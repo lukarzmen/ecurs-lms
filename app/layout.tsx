@@ -2,6 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { ClerkProvider, SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs'
+import ToastProvider from '@/components/providers/toast-provider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -18,7 +19,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-      <body>
+      <body className={inter.className}>
           <header>
             <SignedOut>
               <SignInButton />
@@ -27,7 +28,8 @@ export default function RootLayout({
               <UserButton afterSignOutUrl="/" />
             </SignedIn>
           </header>
-          <main>{children}</main>
+          <ToastProvider/>
+          {children}
         </body>
       </html>
     </ClerkProvider>
