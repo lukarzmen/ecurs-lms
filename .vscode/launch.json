@@ -9,7 +9,14 @@
             "request": "launch",
             "name": "Launch Chrome against localhost",
             "url": "http://localhost:3000",
-            "webRoot": "${workspaceFolder}"
+            "webRoot": "${workspaceFolder}",
+            "runtimeArgs": [
+                "--disable-notifications",
+                "--disable-gpu",
+                "--deterministic-fetch",
+                "--disable-features=IsolateOrigins,site-per-process",
+                "--disable-web-security",
+            ]
         },
         {
             "name": "SWA: Run ecurs-lms",
