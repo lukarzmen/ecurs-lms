@@ -1,11 +1,20 @@
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
-import { UserButton } from '@clerk/nextjs'
+import { SignedIn, SignedOut, SignIn, UserButton } from '@clerk/nextjs'
 
 export default function Home() {
   return (
-    <div>
-      <UserButton afterSwitchSessionUrl="/"  />
+    <div className='min-h-screen pl-4'>
+      <SignedOut>
+        <div className='flex items-center justify-center'>
+          <SignIn/>
+
+          </div>
+      </SignedOut>
+      <SignedIn>
+        Dashboard
+      </SignedIn>
     </div>
+
   )
 }
