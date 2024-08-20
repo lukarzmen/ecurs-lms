@@ -13,8 +13,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-
-
 model Course {
   id String @id @default(uuid())
   userId String
@@ -27,6 +25,8 @@ model Course {
   categoryId String?
   category Category? @relation(fields: [categoryId], references: [id])
   attachments Attachment[]
+  chapters Chapter[]
+  purchases Purchase[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -52,4 +52,66 @@ model Category {
   courses Course[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Chapter {
+  id String @id @default(uuid())
+  title String
+  description String?
+  videoUrl String?
+  position Int
+  isPublished Boolean @default(false)
+  isFree Boolean @default(false)
+  muxData MuxData?
+  courseId String
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userProgress UserProgress[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([courseId])
+}
+model MuxData {
+  id String @id @default(uuid())
+  chapterId String @unique
+  assetId String
+  playbackId String
+
+  chapter Chapter @relation(fields: [chapterId], references: [id])
+}
+model UserProgress {
+  id String @id @default(uuid())
+  userId String
+  chapterId String
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  isCompleted Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([chapterId])
+
+  @@unique([userId, chapterId])
+}
+
+model Purchase {
+  id String @id @default(uuid())
+  userId String
+  courseId String
+  course Course @relation(fields: [courseId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([courseId])
+}
+
+model StripeCustomer {
+  id String @id @default(uuid())
+  userId String @unique
+  stripeCustomerId String @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }

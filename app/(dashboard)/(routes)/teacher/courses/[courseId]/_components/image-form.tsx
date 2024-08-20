@@ -27,7 +27,7 @@ export const ImageForm = ({
     const toogleEdit = () => {
         setIsEditing((current) => !current);
     }
-
+    imageUrl = "";//"/logo.svg";
     const onSubmit = async () => {
         // try {
         //     await axios.patch(`/api/courses/${courseId}`, values);
@@ -59,11 +59,9 @@ export const ImageForm = ({
                     <ImageIcon className="h-10 w-10 text-slate-500"></ImageIcon>
                 </div>
             )  : (
-                <></>
-                // <div className="relative aspect-video mt-2">
-                //     {/* todo: do dokonczenia komponent image upload i logika */}
-                //     {/* <Image src={imageUrl} className="object-cover rounded-md"/>  */}
-                // </div>
+                <div className="flex items-center justify-center h-40 bg-slate-200 rounded-md">
+                    <img src={imageUrl} alt="Course Image" className="object-cover rounded-md" />
+                </div>
             )}
             {isEditing && 
                 (
