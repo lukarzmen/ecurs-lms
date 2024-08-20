@@ -1,17 +1,32 @@
 const {PrismaClient} = require("@prisma/client")
 
-const database = new PrismaClient();
-
 async function main() {
+    const db = new PrismaClient();
     try {
-        await database.category.createMany({
-            data: {
-
-            }
-        })
+        
+        await db.$connect();
+        await db.category?.createMany({
+            data: [
+                {
+                    name: "Development"
+                },
+                {
+                    name: "Design"
+                },
+                {
+                    name: "Business"
+                },
+                {
+                    name: "Marketing"
+                }
+            ]
+        });
+        console.log("Categories seeded successfully");
     } catch (error) {
        console.log("error seeding categories", error) 
     }finally{
-        await database.$disconnect();
+        await db.$disconnect();
     }
 }
+
+main()
