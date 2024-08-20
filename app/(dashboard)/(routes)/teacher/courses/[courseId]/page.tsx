@@ -7,6 +7,7 @@ import { LayoutDashboard } from "lucide-react";
 import TitleForm from "./_components/title-form";
 import { Description } from "@radix-ui/react-dialog";
 import DescriptionForm from "./_components/description-form";
+import ImageForm from "./_components/image-form";
 
 const CourseIdPage = async ({params}: {
         params: {
@@ -26,7 +27,12 @@ const CourseIdPage = async ({params}: {
         }
     });
     
-    
+    // const categories = await db.category.findMany({
+    //     orderBy: {
+    //         name: "asc"
+    //     }
+    // });
+
     console.log(`course: ${course}`);
     if(!course){
         return (
@@ -71,6 +77,7 @@ const CourseIdPage = async ({params}: {
                 </div>
                 <TitleForm title={courseTitle} courseId={courseId} />
                 <DescriptionForm description={course.description} courseId={courseId} />
+                <ImageForm imageUrl={course.imageUrl} courseId={courseId} />
             </div>
         </div>
     );
