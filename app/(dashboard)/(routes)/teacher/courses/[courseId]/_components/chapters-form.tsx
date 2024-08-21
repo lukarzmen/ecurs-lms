@@ -16,13 +16,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { z } from "zod";
-import { Pencil, PlusCircle } from "lucide-react";
+import { Loader2, Pencil, PlusCircle, X } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Chapter } from "@prisma/client";
+import { ChaptersList } from "./chapters-list";
 
 const formSchema = z.object({
     title: z.string().min(1, {
@@ -50,9 +51,7 @@ export const ChaptersForm = ({
     });
     const router = useRouter();
     const { isSubmitting, isValid } = form.formState;
-    const toogleUpdating = () => {
-        setIsUpdating((current) => !current);
-    }
+
     const toogleCreating = () => {
         setIsCreating((current) => !current);
     }
@@ -66,9 +65,38 @@ export const ChaptersForm = ({
             toast.error("Something went wrong");
         }
     }
+    const onReorder = async (updateData: { id: string; position: number }[]) => {
+        try {
+            setIsUpdating(true);
+            console.log(`courseId: ${courseId}`);
+            await axios.put(`/api/courses/${courseId}/chapters/reorder`, {
+                list: updateData
+            });
+            toast.success("Chapters reordered");
+            router.refresh();
+        } catch (error) {
+            setIsUpdating(false);
+            toast.error("Something went wrong");
+            console.error(error);
+        }
+    }
+
+    const onEdit = (chapterId: string) => {
+        router.push(`/dashboard/routes/teacher/courses/${courseId}/chapters/${chapterId}`);
+    }
+
+    function onDelete(chapterId: string): void {
+        throw new Error("Function not implemented.");
+    }
 
     return (
-        <div className="mt-6 border bg-slate-100 rounded-md p-4">
+        <div className="relative mt-6 border bg-slate-100 rounded-md p-4">
+            {
+                isUpdating && (<div className="absolute h-full w-full bg-slate-500/200
+                    top-0 right-0 flex items-center justify-center">
+                    <Loader2 className="animate-spin h-6 w-6 text-sky-700" ></Loader2>
+                </div>)
+            }
             <div className="font-medium flex items-center justify-between">
                 Course chapters
                 <Button onClick={toogleCreating} variant="ghost">
@@ -101,30 +129,19 @@ export const ChaptersForm = ({
             ) : (
                 <div>
                     <p className={
-                        cn("text-sm mt-2", 
+                        cn("text-sm mt-2",
                             !chapters && "text-slate-500 italic"
                         )
                     }>
-                        {!chapters ? "No chapters" : chapters.map((chapter) => (
-                            <div key={chapter.id} className="flex items-center p-3 w-full bg-sky-100 border-sky-200 border text-sky-700 rounded-md">
-                                <p className="text-xs line-clamp-1">{chapter.title}</p>
-                                {isUpdating && (
-                                    <button type="button" className="ml-auto hover:opacity-75 transition" onClick={() => onDelete(chapter.id)} title="Delete Chapter">
-                                        <X className="h-4 w-4">
-                                        </X>
-                                    </button>
-                                )}
-                            </div>
-                        )
-                    )
+                        {chapters ?
+                            (<ChaptersList onEdit={() => {() => {onEdit} }} onReorder={onReorder} items={chapters || []} />)
+                            : "No chapters"
                         }
                     </p>
                     <p className="text-sm text-muted-foreground mt-4">
                         Drag and drop to reorder chapters
                     </p>
                 </div>
-
-
             )}
         </div>
     );

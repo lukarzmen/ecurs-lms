@@ -112,7 +112,7 @@ const CourseIdPage = async ({params}: {
                         </h2>
                     </div>
                     <div>
-                    <ChaptersForm description={course.description} courseId={courseId} />
+                    <ChaptersForm chapters={course.chapters} courseId={courseId} />
                     </div>
                 </div>
                 <div>

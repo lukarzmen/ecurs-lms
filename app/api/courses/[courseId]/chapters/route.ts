@@ -4,9 +4,10 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request, {params}: {params: {courseId: string}}){
     const {courseId} = params;
-    const {imageUrl} = await req.json();
+    
     try {
         const {title} = await req.json();
+        console.log(`body ${JSON.stringify(title)}`);
         const {userId} = auth() ?? "";
         if(!userId){
             return new NextResponse("Unauthorized", {
