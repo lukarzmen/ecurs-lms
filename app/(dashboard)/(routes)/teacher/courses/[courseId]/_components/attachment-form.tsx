@@ -34,7 +34,6 @@ export const AttachmentForm = ({
         // }
     }
     const blobUrlsEmpty = !blobUrls || blobUrls.length === 0;
-    console.log(`blobUrlsEmpty: ${blobUrlsEmpty}`);
 
     const onDelete = async (blobUrl: string) => {
         setdeletingBlobUrl(blobUrl);

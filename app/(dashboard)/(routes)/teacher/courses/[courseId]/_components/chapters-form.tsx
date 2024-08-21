@@ -82,7 +82,7 @@ export const ChaptersForm = ({
     }
 
     const onEdit = (chapterId: string) => {
-        router.push(`/dashboard/routes/teacher/courses/${courseId}/chapters/${chapterId}`);
+        router.push(`/teacher/courses/${courseId}/chapters/${chapterId}`);
     }
 
     function onDelete(chapterId: string): void {
@@ -134,7 +134,7 @@ export const ChaptersForm = ({
                         )
                     }>
                         {chapters ?
-                            (<ChaptersList onEdit={() => {() => {onEdit} }} onReorder={onReorder} items={chapters || []} />)
+                            (<ChaptersList onEdit={onEdit} onReorder={onReorder} items={chapters || []} />)
                             : "No chapters"
                         }
                     </p>
