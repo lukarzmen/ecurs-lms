@@ -11,11 +11,14 @@ import ExampleTheme from './ExampleTheme';
 import ToolbarPlugin from './_plugins/ToolbarPlugin';
 import TreeViewPlugin from './_plugins/TreeViewPlugin';
 import "./styles.css";
+import { TextAreaNode } from './_nodes/TextAreaNode';
 const placeholder = 'Enter some rich text...';
 
 const editorConfig = {
   namespace: 'React.js Demo',
-  nodes: [],
+  nodes: [
+    TextAreaNode
+  ],
   // Handling of errors during update
   onError(error: Error) {
     throw error;
