@@ -1,11 +1,14 @@
 import { IconBadge } from "@/components/icon-badge";
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
-import { ArrowLeft, LayoutDashboard } from "lucide-react";
+import { ArrowLeft, Eye, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import ChapterTitleForm from "./_components/chapter-title-form";
 import ChapterDescriptionForm from "./_components/chapter-description-form";
+import ChapterAccessForm from "./_components/chapter-access-form";
+import { Banner } from "@/components/banner";
+import { ChapterActions } from "../../_components/chapter-actions";
 
 const ChapterEditPage = async ({
     params
@@ -36,8 +39,7 @@ const ChapterEditPage = async ({
 
     const requiredFields = [
         chapter.title,
-        chapter.description,
-        chapter.videoUrl,
+        chapter.description
     ]
 
     const totalFields = requiredFields.length;
@@ -45,7 +47,12 @@ const ChapterEditPage = async ({
 
     const completionText = `${completedFields}/${totalFields}`;
 
+    const isComplete = requiredFields.every(Boolean);
+
     return (
+        <>
+        {!chapter.isPublished  && (<Banner variant="warning" label="This is unpublished. It will be not visible in the course"  />)     
+        }
         <div className="p-6">
             <div className="flex items-center justify-between">
                 <div className="w-full">
@@ -63,6 +70,12 @@ const ChapterEditPage = async ({
                                 Complete all fields {completionText}
                             </span>
                         </div>
+                        <ChapterActions disabled={!isComplete} 
+                        courseId={params.courseId} chapterId={params.chapterId}
+                        isPublished={chapter.isPublished} 
+                        >
+
+                        </ChapterActions>
                     </div>
                 </div>          
             </div>
@@ -77,8 +90,16 @@ const ChapterEditPage = async ({
                         <ChapterTitleForm chapterId={chapter.id} title={chapter.title} courseId={params.courseId} /> 
                         <ChapterDescriptionForm chapterId={chapter.id} description={chapter.description ?? ""} courseId={params.courseId} />
                     </div>
+                    <div className="flex items-center gap-x-2">
+                        <IconBadge icon={Eye}/>
+                        <h2 className="text-xl">
+                            Access settings
+                        </h2>
+                    </div>
+                    <ChapterAccessForm chapterId={chapter.id} courseId={params.courseId} isFree={!!chapter.isFree}/>
                 </div>
         </div>
+        </>
     );
 }
 

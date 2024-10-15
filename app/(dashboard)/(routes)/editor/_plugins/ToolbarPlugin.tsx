@@ -160,7 +160,20 @@ export default function ToolbarPlugin() {
         className="toolbar-item"
         aria-label="Justify Align">
         <i className="format justify-align" />
-      </button>{' '}
+      </button>
+      <Divider />
+      
+      <button
+        onClick={() => {
+          editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify');
+        }}
+        className="toolbar-item"
+        aria-label="Justify Align">
+        <i className="format text-editor" />
+        
+      </button>
+      
+      {' '}
     </div>
   );
 }
