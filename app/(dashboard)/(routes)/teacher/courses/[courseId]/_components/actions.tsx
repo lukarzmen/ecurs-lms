@@ -2,6 +2,7 @@
 
 import { ConfirmModal } from "@/components/modals/confirm-modal";
 import { Button } from "@/components/ui/button";
+import { useConfettiStore } from "@/hooks/use-confetti-store";
 import axios from "axios";
 import { Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -17,18 +18,20 @@ interface ActionsProps {
 export const Actions = ({ disabled, courseId, isPublished }: ActionsProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const confetti = useConfettiStore();
+  
   const onConfirm = async () => {
     try {
       setIsLoading(true);
       if (isPublished) {
         await axios.patch(`/api/courses/${courseId}/unpublish`);
-        toast.success("Chapter pusblished");
+        toast.success("Chapter unpublished");
       } else {
         await axios.patch(`/api/courses/${courseId}/publish`);
-        toast.success("Chapter unpublished");
+        toast.success("Chapter published");
+        confetti.onOpen();
       }
-      await axios.patch(`/api/courses/${courseId}/unpublish`);
-
+      
       router.refresh();
     } catch (error) {
       toast.error("Failed to delete chapter");
@@ -49,6 +52,7 @@ export const Actions = ({ disabled, courseId, isPublished }: ActionsProps) => {
       setIsLoading(false);
     }
   };
+
   return (
     <div className="flex items-center gap-x-2">
       <Button

@@ -32,39 +32,4 @@ export async function POST(req: Request) {
   }
 }
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: { courseId: string } },
-) {
-  try {
-    const { userId } = auth() ?? "";
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-    const ownCourse = await db.course.findFirst({
-      where: {
-        id: params.courseId,
-        userId,
-      },
-    });
-    if (!ownCourse) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-    const deletedCourse = await db.course.delete({
-      where: {
-        id: params.courseId,
-        userId: userId,
-      },
-      include: {
-        chapters: true,
-      },
-    });
-    if (!deletedCourse) {
-      return new NextResponse("Not found", { status: 404 });
-    }
-    return NextResponse.json(deletedCourse);
-  } catch (error) {
-    console.log("[COURSES_ID]", error);
-    return new NextResponse("Internal server error", { status: 500 });
-  }
-}
+

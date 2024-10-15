@@ -66,13 +66,13 @@ const CourseIdPage = async ({
   const requiredFields = [
     course.title,
     course.description,
-    course.imageUrl,
+    // course.imageUrl,
     course.price,
     course.categoryId,
     course.chapters.some((chapter) => chapter.isPublished),
   ];
 
-  const totalFields = requiredFields.filter.length;
+  const totalFields = requiredFields.length;
   const completedFields = requiredFields.filter(Boolean).length;
 
   const completionText = `${completedFields}/${totalFields}`;

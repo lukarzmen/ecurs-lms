@@ -25,17 +25,16 @@ isPublished
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
     const onPublish = async () => {
-    try {
+        console.log("onPublish");
+        try {
         setIsLoading(true);
         if(isPublished){
             await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}/unpublish`); 
-            toast.success("Chapter published");  
+            toast.success("Chapter unpublished");  
         }else{
             await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}/publish`);  
-            toast.success("Chapter unpublished");
+            toast.success("Chapter published");
         }
-        await axios.patch(`/api/courses/${courseId}/unpublish`);  
-     
         router.refresh();
     } catch (error) {
         toast.error("Failed to publish chapter");
@@ -43,7 +42,7 @@ isPublished
     finally {
         setIsLoading(false);
     }
-
+    }
 
     const onDelete = async () => {
     try {
@@ -62,9 +61,8 @@ isPublished
 
     return (
         <div className="flex items-center gap-x-2">
-            <Button onClick={() => {onPublish}} disabled={disabled || isLoading} variant="outline" size="sm">
-                {isPublished ? "Unpublish" : "Publish"}
-            
+            <Button onClick={onPublish} disabled={disabled || isLoading} variant="outline" size="sm">
+                {isPublished ? "Unpublish" : "Publish"}         
             </Button>
             <ConfirmModal onConfirm={onDelete}>
                 <Button size="sm" disabled={isLoading} >
