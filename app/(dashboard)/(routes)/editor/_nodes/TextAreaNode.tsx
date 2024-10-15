@@ -1,5 +1,5 @@
-import { DecoratorNode } from 'lexical';
-import React from 'react';
+import { DecoratorNode } from "lexical";
+import React from "react";
 
 // Define a React component that will represent the textarea in the editor
 function TextAreaComponent() {
@@ -8,14 +8,14 @@ function TextAreaComponent() {
 
 export class TextAreaNode extends DecoratorNode<{}> {
   static getType() {
-    return 'textarea';
+    return "textarea";
   }
 
   constructor(key?: string) {
     super(key);
   }
 
-  static clone(node: { __key: any; }) {
+  static clone(node: { __key: any }) {
     return new TextAreaNode(node.__key);
   }
 
@@ -27,7 +27,7 @@ export class TextAreaNode extends DecoratorNode<{}> {
   // Exporting the node to JSON
   exportJSON() {
     return {
-      type: 'textarea',
+      type: "textarea",
       version: 1,
     };
   }
@@ -39,7 +39,7 @@ export class TextAreaNode extends DecoratorNode<{}> {
 
   // Create the DOM element for non-react environments (e.g., SSR)
   createDOM() {
-    const container = document.createElement('div');
+    const container = document.createElement("div");
     return container;
   }
 
@@ -49,7 +49,7 @@ export class TextAreaNode extends DecoratorNode<{}> {
 
   // Optional: If you want to export the text content inside the textarea
   exportText() {
-    return ''; // You can customize this if your textarea holds specific text
+    return ""; // You can customize this if your textarea holds specific text
   }
 }
 
