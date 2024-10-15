@@ -13,6 +13,7 @@ import {
   UNDO_COMMAND,
 } from 'lexical';
 import {useCallback, useEffect, useRef, useState} from 'react';
+import { $createTextAreaNode } from '../_nodes/TextAreaNode';
 
 const LowPriority = 1;
 
@@ -75,6 +76,17 @@ export default function ToolbarPlugin() {
     );
   }, [editor, $updateToolbar]);
 
+  const insertTextArea = () => {
+    editor.update(() => {
+      const textAreaNode = $createTextAreaNode();
+        const selection = $getSelection(); // Get current selection
+        
+        if ($isRangeSelection(selection)) {
+            selection.insertNodes([textAreaNode]); // Insert the custom node at the selection
+        }
+    });
+  };
+  
   return (
     <div className="toolbar" ref={toolbarRef}>
       <button
@@ -160,20 +172,14 @@ export default function ToolbarPlugin() {
         className="toolbar-item"
         aria-label="Justify Align">
         <i className="format justify-align" />
-      </button>
+      </button>{' '}
       <Divider />
-      
       <button
-        onClick={() => {
-          editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify');
-        }}
-        className="toolbar-item"
-        aria-label="Justify Align">
-        <i className="format text-editor" />
-        
+        onClick={insertTextArea}
+        className="toolbar-item spaced"
+        aria-label="Code">
+        <i className="format code" />
       </button>
-      
-      {' '}
     </div>
   );
 }
