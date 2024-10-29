@@ -97,6 +97,7 @@ const ChapterEditPage = async ({
               courseId={params.courseId}
             />
           </div>
+          <div className="space-y-4">
           <div className="flex items-center gap-x-2">
             <IconBadge icon={Eye} />
             <h2 className="text-xl">Access settings</h2>
@@ -106,6 +107,7 @@ const ChapterEditPage = async ({
             courseId={params.courseId}
             isFree={!!chapter.isFree}
           />
+        </div>
         </div>
       </div>
     </>
