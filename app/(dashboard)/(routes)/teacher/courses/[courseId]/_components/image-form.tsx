@@ -59,11 +59,11 @@ export const ImageForm = ({ imageUrl, courseId }: ImageFormProps) => {
           <ImageIcon className="h-10 w-10 text-slate-500"></ImageIcon>
         </div>
       ) : (
-        <div className="flex items-center justify-center h-40 bg-slate-200 rounded-md">
+        <div className="flex items-center justify-center h-40 bg-slate-200 rounded-md overflow-hidden">
           <img
             src={imageUrl}
             alt="Course Image"
-            className="object-cover rounded-md"
+            className="object-cover rounded-md h-full w-full"
           />
         </div>
       )}
