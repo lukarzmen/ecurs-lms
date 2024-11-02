@@ -113,7 +113,7 @@ function $prepopulatedRichText() {
   }
 }
 
-function App(): JSX.Element {
+function LexicalEditor(): JSX.Element {
   const {
     settings: {isCollab, emptyEditor, measureTypingPerf},
   } = useSettings();
@@ -126,6 +126,7 @@ function App(): JSX.Element {
       : $prepopulatedRichText,
     namespace: 'Playground',
     nodes: [...PlaygroundNodes],
+    editable: true,
     onError: (error: Error) => {
       throw error;
     },
@@ -162,7 +163,7 @@ export default function PlaygroundApp(): JSX.Element {
   return (
     <SettingsContext>
       <FlashMessageContext>
-        <App />
+        <LexicalEditor />
       </FlashMessageContext>
       <a
         href="https://github.com/facebook/lexical/tree/main/packages/lexical-playground"

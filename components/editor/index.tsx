@@ -15,7 +15,7 @@ import './index.css';
 import * as React from 'react';
 import {createRoot} from 'react-dom/client';
 
-import App from './App';
+import App from './LexicalEditor';
 
 if (setupEnv.disableBeforeInput) {
   // vite is really aggressive about tree-shaking, this

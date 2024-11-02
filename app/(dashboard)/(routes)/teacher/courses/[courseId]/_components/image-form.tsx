@@ -23,7 +23,6 @@ export const ImageForm = ({ imageUrl, courseId }: ImageFormProps) => {
   const toogleEdit = () => {
     setIsEditing((current) => !current);
   };
-  imageUrl = ""; //"/logo.svg";
   const onSubmit = async () => {
     // try {
     //     await axios.patch(`/api/courses/${courseId}`, values);

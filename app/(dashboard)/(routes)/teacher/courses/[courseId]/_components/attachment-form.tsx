@@ -61,7 +61,7 @@ export const AttachmentForm = ({ courseId }: AttachmentFormProps) => {
       </div>
       {!isEditing && !blobUrlsEmpty ? (
         blobUrls.map((blobUrl) => (
-          <div className="flex items-center p-3 w-full bg-sky-100 border-sky-200 border text-sky-700 rounded-md">
+          <div key={blobUrl} className="flex items-center p-3 w-full bg-sky-100 border-sky-200 border text-sky-700 rounded-md">
             <File className="h-4 w-4 mr-2 flex-shrink-0"></File>
             <p className="text-xs line-clamp-1">{blobUrl}</p>
             {deletingBlobUrl === blobUrl}

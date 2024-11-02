@@ -22,6 +22,7 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
+import { Editor } from "@/components/editor";
 
 const formSchema = z.object({
   description: z.string().min(1, {
@@ -88,9 +89,8 @@ export const DescriptionForm = ({
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Textarea
+                    <Editor
                       disabled={isSubmitting}
-                      placeholder="e.g. This course is about..."
                       {...field}
                     />
                   </FormControl>
@@ -106,9 +106,10 @@ export const DescriptionForm = ({
           </form>
         </Form>
       ) : (
-        <p className={cn(!description && "text-sm mt-2")}>
-          {description || "No description"}
-        </p>
+        <div
+          className={cn(!description && "text-sm mt-2")}
+          dangerouslySetInnerHTML={{ __html: description || "No description" }}
+        />
       )}
     </div>
   );

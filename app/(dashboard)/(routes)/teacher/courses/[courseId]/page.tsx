@@ -80,6 +80,12 @@ const CourseIdPage = async ({
   const isComplete = requiredFields.every(Boolean);
 
   const courseTitle = course.title;
+
+  const sasToken = process.env.NEXT_PUBLIC_AZURE_SAS_TOKEN;
+  const containerName = process.env.NEXT_PUBLIC_AZURE_BLOB_CONTAINER_NAME ?? "default";
+  const accountName = process.env.NEXT_PUBLIC_AZURE_BLOB_ACCOUNT_NAME;
+  const url = `https://${accountName}.blob.core.windows.net/?${sasToken}&timeout=20`;
+  
   return (
     <>
       {!course.isPublished && (
@@ -116,6 +122,7 @@ const CourseIdPage = async ({
               return {
                 label: x.name,
                 value: x.id,
+                key: x.id,
               };
             })}
             courseId={courseId}

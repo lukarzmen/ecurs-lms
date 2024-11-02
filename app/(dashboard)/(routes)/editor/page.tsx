@@ -1,6 +1,6 @@
 "use client";
 
-import PlaygroundApp from "@/components/editor/App";
+import PlaygroundApp from "@/components/editor/LexicalEditor";
 
 
 export default function EditorPage() {

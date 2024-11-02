@@ -10,7 +10,12 @@ interface FileUploadProps {
   onFileChange: (file: File) => void;
 }
 export const FileUpload = ({ courseId }: { courseId: number }) => {
-  const azureBlobService: AzureBlobService = new AzureBlobService();
+  const sasToken = process.env.NEXT_PUBLIC_AZURE_SAS_TOKEN;
+  const containerName = process.env.NEXT_PUBLIC_AZURE_BLOB_CONTAINER_NAME ?? "default";
+  const accountName = process.env.NEXT_PUBLIC_AZURE_BLOB_ACCOUNT_NAME;
+  const url = `https://${accountName}.blob.core.windows.net/?${sasToken}&timeout=20`
+
+  const azureBlobService: AzureBlobService = new AzureBlobService(url, containerName);
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<
     "initial" | "uploading" | "success" | "fail"
@@ -24,15 +29,18 @@ export const FileUpload = ({ courseId }: { courseId: number }) => {
   };
 
   const handleUpload = async () => {
+    console.log(`uploading file ${file}`);
     if (file) {
       setStatus("uploading");
 
       try {
+        console.log(`uploading file ${file}`);
         const fileName: string = await azureBlobService.uploadFile(
           file,
           `${courseId}-${file.name}`,
+
         );
-        await axios.post(`/api/courses/${courseId}`, fileName);
+        await axios.post(`/api/courses/${courseId}`, { imageUrl: fileName });
         setStatus("success");
         toast.success("Course updated");
       } catch (error) {
@@ -43,13 +51,32 @@ export const FileUpload = ({ courseId }: { courseId: number }) => {
     }
   };
 
+  const fileInputRef = useRef(null);
+  const handleButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   return (
-    <>
+    <div className="m-2">
       <div className="input-group">
         <label htmlFor="file" className="sr-only">
           Choose a file
         </label>
-        <input id="file" type="file" onChange={handleFileChange} />
+        <div>
+          <div>
+            <Button onClick={handleButtonClick} className="upload-button">
+              Load File
+            </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              style={{ display: 'none' }} // Hide the file input element
+              onChange={handleFileChange}
+            />
+          </div>
+        </div>
       </div>
       {file && (
         <section>
@@ -63,13 +90,13 @@ export const FileUpload = ({ courseId }: { courseId: number }) => {
       )}
 
       {file && (
-        <Button onClick={handleUpload} className="submit">
+        <Button onClick={handleUpload} className="submit mt-2 mb-2">
           Upload a file
         </Button>
       )}
 
       <Result status={status} />
-    </>
+    </div>
   );
 };
 

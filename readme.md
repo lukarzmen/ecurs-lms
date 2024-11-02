@@ -37,3 +37,6 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 ## Tools used
 https://ui.shadcn.com/
 https://clerk.com/
+
+# Translations
+We'll add translations soon https://github.com/i18next/next-i18next#client-side-loading-of-translations-via-http

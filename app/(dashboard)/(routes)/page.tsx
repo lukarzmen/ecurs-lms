@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { SignedIn, SignedOut, SignIn, UserButton } from "@clerk/nextjs";
+import { Logo } from "../_components/logo";
 
 export default function Home() {
+  const azureSasSignature = process.env.AZURE_SAS_SIGNATURE;
   return (
     <div className="min-h-screen pl-4">
       <SignedOut>
@@ -10,7 +12,9 @@ export default function Home() {
           <SignIn />
         </div>
       </SignedOut>
-      <SignedIn>Dashboard</SignedIn>
+      <SignedIn>
+        <Logo/>
+      </SignedIn>
     </div>
   );
 }
