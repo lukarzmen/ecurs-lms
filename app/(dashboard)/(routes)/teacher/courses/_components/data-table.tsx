@@ -61,8 +61,10 @@ export function DataTable<TData, TValue>({
                 <Input
                     placeholder="Filter courses..."
                     value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-                    onChange={(event) =>
+                    onChange={(event) => {
+                        console.log("Event target value " + event.target.value);
                         table.getColumn("title")?.setFilterValue(event.target.value)
+                    }
                     }
                     className="max-w-sm"
                 />
