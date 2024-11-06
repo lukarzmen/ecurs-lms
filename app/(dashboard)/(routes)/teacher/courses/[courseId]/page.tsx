@@ -131,7 +131,7 @@ const CourseIdPage = async ({
             <div>
               <div className="flex items-center gap-x-2">
                 <IconBadge icon={ListCheck}></IconBadge>
-                <h2 className="text-xl">Course chapters</h2>
+                <h2 className="text-xl">Lessons</h2>
               </div>
               <div>
                 <ChaptersForm chapters={course.chapters} courseId={courseId} />

@@ -39,6 +39,10 @@ export const ChaptersForm = ({ chapters, courseId }: ChaptersFormProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
+
+  //todo: adding notes https://github.com/marisabrantley/sticky-notes-app
+ //https://www.npmjs.com/package/react-quiz-component quiz
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -96,14 +100,14 @@ export const ChaptersForm = ({ chapters, courseId }: ChaptersFormProps) => {
         </div>
       )}
       <div className="font-medium flex items-center justify-between">
-        Course chapters
+        Lessons
         <Button onClick={toogleCreating} variant="ghost">
           {isCreating ? (
             <>Cancel</>
           ) : (
             <>
               <PlusCircle className="h-4 w-4 mr-2"></PlusCircle>
-              Add a chapter
+              Add
             </>
           )}
         </Button>
@@ -153,7 +157,7 @@ export const ChaptersForm = ({ chapters, courseId }: ChaptersFormProps) => {
             )}
           </p>
           <p className="text-sm text-muted-foreground mt-4">
-            Drag and drop to reorder chapters
+            Drag and drop to reorder lessons
           </p>
         </div>
       )}

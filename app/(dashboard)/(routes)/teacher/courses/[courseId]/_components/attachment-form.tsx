@@ -54,7 +54,7 @@ export const AttachmentForm = ({ courseId }: AttachmentFormProps) => {
           {!isEditing && (
             <>
               <PlusCircle className="h-4 w-4 mr-2"></PlusCircle>
-              Add file
+              Add
             </>
           )}
         </Button>

@@ -260,7 +260,7 @@ export default function ImageResizer({
           onClick={() => {
             setShowCaption(!showCaption);
           }}>
-          Add Caption
+          Add
         </button>
       )}
       <div

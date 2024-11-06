@@ -78,7 +78,7 @@ export const CategoryForm = ({
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2"></Pencil>
-              Edit category
+              Edit
             </>
           )}
         </Button>

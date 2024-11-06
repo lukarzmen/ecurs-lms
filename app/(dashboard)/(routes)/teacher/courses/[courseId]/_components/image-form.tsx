@@ -43,13 +43,13 @@ export const ImageForm = ({ imageUrl, courseId }: ImageFormProps) => {
           {!isEditing && imageUrl && (
             <>
               <Pencil className="h-4 w-4 mr-2"></Pencil>
-              Edit image
+              Edit
             </>
           )}
           {!isEditing && !imageUrl && (
             <>
               <PlusCircle className="h-4 w-4 mr-2"></PlusCircle>
-              Add image
+              Add
             </>
           )}
         </Button>

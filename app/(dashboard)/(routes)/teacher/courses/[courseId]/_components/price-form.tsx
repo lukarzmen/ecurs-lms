@@ -69,7 +69,7 @@ export const PriceForm = ({ price, courseId }: PriceFormProps) => {
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2"></Pencil>
-              Edit price
+              Edit
             </>
           )}
         </Button>

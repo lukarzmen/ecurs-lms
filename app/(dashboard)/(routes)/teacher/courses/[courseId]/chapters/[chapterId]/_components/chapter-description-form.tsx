@@ -69,14 +69,14 @@ export const ChapterDescriptionForm = ({
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Chapter description
+        Content
         <Button onClick={toogleEdit} variant="ghost">
           {isEditing ? (
             <>Cancel</>
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2"></Pencil>
-              Edit description
+              Edit
             </>
           )}
         </Button>

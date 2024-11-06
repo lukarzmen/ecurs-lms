@@ -242,7 +242,7 @@ export default function PollComponent({
         })}
         <div className="PollNode__footer">
           <Button onClick={addOption} small={true}>
-            Add Option
+            Add
           </Button>
         </div>
       </div>

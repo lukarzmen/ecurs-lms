@@ -10,7 +10,7 @@ import {$createLinkNode} from '@lexical/link';
 import {$createListItemNode, $createListNode} from '@lexical/list';
 import {LexicalComposer} from '@lexical/react/LexicalComposer';
 import {$createHeadingNode, $createQuoteNode} from '@lexical/rich-text';
-import {$createParagraphNode, $createTextNode, $getRoot} from 'lexical';
+import {$createParagraphNode, $createTextNode, $getRoot, EditorState} from 'lexical';
 import * as React from 'react';
 
 import {isDevPlayground} from './appSettings';
@@ -23,11 +23,13 @@ import logo from './images/logo.svg';
 import PlaygroundNodes from './nodes/PlaygroundNodes';
 import DocsPlugin from './plugins/DocsPlugin';
 import PasteLogPlugin from './plugins/PasteLogPlugin';
+import {OnChangePlugin} from '@lexical/react/LexicalOnChangePlugin';
 import {TableContext} from './plugins/TablePlugin';
 import TestRecorderPlugin from './plugins/TestRecorderPlugin';
 import TypingPerfPlugin from './plugins/TypingPerfPlugin';
 import Settings from './Settings';
 import PlaygroundEditorTheme from './themes/PlaygroundEditorTheme';
+import { useRef } from 'react';
 
 console.warn(
   'If you are profiling the playground app, please ensure you turn off the debug view. You can disable it by pressing on the settings control in the bottom-left of your screen and toggling the debug view setting.',
@@ -133,11 +135,17 @@ function LexicalEditor(): JSX.Element {
     theme: PlaygroundEditorTheme,
   };
 
+  const editorStateRef = useRef<EditorState | null>(null);
+  
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <SharedHistoryContext>
         <TableContext>
           <SharedAutocompleteContext>
+          <OnChangePlugin onChange={(editorState) => {
+                editorStateRef.current = editorState;
+                console.log(JSON.stringify(editorStateRef.current));
+            }} />
             <header>
               <a href="https://lexical.dev" target="_blank" rel="noreferrer">
                 <img src={logo} alt="Lexical Logo" />
