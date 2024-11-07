@@ -91,11 +91,7 @@ const ChapterEditPage = async ({
               title={chapter.title}
               courseId={params.courseId}
             />
-            <ChapterDescriptionForm
-              chapterId={chapter.id}
-              description={chapter.description ?? ""}
-              courseId={params.courseId}
-            />
+         
           </div>
           <div className="space-y-4">
           <div className="flex items-center gap-x-2">
@@ -108,7 +104,14 @@ const ChapterEditPage = async ({
             isFree={!!chapter.isFree}
           />
         </div>
+    
         </div>
+        
+        <ChapterDescriptionForm
+              chapterId={chapter.id}
+              description={chapter.description ?? ""}
+              courseId={params.courseId}
+            />
       </div>
     </>
   );
