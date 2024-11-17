@@ -9,7 +9,7 @@
 import {CAN_USE_BEFORE_INPUT} from '@lexical/utils';
 import {useEffect, useMemo, useState} from 'react';
 
-import {INITIAL_SETTINGS, isDevPlayground} from './appSettings';
+import {INITIAL_SETTINGS} from './appSettings';
 import {useSettings} from './context/SettingsContext';
 import Switch from './ui/Switch';
 
@@ -53,13 +53,13 @@ export default function Settings(): JSX.Element {
   return (
     <>
       <button
-        id="options-button"
-        className={`editor-dev-button ${showSettings ? 'active' : ''}`}
-        onClick={() => setShowSettings(!showSettings)}
-      />
+        className={`toolbar-item spaced ${showSettings ? 'active' : ''}`}
+        onClick={() => setShowSettings(!showSettings)}>
+          <i className="format settings" />
+        </button>
       {showSettings ? (
         <div className="switches">
-          {isRichText && isDevPlayground && (
+          {isRichText && (
             <Switch
               onClick={() => {
                 setOption('isCollab', !isCollab);
@@ -67,19 +67,6 @@ export default function Settings(): JSX.Element {
               }}
               checked={isCollab}
               text="Collaboration"
-            />
-          )}
-          {isDevPlayground && (
-            <Switch
-              onClick={() => {
-                if (isSplitScreen) {
-                  window.parent.location.href = `/${search}`;
-                } else {
-                  window.location.href = `/split/${search}`;
-                }
-              }}
-              checked={isSplitScreen}
-              text="Split Screen"
             />
           )}
           <Switch

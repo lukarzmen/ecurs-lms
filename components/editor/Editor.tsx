@@ -70,12 +70,18 @@ import TreeViewPlugin from './plugins/TreeViewPlugin';
 import TwitterPlugin from './plugins/TwitterPlugin';
 import YouTubePlugin from './plugins/YouTubePlugin';
 import ContentEditable from './ui/ContentEditable';
+import { SerializedDocument } from '@lexical/file';
 
 const skipCollaborationInit =
   // @ts-expect-error
   window.parent != null && window.parent.frames.right === window;
 
-export default function Editor(): JSX.Element {
+export default function Editor( {
+  onSave,
+}: {
+  onSave: (serializedDocument: SerializedDocument) => boolean;
+}): JSX.Element {
+ 
   const {historyState} = useSharedHistoryContext();
   const {
     settings: {
@@ -236,10 +242,10 @@ export default function Editor(): JSX.Element {
             maxLength={5}
           />
         )}
-        {isAutocomplete && <AutocompletePlugin />}
-        <div>{showTableOfContents && <TableOfContentsPlugin />}</div>
+        {isAutocomplete && <AutocompletePlugin />}       
         {shouldUseLexicalContextMenu && <ContextMenuPlugin />}
         <ActionsPlugin
+          onSave={onSave}
           isRichText={isRichText}
           shouldPreserveNewLinesInMarkdown={shouldPreserveNewLinesInMarkdown}
         />

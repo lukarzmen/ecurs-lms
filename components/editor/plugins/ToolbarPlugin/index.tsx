@@ -97,6 +97,7 @@ import {INSERT_PAGE_BREAK} from '../PageBreakPlugin';
 import {InsertPollDialog} from '../PollPlugin';
 import {InsertTableDialog} from '../TablePlugin';
 import FontSize from './fontSize';
+import Settings from '../../Settings';
 
 const blockTypeToBlockName = {
   bullet: 'Bulleted List',
@@ -1240,7 +1241,8 @@ export default function ToolbarPlugin({
         editor={activeEditor}
         isRTL={isRTL}
       />
-
+      <Divider />
+      <Settings />
       {modal}
     </div>
   );

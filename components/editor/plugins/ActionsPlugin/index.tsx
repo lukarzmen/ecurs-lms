@@ -6,9 +6,9 @@
  *
  */
 
-import type {LexicalEditor} from 'lexical';
+import type { LexicalEditor } from 'lexical';
 
-import {$createCodeNode, $isCodeNode} from '@lexical/code';
+import { $createCodeNode, $isCodeNode } from '@lexical/code';
 import {
   editorStateFromSerializedDocument,
   exportFile,
@@ -20,10 +20,10 @@ import {
   $convertFromMarkdownString,
   $convertToMarkdownString,
 } from '@lexical/markdown';
-import {useCollaborationContext} from '@lexical/react/LexicalCollaborationContext';
-import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
-import {mergeRegister} from '@lexical/utils';
-import {CONNECTED_COMMAND, TOGGLE_CONNECT_COMMAND} from '@lexical/yjs';
+import { useCollaborationContext } from '@lexical/react/LexicalCollaborationContext';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { mergeRegister } from '@lexical/utils';
+import { CONNECTED_COMMAND, TOGGLE_CONNECT_COMMAND } from '@lexical/yjs';
 import {
   $createTextNode,
   $getRoot,
@@ -32,14 +32,14 @@ import {
   CLEAR_HISTORY_COMMAND,
   COMMAND_PRIORITY_EDITOR,
 } from 'lexical';
-import {useCallback, useEffect, useState} from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import {INITIAL_SETTINGS} from '../../appSettings';
+import { INITIAL_SETTINGS } from '../../appSettings';
 import useFlashMessage from '../../hooks/useFlashMessage';
 import useModal from '../../hooks/useModal';
 import Button from '../../ui/Button';
-import {docFromHash, docToHash} from '../../utils/docSerialization';
-import {PLAYGROUND_TRANSFORMERS} from '../MarkdownTransformers';
+import { docFromHash, docToHash } from '../../utils/docSerialization';
+import { PLAYGROUND_TRANSFORMERS } from '../MarkdownTransformers';
 import {
   SPEECH_TO_TEXT_COMMAND,
   SUPPORT_SPEECH_RECOGNITION,
@@ -91,11 +91,23 @@ async function shareDoc(doc: SerializedDocument): Promise<void> {
   await window.navigator.clipboard.writeText(newUrl);
 }
 
+type ActionPluginsSettings = {
+  isSpeechToTextEnabled: boolean;
+  isSharableEnabled: boolean;
+  isReadOnlyEnabled: boolean;
+  isConvertToMarkdownEnabled: boolean;
+};
+
+
+
+
 export default function ActionsPlugin({
   isRichText,
+  onSave,
   shouldPreserveNewLinesInMarkdown,
 }: {
   isRichText: boolean;
+  onSave: (serializedDocument: SerializedDocument) => boolean;
   shouldPreserveNewLinesInMarkdown: boolean;
 }): JSX.Element {
   const [editor] = useLexicalComposerContext();
@@ -105,7 +117,15 @@ export default function ActionsPlugin({
   const [isEditorEmpty, setIsEditorEmpty] = useState(true);
   const [modal, showModal] = useModal();
   const showFlashMessage = useFlashMessage();
-  const {isCollabActive} = useCollaborationContext();
+  const { isCollabActive } = useCollaborationContext();
+
+  const settings: ActionPluginsSettings = {
+    isSpeechToTextEnabled: true,
+    isSharableEnabled: true,
+    isReadOnlyEnabled: true,
+    isConvertToMarkdownEnabled: true,
+  };
+
   useEffect(() => {
     if (INITIAL_SETTINGS.isCollab) {
       return;
@@ -136,7 +156,7 @@ export default function ActionsPlugin({
 
   useEffect(() => {
     return editor.registerUpdateListener(
-      ({dirtyElements, prevEditorState, tags}) => {
+      ({ dirtyElements, prevEditorState, tags }) => {
         // If we are in read only mode, send the editor state
         // to server and ask for validation if possible.
         if (
@@ -195,7 +215,24 @@ export default function ActionsPlugin({
 
   return (
     <div className="actions">
-      {SUPPORT_SPEECH_RECOGNITION && (
+            <button
+        className="action-button save"
+        onClick={() => 
+        {
+          const serializedDocument: SerializedDocument = serializedDocumentFromEditorState(editor.getEditorState(), {
+            source: 'Playground',
+          });
+          const saveResult = onSave(serializedDocument);
+          console.log(`Save result: ${saveResult}`);
+        }
+        }
+        title="Save"
+        aria-label="Save editor state">
+        <i className="save" />
+      </button>
+
+      
+      {SUPPORT_SPEECH_RECOGNITION && settings.isSpeechToTextEnabled && (
         <button
           onClick={() => {
             editor.dispatchCommand(SPEECH_TO_TEXT_COMMAND, !isSpeechToText);
@@ -206,12 +243,12 @@ export default function ActionsPlugin({
             (isSpeechToText ? 'active' : '')
           }
           title="Speech To Text"
-          aria-label={`${
-            isSpeechToText ? 'Enable' : 'Disable'
-          } speech to text`}>
+          aria-label={`${isSpeechToText ? 'Enable' : 'Disable'
+            } speech to text`}>
           <i className="mic" />
         </button>
       )}
+
       <button
         className="action-button import"
         onClick={() => importFile(editor)}
@@ -232,23 +269,26 @@ export default function ActionsPlugin({
         aria-label="Export editor state to JSON">
         <i className="export" />
       </button>
-      <button
-        className="action-button share"
-        disabled={isCollabActive || INITIAL_SETTINGS.isCollab}
-        onClick={() =>
-          shareDoc(
-            serializedDocumentFromEditorState(editor.getEditorState(), {
-              source: 'Playground',
-            }),
-          ).then(
-            () => showFlashMessage('URL copied to clipboard'),
-            () => showFlashMessage('URL could not be copied to clipboard'),
-          )
-        }
-        title="Share"
-        aria-label="Share Playground link to current editor state">
-        <i className="share" />
-      </button>
+      {settings.isSharableEnabled &&
+        <button
+          className="action-button share"
+          disabled={isCollabActive || INITIAL_SETTINGS.isCollab}
+          onClick={() =>
+            shareDoc(
+              serializedDocumentFromEditorState(editor.getEditorState(), {
+                source: 'Playground',
+              }),
+            ).then(
+              () => showFlashMessage('URL copied to clipboard'),
+              () => showFlashMessage('URL could not be copied to clipboard'),
+            )
+          }
+          title="Share"
+          aria-label="Share Playground link to current editor state">
+          <i className="share" />
+        </button>
+      }
+
       <button
         className="action-button clear"
         disabled={isEditorEmpty}
@@ -287,12 +327,10 @@ export default function ActionsPlugin({
           onClick={() => {
             editor.dispatchCommand(TOGGLE_CONNECT_COMMAND, !connected);
           }}
-          title={`${
-            connected ? 'Disconnect' : 'Connect'
-          } Collaborative Editing`}
-          aria-label={`${
-            connected ? 'Disconnect from' : 'Connect to'
-          } a collaborative editing server`}>
+          title={`${connected ? 'Disconnect' : 'Connect'
+            } Collaborative Editing`}
+          aria-label={`${connected ? 'Disconnect from' : 'Connect to'
+            } a collaborative editing server`}>
           <i className={connected ? 'disconnect' : 'connect'} />
         </button>
       )}
