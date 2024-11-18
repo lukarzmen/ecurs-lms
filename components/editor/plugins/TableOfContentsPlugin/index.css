@@ -41,16 +41,17 @@
 
 .table-of-contents {
   color: #65676b;
-  position: fixed;
-  top: 200px;
-  right: -35px;
+  top: 150px;
+  left: 15px;
+  margin-left: 20px;
   padding: 10px;
   width: 250px;
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
-  z-index: 1;
-  height: 300px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  height: 400px;
 }
 
 .first-heading {

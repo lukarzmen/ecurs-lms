@@ -6,23 +6,23 @@
  *
  */
 import './index.css';
-import {$createLinkNode} from '@lexical/link';
-import {$createListItemNode, $createListNode} from '@lexical/list';
-import {LexicalComposer} from '@lexical/react/LexicalComposer';
-import {$createHeadingNode, $createQuoteNode} from '@lexical/rich-text';
-import {$createParagraphNode, $createTextNode, $getRoot, EditorState} from 'lexical';
+import { $createLinkNode } from '@lexical/link';
+import { $createListItemNode, $createListNode } from '@lexical/list';
+import { LexicalComposer } from '@lexical/react/LexicalComposer';
+import { $createHeadingNode, $createQuoteNode } from '@lexical/rich-text';
+import { $createParagraphNode, $createTextNode, $getRoot, EditorState } from 'lexical';
 import * as React from 'react';
 
-import {FlashMessageContext} from './context/FlashMessageContext';
-import {SettingsContext, useSettings} from './context/SettingsContext';
-import {SharedAutocompleteContext} from './context/SharedAutocompleteContext';
-import {SharedHistoryContext} from './context/SharedHistoryContext';
+import { FlashMessageContext } from './context/FlashMessageContext';
+import { SettingsContext, useSettings } from './context/SettingsContext';
+import { SharedAutocompleteContext } from './context/SharedAutocompleteContext';
+import { SharedHistoryContext } from './context/SharedHistoryContext';
 import Editor from './Editor';
 import PlaygroundNodes from './nodes/PlaygroundNodes';
 import DocsPlugin from './plugins/DocsPlugin';
 import PasteLogPlugin from './plugins/PasteLogPlugin';
-import {OnChangePlugin} from '@lexical/react/LexicalOnChangePlugin';
-import {TableContext} from './plugins/TablePlugin';
+import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
+import { TableContext } from './plugins/TablePlugin';
 import TestRecorderPlugin from './plugins/TestRecorderPlugin';
 import TypingPerfPlugin from './plugins/TypingPerfPlugin';
 import Settings from './Settings';
@@ -40,7 +40,7 @@ console.warn(
 
 function LexicalEditor(): JSX.Element {
   const {
-    settings: {isCollab, emptyEditor, measureTypingPerf},
+    settings: { isCollab, emptyEditor, measureTypingPerf },
   } = useSettings();
 
   const initialConfig = {
@@ -57,37 +57,39 @@ function LexicalEditor(): JSX.Element {
   };
 
   const editorStateRef = useRef<EditorState | null>(null);
-  
+
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <SharedHistoryContext>
         <TableContext>
           <SharedAutocompleteContext>
-          {/* <OnChangePlugin onChange={(editorState) => {
+            {/* <OnChangePlugin onChange={(editorState) => {
                 editorStateRef.current = editorState;              
             }} /> */}
             <header>
-                <a href="https://lexical.dev" target="_blank" rel="noreferrer">
+              <a href="https://lexical.dev" target="_blank" rel="noreferrer">
                 <Logo></Logo>
-                </a>
+              </a>
             </header>
-            <div className="editor-shell">
-              <Editor onSave={(serializedDocument: SerializedDocument) => {
-                console.log(serializedDocument);
-                return true;
-              }}
-              
-              />        
+            <div className='flex flex-row'>
+              <div className="editor-shell ">
+                <Editor onSave={(serializedDocument: SerializedDocument) => {
+                  console.log(serializedDocument);
+                  return true;
+                }}
+
+                />
+              </div>
               <TableOfContentsPlugin />
             </div>
             <DocsPlugin />
-            <PasteLogPlugin /> 
+            <PasteLogPlugin />
             <TestRecorderPlugin />
-            
+
             {measureTypingPerf ? <TypingPerfPlugin /> : null}
           </SharedAutocompleteContext>
         </TableContext>
-        
+
       </SharedHistoryContext>
     </LexicalComposer>
   );
