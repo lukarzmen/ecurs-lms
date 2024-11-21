@@ -59,7 +59,7 @@ model Category {
 model Chapter {
   id String @id @default(uuid())
   title String
-  description String?
+  description String? @db.Text
   videoUrl String?
   position Int
   isPublished Boolean @default(false)

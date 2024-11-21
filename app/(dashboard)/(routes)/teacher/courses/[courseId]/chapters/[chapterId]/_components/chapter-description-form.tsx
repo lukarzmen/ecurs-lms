@@ -17,13 +17,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { z } from "zod";
 import { Pencil } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Editor } from "@/components/editor";
 import { Preview } from "@/components/preview";
+import LexicalEditor from "@/components/editor/LexicalEditor";
+import { SerializedDocument } from "@lexical/file";
+import { convertLexicalJsonToHtml } from "@/components/editor/utils/lexicalParser";
 
 const formSchema = z.object({
   description: z.string().min(1),
@@ -46,6 +49,14 @@ export const ChapterDescriptionForm = ({
       description: description,
     },
   });
+
+  const [lessonContent, setLessonContent] = useState(description);
+  useEffect(() => {
+    const content = convertLexicalJsonToHtml(description);
+    setLessonContent(content);
+    console.log(content);
+  }, [lessonContent]);
+
   const router = useRouter();
   const { isSubmitting, isValid } = form.formState;
   const toogleEdit = () => {
@@ -65,6 +76,11 @@ export const ChapterDescriptionForm = ({
       toast.error("Something went wrong");
     }
   };
+
+  const handleOnSave = (serializedDocument: SerializedDocument) => {
+    console.log(serializedDocument);
+    return true;
+  }
 
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
@@ -93,7 +109,11 @@ export const ChapterDescriptionForm = ({
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Editor disabled={isSubmitting} {...field} />
+                    <LexicalEditor initialValue={description} disabled={isSubmitting} onSave={handleOnSave} onEditorChange={(editorState) => {
+                      form.setValue('description', editorState);
+                      const content = convertLexicalJsonToHtml(description);
+                      setLessonContent(content);
+                    }}  {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -110,11 +130,14 @@ export const ChapterDescriptionForm = ({
         <div
           className={cn(
             "text-sm mt-2",
-            !description && "text-slate-500 italic",
+            !lessonContent && "text-slate-500 italic",
           )}
         >
-          {description && <Preview value={description} />}
-          {!description && "No description"}
+          {lessonContent && <div
+            className={cn(!lessonContent && "text-sm mt-2")}
+          dangerouslySetInnerHTML={{ __html: lessonContent || "No description" }}
+        />}
+          {!lessonContent && "No description"}
         </div>
       )}
     </div>

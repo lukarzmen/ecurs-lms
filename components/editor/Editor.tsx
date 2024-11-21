@@ -71,6 +71,7 @@ import TwitterPlugin from './plugins/TwitterPlugin';
 import YouTubePlugin from './plugins/YouTubePlugin';
 import ContentEditable from './ui/ContentEditable';
 import { SerializedDocument } from '@lexical/file';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 
 const skipCollaborationInit =
   // @ts-expect-error
@@ -78,8 +79,10 @@ const skipCollaborationInit =
 
 export default function Editor( {
   onSave,
+  onEditorChange,
 }: {
   onSave: (serializedDocument: SerializedDocument) => boolean;
+  onEditorChange: (editorState: string) => void;
 }): JSX.Element {
  
   const {historyState} = useSharedHistoryContext();
@@ -118,6 +121,18 @@ export default function Editor( {
     }
   };
 
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    const unregisterListener = editor.registerUpdateListener(({ editorState }) => {
+      // Serializuj stan edytora do stringa lub innego formatu
+      const serializedState = JSON.stringify(editorState.toJSON());
+      onEditorChange(serializedState);
+    });
+
+    return () => unregisterListener();
+  }, [editor, onEditorChange]);
+  
   useEffect(() => {
     const updateViewPortWidth = () => {
       const isNextSmallWidthViewport =

@@ -20,12 +20,12 @@
 }
 
 .selected-heading-wrapper::before {
-  content: ' ';
+  content: '';
   position: absolute;
   display: inline-block;
   left: -30px;
-  top: 4px;
-  z-index: 10;
+  /* top: 4px; */
+  /* z-index: 10; */
   height: 4px;
   width: 4px;
   background-color: #3578e5;
@@ -62,12 +62,8 @@
 
 .headings {
   list-style: none;
-  margin-top: 0;
-  margin-left: 10px;
-  padding: 0;
+  margin-left: 5px;
   overflow: scroll;
-  width: 200px;
-  height: 220px;
   overflow-x: hidden;
   overflow-y: auto;
   -ms-overflow-style: none; /* IE and Edge */
@@ -79,18 +75,8 @@
   display: none;
 }
 
-/* .headings::before {
-  content: ' ';
-  position: absolute;
-  height: 220px;
-  width: 4px;
-  right: 240px;
-  margin-top: 5px;
-  background-color: #ccd0d5;
-  border-radius: 2px;
-} */
 
 .normal-heading-wrapper {
-  margin-left: 32px;
+  margin-left: 10px;
   position: relative;
 }
