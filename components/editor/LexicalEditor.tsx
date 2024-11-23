@@ -7,7 +7,6 @@
  */
 import './index.css';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
-import { EditorState, LexicalEditor } from 'lexical';
 import * as React from 'react';
 
 import { SettingsContext, useSettings } from './context/SettingsContext';
@@ -20,55 +19,41 @@ import PasteLogPlugin from './plugins/PasteLogPlugin';
 import { TableContext } from './plugins/TablePlugin';
 import TestRecorderPlugin from './plugins/TestRecorderPlugin';
 import TypingPerfPlugin from './plugins/TypingPerfPlugin';
-import PlaygroundEditorTheme from './themes/PlaygroundEditorTheme';
-import { useEffect, useRef } from 'react';
-import TableOfContentsPlugin from './plugins/TableOfContentsPlugin';
-import { Logo } from '@/app/(dashboard)/_components/logo';
 import { SerializedDocument } from '@lexical/file';
 import { FlashMessageContext } from './context/FlashMessageContext';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 
 console.warn(
   'If you are profiling the playground app, please ensure you turn off the debug view. You can disable it by pressing on the settings control in the bottom-left of your screen and toggling the debug view setting.',
 );
 
 
+import { useEffect } from 'react';
+
 export default function LexicalEditor({
   onSave,
   onEditorChange,
   initialStateJSON,
-  
+  isEditable
 }: {
   onSave: (serializedDocument: SerializedDocument) => boolean;
   onEditorChange: (editorState: string) => void;
   initialStateJSON: string | null;
+  isEditable: boolean;
 }): JSX.Element {
   const {
-    settings: { isCollab, emptyEditor, measureTypingPerf },
+    settings: { measureTypingPerf },
   } = useSettings();
 
   const initialConfig = {
-    editorState: (editor : LexicalEditor) => {
-      try {
-        // Parse the JSON string and return the parsed editor state
-        return initialStateJSON ? editor.parseEditorState(initialStateJSON) : editor.getEditorState();
-      } catch (error) {
-        console.error("Failed to load editor state from JSON:", error);
-        return null; // Fallback to default state
-      }
-    },
+    editorState:  initialStateJSON,
     namespace: 'Playground',
     nodes: [...PlaygroundNodes],
-    editable: true,
+    editable: isEditable,
     onError: (error: Error) => {
       throw error;
     },
     // theme: PlaygroundEditorTheme,
   };
-
-  const editorStateRef = useRef<EditorState | null>(null);
-
-
   
   return (
     <SettingsContext>
@@ -79,11 +64,11 @@ export default function LexicalEditor({
           <SharedAutocompleteContext>
             <div className='flex flex-row'>
               <div className="editor-shell ">
-                <Editor onSave={onSave} onEditorChange={onEditorChange}
+                <Editor onSave={onSave} onEditorChange={onEditorChange} isEditable={isEditable}
 
                 />
               </div>
-              <TableOfContentsPlugin />
+              {/* <TableOfContentsPlugin /> */}
             </div>
             <DocsPlugin />
             <PasteLogPlugin />

@@ -27,6 +27,8 @@ import { Preview } from "@/components/preview";
 import LexicalEditor from "@/components/editor/LexicalEditor";
 import { SerializedDocument } from "@lexical/file";
 import { convertLexicalJsonToHtml } from "@/components/editor/utils/lexicalParser";
+import { EditorState } from "lexical";
+import ReadOnlyEditor from "@/components/editor/ReadonlyEditor";
 
 const formSchema = z.object({
   description: z.string().min(1),
@@ -49,13 +51,11 @@ export const ChapterDescriptionForm = ({
       description: description,
     },
   });
-
-  const [lessonContent, setLessonContent] = useState(description);
+  
   useEffect(() => {
-    const content = convertLexicalJsonToHtml(description);
-    setLessonContent(content);
-    console.log(content);
-  }, [lessonContent]);
+
+    console.log('description', description);  
+  }, [isEditing]);
 
   const router = useRouter();
   const { isSubmitting, isValid } = form.formState;
@@ -65,6 +65,7 @@ export const ChapterDescriptionForm = ({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      console.log(values);
       await axios.patch(
         `/api/courses/${courseId}/chapters/${chapterId}`,
         values,
@@ -97,7 +98,6 @@ export const ChapterDescriptionForm = ({
           )}
         </Button>
       </div>
-      {isEditing ? (
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -109,37 +109,19 @@ export const ChapterDescriptionForm = ({
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <LexicalEditor initialValue={description} disabled={isSubmitting} onSave={handleOnSave} onEditorChange={(editorState) => {
-                      form.setValue('description', editorState);
-                      const content = convertLexicalJsonToHtml(description);
-                      setLessonContent(content);
+                    <LexicalEditor initialStateJSON={description} disabled={isSubmitting} onSave={handleOnSave} 
+                    isEditable={isEditing}
+                    onEditorChange={(content: string) => {
+                      form.setValue('description', content);
                     }}  {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             ></FormField>
-            <div className="flex items-center gap-x-2">
-              <Button disabled={!isValid || isSubmitting} type="submit">
-                Save
-              </Button>
-            </div>
           </form>
         </Form>
-      ) : (
-        <div
-          className={cn(
-            "text-sm mt-2",
-            !lessonContent && "text-slate-500 italic",
-          )}
-        >
-          {lessonContent && <div
-            className={cn(!lessonContent && "text-sm mt-2")}
-          dangerouslySetInnerHTML={{ __html: lessonContent || "No description" }}
-        />}
-          {!lessonContent && "No description"}
-        </div>
-      )}
+     
     </div>
   );
 };

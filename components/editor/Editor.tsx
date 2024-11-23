@@ -80,9 +80,11 @@ const skipCollaborationInit =
 export default function Editor( {
   onSave,
   onEditorChange,
+  isEditable,
 }: {
   onSave: (serializedDocument: SerializedDocument) => boolean;
   onEditorChange: (editorState: string) => void;
+  isEditable: boolean;
 }): JSX.Element {
  
   const {historyState} = useSharedHistoryContext();
@@ -103,12 +105,8 @@ export default function Editor( {
       tableCellBackgroundColor,
     },
   } = useSettings();
-  const isEditable = useLexicalEditable();
-  const placeholder = isCollab
-    ? 'Enter some collaborative rich text...'
-    : isRichText
-    ? 'Enter some rich text...'
-    : 'Enter some plain text...';
+  // const isEditable = useLexicalEditable();
+  const placeholder = "Start typing here...";
   const [floatingAnchorElem, setFloatingAnchorElem] =
     useState<HTMLDivElement | null>(null);
   const [isSmallWidthViewport, setIsSmallWidthViewport] =
@@ -129,9 +127,9 @@ export default function Editor( {
       const serializedState = JSON.stringify(editorState.toJSON());
       onEditorChange(serializedState);
     });
-
+    editor.setEditable(isEditable);
     return () => unregisterListener();
-  }, [editor, onEditorChange]);
+  }, [editor, onEditorChange, isEditable]);
   
   useEffect(() => {
     const updateViewPortWidth = () => {
