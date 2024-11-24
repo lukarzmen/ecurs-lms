@@ -22,11 +22,11 @@ const ChapterEditPage = async ({
   if (!userId) {
     return redirect("/");
   }
-
+  const { courseId, chapterId } = await params;
   const chapter = await db.chapter.findFirst({
     where: {
-      id: params.chapterId,
-      courseId: params.courseId,
+      id: chapterId,
+      courseId: courseId,
     },
     include: {
       muxData: true,
@@ -58,7 +58,7 @@ const ChapterEditPage = async ({
         <div className="flex items-center justify-between">
           <div className="w-full">
             <Link
-              href={`/teacher/courses/${params.courseId}`}
+              href={`/teacher/courses/${courseId}`}
               className="flex items-center text-sm hover:opacity-75 transition mb-6"
             >
               <ArrowLeft className="h-4 w-4 mr-2"></ArrowLeft>
@@ -73,8 +73,8 @@ const ChapterEditPage = async ({
               </div>
               <ChapterActions
                 disabled={!isComplete}
-                courseId={params.courseId}
-                chapterId={params.chapterId}
+                courseId={courseId}
+                chapterId={chapterId}
                 isPublished={chapter.isPublished}
               ></ChapterActions>
             </div>
@@ -89,7 +89,7 @@ const ChapterEditPage = async ({
             <ChapterTitleForm
               chapterId={chapter.id}
               title={chapter.title}
-              courseId={params.courseId}
+              courseId={courseId}
             />
          
           </div>
@@ -100,7 +100,7 @@ const ChapterEditPage = async ({
           </div>
           <ChapterAccessForm
             chapterId={chapter.id}
-            courseId={params.courseId}
+            courseId={courseId}
             isFree={!!chapter.isFree}
           />
         </div>
@@ -110,7 +110,7 @@ const ChapterEditPage = async ({
         <ChapterDescriptionForm
               chapterId={chapter.id}
               description={chapter.description ?? ""}
-              courseId={params.courseId}
+              courseId={courseId}
             />
       </div>
     </>

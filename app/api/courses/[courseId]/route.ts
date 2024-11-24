@@ -8,8 +8,7 @@ export async function PATCH(
 ) {
   const { courseId } = params;
   const values = await req.json();
-  
-  console.log(values);
+
   try {
     const { userId } = auth() ?? "";
     if (!userId) {

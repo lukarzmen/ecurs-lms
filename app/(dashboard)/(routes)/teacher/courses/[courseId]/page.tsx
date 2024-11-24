@@ -31,8 +31,8 @@ const CourseIdPage = async ({
   if (!userId) {
     return redirect("/");
   }
+  const { courseId } = await params;
 
-  const courseId = params.courseId;
   const course = await db.course.findUnique({
     where: {
       id: courseId,
@@ -58,7 +58,6 @@ const CourseIdPage = async ({
     },
   });
 
-  console.log(`categories: ${categories}`);
   if (!course) {
     return <div>Course not found</div>;
   }

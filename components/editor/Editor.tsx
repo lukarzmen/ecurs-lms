@@ -150,7 +150,7 @@ export default function Editor( {
 
   return (
     <>
-      {isRichText && <ToolbarPlugin setIsLinkEditMode={setIsLinkEditMode} />}
+      {isRichText && isEditable && <ToolbarPlugin setIsLinkEditMode={setIsLinkEditMode} />}
       <div
         className={`editor-container ${showTreeView ? 'tree-view' : ''} ${
           !isRichText ? 'plain-text' : ''
@@ -257,11 +257,11 @@ export default function Editor( {
         )}
         {isAutocomplete && <AutocompletePlugin />}       
         {shouldUseLexicalContextMenu && <ContextMenuPlugin />}
-        <ActionsPlugin
+        {isEditable && (<ActionsPlugin
           onSave={onSave}
           isRichText={isRichText}
           shouldPreserveNewLinesInMarkdown={shouldPreserveNewLinesInMarkdown}
-        />
+        />)}
       </div>
       {showTreeView && <TreeViewPlugin />}
     </>

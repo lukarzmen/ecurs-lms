@@ -3,27 +3,31 @@ import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
+import PlaygroundNodes from './nodes/PlaygroundNodes';
+import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 
-const ReadOnlyEditor = ({ content }: {content:string}) => {
+const ReadOnlyEditor = ({ content }: {content: string | null;}) => {
     // Konfiguracja początkowa Lexical
     const initialConfig = {
         namespace: 'ReadOnlyEditor',
-        editorState: content,
-        readOnly: true, // Włączenie trybu read-only
+        editorState: content && content.trim() !== '' ? content : undefined,
+        editable: false, 
         onError: (error) => {
             console.error('Lexical Error:', error);
         },
+        nodes: [...PlaygroundNodes],
     };
+    const placeholder = "Start typing here...";
 
     return (
         <LexicalComposer initialConfig={initialConfig}>
             <div className='flex flex-row'>
                 <div className="editor-shell ">
                     <div className='editor-container'> 
-                    <PlainTextPlugin
+                    <RichTextPlugin
                         contentEditable={<div className="editor-scroller">
                             <div className="editor">
-                              <ContentEditable placeholder="" />
+                            <ContentEditable placeholder={placeholder} />
                             </div>
                           </div>}
                         placeholder={null}

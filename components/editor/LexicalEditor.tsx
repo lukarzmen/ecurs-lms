@@ -45,7 +45,7 @@ export default function LexicalEditor({
   } = useSettings();
 
   const initialConfig = {
-    editorState:  initialStateJSON,
+    editorState: initialStateJSON && initialStateJSON.trim() !== '' ? initialStateJSON : undefined,
     namespace: 'Playground',
     nodes: [...PlaygroundNodes],
     editable: isEditable,

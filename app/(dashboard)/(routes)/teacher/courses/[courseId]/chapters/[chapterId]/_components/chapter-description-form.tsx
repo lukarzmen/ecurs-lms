@@ -6,29 +6,19 @@ import { useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormItem,
   FormField,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { z } from "zod";
 import { Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { Textarea } from "@/components/ui/textarea";
-import { Editor } from "@/components/editor";
-import { Preview } from "@/components/preview";
 import LexicalEditor from "@/components/editor/LexicalEditor";
 import { SerializedDocument } from "@lexical/file";
-import { convertLexicalJsonToHtml } from "@/components/editor/utils/lexicalParser";
-import { EditorState } from "lexical";
-import ReadOnlyEditor from "@/components/editor/ReadonlyEditor";
 
 const formSchema = z.object({
   description: z.string().min(1),
@@ -65,7 +55,6 @@ export const ChapterDescriptionForm = ({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      console.log(values);
       await axios.patch(
         `/api/courses/${courseId}/chapters/${chapterId}`,
         values,

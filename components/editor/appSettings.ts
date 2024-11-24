@@ -6,8 +6,6 @@
  *
  */
 
-const hostName = window.location.hostname;
-
 export const DEFAULT_SETTINGS = {
   disableBeforeInput: false,
   emptyEditor: true,

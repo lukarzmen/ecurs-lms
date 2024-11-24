@@ -8,7 +8,6 @@ export async function PUT(
     courseId: string;
   },
 ) {
-  console.log("aaa");
   const { userId } = auth();
   if (!userId) {
     return new NextResponse("Unauthorized", {

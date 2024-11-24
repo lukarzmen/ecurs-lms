@@ -40,3 +40,8 @@ https://clerk.com/
 
 # Translations
 We'll add translations soon https://github.com/i18next/next-i18next#client-side-loading-of-translations-via-http
+
+# other platforms
+https://github.com/moodle/moodle
+https://www.learnworlds.com/
+https://www.thinkific.com/

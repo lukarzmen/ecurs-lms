@@ -15,10 +15,10 @@ const CourseLayout = async ({ children, params }: {
         return redirect('/');
     }
 
-
+    const {courseId} = await params;
     const course = await db.course.findFirst({
         where: {
-            id: params.courseId,
+            id: courseId,
             userId,
         },
         include: {

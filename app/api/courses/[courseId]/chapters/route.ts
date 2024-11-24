@@ -10,7 +10,6 @@ export async function POST(
 
   try {
     const { title } = await req.json();
-    console.log(`body ${JSON.stringify(title)}`);
     const { userId } = auth() ?? "";
     if (!userId) {
       return new NextResponse("Unauthorized", {

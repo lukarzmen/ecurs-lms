@@ -25,7 +25,6 @@ export const CourseSidebar = async ({ course }: CourseSidebarProps) => {
             }
         },
     });
-
     return (
         <div className="h-full border-r flex flex-col overflow-y-auto shadow-sm rounded-md">
             <div className="p-8 flex flex-col border-b">
