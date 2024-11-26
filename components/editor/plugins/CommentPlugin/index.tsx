@@ -691,12 +691,6 @@ function CommentsPanel({
           <i className="comments" />
         </Button>
       </div>
-        <Button
-          onClick={() => onClosePanel()}
-          title={'Hide Comments'}>
-          <i className="comments" />
-        </Button>,
-      <h2 className="CommentPlugin_CommentsPanel_Heading">Comments</h2>
       {isEmpty ? (
         <div className="CommentPlugin_CommentsPanel_Empty">No Comments</div>
       ) : (
