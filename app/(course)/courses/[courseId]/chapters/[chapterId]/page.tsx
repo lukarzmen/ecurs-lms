@@ -56,8 +56,8 @@ const ChapterIdPage = async ({
             )}
             
             {/* Chapter content */}
-            <div className="flex flex-col max-w-4xl mx-auto pb-20">
-                <h1 className="text-3xl font-semibold">{chapter.title}</h1>
+            <div className="flex flex-col mx-auto pb-20">
+                <h1 className="text-3xl font-semibold pl-5">{chapter.title}</h1>
                 <div className="p-4">
                     <ChapterContent content={chapter.description} />
                 </div>

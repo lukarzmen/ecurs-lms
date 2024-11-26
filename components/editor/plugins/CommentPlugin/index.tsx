@@ -660,6 +660,7 @@ function CommentsPanel({
   comments,
   submitAddComment,
   markNodeMap,
+  onClosePanel
 }: {
   activeIDs: Array<string>;
   comments: Comments;
@@ -673,12 +674,28 @@ function CommentsPanel({
     isInlineComment: boolean,
     thread?: Thread,
   ) => void;
+  onClosePanel: () => void;
 }): JSX.Element {
   const listRef = useRef<HTMLUListElement>(null);
   const isEmpty = comments.length === 0;
-
+  
   return (
+
     <div className="CommentPlugin_CommentsPanel">
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-semibold">Comments</h2>
+        <Button
+          onClick={() => onClosePanel()}
+          title={'Hide Comments'}
+          className="ml-4">
+          <i className="comments" />
+        </Button>
+      </div>
+        <Button
+          onClick={() => onClosePanel()}
+          title={'Hide Comments'}>
+          <i className="comments" />
+        </Button>,
       <h2 className="CommentPlugin_CommentsPanel_Heading">Comments</h2>
       {isEmpty ? (
         <div className="CommentPlugin_CommentsPanel_Empty">No Comments</div>
@@ -961,17 +978,6 @@ export default function CommentPlugin({
           />,
           document.body,
         )}
-      {createPortal(
-        <Button
-          className={`CommentPlugin_ShowCommentsButton ${
-            showComments ? 'active' : ''
-          }`}
-          onClick={() => setShowComments(!showComments)}
-          title={showComments ? 'Hide Comments' : 'Show Comments'}>
-          <i className="comments" />
-        </Button>,
-        document.body,
-      )}
       {showComments &&
         createPortal(
           <CommentsPanel
@@ -980,6 +986,7 @@ export default function CommentPlugin({
             deleteCommentOrThread={deleteCommentOrThread}
             activeIDs={activeIDs}
             markNodeMap={markNodeMap}
+            onClosePanel={() => setShowComments(false)}
           />,
           document.body,
         )}

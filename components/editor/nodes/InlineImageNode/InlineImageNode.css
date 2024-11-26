@@ -43,7 +43,6 @@
 .InlineImageNode_Checkbox:checked,
 .InlineImageNode_Checkbox:not(:checked) {
   position: absolute;
-  left: -9999px;
 }
 
 .InlineImageNode_Checkbox:checked + label,
