@@ -17,7 +17,7 @@ export const AttachmentForm = ({ courseId }: AttachmentFormProps) => {
     setIsEditing((current) => !current);
   };
   const [deletingBlobUrl, setdeletingBlobUrl] = useState<string | null>(null);
-  const blobUrls = ["test.pdf", "wideo_podsumowanie.mp4", "lekcja.mp3"]; //todo: get from blob storage via courseId
+  const blobUrls: string[] = []; //todo: get from blob storage via courseId
 
   const onSubmit = async () => {
     // try {

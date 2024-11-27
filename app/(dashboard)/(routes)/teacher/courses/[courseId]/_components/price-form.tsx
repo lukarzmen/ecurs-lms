@@ -107,7 +107,7 @@ export const PriceForm = ({ price, courseId }: PriceFormProps) => {
         </Form>
       ) : (
         <p className={cn(!price && "text-sm mt-2")}>
-          {price ? formatPrice(price) : "No price"}
+          {price ? formatPrice(price) : "Free"}
         </p>
       )}
     </div>
