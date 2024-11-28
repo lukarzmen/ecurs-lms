@@ -28,6 +28,7 @@ console.warn(
 
 
 import { useEffect } from 'react';
+import PlaygroundEditorTheme from './themes/PlaygroundEditorTheme';
 
 export default function LexicalEditor({
   onSave,
@@ -52,7 +53,7 @@ export default function LexicalEditor({
     onError: (error: Error) => {
       throw error;
     },
-    // theme: PlaygroundEditorTheme,
+    theme: PlaygroundEditorTheme
   };
   
   return (
