@@ -45,3 +45,13 @@ We'll add translations soon https://github.com/i18next/next-i18next#client-side-
 https://github.com/moodle/moodle
 https://www.learnworlds.com/
 https://www.thinkific.com/
+
+# Pomysly na zagadki
+Matching cards https://www.youtube.com/watch?v=F_zdlcydF3Q
+Karaoke z breakujacym tekstem z uzyciem whisper
+Taboo Uczestnik musi wyjaśnić dane słowo, nie używając określonych "zakazanych" wyrazów
+prompt do gpt jakie interaktywne zadania mogę przygotować dla ludzi uczących się języka
+kalambury
+luki
+tlumaczenia slow
+tytul do teksu
