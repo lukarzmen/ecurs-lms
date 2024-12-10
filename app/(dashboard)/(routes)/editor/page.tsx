@@ -1,6 +1,7 @@
 "use client";
 
 import PlaygroundApp from "@/components/editor/LexicalEditor";
+import { SerializedDocument } from "@lexical/file";
 
 
 export default function EditorPage() {
@@ -13,7 +14,11 @@ export default function EditorPage() {
 
   return (
     <div className="p-6">
-      <PlaygroundApp></PlaygroundApp>
+      <PlaygroundApp onSave={function (serializedDocument: SerializedDocument): boolean {
+        return true;
+      } } onEditorChange={function (editorState: string): void {
+        
+      } } initialStateJSON={null} isEditable={true}></PlaygroundApp>
     </div>
   );
 }

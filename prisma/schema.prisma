@@ -4,7 +4,7 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
   relationMode = "prisma"
 }
@@ -33,7 +33,6 @@ model Course {
   updatedAt DateTime @updatedAt
 
   @@index([categoryId])
-  @@fulltext([title])
 }
 
 model Attachment {

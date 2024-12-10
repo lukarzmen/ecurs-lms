@@ -44,7 +44,9 @@ export const CourseCard = ({
                     </div>
                 </div>
                 {progress !== null ? (
-                    <div></div>
+                    <div>
+                        {/* todo: progress bar */}
+                    </div>
                 ) : (
                     <p className="text-md md:text-sm font-medium text-slate-700">
                         {formatPrice(price)}

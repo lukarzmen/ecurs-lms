@@ -23,7 +23,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Editor } from "@/components/editor";
+import { BasicEditor } from "@/components/editor";
 import { Preview } from "@/components/preview";
 
 const formSchema = z.object({

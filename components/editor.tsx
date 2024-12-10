@@ -9,7 +9,7 @@ interface EditorProps {
   onChange: (value: string) => void;
 }
 
-export const Editor = ({ value, onChange }: EditorProps) => {
+export const BasicEditor = ({ value, onChange }: EditorProps) => {
   const ReactQuill = useMemo(
     () =>
       dynamic(() => import("react-quill"), {

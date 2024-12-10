@@ -1242,6 +1242,24 @@ export default function ToolbarPlugin({
         isRTL={isRTL}
       />
       <Divider />
+      <button
+        disabled={!isEditable}
+        onClick={() => {
+          activeEditor.update(() => {
+            const selection = $getSelection();
+            if ($isRangeSelection(selection)) {
+              const textContent = selection.getTextContent();
+              selection.insertText('_'.repeat(textContent.length));
+            }
+          });
+        }}
+        className="toolbar-item spaced"
+        title="Replace text with gaps"
+        type="button"
+        aria-label="Replace text with gaps">
+        <i className="format underline" />
+      </button>
+      <Divider />
       <Settings />
       {modal}
     </div>

@@ -7,6 +7,13 @@
  */
 
 @import 'https://fonts.googleapis.com/css?family=Reenie+Beanie';
+ol {
+  list-style-type: decimal;
+}
+
+ul {
+  list-style: initial;
+}
 
 body {
   margin: 0;
