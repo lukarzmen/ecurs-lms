@@ -80,7 +80,6 @@ header h1 {
 }
 
 .editor-scroller {
-  height: 100vh;
   border: 0;
   display: flex;
   position: relative;

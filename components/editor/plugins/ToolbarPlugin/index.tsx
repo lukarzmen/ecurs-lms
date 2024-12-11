@@ -98,6 +98,7 @@ import {InsertPollDialog} from '../PollPlugin';
 import {InsertTableDialog} from '../TablePlugin';
 import FontSize from './fontSize';
 import Settings from '../../Settings';
+import { GapNode } from '../../nodes/GapNode';
 
 const blockTypeToBlockName = {
   bullet: 'Bulleted List',
@@ -1246,12 +1247,21 @@ export default function ToolbarPlugin({
         disabled={!isEditable}
         onClick={() => {
           activeEditor.update(() => {
-            const selection = $getSelection();
-            if ($isRangeSelection(selection)) {
-              const textContent = selection.getTextContent();
-              selection.insertText('_'.repeat(textContent.length));
+            createGap();
+
+            function createGap() {
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                const selectedText = selection.getTextContent();
+                if (selectedText) {
+                  const gapNode = new GapNode(selectedText);
+                  selection.insertNodes([gapNode]);
+                  console.log(`Zamieniono tekst: "${selectedText}" na lukę.`);
+                } else {
+                  alert('Zaznacz tekst, który chcesz zamienić na lukę.');
+                }
             }
-          });
+          }});
         }}
         className="toolbar-item spaced"
         title="Replace text with gaps"

@@ -41,9 +41,6 @@ export default function LexicalEditor({
   initialStateJSON: string | null;
   isEditable: boolean;
 }): JSX.Element {
-  const {
-    settings: { measureTypingPerf },
-  } = useSettings();
 
   const initialConfig = {
     editorState: initialStateJSON && initialStateJSON.trim() !== '' ? initialStateJSON : undefined,
@@ -55,33 +52,22 @@ export default function LexicalEditor({
     },
     theme: PlaygroundEditorTheme
   };
-  
+
   return (
     <SettingsContext>
       <FlashMessageContext>
-    <LexicalComposer initialConfig={initialConfig}>
-      <SharedHistoryContext>
-        <TableContext>
-          <SharedAutocompleteContext>
+        <LexicalComposer initialConfig={initialConfig}>
+          <SharedHistoryContext>
             <div className='flex flex-row'>
               <div className="editor-shell ">
-                <Editor onSave={onSave} onEditorChange={onEditorChange} isEditable={isEditable}
-
-                />
+                <Editor onSave={onSave} onEditorChange={onEditorChange} isEditable={isEditable} />
               </div>
-              {/* <TableOfContentsPlugin /> */}
             </div>
             <DocsPlugin />
             <PasteLogPlugin />
-            <TestRecorderPlugin />
-
-            {measureTypingPerf ? <TypingPerfPlugin /> : null}
-          </SharedAutocompleteContext>
-        </TableContext>
-
-      </SharedHistoryContext>
-    </LexicalComposer>
-    </FlashMessageContext>   
+          </SharedHistoryContext>
+        </LexicalComposer>
+      </FlashMessageContext>
     </SettingsContext>
   );
 }
