@@ -1253,7 +1253,7 @@ export default function ToolbarPlugin({
         title="Replace text with gaps"
         type="button"
         aria-label="Replace text with gaps">
-        <i className="format underline" />
+        <i className="format fillgap" />
       </button>
       <Divider />
       <Settings />

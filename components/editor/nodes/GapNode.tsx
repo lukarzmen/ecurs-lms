@@ -1,43 +1,62 @@
-import { DecoratorNode, SerializedLexicalNode } from "lexical";
+import { DecoratorNode, SerializedLexicalNode, Spread } from "lexical";
 
-interface SerializedGapNode extends SerializedLexicalNode {
-  hiddenText: string;
-}
+export type SerializedGapNode = Spread<
+  {
+    hiddenText: string;
+  },
+  SerializedLexicalNode
+>;
 
 export class GapNode extends DecoratorNode<JSX.Element> {
-    __hiddenText: string;
-    static getType() {
-      return 'gap';
-    }
-  
-    static clone(node: { __hiddenText: any; }) {
-      return new GapNode(node.__hiddenText);
-    }
-  
-    constructor(hiddenText: string) {
-      super();
-      this.__hiddenText = hiddenText;
-    }
-    createDOM(_config: any, _editor: any): HTMLElement {
-      const span = document.createElement('span');
-      span.style.textDecoration = 'underline';
-      span.dataset.hiddenText = this.__hiddenText;
-      span.contentEditable = 'false';
-      span.innerText = '_____';
-        return span;
-    }
-  
-  
-    static importJSON(serializedNode: SerializedGapNode) {
-      const { hiddenText } = serializedNode;
-      return new GapNode(hiddenText);
-    }
-  
-    exportJSON() {
-      return {
-        type: 'gap',
-        version: 1,
-        hiddenText: this.__hiddenText,
-      };
-    }
+  __hiddenText: string;
+
+  static getType(): string {
+    return "gap";
   }
+
+  static clone(node: GapNode): GapNode {
+    return new GapNode(node.__hiddenText, node.__key);
+  }
+
+  static importJSON(serializedNode: SerializedGapNode): GapNode {
+    return new GapNode(serializedNode.hiddenText);
+  }
+
+  exportJSON(): SerializedGapNode {
+    return {
+      type: GapNode.getType(),
+      version: 1, // Ensure a `version` field is added for compatibility.
+      hiddenText: this.__hiddenText,
+    };
+  }
+
+  constructor(hiddenText: string, key?: string) {
+    super(key);
+    this.__hiddenText = hiddenText;
+  }
+
+  createDOM(): HTMLElement {
+    const span = document.createElement("span");
+    span.style.textDecoration = "underline";
+    span.dataset.hiddenText = this.__hiddenText;
+    span.contentEditable = "false";
+    span.innerText = "_____";
+    return span;
+  }
+
+  updateDOM(): boolean {
+    return false;
+  }
+
+  decorate(): JSX.Element {
+    return (
+      <span
+        style={{ textDecoration: "underline" }}
+        data-hidden-text={this.__hiddenText}
+        contentEditable="false"
+      >
+        _____
+      </span>
+    );
+  }
+}

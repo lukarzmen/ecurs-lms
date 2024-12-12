@@ -395,6 +395,10 @@ i.underline {
   background-image: url(images/icons/type-underline.svg);
 }
 
+i.fillgap {
+  background-image: url(images/icons/fill-gap.svg);
+}
+
 i.strikethrough {
   background-image: url(images/icons/type-strikethrough.svg);
 }
