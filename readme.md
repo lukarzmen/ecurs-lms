@@ -55,3 +55,6 @@ kalambury
 luki
 tlumaczenia slow
 tytul do teksu
+
+# dobre pomysly
+jakies zadania po tekscie typu porozmawiaj z kims, napisz post, zrob jakies karteczki, sledzika pod pierzynka itd 

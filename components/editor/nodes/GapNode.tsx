@@ -1,62 +1,51 @@
-import { DecoratorNode, SerializedLexicalNode, Spread } from "lexical";
+import { TextNode, SerializedTextNode, NodeKey } from "lexical";
 
-export type SerializedGapNode = Spread<
-  {
-    hiddenText: string;
-  },
-  SerializedLexicalNode
->;
+export type SerializedGapNode = SerializedTextNode & {
+  hiddenText: string;
+};
 
-export class GapNode extends DecoratorNode<JSX.Element> {
-  __hiddenText: string;
-
+export class GapNode extends TextNode {
   static getType(): string {
     return "gap";
   }
 
   static clone(node: GapNode): GapNode {
-    return new GapNode(node.__hiddenText, node.__key);
+    return new GapNode(node.__text, node.__key);
   }
 
-  static importJSON(serializedNode: SerializedGapNode): GapNode {
-    return new GapNode(serializedNode.hiddenText);
+  static importJSON(serializedNode: SerializedTextNode): GapNode {
+    const { text } = serializedNode;
+    return new GapNode(text);
   }
 
-  exportJSON(): SerializedGapNode {
+  exportJSON(): SerializedTextNode {
     return {
+      ...super.exportJSON(),
       type: GapNode.getType(),
-      version: 1, // Ensure a `version` field is added for compatibility.
-      hiddenText: this.__hiddenText,
+      version: 1
     };
   }
 
-  constructor(hiddenText: string, key?: string) {
-    super(key);
-    this.__hiddenText = hiddenText;
+  constructor(text: string, key?: NodeKey) {
+    super(text, key);
   }
 
-  createDOM(): HTMLElement {
-    const span = document.createElement("span");
-    span.style.textDecoration = "underline";
-    span.dataset.hiddenText = this.__hiddenText;
-    span.contentEditable = "false";
-    span.innerText = "_____";
-    return span;
+  createDOM(config): HTMLElement {
+    console.log('createDom', this.__text);
+    const dom = document.createElement("span");
+    dom.style.textDecoration = "underline";
+    const textToReplace = this.__text ? "_".repeat(this.__text.length) : "____";
+    dom.textContent = textToReplace; // Replace text with underlines
+    dom.setAttribute("data-hidden-text", this.__text);
+    return dom;
   }
 
-  updateDOM(): boolean {
-    return false;
+  getHiddenText(): string {
+    return this.__text;
   }
 
-  decorate(): JSX.Element {
-    return (
-      <span
-        style={{ textDecoration: "underline" }}
-        data-hidden-text={this.__hiddenText}
-        contentEditable="false"
-      >
-        _____
-      </span>
-    );
+
+  isTextEntity(): boolean {
+    return true;
   }
 }

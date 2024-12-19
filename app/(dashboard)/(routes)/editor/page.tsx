@@ -14,6 +14,9 @@ export default function EditorPage() {
 
   return (
     <div className="p-6">
+      zaznaczanie tekstu i wybieranie z niego slowek lub definicji. udostepnianie arkusza. ew fiszki
+      pozniej zadanie z tlumaczeniem (otwarte). quizy + generator, odtwarzacz audio i wideo
+      odpowiedzi na pytania i pytania do teksty itd
       <PlaygroundApp onSave={function (serializedDocument: SerializedDocument): boolean {
         return true;
       } } onEditorChange={function (editorState: string): void {

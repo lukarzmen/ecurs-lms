@@ -48,9 +48,11 @@ import {
 } from '@lexical/utils';
 import {
   $createParagraphNode,
+  $createTextNode,
   $getNodeByKey,
   $getRoot,
   $getSelection,
+  $getTextContent,
   $isElementNode,
   $isRangeSelection,
   $isRootOrShadowRoot,
@@ -69,6 +71,7 @@ import {
   OUTDENT_CONTENT_COMMAND,
   REDO_COMMAND,
   SELECTION_CHANGE_COMMAND,
+  TextNode,
   UNDO_COMMAND,
 } from 'lexical';
 import {Dispatch, useCallback, useEffect, useState} from 'react';
@@ -99,6 +102,7 @@ import {InsertTableDialog} from '../TablePlugin';
 import FontSize from './fontSize';
 import Settings from '../../Settings';
 import { GapNode } from '../../nodes/GapNode';
+import { boolean } from 'zod';
 
 const blockTypeToBlockName = {
   bullet: 'Bulleted List',
@@ -860,7 +864,35 @@ export default function ToolbarPlugin({
 
   const canViewerSeeInsertDropdown = !isImageCaption;
   const canViewerSeeInsertCodeButton = !isImageCaption;
-
+  function toogleGap() {
+    const selection = $getSelection();
+    const textSelection = $getTextContent();
+    console.log(selection?.getNodes());
+    console.log(textSelection);
+    if (!selection) {
+      alert('Zaznacz tekst, który chcesz zamienić na lukę.');
+      return;
+    }
+    if ($isRangeSelection(selection)) {
+      const nodes = selection.getNodes();
+      console.log(nodes);
+      
+      let anyNodeReplaced = false;
+      nodes.forEach((node) => {
+          if (node instanceof GapNode) {   
+            const textNode = new TextNode(node.__text);
+            node.replace(textNode);
+            anyNodeReplaced = true;
+          }
+      });
+      if(anyNodeReplaced){
+        return;
+      }
+            
+      const gapNode = new GapNode(textSelection);
+      selection.insertNodes([gapNode]);
+  }
+}
   return (
     <div className="toolbar">
       <button
@@ -1233,21 +1265,9 @@ export default function ToolbarPlugin({
         disabled={!isEditable}
         onClick={() => {
           activeEditor.update(() => {
-            createGap();
+            toogleGap();
 
-            function createGap() {
-              const selection = $getSelection();
-              if ($isRangeSelection(selection)) {
-                const selectedText = selection.getTextContent();
-                if (selectedText) {
-                  const gapNode = new GapNode(selectedText);
-                  selection.insertNodes([gapNode]);
-                  console.log(`Zamieniono tekst: "${selectedText}" na lukę.`);
-                } else {
-                  alert('Zaznacz tekst, który chcesz zamienić na lukę.');
-                }
-            }
-          }});
+            });
         }}
         className="toolbar-item spaced"
         title="Replace text with gaps"
