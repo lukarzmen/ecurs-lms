@@ -36,8 +36,9 @@ import {PollNode} from './PollNode';
 import {StickyNode} from './StickyNode';
 import {YouTubeNode} from './YouTubeNode';
 import { GapNode } from './GapNode';
+import { QuizNode } from './QuizNode';
 
-const PlaygroundNodes: Array<Klass<LexicalNode>> = [
+const EditorNodes: Array<Klass<LexicalNode>> = [
   HeadingNode,
   ListNode,
   ListItemNode,
@@ -70,7 +71,8 @@ const PlaygroundNodes: Array<Klass<LexicalNode>> = [
   PageBreakNode,
   LayoutContainerNode,
   LayoutItemNode,
-  GapNode
+  GapNode,
+  QuizNode
 ];
 
-export default PlaygroundNodes;
+export default EditorNodes;

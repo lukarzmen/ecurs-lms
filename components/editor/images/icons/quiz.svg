@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <!-- Background Squares -->
+  <rect x="0" y="0" width="100" height="100" fill="none" stroke="black" stroke-width="2" />
+  <rect x="100" y="0" width="100" height="100" fill="none" stroke="black" stroke-width="2" />
+  <rect x="0" y="100" width="100" height="100" fill="none" stroke="black" stroke-width="2" />
+  <rect x="100" y="100" width="100" height="100" fill="none" stroke="black" stroke-width="2" />
+
+  <!-- Letters -->
+  <text x="50" y="60" font-family="Arial, sans-serif" font-size="50" text-anchor="middle" dominant-baseline="middle">A</text>
+  <text x="150" y="60" font-family="Arial, sans-serif" font-size="50" text-anchor="middle" dominant-baseline="middle">B</text>
+  <text x="50" y="160" font-family="Arial, sans-serif" font-size="50" text-anchor="middle" dominant-baseline="middle">C</text>
+  <text x="150" y="160" font-family="Arial, sans-serif" font-size="50" text-anchor="middle" dominant-baseline="middle">D</text>
+</svg>

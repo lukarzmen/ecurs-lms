@@ -49,6 +49,7 @@ import {MaxLengthPlugin} from './plugins/MaxLengthPlugin';
 import MentionsPlugin from './plugins/MentionsPlugin';
 import PageBreakPlugin from './plugins/PageBreakPlugin';
 import PollPlugin from './plugins/PollPlugin';
+import QuizPlugin from './plugins/QuizPlugin';
 import SpeechToTextPlugin from './plugins/SpeechToTextPlugin';
 import TabFocusPlugin from './plugins/TabFocusPlugin';
 import TableCellResizer from './plugins/TableCellResizer';
@@ -147,6 +148,7 @@ export default function Editor( {
         <InlineImagePlugin />
         <LinkPlugin hasLinkAttributes={hasLinkAttributes} />
         <PollPlugin />
+        <QuizPlugin />
         <YouTubePlugin />
         <ClickableLinkPlugin disabled={isEditable} />
         <HorizontalRulePlugin />

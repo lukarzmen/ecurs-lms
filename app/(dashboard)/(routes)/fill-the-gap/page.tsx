@@ -12,7 +12,7 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import ToolbarPlugin from "@/components/editor/plugins/ToolbarPlugin";
 import { useState } from "react";
 import PlaygroundEditorTheme from "@/components/editor/themes/PlaygroundEditorTheme";
-import PlaygroundNodes from "@/components/editor/nodes/PlaygroundNodes";
+import EditorNodes from "@/components/editor/nodes/EditorNodes";
 
 export default function FillTheGapPage() {
 
@@ -20,7 +20,7 @@ export default function FillTheGapPage() {
 
     const initialConfig = {
         namespace: 'MyEditor',
-        nodes: [...PlaygroundNodes],
+        nodes: [...EditorNodes],
         editable: true,
         onError: (error: Error) => {
             throw error;

@@ -48,7 +48,6 @@ import {
 } from '@lexical/utils';
 import {
   $createParagraphNode,
-  $createTextNode,
   $getNodeByKey,
   $getRoot,
   $getSelection,
@@ -79,7 +78,6 @@ import * as React from 'react';
 import {IS_APPLE} from '../../shared/environments';
 
 import useModal from '../../hooks/useModal';
-import catTypingGif from '../../images/cat-typing.gif';
 import {$createStickyNode} from '../../nodes/StickyNode';
 import DropDown, {DropDownItem} from '../../ui/DropDown';
 import DropdownColorPicker from '../../ui/DropdownColorPicker';
@@ -90,9 +88,7 @@ import {INSERT_COLLAPSIBLE_COMMAND} from '../CollapsiblePlugin';
 import {InsertEquationDialog} from '../EquationsPlugin';
 import {INSERT_EXCALIDRAW_COMMAND} from '../ExcalidrawPlugin';
 import {
-  INSERT_IMAGE_COMMAND,
   InsertImageDialog,
-  InsertImagePayload,
 } from '../ImagesPlugin';
 import {InsertInlineImageDialog} from '../InlineImagePlugin';
 import InsertLayoutDialog from '../LayoutPlugin/InsertLayoutDialog';
@@ -102,7 +98,8 @@ import {InsertTableDialog} from '../TablePlugin';
 import FontSize from './fontSize';
 import Settings from '../../Settings';
 import { GapNode } from '../../nodes/GapNode';
-import { boolean } from 'zod';
+import { InsertQuizDialog } from '../QuizPlugin';
+import { ToDictionaryDialog } from '../DictionaryPlugin';
 
 const blockTypeToBlockName = {
   bullet: 'Bulleted List',
@@ -867,16 +864,13 @@ export default function ToolbarPlugin({
   function toogleGap() {
     const selection = $getSelection();
     const textSelection = $getTextContent();
-    console.log(selection?.getNodes());
-    console.log(textSelection);
     if (!selection) {
       alert('Zaznacz tekst, który chcesz zamienić na lukę.');
       return;
     }
     if ($isRangeSelection(selection)) {
       const nodes = selection.getNodes();
-      console.log(nodes);
-      
+     
       let anyNodeReplaced = false;
       nodes.forEach((node) => {
           if (node instanceof GapNode) {   
@@ -1261,20 +1255,43 @@ export default function ToolbarPlugin({
         isRTL={isRTL}
       />
       <Divider />
-      <button
+      <DropDown
         disabled={!isEditable}
-        onClick={() => {
-          activeEditor.update(() => {
-            toogleGap();
-
+        buttonClassName="toolbar-item spaced"
+        buttonLabel="Kurs"
+        buttonAriaLabel="Custom options"
+        buttonIconClassName="icon dropdown-course">
+        <DropDownItem
+          onClick={() => {
+            activeEditor.update(() => {
+              toogleGap();
             });
-        }}
-        className="toolbar-item spaced"
-        title="Replace text with gaps"
-        type="button"
-        aria-label="Replace text with gaps">
-        <i className="format fillgap" />
-      </button>
+          }}
+          className="item">
+          <i className="icon fillgap" />
+          <span className="text">To gaps</span>
+        </DropDownItem>
+        <DropDownItem
+          onClick={() => {
+            showModal('Generate Test', (onClose) => (
+              <InsertQuizDialog activeEditor={activeEditor} onClose={onClose} />
+            ));
+          }}
+          className="item">
+          <i className="icon quiz" />
+          <span className="text">Generate test</span>
+        </DropDownItem>
+        <DropDownItem
+          onClick={() => {
+            showModal('To dictionary', (onClose) => (
+              <ToDictionaryDialog activeEditor={activeEditor} onClose={onClose} />
+            ));
+          }}
+          className="item">
+          <i className="icon dictionary" />
+          <span className="text">To dictionary</span>
+        </DropDownItem>
+      </DropDown>
       <Divider />
       <Settings />
       {modal}

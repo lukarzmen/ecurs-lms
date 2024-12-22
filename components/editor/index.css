@@ -370,7 +370,17 @@ pre::-webkit-scrollbar-thumb {
 i.palette {
   background-image: url(images/icons/palette.svg);
 }
+.icon.quiz {
+  background-image: url(images/icons/quiz.svg);
+}
 
+.icon.dictionary {
+  background-image: url(images/icons/dictionary.svg);
+}
+
+i.bold {
+  background-image: url(images/icons/type-bold.svg);
+}
 i.bucket {
   background-image: url(images/icons/paint-bucket.svg);
 }
@@ -395,7 +405,7 @@ i.underline {
   background-image: url(images/icons/type-underline.svg);
 }
 
-i.fillgap {
+.icon.fillgap {
   background-image: url(images/icons/fill-gap.svg);
 }
 
@@ -429,6 +439,10 @@ i.horizontal-rule {
 
 .icon.dropdown-more {
   background-image: url(images/icons/dropdown-more.svg);
+}
+
+.icon.dropdown-course {
+  background-image: url(images/icons/markdown.svg);
 }
 
 .icon.font-color {

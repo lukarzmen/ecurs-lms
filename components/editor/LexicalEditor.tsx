@@ -13,7 +13,7 @@ import { SettingsContext, useSettings } from './context/SettingsContext';
 import { SharedAutocompleteContext } from './context/SharedAutocompleteContext';
 import { SharedHistoryContext } from './context/SharedHistoryContext';
 import Editor from './Editor';
-import PlaygroundNodes from './nodes/PlaygroundNodes';
+import EditorNodes from './nodes/EditorNodes';
 import DocsPlugin from './plugins/DocsPlugin';
 import PasteLogPlugin from './plugins/PasteLogPlugin';
 import { TableContext } from './plugins/TablePlugin';
@@ -45,7 +45,7 @@ export default function LexicalEditor({
   const initialConfig = {
     editorState: initialStateJSON && initialStateJSON.trim() !== '' ? initialStateJSON : undefined,
     namespace: 'Playground',
-    nodes: [...PlaygroundNodes],
+    nodes: [...EditorNodes],
     editable: isEditable,
     onError: (error: Error) => {
       throw error;

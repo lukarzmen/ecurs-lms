@@ -3,7 +3,7 @@ import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
-import PlaygroundNodes from './nodes/PlaygroundNodes';
+import EditorNodes from './nodes/EditorNodes';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 
 const ReadOnlyEditor = ({ content }: {content: string | null;}) => {
@@ -15,7 +15,7 @@ const ReadOnlyEditor = ({ content }: {content: string | null;}) => {
         onError: (error) => {
             console.error('Lexical Error:', error);
         },
-        nodes: [...PlaygroundNodes],
+        nodes: [...EditorNodes],
     };
     const placeholder = "Start typing here...";
 
