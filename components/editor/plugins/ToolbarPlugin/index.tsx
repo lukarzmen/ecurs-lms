@@ -99,7 +99,9 @@ import FontSize from './fontSize';
 import Settings from '../../Settings';
 import { GapNode } from '../../nodes/GapNode';
 import { InsertQuizDialog } from '../QuizPlugin';
-import { ToDictionaryDialog } from '../DictionaryPlugin';
+import { DictionaryPlugin, TO_DICTIONARY_COMMAND } from '../DictionaryPlugin';
+import { ToDictionaryDialog } from '../DictionaryKeywordsPlugin';
+import { DictionaryKeywordNode } from '../../nodes/DictionaryKeywordNode';
 
 const blockTypeToBlockName = {
   bullet: 'Bulleted List',
@@ -861,6 +863,7 @@ export default function ToolbarPlugin({
 
   const canViewerSeeInsertDropdown = !isImageCaption;
   const canViewerSeeInsertCodeButton = !isImageCaption;
+  
   function toogleGap() {
     const selection = $getSelection();
     const textSelection = $getTextContent();
@@ -887,6 +890,19 @@ export default function ToolbarPlugin({
       selection.insertNodes([gapNode]);
   }
 }
+function toDictionary() {
+  const selection = $getSelection();
+    const textSelection = $getTextContent();
+    if (!selection) {
+      alert('Zaznacz tekst, który chcesz zamienić na lukę.');
+      return;
+    }
+    if ($isRangeSelection(selection)) {      
+      const dictionaryKeywordNode = new DictionaryKeywordNode(textSelection);
+      selection.insertNodes([dictionaryKeywordNode]);
+}
+}
+
   return (
     <div className="toolbar">
       <button
@@ -1283,12 +1299,20 @@ export default function ToolbarPlugin({
         </DropDownItem>
         <DropDownItem
           onClick={() => {
-            showModal('To dictionary', (onClose) => (
-              <ToDictionaryDialog activeEditor={activeEditor} onClose={onClose} />
-            ));
+            activeEditor.dispatchCommand(TO_DICTIONARY_COMMAND, undefined);
           }}
           className="item">
           <i className="icon dictionary" />
+          <span className="text">Add definition</span>
+        </DropDownItem>
+        <DropDownItem
+          onClick={() => {
+            activeEditor.update(() => {
+              toDictionary();
+            });
+          }}
+          className="item">
+          <i className="icon plus" />
           <span className="text">To dictionary</span>
         </DropDownItem>
       </DropDown>

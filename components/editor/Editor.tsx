@@ -58,6 +58,7 @@ import YouTubePlugin from './plugins/YouTubePlugin';
 import ContentEditable from './ui/ContentEditable';
 import { SerializedDocument } from '@lexical/file';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { DictionaryPlugin } from './plugins/DictionaryPlugin';
 
 
 export default function Editor( {
@@ -118,11 +119,7 @@ export default function Editor( {
         <KeywordsPlugin />
         <SpeechToTextPlugin />
         <AutoLinkPlugin />
-        <CommentPlugin
-          providerFactory={createWebsocketProvider}
-        />
-
-
+        <DictionaryPlugin />
         <HistoryPlugin externalHistoryState={historyState} />        
         <RichTextPlugin
           contentEditable={
