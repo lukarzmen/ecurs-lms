@@ -38,6 +38,7 @@ import {YouTubeNode} from './YouTubeNode';
 import { GapNode } from './GapNode';
 import { QuizNode } from './QuizNode';
 import { DictionaryKeywordNode } from './DictionaryKeywordNode';
+import { DictionaryNode } from './DictionaryNode';
 
 const EditorNodes: Array<Klass<LexicalNode>> = [
   HeadingNode,
@@ -74,6 +75,7 @@ const EditorNodes: Array<Klass<LexicalNode>> = [
   LayoutItemNode,
   GapNode,
   QuizNode,
+  DictionaryNode,
   DictionaryKeywordNode 
 ];
 

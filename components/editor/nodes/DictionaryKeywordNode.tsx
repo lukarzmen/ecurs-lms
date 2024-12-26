@@ -35,8 +35,8 @@ export class DictionaryKeywordNode extends TextNode {
     dom.style.backgroundColor = "yellow"; // Highlighted background
     dom.style.cursor = "pointer";
     dom.textContent = this.__text; // Display the original text
-    dom.setAttribute("data-description", "hidentext");
-    dom.title = "hidentext"; // Tooltip for description
+    dom.setAttribute("data-description", "keyword-node");
+    dom.title = "keyword-node"; // Tooltip for description
     return dom;
   }
 

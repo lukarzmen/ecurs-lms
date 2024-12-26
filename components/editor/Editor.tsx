@@ -59,6 +59,7 @@ import ContentEditable from './ui/ContentEditable';
 import { SerializedDocument } from '@lexical/file';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { DictionaryPlugin } from './plugins/DictionaryPlugin';
+import { GenerateDictionaryPlugin } from './plugins/GenerateDictionaryPlugin';
 
 
 export default function Editor( {
@@ -146,6 +147,7 @@ export default function Editor( {
         <LinkPlugin hasLinkAttributes={hasLinkAttributes} />
         <PollPlugin />
         <QuizPlugin />
+        <GenerateDictionaryPlugin />
         <YouTubePlugin />
         <ClickableLinkPlugin disabled={isEditable} />
         <HorizontalRulePlugin />

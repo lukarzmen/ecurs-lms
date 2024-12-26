@@ -102,6 +102,7 @@ import { InsertQuizDialog } from '../QuizPlugin';
 import { DictionaryPlugin, TO_DICTIONARY_COMMAND } from '../DictionaryPlugin';
 import { ToDictionaryDialog } from '../DictionaryKeywordsPlugin';
 import { DictionaryKeywordNode } from '../../nodes/DictionaryKeywordNode';
+import { GENERATE_DICTIONARY_COMMAND } from '../GenerateDictionaryPlugin';
 
 const blockTypeToBlockName = {
   bullet: 'Bulleted List',
@@ -1299,7 +1300,7 @@ function toDictionary() {
         </DropDownItem>
         <DropDownItem
           onClick={() => {
-            activeEditor.dispatchCommand(TO_DICTIONARY_COMMAND, undefined);
+            activeEditor.dispatchCommand(TO_DICTIONARY_COMMAND, "");
           }}
           className="item">
           <i className="icon dictionary" />
@@ -1314,6 +1315,20 @@ function toDictionary() {
           className="item">
           <i className="icon plus" />
           <span className="text">To dictionary</span>
+        </DropDownItem>
+        <DropDownItem
+          onClick={() => {
+            activeEditor.dispatchCommand(GENERATE_DICTIONARY_COMMAND, "");
+          }}
+          className="item">
+          <i className="icon generate-dictionary" />
+          <span className="text">Generate dictionary</span>
+        </DropDownItem>
+        <DropDownItem
+          onClick={() => {}}
+          className="item">
+          <i className="icon question" />
+          <span className="text">Add question</span>
         </DropDownItem>
       </DropDown>
       <Divider />

@@ -457,6 +457,14 @@ i.horizontal-rule {
   background-image: url(images/icons/bg-color.svg);
 }
 
+.icon.question {
+  background-image: url(images/icons/question.svg);
+}
+.icon.generate-dictionary {
+  background-image: url(images/icons/dictionary2.svg);
+}
+
+
 .icon.table {
   background-color: #6c757d;
   mask-image: url(images/icons/table.svg);
