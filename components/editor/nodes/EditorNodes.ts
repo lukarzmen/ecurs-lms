@@ -39,6 +39,7 @@ import { GapNode } from './GapNode';
 import { QuizNode } from './QuizNode';
 import { DictionaryKeywordNode } from './DictionaryKeywordNode';
 import { DictionaryNode } from './DictionaryNode';
+import { DefinitionNode } from './DefinitionNode';
 
 const EditorNodes: Array<Klass<LexicalNode>> = [
   HeadingNode,
@@ -76,6 +77,7 @@ const EditorNodes: Array<Klass<LexicalNode>> = [
   GapNode,
   QuizNode,
   DictionaryNode,
+  DefinitionNode,
   DictionaryKeywordNode 
 ];
 

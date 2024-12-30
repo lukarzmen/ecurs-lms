@@ -63,8 +63,6 @@ export default function LexicalEditor({
                 <Editor onSave={onSave} onEditorChange={onEditorChange} isEditable={isEditable} />
               </div>
             </div>
-            <DocsPlugin />
-            <PasteLogPlugin />
           </SharedHistoryContext>
         </LexicalComposer>
       </FlashMessageContext>

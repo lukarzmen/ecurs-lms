@@ -198,7 +198,7 @@ function useOnChange(
   );
 }
 
-function CommentInputBox({
+export function CommentInputBox({
   editor,
   cancelAddComment,
   submitAddComment,

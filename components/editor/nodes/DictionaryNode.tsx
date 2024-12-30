@@ -6,20 +6,17 @@ export interface Dictionary {
 
 export class DictionaryNode extends DecoratorNode<JSX.Element> {
     __dictionaryData: Dictionary;
+    clone() {
+      return new DictionaryNode(this.__dictionaryData);
+    }
+
     static getType() {
       return 'dictionary';
     }
   
     decorate() {
       return (
-        <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-          {Object.entries(this.__dictionaryData).map(([keyword, definition]) => (
-            <tr key={keyword}>
-              <td style={{ border: '1px solid black', padding: '8px' }}>{keyword}</td>
-              <td style={{ border: '1px solid black', padding: '8px' }}>{definition}</td>
-            </tr>
-          ))}
-        </table>
+        <></>
       );
     }
 
@@ -40,7 +37,15 @@ export class DictionaryNode extends DecoratorNode<JSX.Element> {
         const definitionCell = document.createElement('td');
         definitionCell.style.border = '1px solid black';
         definitionCell.style.padding = '8px';
-        definitionCell.textContent = definition;
+        const definitionInput = document.createElement('input');
+        definitionInput.type = 'text';
+        definitionInput.value = definition;
+        definitionInput.style.width = '100%';
+        definitionInput.style.boxSizing = 'border-box';
+        definitionInput.addEventListener('input', (e) => {
+          this.__dictionaryData[keyword] = (e.target as HTMLInputElement).value;
+        });
+        definitionCell.appendChild(definitionInput);
         row.appendChild(definitionCell);
   
         dom.appendChild(row);

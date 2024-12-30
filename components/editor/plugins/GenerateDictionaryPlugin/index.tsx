@@ -22,32 +22,29 @@ export function GenerateDictionaryPlugin() {
         nodes.forEach((node) => {
             if (node instanceof DictionaryKeywordNode) {  
               dictionaryData[node.__text] = '';
-              const textNode = $createTextNode(node.__text);
-              node.replace(textNode);
             }
         });
-      }
-      const dictionaryNode = new DictionaryNode(dictionaryData);
-      $insertNodes([dictionaryNode]);
-      if ($isRootOrShadowRoot(dictionaryNode.getParentOrThrow())) {
-        $wrapNodeInElement(dictionaryNode, $createParagraphNode).selectEnd();
-      }
-                
-      // editor.update(() => {
-      //   const contentToInsert = dictionaryData
-      //     .map((content) => `**${content}** -\n`)
-      //     .join('');
         
-      //   console.log(contentToInsert);
-      //   const selection = window.getSelection();
-      //   if (selection && selection.rangeCount > 0) {
-      //     const range = selection.getRangeAt(0);
-      //     const div = document.createElement('div');
-      //     div.innerHTML = contentToInsert.replace(/\n/g, '<br>');
-      //     range.collapse(false); // Move cursor to end of the selection
-      //     range.insertNode(div);
-      //   }
-      // });
+        const focusNode = selection.focus.getNode();
+        const focusKey = selection.focus.key;
+        // Determine the node immediately after the focus node
+        const nextSibling = focusNode.getNextSibling();
+
+        // Create your custom node
+        const dictionaryNode = new DictionaryNode(dictionaryData);
+
+        if (nextSibling) {
+          // Insert the dictionary node after the next sibling
+          nextSibling.insertAfter(dictionaryNode);
+        } else {
+          // If there's no next sibling, insert after the focus node
+          focusNode.insertAfter(dictionaryNode);
+        }
+
+        // Optionally, move the selection to the end of the inserted node
+        dictionaryNode.selectEnd();
+      }
+      
     }, [editor]);
   
     useEffect(() => {
