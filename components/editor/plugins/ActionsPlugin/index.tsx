@@ -40,10 +40,10 @@ import useModal from '../../hooks/useModal';
 import Button from '../../ui/Button';
 import { docFromHash, docToHash } from '../../utils/docSerialization';
 import { PLAYGROUND_TRANSFORMERS } from '../MarkdownTransformers';
-import {
-  SPEECH_TO_TEXT_COMMAND,
-  SUPPORT_SPEECH_RECOGNITION,
-} from '../SpeechToTextPlugin';
+// import {
+//   SPEECH_TO_TEXT_COMMAND,
+//   SUPPORT_SPEECH_RECOGNITION,
+// } from '../SpeechToTextPlugin';
 
 async function sendEditorState(editor: LexicalEditor): Promise<void> {
   const stringifiedEditorState = JSON.stringify(editor.getEditorState());
@@ -232,7 +232,7 @@ export default function ActionsPlugin({
       </button>
 
       
-      {SUPPORT_SPEECH_RECOGNITION && settings.isSpeechToTextEnabled && (
+      {/* {SUPPORT_SPEECH_RECOGNITION && settings.isSpeechToTextEnabled && (
         <button
           onClick={() => {
             editor.dispatchCommand(SPEECH_TO_TEXT_COMMAND, !isSpeechToText);
@@ -247,7 +247,7 @@ export default function ActionsPlugin({
             } speech to text`}>
           <i className="mic" />
         </button>
-      )}
+      )} */}
 
       {/* <button
         className="action-button import"

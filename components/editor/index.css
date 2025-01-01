@@ -463,7 +463,9 @@ i.horizontal-rule {
 .icon.generate-dictionary {
   background-image: url(images/icons/dictionary2.svg);
 }
-
+.icon.generate-text {
+  background-image: url(images/icons/written-page.svg);
+}
 
 .icon.table {
   background-color: #6c757d;

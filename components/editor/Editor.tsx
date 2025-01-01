@@ -60,6 +60,8 @@ import { SerializedDocument } from '@lexical/file';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { DictionaryPlugin } from './plugins/DictionaryPlugin';
 import { GenerateDictionaryPlugin } from './plugins/GenerateDictionaryPlugin';
+import TextGeneratorPlugin from './plugins/TextGeneratorPlugin';
+import QuestionAnswerPlugin from './plugins/QuestionAnswerPlugin';
 
 
 export default function Editor( {
@@ -118,7 +120,7 @@ export default function Editor( {
         <EmojisPlugin />
         <HashtagPlugin />
         <KeywordsPlugin />
-        <SpeechToTextPlugin />
+        {/* <SpeechToTextPlugin /> */}
         <AutoLinkPlugin />
         <DictionaryPlugin />
         <HistoryPlugin externalHistoryState={historyState} />        
@@ -146,8 +148,10 @@ export default function Editor( {
         <InlineImagePlugin />
         <LinkPlugin hasLinkAttributes={hasLinkAttributes} />
         <PollPlugin />
+        <TextGeneratorPlugin />
         <QuizPlugin />
         <GenerateDictionaryPlugin />
+        <QuestionAnswerPlugin />
         <YouTubePlugin />
         <ClickableLinkPlugin disabled={isEditable} />
         <HorizontalRulePlugin />

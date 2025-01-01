@@ -48,6 +48,7 @@ import {
 } from '@lexical/utils';
 import {
   $createParagraphNode,
+  $createTextNode,
   $getNodeByKey,
   $getRoot,
   $getSelection,
@@ -103,6 +104,9 @@ import { DictionaryPlugin, TO_DICTIONARY_COMMAND } from '../DictionaryPlugin';
 import { ToDictionaryDialog } from '../DictionaryKeywordsPlugin';
 import { DictionaryKeywordNode } from '../../nodes/DictionaryKeywordNode';
 import { GENERATE_DICTIONARY_COMMAND } from '../GenerateDictionaryPlugin';
+import OpenAIService from '@/services/OpenAIService';
+import { GENERATE_TEXT_COMMAND, TextGeneratorDialog } from '../TextGeneratorPlugin';
+import { QuestionAnswerDialog } from '../QuestionAnswerPlugin';
 
 const blockTypeToBlockName = {
   bullet: 'Bulleted List',
@@ -1300,14 +1304,6 @@ function toDictionary() {
         </DropDownItem>
         <DropDownItem
           onClick={() => {
-            activeEditor.dispatchCommand(TO_DICTIONARY_COMMAND, "");
-          }}
-          className="item">
-          <i className="icon dictionary" />
-          <span className="text">Add definition</span>
-        </DropDownItem>
-        <DropDownItem
-          onClick={() => {
             activeEditor.update(() => {
               toDictionary();
             });
@@ -1321,11 +1317,32 @@ function toDictionary() {
             activeEditor.dispatchCommand(GENERATE_DICTIONARY_COMMAND, "");
           }}
           className="item">
-          <i className="icon generate-dictionary" />
+          <i className="icon dictionary" />
           <span className="text">Generate dictionary</span>
         </DropDownItem>
         <DropDownItem
-          onClick={() => {}}
+          onClick={() => {
+            showModal('Generate content', (onClose) => (
+              <TextGeneratorDialog
+                activeEditor={activeEditor}
+                onClose={onClose}
+              />
+            ));
+          }}
+          className="item">
+          <i className="icon generate-text" />
+          <span className="text">Generate content</span>
+        </DropDownItem>
+        <DropDownItem
+          onClick={() => {
+            showModal('Insert QA', (onClose) => (
+              <QuestionAnswerDialog
+              activeEditor={activeEditor}
+              onClose={onClose}
+            />
+            ));
+            
+          }}
           className="item">
           <i className="icon question" />
           <span className="text">Add question</span>

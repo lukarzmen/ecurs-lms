@@ -40,6 +40,7 @@ import { QuizNode } from './QuizNode';
 import { DictionaryKeywordNode } from './DictionaryKeywordNode';
 import { DictionaryNode } from './DictionaryNode';
 import { DefinitionNode } from './DefinitionNode';
+import { QuestionAnswerNode } from './QuestionAnswerNode/QuestionAnswer';
 
 const EditorNodes: Array<Klass<LexicalNode>> = [
   HeadingNode,
@@ -78,7 +79,8 @@ const EditorNodes: Array<Klass<LexicalNode>> = [
   QuizNode,
   DictionaryNode,
   DefinitionNode,
-  DictionaryKeywordNode 
+  DictionaryKeywordNode,
+  QuestionAnswerNode
 ];
 
 export default EditorNodes;

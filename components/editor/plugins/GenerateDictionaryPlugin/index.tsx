@@ -24,25 +24,12 @@ export function GenerateDictionaryPlugin() {
               dictionaryData[node.__text] = '';
             }
         });
-        
-        const focusNode = selection.focus.getNode();
-        const focusKey = selection.focus.key;
-        // Determine the node immediately after the focus node
-        const nextSibling = focusNode.getNextSibling();
 
         // Create your custom node
         const dictionaryNode = new DictionaryNode(dictionaryData);
 
-        if (nextSibling) {
-          // Insert the dictionary node after the next sibling
-          nextSibling.insertAfter(dictionaryNode);
-        } else {
-          // If there's no next sibling, insert after the focus node
-          focusNode.insertAfter(dictionaryNode);
-        }
-
-        // Optionally, move the selection to the end of the inserted node
-        dictionaryNode.selectEnd();
+        const root = $getRoot();
+        root.append(dictionaryNode);
       }
       
     }, [editor]);

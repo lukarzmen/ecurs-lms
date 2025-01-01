@@ -6,7 +6,8 @@ export interface Dictionary {
 
 export class DictionaryNode extends DecoratorNode<JSX.Element> {
     __dictionaryData: Dictionary;
-    clone() {
+    
+    clone(): DictionaryNode{
       return new DictionaryNode(this.__dictionaryData);
     }
 
