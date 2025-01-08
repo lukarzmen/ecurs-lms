@@ -14,11 +14,6 @@ import {
 import {useEffect, useState} from 'react';
 import * as React from 'react';
 
-import {
-  $createQuizNode,
-  createQuizOption,
-  QuizNode,
-} from '../../nodes/QuizNode';
 import Button from '../../ui/Button';
 import {DialogActions} from '../../ui/Dialog';
 import TextInput from '../../ui/TextInput';

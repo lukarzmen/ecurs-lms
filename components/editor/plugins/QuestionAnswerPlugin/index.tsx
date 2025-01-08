@@ -14,15 +14,9 @@ import {
 import {useEffect, useState} from 'react';
 import * as React from 'react';
 
-import {
-  $createQuizNode,
-  createQuizOption,
-  QuizNode,
-} from '../../nodes/QuizNode';
 import Button from '../../ui/Button';
 import {DialogActions} from '../../ui/Dialog';
 import TextInput from '../../ui/TextInput';
-import OpenAIService from '@/services/OpenAIService';
 import { $createQuestionAnswerNode } from '../../nodes/QuestionAnswerNode/QuestionAnswer';
 
 export const INSERT_QA_COMMAND: LexicalCommand<string> = createCommand(

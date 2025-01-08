@@ -871,17 +871,19 @@ export default function ToolbarPlugin({
   
   function toogleGap() {
     const selection = $getSelection();
-    const textSelection = $getTextContent();
+    
     if (!selection) {
       alert('Zaznacz tekst, który chcesz zamienić na lukę.');
       return;
     }
+    console.log('selection', selection);
     if ($isRangeSelection(selection)) {
       const nodes = selection.getNodes();
      
       let anyNodeReplaced = false;
       nodes.forEach((node) => {
           if (node instanceof GapNode) {   
+            console.log('GapNode', node);
             const textNode = new TextNode(node.__text);
             node.replace(textNode);
             anyNodeReplaced = true;
@@ -890,7 +892,7 @@ export default function ToolbarPlugin({
       if(anyNodeReplaced){
         return;
       }
-            
+      const textSelection = selection.getTextContent();  
       const gapNode = new GapNode(textSelection);
       selection.insertNodes([gapNode]);
   }

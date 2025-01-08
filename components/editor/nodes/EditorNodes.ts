@@ -36,7 +36,7 @@ import {PollNode} from './PollNode';
 import {StickyNode} from './StickyNode';
 import {YouTubeNode} from './YouTubeNode';
 import { GapNode } from './GapNode';
-import { QuizNode } from './QuizNode';
+import { QuizNode } from './QuizNode/QuizNode';
 import { DictionaryKeywordNode } from './DictionaryKeywordNode';
 import { DictionaryNode } from './DictionaryNode';
 import { DefinitionNode } from './DefinitionNode';

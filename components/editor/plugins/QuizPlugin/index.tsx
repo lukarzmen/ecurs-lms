@@ -12,16 +12,13 @@ import {
 import {useEffect, useState} from 'react';
 import * as React from 'react';
 
-import {
-  $createQuizNode,
-  createQuizOption,
-  QuizNode,
-} from '../../nodes/QuizNode';
 import Button from '../../ui/Button';
 import {DialogActions} from '../../ui/Dialog';
 import TextInput from '../../ui/TextInput';
+import Select from '../../ui/Select';
+import { QuizNode } from '../../nodes/QuizNode/QuizNode';
 
-export const INSERT_TEST_COMMAND: LexicalCommand<string> = createCommand(
+export const INSERT_TEST_COMMAND: LexicalCommand<{question: string; answers: string[]; correctAnswerIndex: number}> = createCommand(
   'INSERT_TEST_COMMAND',
 );
 
@@ -33,17 +30,60 @@ export function InsertQuizDialog({
   onClose: () => void;
 }): JSX.Element {
   const [question, setQuestion] = useState('');
+  const [answers, setAnswers] = useState(['', '', '', '']);
+  const [correctAnswerIndex, setCorrectAnswerIndex] = useState<number | null>(null);
+
+  const onAnswerChange = (index: number, value: string) => {
+    setAnswers((prevAnswers) => {
+      const updatedAnswers = [...prevAnswers];
+      updatedAnswers[index] = value;
+      return updatedAnswers;
+    });
+  };
+
+  const isFormValid =
+    question.trim() !== '' &&
+    answers.every((answer) => answer.trim() !== '') &&
+    correctAnswerIndex !== null;
 
   const onClick = () => {
-    activeEditor.dispatchCommand(INSERT_TEST_COMMAND, question);
-    onClose();
+    if (isFormValid) {
+      activeEditor.dispatchCommand(INSERT_TEST_COMMAND, {
+        question,
+        answers,
+        correctAnswerIndex,
+      });
+      onClose();
+    }
   };
 
   return (
     <>
       <TextInput label="Question" onChange={setQuestion} value={question} />
+      {answers && answers.map((answer, index) => (
+        <TextInput
+          key={index}
+          label={`Answer ${index + 1}`}
+          onChange={(value) => onAnswerChange(index, value)}
+          value={answer}
+        />
+      ))}
+      <Select
+        label="Correct Answer"
+        value={correctAnswerIndex?.toString() || ''}
+        onChange={(event) => setCorrectAnswerIndex(parseInt(event.target.value, 10))}
+      >
+        <option value="" disabled>
+          Select correct answer
+        </option>
+        {answers && answers.map((_, index) => (
+          <option key={index} value={index}>
+            Answer {index + 1}
+          </option>
+        ))}
+      </Select>
       <DialogActions>
-        <Button disabled={question.trim() === ''} onClick={onClick}>
+        <Button disabled={!isFormValid} onClick={onClick}>
           Confirm
         </Button>
       </DialogActions>
@@ -51,20 +91,14 @@ export function InsertQuizDialog({
   );
 }
 
+
 export default function TestPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
-    if (!editor.hasNodes([QuizNode])) {
-      throw new Error('QuizPlugin: QuizNode not registered on editor');
-    }
-
-    return editor.registerCommand<string>(
+    return editor.registerCommand<any>(
       INSERT_TEST_COMMAND,
-      (payload) => {
-        const testNode = $createQuizNode(payload, [
-          createQuizOption(),
-          createQuizOption(),
-        ]);
+      ({question, answers, correctAnswerIndex}) => {
+        const testNode = new QuizNode(question, answers, correctAnswerIndex);
         $insertNodes([testNode]);
         if ($isRootOrShadowRoot(testNode.getParentOrThrow())) {
           $wrapNodeInElement(testNode, $createParagraphNode).selectEnd();
