@@ -63,13 +63,13 @@ export function InsertQuizDialog({
       {answers && answers.map((answer, index) => (
         <TextInput
           key={index}
-          label={`Answer ${index + 1}`}
+          label={`${String.fromCharCode(65 + index)}`}
           onChange={(value) => onAnswerChange(index, value)}
           value={answer}
         />
       ))}
       <Select
-        label="Correct Answer"
+        label="Correct"
         value={correctAnswerIndex?.toString() || ''}
         onChange={(event) => setCorrectAnswerIndex(parseInt(event.target.value, 10))}
       >
@@ -77,9 +77,9 @@ export function InsertQuizDialog({
           Select correct answer
         </option>
         {answers && answers.map((_, index) => (
-          <option key={index} value={index}>
-            Answer {index + 1}
-          </option>
+            <option key={index} value={index}>
+            {String.fromCharCode(65 + index)}
+            </option>
         ))}
       </Select>
       <DialogActions>

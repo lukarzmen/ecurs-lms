@@ -20,35 +20,42 @@ export default function QuizComponent({ question, answers, correctAnswerIndex, n
   };
 
   return (
-    <div className="quiz-component">
-      <h3>{question}</h3>
-      <ul>
+    <div className="quiz-component p-4 max-w-md mx-auto border border-gray-300 rounded-lg shadow-md">
+      <h3 className="text-lg font-bold mb-4 text-center">{question}</h3>
+      <div className="grid grid-cols-2 gap-4">
         {answers.map((answer, index) => (
-          <li key={index}>
-            <button
-              onClick={() => handleAnswerSelect(index)}
-              disabled={isSubmitted}
-              style={{
-                backgroundColor: isSubmitted
-                  ? index === correctAnswerIndex
-                    ? 'green'
-                    : selectedAnswer === index
-                    ? 'red'
-                    : ''
-                  : '',
-              }}
-            >
-              {answer}
-            </button>
-          </li>
+          <button
+            key={index}
+            onClick={() => handleAnswerSelect(index)}
+            disabled={isSubmitted}
+            className={`p-2 border rounded-lg text-center transition-all duration-200 hover:shadow-md ${
+              isSubmitted
+                ? index === correctAnswerIndex
+                  ? 'bg-green-500 text-white'
+                  : selectedAnswer === index
+                  ? 'bg-red-500 text-white'
+                  : 'bg-gray-200'
+                : 'bg-blue-500 text-white hover:bg-blue-600'
+            }`}
+          >
+            {answer}
+          </button>
         ))}
-      </ul>
+      </div>
       {isSubmitted ? (
-        <p>
+        <p className="mt-4 text-center font-medium text-lg">
           {selectedAnswer === correctAnswerIndex ? 'Correct!' : 'Incorrect. Try again!'}
         </p>
       ) : (
-        <button onClick={handleSubmit} disabled={selectedAnswer === null}>
+        <button
+          onClick={handleSubmit}
+          disabled={selectedAnswer === null}
+          className={`mt-4 w-full py-2 px-4 rounded-lg text-white font-bold transition-all duration-200 ${
+            selectedAnswer === null
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-green-500 hover:bg-green-600'
+          }`}
+        >
           Submit
         </button>
       )}
