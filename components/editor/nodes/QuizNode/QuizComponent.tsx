@@ -5,9 +5,10 @@ interface QuizComponentProps {
   answers: string[];
   correctAnswerIndex: number;
   nodeKey: string;
+  correctAnswerDescription: string | null;
 }
 
-export default function QuizComponent({ question, answers, correctAnswerIndex, nodeKey }: QuizComponentProps) {
+export default function QuizComponent({ question, answers, correctAnswerIndex, nodeKey, correctAnswerDescription }: QuizComponentProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
 

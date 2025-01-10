@@ -2,9 +2,13 @@ import React from "react";
 
 function QuestionAnswerComponent({ question }: { question: string }) {
   return (
-    <div style={{ marginBottom: "16px" }}>
-      <p style={{ margin: "0" }}>{question}</p>
-      <input type="text" style={{ width: "100%" }} placeholder="Your answer" />
+    <div className="mb-4">
+      <p className="text-gray-800 font-medium mb-2">{question}</p>
+      <input
+        type="text"
+        className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Your answer"
+      />
     </div>
   );
 }

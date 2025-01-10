@@ -4,6 +4,7 @@ export interface Dictionary {
   [Key: string]: string;
 }
 
+//todo: do przepisania na komponent ostyloway tailwindem
 export class DictionaryNode extends DecoratorNode<JSX.Element> {
     __dictionaryData: Dictionary;
     
