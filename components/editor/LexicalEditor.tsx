@@ -29,6 +29,7 @@ console.warn(
 
 import { useEffect } from 'react';
 import PlaygroundEditorTheme from './themes/PlaygroundEditorTheme';
+import { SaveResult } from './plugins/ActionsPlugin';
 
 export default function LexicalEditor({
   onSave,
@@ -36,7 +37,7 @@ export default function LexicalEditor({
   initialStateJSON,
   isEditable
 }: {
-  onSave: (serializedDocument: SerializedDocument) => boolean;
+  onSave: (serializedDocument: SerializedDocument) => SaveResult;
   onEditorChange: (editorState: string) => void;
   initialStateJSON: string | null;
   isEditable: boolean;

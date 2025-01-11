@@ -25,7 +25,7 @@ import {CAN_USE_DOM} from './shared/canUseDOM';
 import {createWebsocketProvider} from './collaboration';
 import {useSettings} from './context/SettingsContext';
 import {useSharedHistoryContext} from './context/SharedHistoryContext';
-import ActionsPlugin from './plugins/ActionsPlugin';
+import ActionsPlugin, { SaveResult } from './plugins/ActionsPlugin';
 import AutocompletePlugin from './plugins/AutocompletePlugin';
 import AutoEmbedPlugin from './plugins/AutoEmbedPlugin';
 import AutoLinkPlugin from './plugins/AutoLinkPlugin';
@@ -70,7 +70,7 @@ export default function Editor( {
   onEditorChange,
   isEditable,
 }: {
-  onSave: (serializedDocument: SerializedDocument) => boolean;
+  onSave: (serializedDocument: SerializedDocument) => SaveResult;
   onEditorChange: (editorState: string) => void;
   isEditable: boolean;
 }): JSX.Element {

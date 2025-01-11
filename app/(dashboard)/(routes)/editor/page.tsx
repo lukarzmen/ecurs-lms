@@ -2,6 +2,8 @@
 
 import PlaygroundApp from "@/components/editor/LexicalEditor";
 import { SerializedDocument } from "@lexical/file";
+import {hashDocument} from "@/services/HashedService";
+import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 
 
 export default function EditorPage() {
@@ -17,11 +19,17 @@ export default function EditorPage() {
       zaznaczanie tekstu i wybieranie z niego slowek lub definicji. udostepnianie arkusza. ew fiszki
       pozniej zadanie z tlumaczeniem (otwarte). quizy + generator, odtwarzacz audio i wideo
       odpowiedzi na pytania i pytania do teksty itd
-      <PlaygroundApp onSave={function (serializedDocument: SerializedDocument): boolean {
-        return true;
-      } } onEditorChange={function (editorState: string): void {
+      <PlaygroundApp onSave={function (serializedDocument: SerializedDocument): SaveResult {
+
+        const serializedDocumentJSON = JSON.stringify(serializedDocument);
+        console.log(serializedDocumentJSON);
+
+        const hash = hashDocument(serializedDocumentJSON);
+        console.log(hash);
+        return { success: true, hash: hash };
+      }} onEditorChange={function (editorState: string): void {
         
-      } } initialStateJSON={null} isEditable={true}></PlaygroundApp>
+      }} initialStateJSON={null} isEditable={true}></PlaygroundApp>
     </div>
   );
 }

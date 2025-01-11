@@ -5,14 +5,34 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-
+import './index.css';
 import type { LexicalEditor } from 'lexical';
-
+import {
+  EmailIcon,
+  EmailShareButton,
+  FacebookIcon,
+  FacebookMessengerIcon,
+  FacebookMessengerShareButton,
+  FacebookShareButton,
+  FacebookShareCount,
+  LinkedinIcon,
+  LinkedinShareButton,
+  RedditIcon,
+  RedditShareButton,
+  RedditShareCount,
+  TelegramIcon,
+  TelegramShareButton,
+  TwitterShareButton,
+  VKIcon,
+  VKShareButton,
+  VKShareCount,
+  WhatsappIcon,
+  WhatsappShareButton,
+  XIcon,
+} from "react-share";
 import { $createCodeNode, $isCodeNode } from '@lexical/code';
 import {
   editorStateFromSerializedDocument,
-  exportFile,
-  importFile,
   SerializedDocument,
   serializedDocumentFromEditorState,
 } from '@lexical/file';
@@ -107,7 +127,7 @@ export default function ActionsPlugin({
   shouldPreserveNewLinesInMarkdown,
 }: {
   isRichText: boolean;
-  onSave: (serializedDocument: SerializedDocument) => boolean;
+  onSave: (serializedDocument: SerializedDocument) => SaveResult;
   shouldPreserveNewLinesInMarkdown: boolean;
 }): JSX.Element {
   const [editor] = useLexicalComposerContext();
@@ -118,6 +138,8 @@ export default function ActionsPlugin({
   const [modal, showModal] = useModal();
   const showFlashMessage = useFlashMessage();
   const { isCollabActive } = useCollaborationContext();
+  const [isSaved, setIsSaved] = useState(false);
+  const [hash, setHash] = useState('');
 
   const settings: ActionPluginsSettings = {
     isSpeechToTextEnabled: true,
@@ -215,14 +237,15 @@ export default function ActionsPlugin({
 
   return (
     <div className="actions">
-            <button
+      <button
         className="action-button save"
-        onClick={() => 
-        {
+        onClick={() => {
           const serializedDocument: SerializedDocument = serializedDocumentFromEditorState(editor.getEditorState(), {
             source: 'Playground',
           });
           const saveResult = onSave(serializedDocument);
+          setHash(saveResult.hash);
+          setIsSaved(saveResult.success);
           console.log(`Save result: ${saveResult}`);
         }
         }
@@ -231,7 +254,7 @@ export default function ActionsPlugin({
         <i className="save" />
       </button>
 
-      
+
       {/* {SUPPORT_SPEECH_RECOGNITION && settings.isSpeechToTextEnabled && (
         <button
           onClick={() => {
@@ -272,17 +295,25 @@ export default function ActionsPlugin({
       {settings.isSharableEnabled &&
         <button
           className="action-button share"
-          disabled={isCollabActive || INITIAL_SETTINGS.isCollab}
-          onClick={() =>
-            shareDoc(
-              serializedDocumentFromEditorState(editor.getEditorState(), {
-                source: 'Playground',
-              }),
-            ).then(
-              () => showFlashMessage('URL copied to clipboard'),
-              () => showFlashMessage('URL could not be copied to clipboard'),
-            )
-          }
+          disabled={isCollabActive || !isSaved}
+          onClick={() => {
+            showModal('Share editor', (onClose) => (
+              <ShareEditorDialog
+                hash={hash}
+                onClose={onClose}
+              />
+            ));
+          }}
+
+          // shareDoc(
+          //   serializedDocumentFromEditorState(editor.getEditorState(), {
+          //     source: 'Playground',
+          //   }),
+          // ).then(
+          //   () => showFlashMessage('URL copied to clipboard'),
+          //   () => showFlashMessage('URL could not be copied to clipboard'),
+          // )
+
           title="Share"
           aria-label="Share Playground link to current editor state">
           <i className="share" />
@@ -339,6 +370,100 @@ export default function ActionsPlugin({
   );
 }
 
+function ShareEditorDialog({ hash, onClose }: { hash: string; onClose: () => void }): JSX.Element {
+  const shareUrl = `www.aplikacja.pl/editor/${hash}`;
+  const title = 'Masz nowe zadanie!';
+  const exampleImage = 'https://via.placeholder.com/150';
+  return (
+    <div>
+      <div className="grid grid-cols-2 gap-2 justify-center">
+        <FacebookShareButton
+          url={shareUrl}
+          className="Demo__some-network__share-button"
+        >
+          <FacebookIcon size={32} round />
+        </FacebookShareButton>
+
+        <FacebookMessengerShareButton
+          url={shareUrl}
+          appId="521270401588372"
+          className="Demo__some-network__share-button"
+        >
+          <FacebookMessengerIcon size={32} round />
+        </FacebookMessengerShareButton>
+
+        <TwitterShareButton
+          url={shareUrl}
+          title={title}
+          className="Demo__some-network__share-button"
+        >
+          <XIcon size={32} round />
+        </TwitterShareButton>
+
+        <TelegramShareButton
+          url={shareUrl}
+          title={title}
+          className="Demo__some-network__share-button"
+        >
+          <TelegramIcon size={32} round />
+        </TelegramShareButton>
+
+        <WhatsappShareButton
+          url={shareUrl}
+          title={title}
+          separator=":: "
+          className="Demo__some-network__share-button"
+        >
+          <WhatsappIcon size={32} round />
+        </WhatsappShareButton>
+
+        <LinkedinShareButton
+          url={shareUrl}
+          className="Demo__some-network__share-button"
+        >
+          <LinkedinIcon size={32} round />
+        </LinkedinShareButton>
+
+        <VKShareButton
+          url={shareUrl}
+          image={`${String(window.location)}/${exampleImage}`}
+          className="Demo__some-network__share-button"
+        >
+          <VKIcon size={32} round />
+        </VKShareButton>
+
+        <RedditShareButton
+          url={shareUrl}
+          title={title}
+          windowWidth={660}
+          windowHeight={460}
+          className="Demo__some-network__share-button"
+        >
+          <RedditIcon size={32} round />
+        </RedditShareButton>
+
+        <EmailShareButton
+          url={shareUrl}
+          subject={title}
+          body="body"
+          className="Demo__some-network__share-button"
+        >
+          <EmailIcon size={32} round />
+        </EmailShareButton>
+      </div>
+      <Button
+        onClick={() => {
+          onClose();
+        }}
+        className="col-span-2 mt-4"
+      >
+        Close
+      </Button>
+    </div>
+  );
+}
+
+
 function ShowClearDialog({
   editor,
   onClose,
@@ -369,3 +494,9 @@ function ShowClearDialog({
     </>
   );
 }
+
+export interface SaveResult {
+  success: boolean;
+  hash: string;
+}
+

@@ -1,0 +1,29 @@
+.Demo__container {
+    display: grid;
+    grid-gap: 20px;
+    grid-template-columns: repeat(auto-fill, 30px);
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  
+  .Demo__some-network {
+    text-align: center;
+  }
+  
+  .Demo__some-network__share-count {
+    display: inline-flex;
+    justify-content: center;
+    white-space: nowrap;
+    overflow: visible;
+    width: 0;
+    font-size: 14px;
+  }
+  
+  .Demo__some-network__share-button {
+    cursor: pointer;
+  }
+  
+  .Demo__some-network__share-button:hover:not(:active) {
+    opacity: 0.75;
+  }
+  
