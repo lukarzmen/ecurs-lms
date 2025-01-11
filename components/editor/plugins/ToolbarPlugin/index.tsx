@@ -107,6 +107,7 @@ import { GENERATE_DICTIONARY_COMMAND } from '../GenerateDictionaryPlugin';
 import OpenAIService from '@/services/OpenAIService';
 import { GENERATE_TEXT_COMMAND, TextGeneratorDialog } from '../TextGeneratorPlugin';
 import { QuestionAnswerDialog } from '../QuestionAnswerPlugin';
+import { INSERT_GAP_NODE_COMMAND } from '../GapPlugin';
 
 const blockTypeToBlockName = {
   bullet: 'Bulleted List',
@@ -869,43 +870,6 @@ export default function ToolbarPlugin({
   const canViewerSeeInsertDropdown = !isImageCaption;
   const canViewerSeeInsertCodeButton = !isImageCaption;
   
-  function toogleGap() {
-    const selection = $getSelection();
-    
-    if (!selection) {
-      alert('Zaznacz tekst, który chcesz zamienić na lukę.');
-      return;
-    }
-    if ($isRangeSelection(selection)) {
-      const selection = $getSelection();
-      const textSelection = $getTextContent();
-      console.log(selection?.getNodes());
-      console.log(textSelection);
-      if (!selection) {
-        alert('Zaznacz tekst, który chcesz zamienić na lukę.');
-        return;
-      }
-      if ($isRangeSelection(selection)) {
-        const nodes = selection.getNodes();
-        console.log(nodes);
-        
-        let anyNodeReplaced = false;
-        nodes.forEach((node) => {
-            if (node instanceof GapNode) {   
-              const textNode = new TextNode(node.__text);
-              node.replace(textNode);
-              anyNodeReplaced = true;
-            }
-        });
-        if(anyNodeReplaced){
-          return;
-        }
-              
-        const gapNode = new GapNode(textSelection);
-        selection.insertNodes([gapNode]);
-    }
-  }
-}
 function toDictionary() {
   const selection = $getSelection();
     const textSelection = $getTextContent();
@@ -1294,14 +1258,12 @@ function toDictionary() {
         buttonAriaLabel="Custom options"
         buttonIconClassName="icon dropdown-course">
         <DropDownItem
-          onClick={() => {
-            activeEditor.update(() => {
-              toogleGap();
-            });
+          onClick={() => {          
+            activeEditor.dispatchCommand(INSERT_GAP_NODE_COMMAND, "");           
           }}
           className="item">
           <i className="icon fillgap" />
-          <span className="text">To gaps</span>
+          <span className="text">To gap</span>
         </DropDownItem>
         <DropDownItem
           onClick={() => {

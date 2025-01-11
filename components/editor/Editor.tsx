@@ -62,6 +62,7 @@ import { DictionaryPlugin } from './plugins/DictionaryPlugin';
 import { GenerateDictionaryPlugin } from './plugins/GenerateDictionaryPlugin';
 import TextGeneratorPlugin from './plugins/TextGeneratorPlugin';
 import QuestionAnswerPlugin from './plugins/QuestionAnswerPlugin';
+import GapNodePlugin from './plugins/GapPlugin';
 
 
 export default function Editor( {
@@ -118,6 +119,7 @@ export default function Editor( {
 
         <MentionsPlugin />
         <EmojisPlugin />
+        <GapNodePlugin/>
         <HashtagPlugin />
         <KeywordsPlugin />
         {/* <SpeechToTextPlugin /> */}

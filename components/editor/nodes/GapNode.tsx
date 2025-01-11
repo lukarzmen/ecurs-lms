@@ -1,60 +1,88 @@
-import { TextNode, SerializedTextNode, NodeKey } from "lexical";
-import ReactDOMServer from 'react-dom/server';
+import { DecoratorNode } from "lexical";
+import React, { useState } from "react";
 
-export type SerializedGapNode = SerializedTextNode & {
+type GapComponentProps = {
   hiddenText: string;
 };
 
-export class GapNode extends TextNode {
+function GapComponent({ hiddenText }: GapComponentProps) {
+  const [userInput, setUserInput] = useState("");
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+
+  const checkAnswer = () => {
+    setIsCorrect(userInput.trim() === hiddenText);
+  };
+
+  return (
+    <div className="flex items-center space-x-4">
+      <input
+        type="text"
+        value={userInput}
+        onChange={(e) => setUserInput(e.target.value)}
+        className="border rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500"
+        placeholder="Type your answer"
+      />
+      <button
+        onClick={checkAnswer}
+        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+      >
+        Check
+      </button>
+      {isCorrect !== null && (
+        <span
+          className={`ml-2 font-semibold ${
+            isCorrect ? "text-green-600" : "text-red-600"
+          }`}
+        >
+          {isCorrect ? "Correct!" : "Try Again!"}
+        </span>
+      )}
+    </div>
+  );
+}
+
+export class GapNode extends DecoratorNode<JSX.Element> {
+  __hiddenText: string;
+
+  constructor(hiddenText: string, key?: string) {
+    super(key);
+    this.__hiddenText = hiddenText;
+  }
+
   static getType(): string {
     return "gap";
   }
 
   static clone(node: GapNode): GapNode {
-    return new GapNode(node.__text, node.__key);
+    return new GapNode(node.__hiddenText, node.__key);
   }
 
-  static importJSON(serializedNode: SerializedTextNode): GapNode {
-    const { text } = serializedNode;
-    return new GapNode(text);
+  static importJSON(serializedNode: any): GapNode {
+    const { hiddenText } = serializedNode;
+    return new GapNode(hiddenText);
   }
 
-  exportJSON(): SerializedTextNode {
+  exportJSON(): any {
     return {
-      ...super.exportJSON(),
-      type: GapNode.getType(),
+      type: "gap",
       version: 1,
+      hiddenText: this.__hiddenText,
     };
   }
 
-  constructor(text: string, key?: NodeKey) {
-    super(text, key);
-  }
-
   createDOM(): HTMLElement {
-    // Create a span element with Tailwind styling and JSX rendering
-    const span = (
-      <span
-        className="underline"
-        data-hidden-text={this.__text}
-      >
-        {this.__text ? "_".repeat(this.__text.length) : "____"}
-      </span>
-    );
-
-    // Convert JSX to DOM element
-    const container = document.createElement("div");
-    container.innerHTML = ReactDOMServer.renderToStaticMarkup(span);
-
-    // Return the first child as the actual span element
-    return container.firstChild as HTMLElement;
+    return document.createElement("div");
   }
 
-  getHiddenText(): string {
-    return this.__text;
+  updateDOM(): boolean {
+    return false;
   }
 
-  isTextEntity(): boolean {
-    return true;
+  decorate(): JSX.Element {
+    return <GapComponent hiddenText={this.__hiddenText} />;
   }
+}
+
+export function $createGapNode(hiddenText: string): GapNode {
+  return new GapNode(hiddenText);
 }
