@@ -102,7 +102,7 @@ import { GapNode } from '../../nodes/GapNode';
 import { InsertQuizDialog } from '../QuizPlugin';
 import { DictionaryPlugin, TO_DICTIONARY_COMMAND } from '../DictionaryPlugin';
 import { ToDictionaryDialog } from '../DictionaryKeywordsPlugin';
-import { DictionaryKeywordNode } from '../../nodes/DictionaryKeywordNode';
+import { DictionaryKeywordNode } from '../../nodes/DictionaryNode/DictionaryKeywordNode';
 import { GENERATE_DICTIONARY_COMMAND } from '../GenerateDictionaryPlugin';
 import OpenAIService from '@/services/OpenAIService';
 import { GENERATE_TEXT_COMMAND, TextGeneratorDialog } from '../TextGeneratorPlugin';
@@ -876,25 +876,34 @@ export default function ToolbarPlugin({
       alert('Zaznacz tekst, który chcesz zamienić na lukę.');
       return;
     }
-    console.log('selection', selection);
     if ($isRangeSelection(selection)) {
-      const nodes = selection.getNodes();
-     
-      let anyNodeReplaced = false;
-      nodes.forEach((node) => {
-          if (node instanceof GapNode) {   
-            console.log('GapNode', node);
-            const textNode = new TextNode(node.__text);
-            node.replace(textNode);
-            anyNodeReplaced = true;
-          }
-      });
-      if(anyNodeReplaced){
+      const selection = $getSelection();
+      const textSelection = $getTextContent();
+      console.log(selection?.getNodes());
+      console.log(textSelection);
+      if (!selection) {
+        alert('Zaznacz tekst, który chcesz zamienić na lukę.');
         return;
       }
-      const textSelection = selection.getTextContent();  
-      const gapNode = new GapNode(textSelection);
-      selection.insertNodes([gapNode]);
+      if ($isRangeSelection(selection)) {
+        const nodes = selection.getNodes();
+        console.log(nodes);
+        
+        let anyNodeReplaced = false;
+        nodes.forEach((node) => {
+            if (node instanceof GapNode) {   
+              const textNode = new TextNode(node.__text);
+              node.replace(textNode);
+              anyNodeReplaced = true;
+            }
+        });
+        if(anyNodeReplaced){
+          return;
+        }
+              
+        const gapNode = new GapNode(textSelection);
+        selection.insertNodes([gapNode]);
+    }
   }
 }
 function toDictionary() {

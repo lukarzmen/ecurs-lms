@@ -1,9 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $createParagraphNode, $createTabNode, $createTextNode, $getRoot, $getSelection, $insertNodes, $isNodeSelection, $isRangeSelection, $isRootOrShadowRoot, $nodesOfType, COMMAND_PRIORITY_EDITOR, COMMAND_PRIORITY_LOW, createCommand, LexicalCommand, LexicalNode } from "lexical";
-import { useCallback, useEffect, useState } from "react";
-import { DictionaryKeywordNode } from "../../nodes/DictionaryKeywordNode";
-import { $wrapNodeInElement } from "@lexical/utils";
-import { $createStickyNode } from "../../nodes/StickyNode";
+import { $createParagraphNode, $getRoot, $getSelection, $isRangeSelection, COMMAND_PRIORITY_LOW, createCommand, LexicalCommand, LexicalNode } from "lexical";
+import { useCallback, useEffect } from "react";
+import { DictionaryKeywordNode } from "../../nodes/DictionaryNode/DictionaryKeywordNode";
 import { Dictionary, DictionaryNode } from "../../nodes/DictionaryNode";
 
 export const GENERATE_DICTIONARY_COMMAND: LexicalCommand<string> = createCommand(
@@ -29,7 +27,9 @@ export function GenerateDictionaryPlugin() {
         const dictionaryNode = new DictionaryNode(dictionaryData);
 
         const root = $getRoot();
-        root.append(dictionaryNode);
+        const paragraphNode = $createParagraphNode();
+        paragraphNode.append(dictionaryNode);
+        root.append(paragraphNode);
       }
       
     }, [editor]);
