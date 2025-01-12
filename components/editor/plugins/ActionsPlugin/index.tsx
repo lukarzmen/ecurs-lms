@@ -371,7 +371,7 @@ export default function ActionsPlugin({
 }
 
 function ShareEditorDialog({ hash, onClose }: { hash: string; onClose: () => void }): JSX.Element {
-  const shareUrl = `www.aplikacja.pl/editor/${hash}`;
+  const shareUrl = `${window.location.origin}/api/task/${hash}`;
   const title = 'Masz nowe zadanie!';
   const exampleImage = 'https://via.placeholder.com/150';
   return (

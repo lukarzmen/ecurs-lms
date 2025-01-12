@@ -4,6 +4,8 @@ import PlaygroundApp from "@/components/editor/LexicalEditor";
 import { SerializedDocument } from "@lexical/file";
 import {hashDocument} from "@/services/HashedService";
 import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 
 export default function EditorPage() {
@@ -14,11 +16,9 @@ export default function EditorPage() {
   //other plugins https://codesandbox.io/examples/package/lexical
   //this is interesting https://playground.lexical.dev/
 
+  
   return (
     <div className="p-6">
-      zaznaczanie tekstu i wybieranie z niego slowek lub definicji. udostepnianie arkusza. ew fiszki
-      pozniej zadanie z tlumaczeniem (otwarte). quizy + generator, odtwarzacz audio i wideo
-      odpowiedzi na pytania i pytania do teksty itd
       <PlaygroundApp onSave={function (serializedDocument: SerializedDocument): SaveResult {
 
         const serializedDocumentJSON = JSON.stringify(serializedDocument);

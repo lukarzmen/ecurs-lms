@@ -107,8 +107,10 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
       GENERATE_TEXT_COMMAND,
       (payload) => {
         console.log('Generating text:', payload);
-        openAiService
-          .askOpenAi(payload)
+        fetch('/api/tasks?prompt=' + encodeURIComponent(payload), {
+          method: 'GET',
+        })
+          .then((response) => response.text())
           .then((response) => {
             editor.update(() => {
               const root = $getRoot();

@@ -1,21 +1,17 @@
 import OpenAI from "openai";
 
 export default class OpenAIService {
-    openai: OpenAI;
-    constructor() {
-        const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
-        if (!apiKey) {
+    async askOpenAi(prompt: string) : Promise<string> {
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) {1
             throw new Error("Missing OpenAI API key");
         }
         //todo: do przeniesienia na strone serwera
-        this.openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
-    }
-
-    async askOpenAi(prompt: string) : Promise<string> {
-        const completion = await this.openai.chat.completions.create({
+        const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+        const completion = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
-                { role: "system", content: "Tworzysz materiały na rzecz szkoły języka rosyjskiego. Generuj tekst na podstawie poleceń." },
+                { role: "system", content: "Tworzysz materiały na rzecz szkoły języka rosyjskiego. Generuj tekst na podstawie poleceń w języku rosyjskim." },
                 {
                     role: "user",
                     content: prompt,
