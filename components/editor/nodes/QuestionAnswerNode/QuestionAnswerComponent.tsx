@@ -6,7 +6,7 @@ export type QAType = {
   explanation: string | null;
 };
 
-function QuestionAnswerComponent({ question, answer }: QAType) {
+function QuestionAnswerComponent({ question, answer, explanation }: QAType) {
   const [userInput, setUserInput] = useState("");
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 

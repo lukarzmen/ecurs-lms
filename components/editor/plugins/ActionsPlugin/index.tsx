@@ -386,7 +386,7 @@ function ShareEditorDialog({ hash, onClose }: { hash: string; onClose: () => voi
 
         <FacebookMessengerShareButton
           url={shareUrl}
-          appId="521270401588372"
+          appId="580840648168709"
           className="Demo__some-network__share-button"
         >
           <FacebookMessengerIcon size={32} round />

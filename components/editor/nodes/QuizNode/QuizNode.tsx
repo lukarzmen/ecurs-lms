@@ -40,7 +40,9 @@ export class QuizNode extends DecoratorNode<JSX.Element> {
       serializedNode.correctAnswerDescription,
     );
   }
-
+  updateDOM(prevNode: QuizNode): boolean {
+    return false;
+  }
   constructor(question: string, answers: string[], correctAnswerIndex: number, correctAnswerDescription: string | null, key?: NodeKey) {
     super(key);
     this.__question = question;
