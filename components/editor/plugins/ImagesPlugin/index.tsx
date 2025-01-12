@@ -29,8 +29,6 @@ import {useEffect, useRef, useState} from 'react';
 import * as React from 'react';
 import {CAN_USE_DOM} from '../../shared/canUseDOM';
 
-import landscapeImage from '../../images/landscape.jpg';
-import yellowFlowerImage from '../../images/yellow-flower.jpg';
 import {
   $createImageNode,
   $isImageNode,
@@ -169,24 +167,6 @@ export function InsertImageDialog({
       {!mode && (
         <DialogButtonsList>
           <Button
-            data-test-id="image-modal-option-sample"
-            onClick={() =>
-              onClick(
-                hasModifier.current
-                  ? {
-                      altText:
-                        'Daylight fir trees forest glacier green high ice landscape',
-                      src: landscapeImage,
-                    }
-                  : {
-                      altText: 'Yellow flower in tilt shift lens',
-                      src: yellowFlowerImage,
-                    },
-              )
-            }>
-            Sample
-          </Button>
-          <Button
             data-test-id="image-modal-option-url"
             onClick={() => setMode('url')}>
             URL
@@ -259,8 +239,13 @@ export default function ImagesPlugin({
 
 const TRANSPARENT_IMAGE =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-const img = document.createElement('img');
-img.src = TRANSPARENT_IMAGE;
+
+  let img: HTMLImageElement | null = null;
+  if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+    img = document.createElement('img');
+    img.src = TRANSPARENT_IMAGE;
+  }
+
 
 function $onDragStart(event: DragEvent): boolean {
   const node = $getImageNodeInSelection();
@@ -272,7 +257,9 @@ function $onDragStart(event: DragEvent): boolean {
     return false;
   }
   dataTransfer.setData('text/plain', '_');
-  dataTransfer.setDragImage(img, 0, 0);
+  if (img) {
+    dataTransfer.setDragImage(img, 0, 0);
+  }
   dataTransfer.setData(
     'application/x-lexical-drag',
     JSON.stringify({
@@ -378,14 +365,15 @@ function getDragSelection(event: DragEvent): Range | null | undefined {
       ? (target as Document).defaultView
       : (target as Element).ownerDocument.defaultView;
   const domSelection = getDOMSelection(targetWindow);
-  if (document.caretRangeFromPoint) {
-    range = document.caretRangeFromPoint(event.clientX, event.clientY);
-  } else if (event.rangeParent && domSelection !== null) {
-    domSelection.collapse(event.rangeParent, event.rangeOffset || 0);
-    range = domSelection.getRangeAt(0);
-  } else {
-    throw Error(`Cannot get the selection when dragging`);
+  if(document !== undefined){
+    if (document.caretRangeFromPoint) {
+      range = document.caretRangeFromPoint(event.clientX, event.clientY);
+    } else if (event.rangeParent && domSelection !== null) {
+      domSelection.collapse(event.rangeParent, event.rangeOffset || 0);
+      range = domSelection.getRangeAt(0);
+    } else {
+      throw Error(`Cannot get the selection when dragging`);
+    }
   }
-
   return range;
 }

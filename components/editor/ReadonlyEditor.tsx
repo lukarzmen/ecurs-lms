@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
-import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import EditorNodes from './nodes/EditorNodes';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
+import ContentEditable from './ui/ContentEditable';
 
 const ReadOnlyEditor = ({ content }: {content: string | null;}) => {
     // Konfiguracja początkowa Lexical
@@ -12,7 +12,7 @@ const ReadOnlyEditor = ({ content }: {content: string | null;}) => {
         namespace: 'ReadOnlyEditor',
         editorState: content && content.trim() !== '' ? content : undefined,
         editable: false, 
-        onError: (error) => {
+        onError: (error: any) => {
             console.error('Lexical Error:', error);
         },
         nodes: [...EditorNodes],

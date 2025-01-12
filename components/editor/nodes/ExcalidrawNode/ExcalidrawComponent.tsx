@@ -23,11 +23,14 @@ import {
 } from 'lexical';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import * as React from 'react';
+const ExcalidrawModal = dynamic(() => import('../../ui/ExcalidrawModal'), {
+  ssr: false,
+});
 
-import ExcalidrawModal from '../../ui/ExcalidrawModal';
 import ImageResizer from '../../ui/ImageResizer';
 import {$isExcalidrawNode} from '.';
 import ExcalidrawImage from './ExcalidrawImage';
+import dynamic from 'next/dynamic';
 
 export default function ExcalidrawComponent({
   nodeKey,

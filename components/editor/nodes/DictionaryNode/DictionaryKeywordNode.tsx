@@ -30,7 +30,7 @@ export class DictionaryKeywordNode extends TextNode {
     super(text, key);
   }
 
-  createDOM(config): HTMLElement {
+  createDOM(config: any): HTMLElement {
     const dom = document.createElement("span");
     dom.style.backgroundColor = "yellow"; // Highlighted background
     dom.style.cursor = "pointer";

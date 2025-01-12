@@ -12,9 +12,9 @@ export function QuestionAnswerDialog({
 }): JSX.Element {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
-  const [explaination, setExplaination] = useState(''); 
+  const [explanation, setExplanation] = useState(''); 
   const handleOnClick = () => {
-    activeEditor.dispatchCommand(INSERT_QA_COMMAND, { question, answer });
+    activeEditor.dispatchCommand(INSERT_QA_COMMAND, { question, answer, explanation });
     onClose();
   };
 
@@ -39,14 +39,14 @@ export function QuestionAnswerDialog({
           className="w-full border border-gray-300 rounded-md p-2"
           placeholder="Enter the correct answer"
         />
-         {/* Explaination */}
-        <label className="text-sm font-medium text-gray-700 text-left">Explaination:</label>
+         {/* Explanation */}
+        <label className="text-sm font-medium text-gray-700 text-left">Explanation:</label>
         <input
           type="text"
-          value={explaination}
-          onChange={(e) => setExplaination(e.target.value)}
+          value={explanation}
+          onChange={(e) => setExplanation(e.target.value)}
           className="w-full border border-gray-300 rounded-md p-2"
-          placeholder="Enter the explaination (optional)"
+          placeholder="Enter the explanation (optional)"
         />
       </div>
 

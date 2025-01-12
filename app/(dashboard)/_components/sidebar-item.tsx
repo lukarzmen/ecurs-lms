@@ -1,15 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Icon } from "next/dist/lib/metadata/types/metadata-types";
 import { usePathname, useRouter } from "next/navigation";
 
 interface SidebarItemProps {
-  icon: Icon;
   label: string;
   href: string;
 }
-export const SidebarItem = ({ icon: Icon, label, href }: SidebarItemProps) => {
+export const SidebarItem = ({ label, href }: SidebarItemProps) => {
   const pathName = usePathname();
   const router = useRouter();
   const isActive = (pathName === "/" && href === "/") || pathName === href;
@@ -29,10 +27,10 @@ export const SidebarItem = ({ icon: Icon, label, href }: SidebarItemProps) => {
       )}
     >
       <div className="flex items-center gap-x-2 py-4">
-        <Icon
+        {/* <Icon
           size={22}
           className={cn("text-slate-500", isActive && "text-sky-700")}
-        ></Icon>
+        ></Icon> */}
         {label}
         <div
           className={cn(

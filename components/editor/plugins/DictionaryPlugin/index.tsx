@@ -43,9 +43,10 @@ export function DictionaryPlugin() {
   }, [editor]);
   
   const submitAddComment = useCallback(
-    (commentOrThread: Comment, isInlineComment: boolean) => {
+    (commentOrThread: Comment | Thread, isInlineComment: boolean) => {
       editor.update(() => {
-        const definitionNode = new DefinitionNode(selectedText, commentOrThread.content);
+        const content = 'content' in commentOrThread ? commentOrThread.content : '';
+        const definitionNode = new DefinitionNode(selectedText, content);
         
         const selection = $getSelection();
         if (selection) {

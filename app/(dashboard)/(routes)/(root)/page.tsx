@@ -11,6 +11,9 @@ export default async function Home() {
   //   return redirect("/");
   // }
 
+  if(!userId){
+    return <div>Please first log to see courses</div>;
+  }
   const {completedCourses, coursesInProgress} = await getDashboardCourses(userId);
 
   console.log(completedCourses);

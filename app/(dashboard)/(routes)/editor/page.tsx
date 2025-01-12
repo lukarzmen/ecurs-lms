@@ -16,7 +16,6 @@ export default function EditorPage() {
   //other plugins https://codesandbox.io/examples/package/lexical
   //this is interesting https://playground.lexical.dev/
 
-  
   return (
     <div className="p-6">
       <PlaygroundApp onSave={function (serializedDocument: SerializedDocument): SaveResult {

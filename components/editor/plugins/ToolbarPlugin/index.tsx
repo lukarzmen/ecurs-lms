@@ -48,7 +48,6 @@ import {
 } from '@lexical/utils';
 import {
   $createParagraphNode,
-  $createTextNode,
   $getNodeByKey,
   $getRoot,
   $getSelection,
@@ -71,7 +70,6 @@ import {
   OUTDENT_CONTENT_COMMAND,
   REDO_COMMAND,
   SELECTION_CHANGE_COMMAND,
-  TextNode,
   UNDO_COMMAND,
 } from 'lexical';
 import {Dispatch, useCallback, useEffect, useState} from 'react';
@@ -98,14 +96,10 @@ import {InsertPollDialog} from '../PollPlugin';
 import {InsertTableDialog} from '../TablePlugin';
 import FontSize from './fontSize';
 import Settings from '../../Settings';
-import { GapNode } from '../../nodes/GapNode/GapNode';
 import { InsertQuizDialog } from '../QuizPlugin/InsertQuizDialog';
-import { DictionaryPlugin, TO_DICTIONARY_COMMAND } from '../DictionaryPlugin';
-import { ToDictionaryDialog } from '../DictionaryKeywordsPlugin';
 import { DictionaryKeywordNode } from '../../nodes/DictionaryNode/DictionaryKeywordNode';
 import { GENERATE_DICTIONARY_COMMAND } from '../GenerateDictionaryPlugin';
-import OpenAIService from '@/services/OpenAIService';
-import { GENERATE_TEXT_COMMAND, TextGeneratorDialog } from '../TextGeneratorPlugin';
+import { TextGeneratorDialog } from '../TextGeneratorPlugin';
 import { QuestionAnswerDialog } from '../QuestionAnswerPlugin/QuestionAnswerDialog';
 import { INSERT_GAP_NODE_COMMAND } from '../GapPlugin';
 

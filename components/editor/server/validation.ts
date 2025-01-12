@@ -19,12 +19,12 @@ const port = 1235;
 
 let stringifiedEditorStateJSON = '';
 
-global.__DEV__ = true;
+// global.__DEV__ = true;
 
 const editor = createHeadlessEditor({
   namespace: 'validation',
   nodes: [...EditorNodes],
-  onError: (error) => {
+  onError: (error: Error) => {
     console.error(error);
   },
 });
@@ -89,7 +89,7 @@ const validateEditorState = async (
   return success;
 };
 
-const server = http.createServer(async (req, res) => {
+const server = http.createServer(async (req: http.IncomingMessage, res: http.ServerResponse) => {
   const pathname = url.parse(req.url!).pathname;
   const {method} = req;
   res.setHeader('Content-Type', 'application/json');

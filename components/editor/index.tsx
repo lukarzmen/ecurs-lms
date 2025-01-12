@@ -17,6 +17,7 @@ import {createRoot} from 'react-dom/client';
 
 import App from './LexicalEditor';
 import { SerializedDocument } from '@lexical/file';
+import { SaveResult } from './plugins/ActionsPlugin';
 
 if (setupEnv.disableBeforeInput) {
   // vite is really aggressive about tree-shaking, this
@@ -43,7 +44,7 @@ window.addEventListener('unhandledrejection', ({reason}) =>
 
 createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <App onSave={function (serializedDocument: SerializedDocument): boolean {
+    <App onSave={function (serializedDocument: SerializedDocument): SaveResult {
       throw new Error('Function not implemented.');
     } } onEditorChange={function (editorState: string): void {
       throw new Error('Function not implemented.');

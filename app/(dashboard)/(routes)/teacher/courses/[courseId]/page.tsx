@@ -111,12 +111,12 @@ const CourseIdPage = async ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           <TitleForm title={courseTitle} courseId={courseId} />
           <DescriptionForm
-            description={course.description}
+            description={course.description ?? ''}
             courseId={courseId}
           />
-          <ImageForm imageUrl={course.imageUrl} courseId={courseId} />
+          <ImageForm imageUrl={course.imageUrl ?? ''} courseId={courseId} />
           <CategoryForm
-            categoryId={course.categoryId}
+            categoryId={course.categoryId ?? ''}
             options={categories.map((x) => {
               return {
                 label: x.name,
@@ -141,14 +141,14 @@ const CourseIdPage = async ({
                 <IconBadge icon={CircleDollarSign}></IconBadge>
                 <h2 className="text-xl">Sell your course</h2>
               </div>
-              <PriceForm courseId={courseId} price={course.price}></PriceForm>
+              <PriceForm courseId={courseId} price={course.price ?? 0}></PriceForm>
             </div>
             <div>
               <div className="flex items-center gap-x-2">
                 <IconBadge icon={File}></IconBadge>
                 <h2 className="text-xl">Resources & Attachments</h2>
               </div>
-              <AttachmentForm blobUrl={course.imageUrl} courseId={courseId} />
+              <AttachmentForm courseId={courseId} />
             </div>
           </div>
         </div>

@@ -24,7 +24,10 @@ import {
   $createExcalidrawNode,
   ExcalidrawNode,
 } from '../../nodes/ExcalidrawNode';
-import ExcalidrawModal from '../../ui/ExcalidrawModal';
+import dynamic from 'next/dynamic';
+const ExcalidrawModal = dynamic(() => import('../../ui/ExcalidrawModal'), {
+  ssr: false,
+});
 
 export const INSERT_EXCALIDRAW_COMMAND: LexicalCommand<void> = createCommand(
   'INSERT_EXCALIDRAW_COMMAND',

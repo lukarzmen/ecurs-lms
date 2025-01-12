@@ -30,7 +30,11 @@ const ChapterIdPage = async ({
         courseId: courseId,
         chapterId: chapterId,
     };
-    const { chapter, course, attachments } = await getChapter(getChapterInputParams);
+    const chapterData = await getChapter(getChapterInputParams);
+    if (typeof chapterData === 'string') {
+        return redirect("/");
+    }
+    const { chapter, course, attachments } = chapterData;
 
     // Redirect if chapter or course is not found
     if (!chapter || !course) {
@@ -38,8 +42,8 @@ const ChapterIdPage = async ({
     }
 
     // Determine if the chapter is locked or completed
-    const isLocked = !chapter.isFree && !course.isPurchased;
-    const isCompleted = !!chapter.userProgress?.[0]?.isCompleted;
+    const isLocked = !chapter.isFree;// && !course.isPurchased;
+    const isCompleted = false;//!!chapter.userProgress?.[0]?.isCompleted;
 
     console.log("content", chapter.description);
     return (

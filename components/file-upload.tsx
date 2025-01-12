@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 interface FileUploadProps {
   onFileChange: (file: File) => void;
 }
-export const FileUpload = ({ courseId }: { courseId: number }) => {
+export const FileUpload = ({ courseId }: { courseId: string }) => {
   const sasToken = process.env.NEXT_PUBLIC_AZURE_SAS_TOKEN;
   const containerName = process.env.NEXT_PUBLIC_AZURE_BLOB_CONTAINER_NAME ?? "default";
   const accountName = process.env.NEXT_PUBLIC_AZURE_BLOB_ACCOUNT_NAME;
@@ -51,7 +51,7 @@ export const FileUpload = ({ courseId }: { courseId: number }) => {
     }
   };
 
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const handleButtonClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();

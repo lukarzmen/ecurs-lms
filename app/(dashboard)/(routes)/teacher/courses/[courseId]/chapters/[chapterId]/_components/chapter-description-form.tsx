@@ -19,6 +19,7 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import LexicalEditor from "@/components/editor/LexicalEditor";
 import { SerializedDocument } from "@lexical/file";
+import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 
 const formSchema = z.object({
   description: z.string().min(1),
@@ -67,9 +68,9 @@ export const ChapterDescriptionForm = ({
     }
   };
 
-  const handleOnSave = (serializedDocument: SerializedDocument) => {
+  const handleOnSave = (serializedDocument: SerializedDocument): SaveResult => {
     console.log(serializedDocument);
-    return true;
+    return { success: true, hash: "" };
   }
 
   return (

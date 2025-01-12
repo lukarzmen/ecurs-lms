@@ -53,5 +53,5 @@ export const getChapter = async ({ userId, courseId, chapterId }: GetChapterProp
 }
     
 
-    return chapter;
+    return chapterId;
 };

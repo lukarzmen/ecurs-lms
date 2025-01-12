@@ -14,7 +14,7 @@ import {useSettings} from './context/SettingsContext';
 import Switch from './ui/Switch';
 
 export default function Settings(): JSX.Element {
-  const windowLocation = window.location;
+  const windowLocation = typeof window !== 'undefined' ? window.location : { search: '' };
   const {
     setOption,
     settings: {
@@ -43,7 +43,7 @@ export default function Settings(): JSX.Element {
   }, []);
   const [showSettings, setShowSettings] = useState(false);
   const [isSplitScreen, search] = useMemo(() => {
-    const parentWindow = window.parent;
+    const parentWindow = typeof window !== 'undefined' ? window.parent : null;
     const _search = windowLocation.search;
     const _isSplitScreen =
       parentWindow && parentWindow.location.pathname === '/split/';
