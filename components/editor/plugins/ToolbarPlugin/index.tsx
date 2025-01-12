@@ -98,15 +98,15 @@ import {InsertPollDialog} from '../PollPlugin';
 import {InsertTableDialog} from '../TablePlugin';
 import FontSize from './fontSize';
 import Settings from '../../Settings';
-import { GapNode } from '../../nodes/GapNode';
-import { InsertQuizDialog } from '../QuizPlugin';
+import { GapNode } from '../../nodes/GapNode/GapNode';
+import { InsertQuizDialog } from '../QuizPlugin/InsertQuizDialog';
 import { DictionaryPlugin, TO_DICTIONARY_COMMAND } from '../DictionaryPlugin';
 import { ToDictionaryDialog } from '../DictionaryKeywordsPlugin';
 import { DictionaryKeywordNode } from '../../nodes/DictionaryNode/DictionaryKeywordNode';
 import { GENERATE_DICTIONARY_COMMAND } from '../GenerateDictionaryPlugin';
 import OpenAIService from '@/services/OpenAIService';
 import { GENERATE_TEXT_COMMAND, TextGeneratorDialog } from '../TextGeneratorPlugin';
-import { QuestionAnswerDialog } from '../QuestionAnswerPlugin';
+import { QuestionAnswerDialog } from '../QuestionAnswerPlugin/QuestionAnswerDialog';
 import { INSERT_GAP_NODE_COMMAND } from '../GapPlugin';
 
 const blockTypeToBlockName = {

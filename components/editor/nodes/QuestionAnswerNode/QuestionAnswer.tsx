@@ -1,12 +1,15 @@
 import { DecoratorNode } from "lexical";
 import QuestionAnswerComponent from "./QuestionAnswerComponent";
 
+
 export class QuestionAnswerNode extends DecoratorNode<JSX.Element> {
   __question: string;
+  __answer: string;
 
-  constructor(question: string, key?: string) {
+  constructor(question: string, answer: string, key?: string) {
     super(key);
     this.__question = question;
+    this.__answer = answer;
   }
 
   static getType(): string {
@@ -18,8 +21,8 @@ export class QuestionAnswerNode extends DecoratorNode<JSX.Element> {
   }
 
   static importJSON(serializedNode: any): QuestionAnswerNode {
-    const { question } = serializedNode;
-    return new QuestionAnswerNode(question);
+    const { question, answer } = serializedNode;
+    return new QuestionAnswerNode(question, answer);
   }
 
   exportJSON(): any {
@@ -27,6 +30,7 @@ export class QuestionAnswerNode extends DecoratorNode<JSX.Element> {
       type: "question-answer",
       version: 1,
       question: this.__question,
+      answer: this.__answer,
     };
   }
 
@@ -39,10 +43,10 @@ export class QuestionAnswerNode extends DecoratorNode<JSX.Element> {
   }
 
   decorate(): JSX.Element {
-    return <QuestionAnswerComponent question={this.__question} />;
+    return <QuestionAnswerComponent question={this.__question} answer={this.__answer} />;
   }
 }
 
-export function $createQuestionAnswerNode(question: string): QuestionAnswerNode {
-  return new QuestionAnswerNode(question);
+export function $createQuestionAnswerNode(qa: QAType): QuestionAnswerNode {
+  return new QuestionAnswerNode(qa.question, qa.answer);
 }
