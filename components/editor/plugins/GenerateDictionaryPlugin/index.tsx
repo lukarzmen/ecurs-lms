@@ -1,8 +1,8 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $createParagraphNode, $getRoot, $getSelection, $isRangeSelection, COMMAND_PRIORITY_LOW, createCommand, LexicalCommand, LexicalNode } from "lexical";
+import { $createParagraphNode, $getRoot, $getSelection, $isRangeSelection, COMMAND_PRIORITY_LOW, createCommand, LexicalCommand } from "lexical";
 import { useCallback, useEffect } from "react";
-import { DictionaryKeywordNode } from "../../nodes/DictionaryNode/DictionaryKeywordNode";
 import { Dictionary, DictionaryNode } from "../../nodes/DictionaryNode";
+import { DescriptionNode } from "../../nodes/DictionaryNode/DescriptionNode";
 
 export const GENERATE_DICTIONARY_COMMAND: LexicalCommand<string> = createCommand(
   'GENERATE_DICTIONARY_COMMAND'
@@ -18,7 +18,7 @@ export function GenerateDictionaryPlugin() {
       if ($isRangeSelection(selection)) {
         const nodes = selection.getNodes();
         nodes.forEach((node) => {
-            if (node instanceof DictionaryKeywordNode) {  
+            if (node instanceof DescriptionNode) {  
               dictionaryData[node.__text] = '';
             }
         });

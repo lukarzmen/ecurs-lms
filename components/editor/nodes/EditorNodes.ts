@@ -39,8 +39,10 @@ import { GapNode } from './GapNode';
 import { QuizNode } from './QuizNode/QuizNode';
 import { DictionaryKeywordNode } from './DictionaryNode/DictionaryKeywordNode';
 import { DictionaryNode } from './DictionaryNode';
-import { DefinitionNode } from './DefinitionNode';
 import { QuestionAnswerNode } from './QuestionAnswerNode/QuestionAnswer';
+import { Description } from '@radix-ui/react-dialog';
+import { DefinitionNode } from './DefinitionNode';
+import { DescriptionNode } from './DictionaryNode/DescriptionNode';
 
 const EditorNodes: Array<Klass<LexicalNode>> = [
   HeadingNode,
@@ -79,6 +81,7 @@ const EditorNodes: Array<Klass<LexicalNode>> = [
   QuizNode,
   DictionaryNode,
   DefinitionNode,
+  DescriptionNode,
   DictionaryKeywordNode,
   QuestionAnswerNode
 ];

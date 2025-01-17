@@ -29,7 +29,10 @@ export class DictionaryNode extends DecoratorNode<JSX.Element> {
       dictionaryData: this.__dictionaryData,
     };
   }
-
+  static importJSON(serializedNode: any): DictionaryNode {
+    const { dictionaryData } = serializedNode;
+    return new DictionaryNode(dictionaryData);
+  }
   updateDOM() {
     return false; // DOM does not need updates
   }

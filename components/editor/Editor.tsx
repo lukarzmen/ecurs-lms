@@ -63,6 +63,7 @@ import { GenerateDictionaryPlugin } from './plugins/GenerateDictionaryPlugin';
 import TextGeneratorPlugin from './plugins/TextGeneratorPlugin';
 import QuestionAnswerPlugin from './plugins/QuestionAnswerPlugin';
 import GapNodePlugin from './plugins/GapPlugin';
+import DescriptionPlugin from './plugins/DescriptionPlugin';
 
 
 export default function Editor( {
@@ -154,6 +155,7 @@ export default function Editor( {
         <QuizPlugin />
         <GenerateDictionaryPlugin />
         <QuestionAnswerPlugin />
+        <DescriptionPlugin />
         <YouTubePlugin />
         <ClickableLinkPlugin disabled={isEditable} />
         <HorizontalRulePlugin />

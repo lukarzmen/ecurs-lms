@@ -102,6 +102,7 @@ import { GENERATE_DICTIONARY_COMMAND } from '../GenerateDictionaryPlugin';
 import { TextGeneratorDialog } from '../TextGeneratorPlugin';
 import { QuestionAnswerDialog } from '../QuestionAnswerPlugin/QuestionAnswerDialog';
 import { INSERT_GAP_NODE_COMMAND } from '../GapPlugin';
+import { INSERT_DEFINITION_NODE_COMMAND } from '../DescriptionPlugin';
 
 const blockTypeToBlockName = {
   bullet: 'Bulleted List',
@@ -1271,9 +1272,7 @@ function toDictionary() {
         </DropDownItem>
         <DropDownItem
           onClick={() => {
-            activeEditor.update(() => {
-              toDictionary();
-            });
+            activeEditor.dispatchCommand(INSERT_DEFINITION_NODE_COMMAND, "");
           }}
           className="item">
           <i className="icon plus" />
