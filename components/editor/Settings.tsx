@@ -18,37 +18,15 @@ export default function Settings(): JSX.Element {
   const {
     setOption,
     settings: {
-      measureTypingPerf,
-      isCollab,
-      isRichText,
       isMaxLength,
-      hasLinkAttributes,
-      isCharLimit,
-      isCharLimitUtf8,
       isAutocomplete,
-      showTreeView,
-      showNestedEditorTreeView,
-      disableBeforeInput,
       showTableOfContents,
       shouldUseLexicalContextMenu,
       shouldPreserveNewLinesInMarkdown,
     },
   } = useSettings();
-  useEffect(() => {
-    if (INITIAL_SETTINGS.disableBeforeInput && CAN_USE_BEFORE_INPUT) {
-      console.error(
-        `Legacy events are enabled (disableBeforeInput) but CAN_USE_BEFORE_INPUT is true`,
-      );
-    }
-  }, []);
+
   const [showSettings, setShowSettings] = useState(false);
-  const [isSplitScreen, search] = useMemo(() => {
-    const parentWindow = typeof window !== 'undefined' ? window.parent : null;
-    const _search = windowLocation.search;
-    const _isSplitScreen =
-      parentWindow && parentWindow.location.pathname === '/split/';
-    return [_isSplitScreen, _search];
-  }, [windowLocation]);
 
   return (
     <>
@@ -58,57 +36,7 @@ export default function Settings(): JSX.Element {
           <i className="format settings" />
         </button>
       {showSettings ? (
-        <div className="switches">
-          {isRichText && (
-            <Switch
-              onClick={() => {
-                setOption('isCollab', !isCollab);
-                window.location.reload();
-              }}
-              checked={isCollab}
-              text="Collaboration"
-            />
-          )}
-          <Switch
-            onClick={() => setOption('measureTypingPerf', !measureTypingPerf)}
-            checked={measureTypingPerf}
-            text="Measure Perf"
-          />
-          <Switch
-            onClick={() => setOption('showTreeView', !showTreeView)}
-            checked={showTreeView}
-            text="Debug View"
-          />
-          <Switch
-            onClick={() =>
-              setOption('showNestedEditorTreeView', !showNestedEditorTreeView)
-            }
-            checked={showNestedEditorTreeView}
-            text="Nested Editors Debug View"
-          />
-          <Switch
-            onClick={() => {
-              setOption('isRichText', !isRichText);
-              setOption('isCollab', false);
-            }}
-            checked={isRichText}
-            text="Rich Text"
-          />
-          <Switch
-            onClick={() => setOption('isCharLimit', !isCharLimit)}
-            checked={isCharLimit}
-            text="Char Limit"
-          />
-          <Switch
-            onClick={() => setOption('isCharLimitUtf8', !isCharLimitUtf8)}
-            checked={isCharLimitUtf8}
-            text="Char Limit (UTF-8)"
-          />
-          <Switch
-            onClick={() => setOption('hasLinkAttributes', !hasLinkAttributes)}
-            checked={hasLinkAttributes}
-            text="Link Attributes"
-          />
+        <div className="switches">         
           <Switch
             onClick={() => setOption('isMaxLength', !isMaxLength)}
             checked={isMaxLength}
@@ -118,14 +46,6 @@ export default function Settings(): JSX.Element {
             onClick={() => setOption('isAutocomplete', !isAutocomplete)}
             checked={isAutocomplete}
             text="Autocomplete"
-          />
-          <Switch
-            onClick={() => {
-              setOption('disableBeforeInput', !disableBeforeInput);
-              setTimeout(() => window.location.reload(), 500);
-            }}
-            checked={disableBeforeInput}
-            text="Legacy Events"
           />
           <Switch
             onClick={() => {

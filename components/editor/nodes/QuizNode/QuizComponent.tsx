@@ -39,14 +39,18 @@ export default function QuizComponent({ question, answers, correctAnswerIndex, n
                 : 'bg-blue-500 text-white hover:bg-blue-600'
             }`}
           >
-            {answer}
+            {answer}         
           </button>
         ))}
       </div>
       {isSubmitted ? (
+        <div>
         <p className="mt-4 text-center font-medium text-lg">
           {selectedAnswer === correctAnswerIndex ? 'Correct!' : 'Incorrect. Try again!'}
         </p>
+        {correctAnswerDescription ? <p className="mt-4 text-center font-medium italic">{correctAnswerDescription}</p> : null}
+        </div>
+     
       ) : (
         <button
           onClick={handleSubmit}

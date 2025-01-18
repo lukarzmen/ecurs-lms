@@ -27,7 +27,7 @@ export default function InsertGapNodePlugin(): JSX.Element | null {
             const selectedText = selection.getTextContent();
 
             if (selectedText.trim() === "") {
-              console.warn("No text selected for the GapNode.");
+              alert("To change selected to gap please select text first.");
               return false; // Early exit if no text is selected
             }
 

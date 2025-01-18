@@ -201,18 +201,20 @@ export default function FontSize({
         className="toolbar-item font-decrement">
         <i className="format minus-icon" />
       </button>
+      <div>
+        <input
+          type="number"
+          value={inputValue}
+          disabled={disabled}
+          className="toolbar-item font-size-input"
+          min={MIN_ALLOWED_FONT_SIZE}
+          max={MAX_ALLOWED_FONT_SIZE}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyPress}
+          onBlur={handleInputBlur}
+        />
+      </div>
 
-      <input
-        type="number"
-        value={inputValue}
-        disabled={disabled}
-        className="toolbar-item font-size-input"
-        min={MIN_ALLOWED_FONT_SIZE}
-        max={MAX_ALLOWED_FONT_SIZE}
-        onChange={(e) => setInputValue(e.target.value)}
-        onKeyDown={handleKeyPress}
-        onBlur={handleInputBlur}
-      />
 
       <button
         type="button"

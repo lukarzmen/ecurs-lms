@@ -20,9 +20,7 @@ import {TabIndentationPlugin} from '@lexical/react/LexicalTabIndentationPlugin';
 import {TablePlugin} from '@lexical/react/LexicalTablePlugin';
 import * as React from 'react';
 import {useEffect, useState} from 'react';
-import {CAN_USE_DOM} from './shared/canUseDOM';
 
-import {createWebsocketProvider} from './collaboration';
 import {useSettings} from './context/SettingsContext';
 import {useSharedHistoryContext} from './context/SharedHistoryContext';
 import ActionsPlugin, { SaveResult } from './plugins/ActionsPlugin';
@@ -31,7 +29,6 @@ import AutoEmbedPlugin from './plugins/AutoEmbedPlugin';
 import AutoLinkPlugin from './plugins/AutoLinkPlugin';
 import CodeHighlightPlugin from './plugins/CodeHighlightPlugin';
 import CollapsiblePlugin from './plugins/CollapsiblePlugin';
-import CommentPlugin from './plugins/CommentPlugin';
 import ComponentPickerPlugin from './plugins/ComponentPickerPlugin';
 import DragDropPaste from './plugins/DragDropPastePlugin';
 import EmojiPickerPlugin from './plugins/EmojiPickerPlugin';
@@ -50,7 +47,6 @@ import MentionsPlugin from './plugins/MentionsPlugin';
 import PageBreakPlugin from './plugins/PageBreakPlugin';
 import PollPlugin from './plugins/PollPlugin';
 import QuizPlugin from './plugins/QuizPlugin';
-import SpeechToTextPlugin from './plugins/SpeechToTextPlugin';
 import TabFocusPlugin from './plugins/TabFocusPlugin';
 import TableCellResizer from './plugins/TableCellResizer';
 import ToolbarPlugin from './plugins/ToolbarPlugin';
@@ -64,6 +60,7 @@ import TextGeneratorPlugin from './plugins/TextGeneratorPlugin';
 import QuestionAnswerPlugin from './plugins/QuestionAnswerPlugin';
 import GapNodePlugin from './plugins/GapPlugin';
 import DescriptionPlugin from './plugins/DescriptionPlugin';
+import TableOfContentsPlugin from './plugins/TableOfContentsPlugin';
 
 
 export default function Editor( {
@@ -79,7 +76,7 @@ export default function Editor( {
   const {historyState} = useSharedHistoryContext();
   const {
     settings: {
-      isCollab,
+      showTableOfContents,
       isAutocomplete,
       isMaxLength,
       hasLinkAttributes,
@@ -107,6 +104,7 @@ export default function Editor( {
 
   return (
     <>
+      {showTableOfContents && <TableOfContentsPlugin />}
       {isEditable && <ToolbarPlugin setIsLinkEditMode={setIsLinkEditMode} />}
       <div
         className={`editor-container plain-text`}>
@@ -167,7 +165,7 @@ export default function Editor( {
         <PageBreakPlugin />
         <LayoutPlugin />
         
-        {isAutocomplete && <AutocompletePlugin />}       
+        {/* {isAutocomplete && <AutocompletePlugin />}        */}
         {isEditable && (<ActionsPlugin
           onSave={onSave}
           isRichText={true}

@@ -84,13 +84,13 @@ export default function DescriptionPlugin(): JSX.Element | null {
           if ($isRangeSelection(selection)) {
             const textContent = selection.getTextContent().trim();
             if (!textContent) {
-              console.warn("No text selected for the DefinitionNode.");
+              alert("To add definition to selected text please select text first.");
               return false;
             }
 
             setSelectedText(textContent);
             setIsModalOpen(true); // Open the modal
-          }
+          }     
         });
 
         return true;

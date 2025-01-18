@@ -865,18 +865,6 @@ export default function ToolbarPlugin({
   const canViewerSeeInsertDropdown = !isImageCaption;
   const canViewerSeeInsertCodeButton = !isImageCaption;
   
-function toDictionary() {
-  const selection = $getSelection();
-    const textSelection = $getTextContent();
-    if (!selection) {
-      alert('Zaznacz tekst, który chcesz zamienić na lukę.');
-      return;
-    }
-    if ($isRangeSelection(selection)) {      
-      const dictionaryKeywordNode = new DictionaryKeywordNode(textSelection);
-      selection.insertNodes([dictionaryKeywordNode]);
-}
-}
 
   return (
     <div className="toolbar">
