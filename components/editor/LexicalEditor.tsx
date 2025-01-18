@@ -9,25 +9,13 @@ import './index.css';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import * as React from 'react';
 
-import { SettingsContext, useSettings } from './context/SettingsContext';
-import { SharedAutocompleteContext } from './context/SharedAutocompleteContext';
+import { SettingsContext } from './context/SettingsContext';
 import { SharedHistoryContext } from './context/SharedHistoryContext';
 import Editor from './Editor';
 import EditorNodes from './nodes/EditorNodes';
-import DocsPlugin from './plugins/DocsPlugin';
-import PasteLogPlugin from './plugins/PasteLogPlugin';
-import { TableContext } from './plugins/TablePlugin';
-import TestRecorderPlugin from './plugins/TestRecorderPlugin';
-import TypingPerfPlugin from './plugins/TypingPerfPlugin';
 import { SerializedDocument } from '@lexical/file';
 import { FlashMessageContext } from './context/FlashMessageContext';
 
-console.warn(
-  'If you are profiling the playground app, please ensure you turn off the debug view. You can disable it by pressing on the settings control in the bottom-left of your screen and toggling the debug view setting.',
-);
-
-
-import { useEffect } from 'react';
 import PlaygroundEditorTheme from './themes/PlaygroundEditorTheme';
 import { SaveResult } from './plugins/ActionsPlugin';
 
