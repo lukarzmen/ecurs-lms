@@ -86,8 +86,6 @@ export default function Editor( {
     },
   } = useSettings();
 
-  const placeholder = "Start typing here...";
-
   const [isLinkEditMode, setIsLinkEditMode] = useState<boolean>(false);
   const [editor] = useLexicalComposerContext();
 
@@ -129,7 +127,7 @@ export default function Editor( {
           contentEditable={
             <div className="editor-scroller">
               <div className="editor">
-                <ContentEditable placeholder={placeholder} />
+                <ContentEditable placeholder={""} />
               </div>
             </div>
           }

@@ -280,12 +280,24 @@ export default function ActionsPlugin({
 }
 
 function ShareEditorDialog({ hash, onClose }: { hash: string; onClose: () => void }): JSX.Element {
-  const shareUrl = `${window.location.origin}/api/task/${hash}`;
+  const shareUrl = `${window.location.origin}/editor/${hash}`;
   const title = 'Masz nowe zadanie!';
   const exampleImage = 'https://via.placeholder.com/150';
   return (
-    <div>
-      <div className="grid grid-cols-2 gap-2 justify-center">
+    <div className="border p-4 rounded">
+      <h2>
+      Share this link: {shareUrl}
+      <button
+        onClick={() => {
+          navigator.clipboard.writeText(shareUrl);
+          alert('Link copied to clipboard!');
+        }}
+        className="ml-2 border border-gray-300 rounded px-2 py-1"
+      >
+        Copy
+      </button>
+      </h2>
+      <div className="flex flex-wrap gap-2 justify-center mt-4">
         <FacebookShareButton
           url={shareUrl}
           className="Demo__some-network__share-button"
@@ -360,14 +372,6 @@ function ShareEditorDialog({ hash, onClose }: { hash: string; onClose: () => voi
           <EmailIcon size={32} round />
         </EmailShareButton>
       </div>
-      <Button
-        onClick={() => {
-          onClose();
-        }}
-        className="col-span-2 mt-4"
-      >
-        Close
-      </Button>
     </div>
   );
 }

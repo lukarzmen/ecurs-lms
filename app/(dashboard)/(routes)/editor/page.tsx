@@ -24,10 +24,25 @@ export default function EditorPage() {
         console.log(serializedDocumentJSON);
 
         const hash = hashDocument(serializedDocumentJSON);
+        fetch(`/api/editor/${hash}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(serializedDocument),
+        })
+          .then(response => response.json())
+          .then(data => {
+            console.log('Success:', data);
+          })
+          .catch((error) => {
+            console.error('Error:', error);
+          });
         console.log(hash);
         return { success: true, hash: hash };
       }} onEditorChange={function (editorState: string): void {
         
+
       }} initialStateJSON={null} isEditable={true}></PlaygroundApp>
     </div>
   );
