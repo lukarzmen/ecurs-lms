@@ -1,3 +1,4 @@
+import { SerializedDocument } from "@lexical/file";
 import { NextResponse } from "next/server";
 import { createClient } from "redis";
 
@@ -18,7 +19,7 @@ export async function GET(req: Request, { params }: { params: { editorId: string
         await client.connect();
         const editorJsonString = await client.get(editorId);
         console.log("GET /api/editor");
-        console.log(editorId);
+        console.log(editorJsonString);
         if (!editorJsonString) {
             return new NextResponse("Not Found: No data for given editorId", {
                 status: 404,
@@ -26,8 +27,9 @@ export async function GET(req: Request, { params }: { params: { editorId: string
         }
 
         const response = new NextResponse(
-            JSON.stringify({ editorJsonString }), { status: 200 }
+            editorJsonString, { status: 200 }
         );
+        await client.disconnect();
         return response;
     } catch (error) {
         console.error("Error in GET /api/editor", error);
@@ -41,17 +43,16 @@ export async function POST(req: Request, { params }: { params: { editorId: strin
 
     try {
         const { editorId } = params;
-        const editorJsonString = await req.text();
+        const serializedEditorDocument: SerializedDocument = await req.json();
+
         console.log("POST /api/editor");
         console.log(editorId);
-        console.log(editorJsonString);
-        if (!editorId || !editorJsonString) {
+        console.log(serializedEditorDocument);
+        if (!editorId || !serializedEditorDocument) {
             return new NextResponse("Bad Request: Missing editorId or prompt", {
                 status: 400,
             });
-        }
-
-       
+        }      
 
         const client = createClient({
             url: process.env.AZURE_REDIS_CONNECTIONSTRING
@@ -59,12 +60,13 @@ export async function POST(req: Request, { params }: { params: { editorId: strin
         client.on('error', err => console.log('Redis Client Error', err));
         
         await client.connect();
-        await client.set(editorId, editorJsonString);
+        await client.set(editorId, JSON.stringify(serializedEditorDocument));
 
 
         const response = new NextResponse(
             JSON.stringify({ message: "Created" }), { status: 201 }
         );
+        await client.disconnect();
         return response;
     } catch (error) {
         console.error("Error in POST /api/editor", error);
@@ -72,4 +74,5 @@ export async function POST(req: Request, { params }: { params: { editorId: strin
             status: 500,
         });
     }
+    
 }

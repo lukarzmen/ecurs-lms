@@ -1,48 +1,46 @@
 "use client";
 
-import PlaygroundApp from "@/components/editor/LexicalEditor";
 import { SerializedDocument } from "@lexical/file";
-import { hashDocument } from "@/services/HashedService";
 import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
-import { useEffect, useState } from "react";
-import ReadOnlyEditor from "@/components/editor/ReadonlyEditor";
 import LexicalEditor from "@/components/editor/LexicalEditor";
+import { useState, useEffect } from "react";
 
 const EditorPage = ({ params }: { params: { editorId: string } }) => {
-    const [initialStateJSON, setInitialState] = useState<string | null>(null);
+
+    const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
-            try {
-                const response = await fetch(`/api/editor/${params.editorId}`, {
-                    method: 'GET'
-                });
+            const response = await fetch(`/api/editor/${params.editorId}`, {
+                method: 'GET'
+            });
 
-                if (!response.ok) {
-                    throw new Error('Error fetching initial state');
-                }
-
-                const initialStateJSON = await response.text();
-                setInitialState(initialStateJSON);
-            } catch (error) {
-                console.error(error);
+            if (!response.ok) {
+                throw new Error('Error fetching initial state');
             }
+
+            const serializedEditorState: SerializedDocument = await response.json();
+            setSerializedEditorStateString(JSON.stringify(serializedEditorState.editorState));
         };
 
         fetchData();
-    }, [initialStateJSON]);
+    }, [params.editorId]);
+
+    if (serializedEditorStateString === null) {
+        return <div>Loading...</div>;
+    }
 
     return (
         <div className="p-6">
+            
+            <LexicalEditor initialStateJSON={serializedEditorStateString} isEditable={false} onEditorChange={() => {
 
-            <LexicalEditor initialStateJSON={initialStateJSON} isEditable={false} onEditorChange={() => {
-
-            }} onSave={(serializedDocument) => {
-            const saveResult: SaveResult = {
-                success: true,
-                hash: ''
-            };
-            return saveResult;
+            }} onSave={() => {
+                const saveResult: SaveResult = {
+                    success: true,
+                    hash: ''
+                };
+                return saveResult;
             }}/>
         </div>
     );

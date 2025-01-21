@@ -32,6 +32,15 @@ export function GapComponent({ hiddenText }: GapComponentProps) {
           placeholder="Type answer"
         />
         <button
+          onClick={() => {
+            setUserInput(hiddenText);
+            checkAnswer();
+          }}
+          className="absolute right-8 bg-transparent text-gray-600 hover:text-blue-600 text-xs"
+        >
+          👁️
+        </button>
+        <button
           onClick={checkAnswer}
           className="absolute right-1 bg-transparent text-gray-600 hover:text-green-600 text-xs"
         >

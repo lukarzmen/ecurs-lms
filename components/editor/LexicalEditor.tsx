@@ -32,7 +32,7 @@ export default function LexicalEditor({
 }): JSX.Element {
 
   const initialConfig = {
-    editorState: initialStateJSON && initialStateJSON.trim() !== '' ? initialStateJSON : undefined,
+    editorState: initialStateJSON,
     namespace: 'Playground',
     nodes: [...EditorNodes],
     editable: isEditable,

@@ -284,20 +284,20 @@ function ShareEditorDialog({ hash, onClose }: { hash: string; onClose: () => voi
   const title = 'Masz nowe zadanie!';
   const exampleImage = 'https://via.placeholder.com/150';
   return (
-    <div className="border p-4 rounded">
-      <h2>
-      Share this link: {shareUrl}
-      <button
-        onClick={() => {
-          navigator.clipboard.writeText(shareUrl);
-          alert('Link copied to clipboard!');
-        }}
-        className="ml-2 border border-gray-300 rounded px-2 py-1"
-      >
-        Copy
-      </button>
-      </h2>
-      <div className="flex flex-wrap gap-2 justify-center mt-4">
+    <div className="flex flex-col items-start border p-4 rounded w-full max-w-lg mx-auto">
+      <div className="text-center w-full break-words">
+        Share this link: {shareUrl}
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(shareUrl);
+            alert('Link copied to clipboard!');
+          }}
+          className="ml-2 border border-gray-300 rounded px-2 py-1"
+        >
+          Copy
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-2 justify-center mt-4 w-full">
         <FacebookShareButton
           url={shareUrl}
           className="Demo__some-network__share-button"
