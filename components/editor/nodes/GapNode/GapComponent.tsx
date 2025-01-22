@@ -34,7 +34,7 @@ export function GapComponent({ hiddenText }: GapComponentProps) {
         <button
           onClick={() => {
             setUserInput(hiddenText);
-            checkAnswer();
+            setIsCorrect(true);
           }}
           className="absolute right-8 bg-transparent text-gray-600 hover:text-blue-600 text-xs"
         >
@@ -47,7 +47,6 @@ export function GapComponent({ hiddenText }: GapComponentProps) {
           ❓
         </button>
       </div>
-      <span>to proceed.</span>
     </span>
   );
 }

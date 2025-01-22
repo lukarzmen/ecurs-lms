@@ -84,7 +84,6 @@ export default function ActionsPlugin({
   const [isEditable, setIsEditable] = useState(() => editor.isEditable());
   const [isEditorEmpty, setIsEditorEmpty] = useState(true);
   const [modal, showModal] = useModal();
-  const [isSaved, setIsSaved] = useState(false);
   const [hash, setHash] = useState('');
 
   const settings: ActionPluginsSettings = {
@@ -162,13 +161,7 @@ export default function ActionsPlugin({
       <button
         className="action-button save"
         onClick={() => {
-          const serializedDocument: SerializedDocument = serializedDocumentFromEditorState(editor.getEditorState(), {
-            source: 'Playground',
-          });
-          const saveResult = onSave(serializedDocument);
-          setHash(saveResult.hash);
-          setIsSaved(saveResult.success);
-          console.log(`Save result: ${saveResult}`);
+          SaveEditorState();
         }
         }
         title="Save"
@@ -217,8 +210,8 @@ export default function ActionsPlugin({
       {settings.isSharableEnabled &&
         <button
           className="action-button share"
-          disabled={!isSaved}
           onClick={() => {
+            SaveEditorState();
             showModal('Share editor', (onClose) => (
               <ShareEditorDialog
                 hash={hash}
@@ -267,16 +260,25 @@ export default function ActionsPlugin({
         aria-label={`${!isEditable ? 'Unlock' : 'Lock'} read-only mode`}>
         <i className={!isEditable ? 'unlock' : 'lock'} />
       </button> */}
-      <button
+      {/* <button
         className="action-button"
         onClick={handleMarkdownToggle}
         title="Convert From Markdown"
         aria-label="Convert from markdown">
         <i className="markdown" />
-      </button>
+      </button> */}
       {modal}
     </div>
   );
+
+  function SaveEditorState() {
+    const serializedDocument: SerializedDocument = serializedDocumentFromEditorState(editor.getEditorState(), {
+      source: 'Playground',
+    });
+    const saveResult = onSave(serializedDocument);
+    setHash(saveResult.hash);
+    console.log(`Save result: ${saveResult}`);
+  }
 }
 
 function ShareEditorDialog({ hash, onClose }: { hash: string; onClose: () => void }): JSX.Element {
