@@ -4,6 +4,7 @@ import { createClient } from "redis";
 
 export async function GET(req: Request, { params }: { params: { editorId: string } }) {
     try {
+        console.log("GET /api/editor", params);
         const { editorId } = params;
         if (!editorId) {
             return new NextResponse("Bad Request: Missing editorId", {
@@ -16,10 +17,12 @@ export async function GET(req: Request, { params }: { params: { editorId: string
         });
         client.on('error', err => console.log('Redis Client Error', err));
         
+        console.log("Create client");
         await client.connect();
+        console.log("GEt redis value");
         const editorJsonString = await client.get(editorId);
-        console.log("GET /api/editor");
-        console.log(editorJsonString);
+
+  
         if (!editorJsonString) {
             return new NextResponse("Not Found: No data for given editorId", {
                 status: 404,
@@ -42,23 +45,21 @@ export async function GET(req: Request, { params }: { params: { editorId: string
 export async function POST(req: Request, { params }: { params: { editorId: string } }) {
 
     try {
+        console.log("POST /api/editor", params);
         const { editorId } = params;
         const serializedEditorDocument: SerializedDocument = await req.json();
 
-        console.log("POST /api/editor");
-        console.log(editorId);
-        console.log(serializedEditorDocument);
         if (!editorId || !serializedEditorDocument) {
             return new NextResponse("Bad Request: Missing editorId or prompt", {
                 status: 400,
             });
         }      
-
+        console.log("Create client");
         const client = createClient({
             url: process.env.AZURE_REDIS_CONNECTIONSTRING
         });
         client.on('error', err => console.log('Redis Client Error', err));
-        
+        console.log("Set redis value");
         await client.connect();
         await client.set(editorId, JSON.stringify(serializedEditorDocument));
 
