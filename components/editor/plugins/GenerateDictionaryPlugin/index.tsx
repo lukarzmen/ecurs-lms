@@ -10,7 +10,12 @@ export const GENERATE_DICTIONARY_COMMAND: LexicalCommand<string> = createCommand
 
 export function GenerateDictionaryPlugin() {
     const [editor] = useLexicalComposerContext();
+    editor.registerNodeTransform(DictionaryNode, dictionaryNode => {
 
+      if (!editor.isEditable()) {
+        dictionaryNode.isEditable = false;
+      }
+    });
     const generateDictionary = useCallback(() => {
       const dictionaryData: Dictionary = {};
   
@@ -19,12 +24,12 @@ export function GenerateDictionaryPlugin() {
         const nodes = selection.getNodes();
         nodes.forEach((node) => {
             if (node instanceof DescriptionNode) {  
-              dictionaryData[node.__text] = '';
+              dictionaryData[node.__text] = node.__definition;
             }
         });
 
         // Create your custom node
-        const dictionaryNode = new DictionaryNode(dictionaryData);
+      const dictionaryNode = new DictionaryNode(dictionaryData, true);
 
         const root = $getRoot();
         const paragraphNode = $createParagraphNode();

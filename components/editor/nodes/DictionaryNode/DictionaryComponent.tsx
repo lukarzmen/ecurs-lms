@@ -3,13 +3,14 @@ import { random } from "lodash";
 
 interface DictionaryComponentProps {
   dictionary: Dictionary;
+  isReadonly?: boolean;
 }
 
 export interface Dictionary {
   [Key: string]: string;
 }
 
-export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictionary }) => {
+export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictionary, isReadonly }) => {
   const [entries, setEntries] = useState(Object.entries(dictionary));
   const [isFlashcardView, setIsFlashcardView] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -57,14 +58,14 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
 
   return (
     <div>
-      <button
+      {!isReadonly ? (<button
         onClick={() => setIsFlashcardView(!isFlashcardView)}
         className="mb-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
       >
         {isFlashcardView ? "To Table View" : "To Flashcard View"}
-      </button>
+      </button>) : null}
 
-      {isFlashcardView ? (
+      {isFlashcardView || isReadonly ? (
         <div className="flex flex-col items-center">
           {entries.length > 0 && (
             <div

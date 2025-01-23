@@ -1246,7 +1246,7 @@ export default function ToolbarPlugin({
           }}
           className="item">
           <i className="icon fillgap" />
-          <span className="text">To gap</span>
+          <span className="text">Replace by gap</span>
         </DropDownItem>
         <DropDownItem
           onClick={() => {
@@ -1256,7 +1256,7 @@ export default function ToolbarPlugin({
           }}
           className="item">
           <i className="icon quiz" />
-          <span className="text">Generate test</span>
+          <span className="text">Add quiz</span>
         </DropDownItem>
         <DropDownItem
           onClick={() => {
@@ -1264,7 +1264,7 @@ export default function ToolbarPlugin({
           }}
           className="item">
           <i className="icon plus" />
-          <span className="text">To dictionary</span>
+          <span className="text">Add definition</span>
         </DropDownItem>
         <DropDownItem
           onClick={() => {
@@ -1272,7 +1272,7 @@ export default function ToolbarPlugin({
           }}
           className="item">
           <i className="icon dictionary" />
-          <span className="text">Generate dictionary</span>
+          <span className="text">Create dictionary</span>
         </DropDownItem>
         <DropDownItem
           onClick={() => {
@@ -1299,7 +1299,7 @@ export default function ToolbarPlugin({
           }}
           className="item">
           <i className="icon question" />
-          <span className="text">Add question</span>
+          <span className="text">Add question - answer</span>
         </DropDownItem>
       </DropDown>
       <Divider />

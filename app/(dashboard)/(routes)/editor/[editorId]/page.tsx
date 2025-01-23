@@ -4,6 +4,7 @@ import { SerializedDocument } from "@lexical/file";
 import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 import LexicalEditor from "@/components/editor/LexicalEditor";
 import { useState, useEffect } from "react";
+import { Dictionary, DictionaryNode } from "@/components/editor/nodes/DictionaryNode";
 
 const EditorPage = ({ params }: { params: { editorId: string } }) => {
 
@@ -20,6 +21,14 @@ const EditorPage = ({ params }: { params: { editorId: string } }) => {
             }
 
             const serializedEditorState: SerializedDocument = await response.json();
+            serializedEditorState.editorState.root.
+            serializedEditorState.editorState.root.children.forEach((node) => {
+                if (node.type === "dictionary") {
+                    const dictionaryNode = node as DictionaryNode;
+                    node.isEditable = false;
+                }
+                    
+            });
             setSerializedEditorStateString(JSON.stringify(serializedEditorState.editorState));
         };
 
