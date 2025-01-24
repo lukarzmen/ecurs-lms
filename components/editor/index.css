@@ -374,6 +374,13 @@ i.palette {
   background-image: url(images/icons/quiz.svg);
 }
 
+.icon.ai {
+  background-image: url(images/icons/magic.svg);
+}
+.icon.audio {
+  background-image: url(images/icons/audio.svg);
+}
+
 .icon.dictionary {
   background-image: url(images/icons/dictionary.svg);
 }

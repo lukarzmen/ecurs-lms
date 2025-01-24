@@ -103,6 +103,7 @@ import { TextGeneratorDialog } from '../TextGeneratorPlugin';
 import { QuestionAnswerDialog } from '../QuestionAnswerPlugin/QuestionAnswerDialog';
 import { INSERT_GAP_NODE_COMMAND } from '../GapPlugin';
 import { INSERT_DEFINITION_NODE_COMMAND } from '../DescriptionPlugin';
+import { CREATE_AUDIO_NODE_COMMAND } from '../AudioPlugin';
 
 const blockTypeToBlockName = {
   bullet: 'Bulleted List',
@@ -1274,6 +1275,28 @@ export default function ToolbarPlugin({
           <i className="icon dictionary" />
           <span className="text">Create dictionary</span>
         </DropDownItem>
+
+        <DropDownItem
+          onClick={() => {
+            showModal('Insert QA', (onClose) => (
+              <QuestionAnswerDialog
+              activeEditor={activeEditor}
+              onClose={onClose}
+            />
+            ));
+          }}
+          className="item">
+          <i className="icon question" />
+          <span className="text">Add question - answer</span>
+        </DropDownItem>
+      </DropDown>
+      <Divider />
+      <DropDown
+        disabled={!isEditable}
+        buttonClassName="toolbar-item spaced"
+        buttonLabel="AI"
+        buttonAriaLabel="Custom options"
+        buttonIconClassName="icon ai">
         <DropDownItem
           onClick={() => {
             showModal('Generate content', (onClose) => (
@@ -1289,19 +1312,14 @@ export default function ToolbarPlugin({
         </DropDownItem>
         <DropDownItem
           onClick={() => {
-            showModal('Insert QA', (onClose) => (
-              <QuestionAnswerDialog
-              activeEditor={activeEditor}
-              onClose={onClose}
-            />
-            ));
-            
+            activeEditor.dispatchCommand(CREATE_AUDIO_NODE_COMMAND, "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3");
           }}
           className="item">
-          <i className="icon question" />
-          <span className="text">Add question - answer</span>
+          <i className="icon audio" />
+          <span className="text">Add audio</span>
         </DropDownItem>
       </DropDown>
+        
       <Divider />
       <Settings />
       {modal}

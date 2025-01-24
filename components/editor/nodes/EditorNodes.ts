@@ -36,6 +36,7 @@ import {PollNode} from './PollNode';
 import {StickyNode} from './StickyNode';
 import {YouTubeNode} from './YouTubeNode';
 import { GapNode } from './GapNode';
+import {AudioNode} from './AudioNode';
 import { QuizNode } from './QuizNode/QuizNode';
 import { DictionaryKeywordNode } from './DictionaryNode/DictionaryKeywordNode';
 import { DictionaryNode } from './DictionaryNode';
@@ -78,6 +79,7 @@ const EditorNodes: Array<Klass<LexicalNode>> = [
   LayoutContainerNode,
   LayoutItemNode,
   GapNode,
+  AudioNode,
   QuizNode,
   DictionaryNode,
   DefinitionNode,

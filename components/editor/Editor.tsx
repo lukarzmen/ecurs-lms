@@ -61,6 +61,8 @@ import QuestionAnswerPlugin from './plugins/QuestionAnswerPlugin';
 import GapNodePlugin from './plugins/GapPlugin';
 import DescriptionPlugin from './plugins/DescriptionPlugin';
 import TableOfContentsPlugin from './plugins/TableOfContentsPlugin';
+import AudioPlugin from './plugins/AudioPlugin';
+import FloatingTextFormatToolbarPlugin from './plugins/FloatingTextFormatToolbarPlugin';
 
 
 export default function Editor( {
@@ -121,6 +123,7 @@ export default function Editor( {
         <KeywordsPlugin />
         {/* <SpeechToTextPlugin /> */}
         <AutoLinkPlugin />
+        <AudioPlugin/>
         <DictionaryPlugin />
         <HistoryPlugin externalHistoryState={historyState} />        
         <RichTextPlugin
@@ -133,6 +136,9 @@ export default function Editor( {
           }
           ErrorBoundary={LexicalErrorBoundary}
         />
+        {/* <FloatingTextFormatToolbarPlugin setIsLinkEditMode={function (value: boolean): void {
+          setIsLinkEditMode(value); w nastepnej wersji wlaczyc
+        } } /> */}
         <MarkdownShortcutPlugin />
         <CodeHighlightPlugin />
         <ListPlugin />
