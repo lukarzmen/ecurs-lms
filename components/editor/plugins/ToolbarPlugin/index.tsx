@@ -103,7 +103,8 @@ import { TextGeneratorDialog } from '../TextGeneratorPlugin';
 import { QuestionAnswerDialog } from '../QuestionAnswerPlugin/QuestionAnswerDialog';
 import { INSERT_GAP_NODE_COMMAND } from '../GapPlugin';
 import { INSERT_DEFINITION_NODE_COMMAND } from '../DescriptionPlugin';
-import { CREATE_AUDIO_NODE_COMMAND } from '../AudioPlugin';
+import { CREATE_AUDIO_NODE_COMMAND, TranscriptionDialog } from '../AudioPlugin';
+import { LanguageSelectorDialog } from '../TranslationPlugin';
 
 const blockTypeToBlockName = {
   bullet: 'Bulleted List',
@@ -1242,6 +1243,14 @@ export default function ToolbarPlugin({
         buttonAriaLabel="Custom options"
         buttonIconClassName="icon dropdown-course">
         <DropDownItem
+          onClick={() => {
+            activeEditor.dispatchCommand(GENERATE_DICTIONARY_COMMAND, "");
+          }}
+          className="item">
+          <i className="icon dictionary" />
+          <span className="text">Create dictionary</span>
+        </DropDownItem>
+        <DropDownItem
           onClick={() => {          
             activeEditor.dispatchCommand(INSERT_GAP_NODE_COMMAND, "");           
           }}
@@ -1269,15 +1278,6 @@ export default function ToolbarPlugin({
         </DropDownItem>
         <DropDownItem
           onClick={() => {
-            activeEditor.dispatchCommand(GENERATE_DICTIONARY_COMMAND, "");
-          }}
-          className="item">
-          <i className="icon dictionary" />
-          <span className="text">Create dictionary</span>
-        </DropDownItem>
-
-        <DropDownItem
-          onClick={() => {
             showModal('Insert QA', (onClose) => (
               <QuestionAnswerDialog
               activeEditor={activeEditor}
@@ -1289,6 +1289,7 @@ export default function ToolbarPlugin({
           <i className="icon question" />
           <span className="text">Add question - answer</span>
         </DropDownItem>
+
       </DropDown>
       <Divider />
       <DropDown
@@ -1312,8 +1313,26 @@ export default function ToolbarPlugin({
         </DropDownItem>
         <DropDownItem
           onClick={() => {
-            activeEditor.dispatchCommand(CREATE_AUDIO_NODE_COMMAND, "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3");
+            showModal('Translate', (onClose) => (
+              <LanguageSelectorDialog
+                activeEditor={activeEditor}
+                onClose={onClose}
+              />
+            ));
           }}
+          className="item">
+          <i className="icon language" />
+          <span className="text">Translate</span>
+        </DropDownItem>
+        <DropDownItem
+            onClick={() => {
+              showModal('Add audio', (onClose) => (
+                <TranscriptionDialog 
+                  activeEditor={activeEditor}
+                  onClose={onClose}
+                />
+              ));
+            }}
           className="item">
           <i className="icon audio" />
           <span className="text">Add audio</span>

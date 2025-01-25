@@ -63,6 +63,8 @@ import DescriptionPlugin from './plugins/DescriptionPlugin';
 import TableOfContentsPlugin from './plugins/TableOfContentsPlugin';
 import AudioPlugin from './plugins/AudioPlugin';
 import FloatingTextFormatToolbarPlugin from './plugins/FloatingTextFormatToolbarPlugin';
+import SpeechToTextPlugin from './plugins/SpeechToTextPlugin';
+import TranslationPlugin from './plugins/TranslationPlugin';
 
 
 export default function Editor( {
@@ -120,6 +122,7 @@ export default function Editor( {
         <EmojisPlugin />
         <GapNodePlugin/>
         <HashtagPlugin />
+        <TranslationPlugin />
         <KeywordsPlugin />
         {/* <SpeechToTextPlugin /> */}
         <AutoLinkPlugin />
@@ -138,6 +141,7 @@ export default function Editor( {
         />
         {/* <FloatingTextFormatToolbarPlugin setIsLinkEditMode={function (value: boolean): void {
           setIsLinkEditMode(value); w nastepnej wersji wlaczyc
+
         } } /> */}
         <MarkdownShortcutPlugin />
         <CodeHighlightPlugin />

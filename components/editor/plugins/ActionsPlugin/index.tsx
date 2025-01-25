@@ -60,6 +60,7 @@ import useModal from '../../hooks/useModal';
 import Button from '../../ui/Button';
 import { docFromHash, docToHash } from '../../utils/docSerialization';
 import { PLAYGROUND_TRANSFORMERS } from '../MarkdownTransformers';
+import { SPEECH_TO_TEXT_COMMAND, SUPPORT_SPEECH_RECOGNITION } from '../SpeechToTextPlugin';
 // import {
 //   SPEECH_TO_TEXT_COMMAND,
 //   SUPPORT_SPEECH_RECOGNITION,
@@ -85,6 +86,7 @@ export default function ActionsPlugin({
   const [isEditorEmpty, setIsEditorEmpty] = useState(true);
   const [modal, showModal] = useModal();
   const [hash, setHash] = useState('');
+  const [isSpeechToText, setIsSpeechToText] = useState(false);
 
   const settings: ActionPluginsSettings = {
     isSpeechToTextEnabled: true,
@@ -168,6 +170,33 @@ export default function ActionsPlugin({
         aria-label="Save editor state">
         <i className="save" />
       </button>
+      {settings.isSharableEnabled &&
+        <button
+          className="action-button share"
+          onClick={() => {
+            SaveEditorState();
+            showModal('Share editor', (onClose) => (
+              <ShareEditorDialog
+                hash={hash}
+                onClose={onClose}
+              />
+            ));
+          }}
+
+          // shareDoc(
+          //   serializedDocumentFromEditorState(editor.getEditorState(), {
+          //     source: 'Playground',
+          //   }),
+          // ).then(
+          //   () => showFlashMessage('URL copied to clipboard'),
+          //   () => showFlashMessage('URL could not be copied to clipboard'),
+          // )
+
+          title="Share"
+          aria-label="Share Playground link to current editor state">
+          <i className="share" />
+        </button>
+      }
 
 
       {/* {SUPPORT_SPEECH_RECOGNITION && settings.isSpeechToTextEnabled && (
@@ -207,33 +236,6 @@ export default function ActionsPlugin({
         aria-label="Export editor state to JSON">
         <i className="export" />
       </button> */}
-      {settings.isSharableEnabled &&
-        <button
-          className="action-button share"
-          onClick={() => {
-            SaveEditorState();
-            showModal('Share editor', (onClose) => (
-              <ShareEditorDialog
-                hash={hash}
-                onClose={onClose}
-              />
-            ));
-          }}
-
-          // shareDoc(
-          //   serializedDocumentFromEditorState(editor.getEditorState(), {
-          //     source: 'Playground',
-          //   }),
-          // ).then(
-          //   () => showFlashMessage('URL copied to clipboard'),
-          //   () => showFlashMessage('URL could not be copied to clipboard'),
-          // )
-
-          title="Share"
-          aria-label="Share Playground link to current editor state">
-          <i className="share" />
-        </button>
-      }
 
       <button
         className="action-button clear"

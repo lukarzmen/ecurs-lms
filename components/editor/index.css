@@ -380,6 +380,9 @@ i.palette {
 .icon.audio {
   background-image: url(images/icons/audio.svg);
 }
+.icon.language {
+  background-image: url(images/icons/language.svg);
+}
 
 .icon.dictionary {
   background-image: url(images/icons/dictionary.svg);

@@ -57,6 +57,7 @@ function SpeechToTextPlugin(): null {
   useEffect(() => {
     if (isEnabled && recognition.current === null) {
       recognition.current = new SpeechRecognition();
+      recognition.current.lang = 'ru-RU';
       recognition.current.continuous = true;
       recognition.current.interimResults = true;
       recognition.current.addEventListener(

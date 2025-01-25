@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
     try {
         const llmPrompt: LLMPrompt = await req.json();
-
+        console.log("llmPrompt", llmPrompt);
         if (!llmPrompt) {
             return new NextResponse("Bad Request: Missing prompt", {
                 status: 400,
