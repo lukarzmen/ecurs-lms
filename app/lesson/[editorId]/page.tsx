@@ -9,17 +9,17 @@ import { useAuth } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 
 const EditorPage = ({ params }: { params: { editorId: string } }) => {
-    const { isLoaded, userId } = useAuth();
+    
+    const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
+    const { isLoaded, userId, sessionId, getToken } = useAuth();
 
     if (!isLoaded) {
         return <div>Loading...</div>;
     }
 
     if(!userId) {
-        return redirect(`/sign-in?redirectUrl=/editor/${params.editorId}`);
-      }
-    const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
-
+        return redirect("/sign-in");
+    }
     useEffect(() => {
         const fetchData = async () => {
             const response = await fetch(`/api/editor/${params.editorId}`, {
@@ -42,7 +42,7 @@ const EditorPage = ({ params }: { params: { editorId: string } }) => {
     }
 
     return (
-        <div className="p-2 h-full">
+        <div className="p-6">
             
             <LexicalEditor initialStateJSON={serializedEditorStateString} isEditable={false} onEditorChange={() => {
 

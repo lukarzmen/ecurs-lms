@@ -10,6 +10,7 @@ import {
   LexicalEditor,
 } from "lexical";
 import { AudioNode } from "../../nodes/AudioNode";
+import ProgressSpinner from "../TextGeneratorPlugin/ProgressComponent";
 
 export const CREATE_AUDIO_NODE_COMMAND: LexicalCommand<{ audioSrc: string; transcription?: string }> = createCommand(
   "CREATE_AUDIO_NODE_COMMAND"
@@ -24,8 +25,40 @@ export function TranscriptionDialog({
 }): JSX.Element {
   const [audioUrl, setAudioUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [generateTranscription, setGenerateTranscription] = useState(false); // New state for the checkbox
-  const [transcription, setTranscription] = useState<string | null>(null); // State to hold transcription
+  const [generateTranscription, setGenerateTranscription] = useState(false);
+  const [transcription, setTranscription] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null); // State to hold the selected file
+
+  const handleFileUpload = async () => {
+    if (!file) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/audio", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`File upload error: ${errorData.message}`);
+      }
+
+      const data = await response.json();
+      console.log(data);
+      setAudioUrl(`${window.location.origin}/api/audio/${data.id}`);
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!audioUrl.trim()) {
@@ -50,15 +83,10 @@ export function TranscriptionDialog({
           throw new Error(`Server error: ${response.status} - ${errorData.message}`);
         }
 
-        if (!response.ok) {
-          throw new Error(`Server error: ${response.status}`);
-        }
-
         const data = await response.json();
         generatedTranscription = data.transcription;
       }
 
-      // Dispatch the command to insert audio node (and transcription if needed)
       activeEditor.dispatchCommand(CREATE_AUDIO_NODE_COMMAND, {
         audioSrc: audioUrl,
         transcription: generateTranscription ? generatedTranscription : undefined,
@@ -83,7 +111,7 @@ export function TranscriptionDialog({
         </button>
         <h2 className="text-xl font-bold mb-4">Generate Audio Transcription</h2>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Audio URL
+          Audio URL or Upload MP3
         </label>
         <input
           type="text"
@@ -91,14 +119,34 @@ export function TranscriptionDialog({
           placeholder="Enter audio source URL..."
           value={audioUrl}
           onChange={(e) => setAudioUrl(e.target.value)}
+          disabled={loading}
         />
-        
+        <div className="flex items-center mb-4">
+          <input
+            type="file"
+            accept="audio/mp3"
+            className="w-full"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            disabled={loading}
+          />
+          {!loading ? (
+          <button
+            className="px-4 py-2 bg-blue-500 text-white rounded-md ml-2"
+            onClick={handleFileUpload}
+            disabled={loading || !file}
+          >
+            Upload
+          </button>
+          ) : <ProgressSpinner />}
+        </div>
+
         <div className="flex items-center mb-4">
           <input
             type="checkbox"
             className="mr-2"
             checked={generateTranscription}
             onChange={(e) => setGenerateTranscription(e.target.checked)}
+            disabled={loading}
           />
           <span className="text-sm">Generate Transcription</span>
         </div>
@@ -106,7 +154,7 @@ export function TranscriptionDialog({
         <div className="flex justify-end space-x-2">
           {loading ? (
             <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md" disabled>
-              Generating...
+              Processing...
             </button>
           ) : (
             <>
@@ -134,7 +182,6 @@ export default function AudioPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    // Register the command for creating an audio node
     return editor.registerCommand<{ audioSrc: string; transcription?: string }>(
       CREATE_AUDIO_NODE_COMMAND,
       ({ audioSrc, transcription }) => {
@@ -143,9 +190,8 @@ export default function AudioPlugin(): JSX.Element | null {
           const audioNode = new AudioNode(audioSrc);
           const paragraphNode = $createParagraphNode();
 
-          root.append(paragraphNode, audioNode); // Insert audio node
+          root.append(paragraphNode, audioNode);
 
-          // If transcription is provided, add transcription node
           if (transcription) {
             const transcriptionNode = $createParagraphNode();
             transcriptionNode.append($createTextNode(transcription));

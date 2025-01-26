@@ -6,9 +6,15 @@ import {hashDocument} from "@/services/HashedService";
 import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 
 
 export default function EditorPage() {
+  const { userId } = useAuth();
+  
+  if(!userId) {
+    return redirect(`/sign-in?redirectUrl=/editor`);
+  }
   //youtube & image plugin
   //https://codesandbox.io/p/sandbox/lexical-youtube-plugin-example-5unxt3?file=%2Fsrc%2Fplugins%2FYouTubePlugin.ts
   //https://codesandbox.io/p/sandbox/lexical-image-plugin-example-iy2bc5?file=%2Fsrc%2FApp.js
@@ -40,7 +46,7 @@ export default function EditorPage() {
           });
         console.log(hash);
         return { success: true, hash: hash };
-      }} onEditorChange={function (editorState: string): void {
+      }} onEditorChange={function (): void {
         
 
       }} initialStateJSON={null} isEditable={true}></PlaygroundApp>

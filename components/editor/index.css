@@ -61,6 +61,7 @@ header h1 {
   position: relative;
   line-height: 1.7;
   font-weight: 400;
+  height: 100vh; /* Full screen height */
 }
 
 .editor-shell .editor-container {

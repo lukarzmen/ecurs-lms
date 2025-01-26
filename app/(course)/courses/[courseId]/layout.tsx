@@ -11,9 +11,9 @@ const CourseLayout = async ({ children, params }: {
     params: { courseId: string; };
 }) => {
     const { userId } = auth() || { userId: '' };
-    if (!userId) {
-        return redirect('/');
-    }
+    if(!userId) {
+        return redirect("/sign-in");
+      }
 
     const {courseId} = await params;
     const course = await db.course.findFirst({

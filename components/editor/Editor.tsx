@@ -139,10 +139,10 @@ export default function Editor( {
           }
           ErrorBoundary={LexicalErrorBoundary}
         />
-        {/* <FloatingTextFormatToolbarPlugin setIsLinkEditMode={function (value: boolean): void {
-          setIsLinkEditMode(value); w nastepnej wersji wlaczyc
+        <FloatingTextFormatToolbarPlugin setIsLinkEditMode={function (value: boolean): void {
+          setIsLinkEditMode(value);
 
-        } } /> */}
+        } } />
         <MarkdownShortcutPlugin />
         <CodeHighlightPlugin />
         <ListPlugin />

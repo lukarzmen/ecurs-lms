@@ -15,9 +15,9 @@ interface CourseSidebarProps {
 }
 export const CourseSidebar = async ({ course }: CourseSidebarProps) => {
     const { userId } = auth();
-    if (!userId) {
-        return redirect('/');
-    }
+    if(!userId) {
+        return redirect("/sign-in");
+      }
     const purchases = await db.purchase.findUnique({
         where: {
             userId_courseId: {

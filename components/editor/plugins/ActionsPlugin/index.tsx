@@ -174,7 +174,7 @@ export default function ActionsPlugin({
         <button
           className="action-button share"
           onClick={() => {
-            SaveEditorState();
+            const hash = SaveEditorState();
             showModal('Share editor', (onClose) => (
               <ShareEditorDialog
                 hash={hash}
@@ -273,13 +273,14 @@ export default function ActionsPlugin({
     </div>
   );
 
-  function SaveEditorState() {
+  function SaveEditorState(): string {
     const serializedDocument: SerializedDocument = serializedDocumentFromEditorState(editor.getEditorState(), {
       source: 'Playground',
     });
     const saveResult = onSave(serializedDocument);
     setHash(saveResult.hash);
     console.log(`Save result: ${saveResult}`);
+    return saveResult.hash;
   }
 }
 

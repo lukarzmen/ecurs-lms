@@ -18,7 +18,7 @@ const ChapterIdPage = async ({
 
     // Redirect to home if user is not authenticated
     if (!user) {
-        return redirect("/");
+        return redirect("/sign-in");
     }
 
     // Fetch chapter data

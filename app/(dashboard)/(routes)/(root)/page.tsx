@@ -4,16 +4,14 @@ import { getDashboardCourses } from "@/actions/get-dashboard-courses";
 import { auth } from "@clerk/nextjs/server";
 import { CheckCircle, Clock } from "lucide-react";
 import { InfoCard } from "./_components/info-card";
+import { redirect } from "next/navigation";
 
 export default async function Home() {
   const {userId} = auth();
-  // if(!userId) {
-  //   return redirect("/");
-  // }
-
-  if(!userId){
-    return <div>Please first log to see courses</div>;
+  if(!userId) {
+    return redirect("/sign-in");
   }
+
   const {completedCourses, coursesInProgress} = await getDashboardCourses(userId);
 
   console.log(completedCourses);

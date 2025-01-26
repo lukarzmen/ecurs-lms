@@ -9,10 +9,11 @@
 .ContentEditable__root {
   border: 0;
   font-size: 15px;
+  height: 100vh;
   display: block;
   position: relative;
   outline: 0;
-  padding: 8px 28px 40px;
+  padding: 35px 28px 40px;
   min-height: 150px;
 }
 @media (max-width: 1025px) {

@@ -28,8 +28,8 @@ const CourseIdPage = async ({
   };
 }) => {
   const { userId } = auth() ?? "";
-  if (!userId) {
-    return redirect("/");
+  if(!userId) {
+    return redirect("/sign-in");
   }
   const { courseId } = await params;
 
