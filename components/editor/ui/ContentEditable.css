@@ -9,12 +9,13 @@
 .ContentEditable__root {
   border: 0;
   font-size: 15px;
-  height: 100vh;
+  max-height: 100vh;
+  /* overflow-y: auto; */
   display: block;
   position: relative;
+  min-height: 87vh;
   outline: 0;
   padding: 35px 28px 40px;
-  min-height: 150px;
 }
 @media (max-width: 1025px) {
   .ContentEditable__root {

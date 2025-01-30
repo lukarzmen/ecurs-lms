@@ -419,7 +419,8 @@
   border-bottom: 2px solid rgba(255, 212, 0, 0.7);
 }
 .PlaygroundEditorTheme__embedBlock {
-  user-select: none;
+  display: flex;
+  justify-content: center;
 }
 .PlaygroundEditorTheme__embedBlockFocus {
   outline: 2px solid rgb(60, 132, 244);

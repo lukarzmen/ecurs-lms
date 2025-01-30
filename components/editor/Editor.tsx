@@ -61,10 +61,9 @@ import QuestionAnswerPlugin from './plugins/QuestionAnswerPlugin';
 import GapNodePlugin from './plugins/GapPlugin';
 import DescriptionPlugin from './plugins/DescriptionPlugin';
 import TableOfContentsPlugin from './plugins/TableOfContentsPlugin';
-import AudioPlugin from './plugins/AudioPlugin';
 import FloatingTextFormatToolbarPlugin from './plugins/FloatingTextFormatToolbarPlugin';
-import SpeechToTextPlugin from './plugins/SpeechToTextPlugin';
 import TranslationPlugin from './plugins/TranslationPlugin';
+import AudioPlugin from './plugins/AudioPlugin';
 
 
 export default function Editor( {
