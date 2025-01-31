@@ -379,7 +379,7 @@ function useFloatingTextFormatToolbar(
 }
 
 export default function FloatingTextFormatToolbarPlugin({
-  anchorElem = typeof document !== 'undefined' ? document.body : null,
+  anchorElem = typeof document !== 'undefined' ? document.body : (document as Document).createElement('div'),
   setIsLinkEditMode,
 }: {
   anchorElem?: HTMLElement;
