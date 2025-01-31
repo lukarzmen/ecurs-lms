@@ -1,13 +1,14 @@
 import { createClient } from 'redis';
 import { v4 as uuidv4 } from 'uuid';
 import { NextResponse } from 'next/server';
+import sharp from 'sharp';
 
 export async function POST(req: Request) {
     const formData = await req.formData();
     const file = formData.get('file') as File;
 
     if (!file) {
-        return new NextResponse("No audio file uploaded.", { status: 400 });
+        return new NextResponse("No  imagefile uploaded.", { status: 400 });
     }
 
     const client = createClient({
@@ -22,10 +23,13 @@ export async function POST(req: Request) {
         await client.connect();
 
         // Convert file to buffer
-        const fileBuffer = Buffer.from(await file.arrayBuffer());
+        let fileBuffer = Buffer.from(await file.arrayBuffer());
+        if (file.type === 'image/jpeg' || file.type === 'image/jpg') {
+            fileBuffer = await sharp(fileBuffer).png().toBuffer();
+        }
 
         // Store the buffer in Redis using base64 encoding
-        await client.set(`audio:${id}`, fileBuffer.toString('base64'));
+        await client.set(`image:${id}`, fileBuffer.toString('base64'));
 
         await client.disconnect();
 

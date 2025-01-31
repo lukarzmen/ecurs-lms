@@ -23,6 +23,7 @@ export function TranscriptionDialog({
   activeEditor: LexicalEditor;
   onClose: () => void;
 }): JSX.Element {
+  const [uploadType, setUploadType] = useState<"url" | "record" | "file" | null>(null);
   const [audioUrl, setAudioUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [generateTranscription, setGenerateTranscription] = useState(false);
@@ -45,8 +46,7 @@ export function TranscriptionDialog({
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`File upload error: ${errorData.message}`);
+        throw new Error("File upload failed");
       }
 
       const data = await response.json();
@@ -59,32 +59,23 @@ export function TranscriptionDialog({
   };
 
   const handleGenerate = async () => {
-    if (!audioUrl.trim()) {
-      return;
-    }
-
+    if (!audioUrl.trim()) return;
     setLoading(true);
-
+    
     try {
       let generatedTranscription = "";
       if (generateTranscription) {
         const response = await fetch("/api/transcribe", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url: audioUrl }),
         });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(`Server error: ${response.status} - ${errorData.message}`);
-        }
-
+        
+        if (!response.ok) throw new Error("Transcription failed");
         const data = await response.json();
         generatedTranscription = data.transcription;
       }
-      console.log("Dispatching CREATE_AUDIO_NODE_COMMAND:", audioUrl, generatedTranscription);
+
       activeEditor.dispatchCommand(CREATE_AUDIO_NODE_COMMAND, {
         audioSrc: audioUrl,
         transcription: generateTranscription ? generatedTranscription : undefined,
@@ -97,6 +88,7 @@ export function TranscriptionDialog({
       setLoading(false);
     }
   };
+
   const handleRecord = async () => {
     if (isRecording) {
       mediaRecorderRef.current?.stop();
@@ -118,6 +110,7 @@ export function TranscriptionDialog({
         const audioBlob = new Blob(audioChunksRef.current, { type: "audio/mp3" });
         const newFile = new File([audioBlob], "recording.mp3", { type: "audio/mp3" });
         setFile(newFile);
+        handleUpload();
       };
 
       mediaRecorder.start();
@@ -131,91 +124,53 @@ export function TranscriptionDialog({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative">
         <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-700" onClick={onClose}>✕</button>
-        <h2 className="text-xl font-bold mb-4">Generate Audio Transcription</h2>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Audio Source</label>
-        <input
-          type="text"
-          className="w-full p-2 border border-gray-300 rounded-md mb-4"
-          placeholder="Enter audio source URL..."
-          value={audioUrl}
-          onChange={(e) => setAudioUrl(e.target.value)}
-          disabled={isRecording || loading}
-        />
+        <h2 className="text-xl font-bold mb-4">Choose Upload Type</h2>
         <div className="flex flex-col space-y-2 mb-4">
-          {loading ? (
-            <div className="flex justify-center items-center">
-              <span className="animate-spin h-5 w-5 border-t-2 border-b-2 border-gray-500 rounded-full"></span>
-            </div>
-          ) : (
-            <>
-              <button
-                className={`px-4 py-2 ${isRecording ? "bg-red-500" : "bg-green-500"} text-white rounded-md`}
-                onClick={handleRecord}
-                disabled={!!audioUrl || loading}
-              >
-                {isRecording ? "Stop Recording" : "Record Audio"}
-              </button>
-              <div className="flex items-center space-x-2 p-2 border border-gray-300 rounded-md">
-                <input
-                  type="file"
-                  accept="audio/mp3"
-                  className="w-full"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  disabled={isRecording || loading}
-                />
-
-              </div>
-                <button
-                  className={`px-4 py-2 rounded-md text-white ${!file || loading ? "bg-gray-500" : "bg-blue-500"}`}
-                  onClick={handleUpload}
-                  disabled={!file || loading}
-                >
-                  Upload
-                </button>
-            </>
-          )}
+          <button className="px-4 py-2 bg-blue-500 text-white rounded-md" onClick={() => setUploadType("url")}>
+            Enter Source URL
+          </button>
+          <button className="px-4 py-2 bg-green-500 text-white rounded-md" onClick={() => setUploadType("record")}>
+            Record Audio
+          </button>
+          <button className="px-4 py-2 bg-gray-500 text-white rounded-md" onClick={() => setUploadType("file")}>
+            Upload File
+          </button>
         </div>
-        
-        <div className="flex items-center mb-4">
+        {uploadType === "url" && (
           <input
-            type="checkbox"
-            className="mr-2"
-            checked={generateTranscription}
-            onChange={(e) => setGenerateTranscription(e.target.checked)}
-            disabled={loading}
+            type="text"
+            className="w-full p-2 border border-gray-300 rounded-md mb-4"
+            placeholder="Enter audio source URL..."
+            value={audioUrl}
+            onChange={(e) => setAudioUrl(e.target.value)}
           />
-          <span className="text-sm">Generate Transcription</span>
-        </div>
-
-        <div className="flex justify-end space-x-2">
-          {loading ? (
-            <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md" disabled>
-              Processing...
+        )}
+        {uploadType === "record" && (
+          <button className={`px-4 py-2 ${isRecording ? "bg-red-500" : "bg-green-500"} text-white rounded-md`} onClick={handleRecord}>
+            {isRecording ? "Stop Recording" : "Start Recording"}
+          </button>
+        )}
+        {uploadType === "file" && (
+          <>
+            <input type="file" accept="audio/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+            <button className="px-4 py-2 bg-blue-500 text-white rounded-md mt-2" onClick={handleUpload} disabled={!file || loading}>
+              {loading ? "Uploading..." : "Upload File"}
             </button>
-          ) : (
-            <>
-              <button
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md"
-                onClick={onClose}
-              >
-                Cancel
-              </button>
-              {audioUrl.trim() && (
-                <button
-                  className="px-4 py-2 bg-blue-500 text-white rounded-md"
-                  onClick={handleGenerate}
-                  disabled={loading}
-                >
-                  Confirm
-                </button>
-              )}
-            </>
+          </>
+        )}
+        <div className="flex justify-end space-x-2 mt-4">
+          <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md" onClick={onClose}>Cancel</button>
+          {audioUrl && (
+            <button className="px-4 py-2 bg-blue-500 text-white rounded-md" onClick={handleGenerate}>
+              Confirm
+            </button>
           )}
         </div>
       </div>
     </div>
   );
 }
+
 
 export default function AudioPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
