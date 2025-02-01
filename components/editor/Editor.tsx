@@ -123,7 +123,6 @@ export default function Editor( {
         <HashtagPlugin />
         <TranslationPlugin />
         <KeywordsPlugin />
-        {/* <SpeechToTextPlugin /> */}
         <AutoLinkPlugin />
         <AudioPlugin/>
         <DictionaryPlugin />

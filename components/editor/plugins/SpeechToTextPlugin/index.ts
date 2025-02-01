@@ -43,7 +43,8 @@ const VOICE_COMMANDS: Readonly<
 };
 
 export const SUPPORT_SPEECH_RECOGNITION: boolean =
-  'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
+  typeof window !== 'undefined' &&
+  ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
 function SpeechToTextPlugin(): null {
   const [editor] = useLexicalComposerContext();
@@ -57,7 +58,7 @@ function SpeechToTextPlugin(): null {
   useEffect(() => {
     if (isEnabled && recognition.current === null) {
       recognition.current = new SpeechRecognition();
-      recognition.current.lang = 'ru-RU';
+      recognition.current.lang = 'pl-PL';
       recognition.current.continuous = true;
       recognition.current.interimResults = true;
       recognition.current.addEventListener(

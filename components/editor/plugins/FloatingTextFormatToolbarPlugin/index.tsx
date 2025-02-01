@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
+"use client";
 
 import './index.css';
 
@@ -379,12 +380,20 @@ function useFloatingTextFormatToolbar(
 }
 
 export default function FloatingTextFormatToolbarPlugin({
-  anchorElem = typeof document !== 'undefined' ? document.body : (document as Document).createElement('div'),
+  anchorElem,
   setIsLinkEditMode,
 }: {
   anchorElem?: HTMLElement;
   setIsLinkEditMode: Dispatch<boolean>;
 }): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
-  return useFloatingTextFormatToolbar(editor, anchorElem, setIsLinkEditMode);
+
+  // Check if `document` is defined
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return null;
+  }
+
+  const actualAnchorElem = anchorElem || document.body;
+
+  return useFloatingTextFormatToolbar(editor, actualAnchorElem, setIsLinkEditMode);
 }

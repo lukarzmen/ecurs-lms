@@ -151,18 +151,13 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
           .then((response) => {
             editor.update(() => {
               const root = $getRoot();
-              const textNode = $createTextNode(response);
-              if (root.getLastChild() && $isParagraphNode(root.getLastChild())) {
-                const lastChild = root.getLastChild();
-                if (lastChild && $isParagraphNode(lastChild)) {
-                  lastChild.append(textNode);
-                }
-              } else {
-                // Utwórz nowy węzeł paragrafu, jeśli nie istnieje
+              const lines = response.split('\n');
+              lines.forEach((line) => {
                 const paragraphNode = $createParagraphNode();
+                const textNode = $createTextNode(line);
                 paragraphNode.append(textNode);
                 root.append(paragraphNode);
-              }
+              });
             });
 
             // Dispatch custom event to signal completion

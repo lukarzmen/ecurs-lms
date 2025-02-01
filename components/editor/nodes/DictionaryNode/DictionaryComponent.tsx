@@ -57,13 +57,8 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
   };
 
   return (
-    <div>
-      {!isReadonly ? (<button
-        onClick={() => setIsFlashcardView(!isFlashcardView)}
-        className="mb-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-      >
-        {isFlashcardView ? "To Table View" : "To Flashcard View"}
-      </button>) : null}
+    <div className="pt-12">
+
 
       {isFlashcardView || isReadonly ? (
         <div className="flex flex-col items-center">
@@ -78,13 +73,13 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
           <div className="mt-4 flex justify-between w-80">
             <button
               onClick={handlePrevious}
-              className="px-4 py-2 w-32 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="px-4 py-2 w-32 bg-red-500 text-white rounded-full hover:bg-red-600"
             >
               Previous
             </button>
             <button
               onClick={handleNext}
-              className="px-4 py-2 w-32 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="px-4 py-2 w-32 bg-blue-500 text-white rounded-full hover:bg-blue-600"
             >
               Next
             </button>
@@ -140,10 +135,16 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
           </table>
           <button
             onClick={handleAddRow}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
           >
             Add Row
           </button>
+                {!isReadonly ? (<button
+        onClick={() => setIsFlashcardView(!isFlashcardView)}
+        className="ml-4 mb-4 pl-4 px-4 py-2 bg-green-500  text-white rounded-full hover:bg-green-600"
+      >
+        {isFlashcardView ? "Table View" : "Flashcard View"}
+      </button>) : null}
         </div>
       )}
     </div>

@@ -1254,7 +1254,7 @@ export default function ToolbarPlugin({
           }}
           className="item">
           <i className="icon dictionary" />
-          <span className="text">Create dictionary</span>
+          <span className="text">Dictionary</span>
         </DropDownItem>
         <DropDownItem
           onClick={() => {
@@ -1262,7 +1262,7 @@ export default function ToolbarPlugin({
           }}
           className="item">
           <i className="icon fillgap" />
-          <span className="text">Replace by gap</span>
+          <span className="text">Gap</span>
         </DropDownItem>
         <DropDownItem
           onClick={() => {
@@ -1272,7 +1272,7 @@ export default function ToolbarPlugin({
           }}
           className="item">
           <i className="icon quiz" />
-          <span className="text">Add quiz</span>
+          <span className="text">Quiz</span>
         </DropDownItem>
         <DropDownItem
           onClick={() => {
@@ -1280,22 +1280,8 @@ export default function ToolbarPlugin({
           }}
           className="item">
           <i className="icon plus" />
-          <span className="text">Add definition</span>
+          <span className="text">Definition</span>
         </DropDownItem>
-        <DropDownItem
-          onClick={() => {
-            showModal('Insert QA', (onClose) => (
-              <QuestionAnswerDialog
-                activeEditor={activeEditor}
-                onClose={onClose}
-              />
-            ));
-          }}
-          className="item">
-          <i className="icon question" />
-          <span className="text">Add question - answer</span>
-        </DropDownItem>
-
       </DropDown>
       <Divider />
       <DropDown
@@ -1329,6 +1315,19 @@ export default function ToolbarPlugin({
           className="item">
           <i className="icon language" />
           <span className="text">Translate</span>
+        </DropDownItem>
+        <DropDownItem
+          onClick={() => {
+            showModal('Insert QA', (onClose) => (
+              <QuestionAnswerDialog
+                activeEditor={activeEditor}
+                onClose={onClose}
+              />
+            ));
+          }}
+          className="item">
+          <i className="icon question" />
+          <span className="text">Question - answer</span>
         </DropDownItem>
       </DropDown>
 

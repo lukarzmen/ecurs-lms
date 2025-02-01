@@ -1,3 +1,4 @@
+
 /**
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
@@ -5,6 +6,8 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
+
+
 import './index.css';
 import type { LexicalEditor } from 'lexical';
 import {
@@ -60,11 +63,6 @@ import useModal from '../../hooks/useModal';
 import Button from '../../ui/Button';
 import { docFromHash, docToHash } from '../../utils/docSerialization';
 import { PLAYGROUND_TRANSFORMERS } from '../MarkdownTransformers';
-import { SPEECH_TO_TEXT_COMMAND, SUPPORT_SPEECH_RECOGNITION } from '../SpeechToTextPlugin';
-// import {
-//   SPEECH_TO_TEXT_COMMAND,
-//   SUPPORT_SPEECH_RECOGNITION,
-// } from '../SpeechToTextPlugin';
 
 type ActionPluginsSettings = {
   isSpeechToTextEnabled: boolean;
@@ -197,8 +195,7 @@ export default function ActionsPlugin({
           <i className="share" />
         </button>
       }
-
-
+      
       {/* {SUPPORT_SPEECH_RECOGNITION && settings.isSpeechToTextEnabled && (
         <button
           onClick={() => {
