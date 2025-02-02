@@ -64,6 +64,7 @@ import TableOfContentsPlugin from './plugins/TableOfContentsPlugin';
 import FloatingTextFormatToolbarPlugin from './plugins/FloatingTextFormatToolbarPlugin';
 import TranslationPlugin from './plugins/TranslationPlugin';
 import AudioPlugin from './plugins/AudioPlugin';
+import SpeechToTextPlugin from './plugins/SpeechToTextPlugin';
 
 
 export default function Editor( {
@@ -137,10 +138,7 @@ export default function Editor( {
           }
           ErrorBoundary={LexicalErrorBoundary}
         />
-        <FloatingTextFormatToolbarPlugin setIsLinkEditMode={function (value: boolean): void {
-          setIsLinkEditMode(value);
-
-        } } />
+        <FloatingTextFormatToolbarPlugin />
         <MarkdownShortcutPlugin />
         <CodeHighlightPlugin />
         <ListPlugin />

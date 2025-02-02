@@ -1301,7 +1301,7 @@ export default function ToolbarPlugin({
           }}
           className="item">
           <i className="icon generate-text" />
-          <span className="text">Generate content</span>
+          <span className="text">Content</span>
         </DropDownItem>
         <DropDownItem
           onClick={() => {

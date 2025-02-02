@@ -63,6 +63,11 @@ import useModal from '../../hooks/useModal';
 import Button from '../../ui/Button';
 import { docFromHash, docToHash } from '../../utils/docSerialization';
 import { PLAYGROUND_TRANSFORMERS } from '../MarkdownTransformers';
+import { SPEECH_TO_TEXT_COMMAND, SUPPORT_SPEECH_RECOGNITION } from '../SpeechToTextPlugin';
+// import {
+//   SPEECH_TO_TEXT_COMMAND,
+//   SUPPORT_SPEECH_RECOGNITION,
+// } from '../SpeechToTextPlugin';
 
 type ActionPluginsSettings = {
   isSpeechToTextEnabled: boolean;
@@ -210,7 +215,7 @@ export default function ActionsPlugin({
           aria-label={`${isSpeechToText ? 'Enable' : 'Disable'
             } speech to text`}>
           <i className="mic" />
-        </button>
+        </button> 
       )} */}
 
       {/* <button
