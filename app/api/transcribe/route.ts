@@ -1,9 +1,10 @@
 import fetch from "node-fetch";
 import fs from "fs/promises";
 import path from "path";
-import { createReadStream } from "fs";
+import { createReadStream, ReadStream } from "fs";
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
+import OpenAIService from "@/services/OpenAIService";
 
 export async function POST(req: Request) {
 
@@ -38,12 +39,10 @@ export async function POST(req: Request) {
         throw new Error("Missing OpenAI API key");
     }
     //todo: do przeniesienia na strone serwera
-    const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
-    const transcriptionResponse = await openai.audio.transcriptions.create({
-      file: createReadStream(tempFilePath),
-      model: "whisper-1",
-    });
-    console.log(transcriptionResponse.text);
+    const audioStream = createReadStream(tempFilePath);
+    const openAiService = new OpenAIService();
+
+    const transcriptionResponse = await openAiService.transcribeAudio(audioStream);
     // Step 3: Clean up the temporary file
     await fs.unlink(tempFilePath);
 
@@ -56,3 +55,4 @@ export async function POST(req: Request) {
     });
   }
 }
+
