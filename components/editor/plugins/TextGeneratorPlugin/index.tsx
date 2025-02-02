@@ -32,7 +32,7 @@ export function TextGeneratorDialog({
   onClose: () => void;
 }): JSX.Element {
   const [userPrompt, setUserPrompt] = useState("");
-  const [systemPrompt, setSystemPrompt] = useState("Tworzysz materiały dla szkoły języka rosyjskiego. Generuj tekst na podstawie poleceń w języku rosyjskim na poziomie A2.");
+  const [systemPrompt, setSystemPrompt] = useState("Tworzysz materiały dla szkoły języka rosyjskiego. Generuj tekst na podstawie poleceń w języku rosyjskim na poziomie A2. Generuj tekst i nic więcej. Nie dodawaj znaków specjalnych jak **.");
   const [isSystemPromptEditable, setIsSystemPromptEditable] = useState(false);
   const [loading, setLoading] = useState(false);
 

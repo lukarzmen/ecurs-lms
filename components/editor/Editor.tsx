@@ -114,11 +114,11 @@ export default function Editor( {
         <DragDropPaste />
         <AutoFocusPlugin />
         <ClearEditorPlugin />
-        <ComponentPickerPlugin />
+        {/* <ComponentPickerPlugin /> */}
         <EmojiPickerPlugin />
         <AutoEmbedPlugin />
 
-        <MentionsPlugin />
+        {/* todo do pobierania lista osob <MentionsPlugin /> */}
         <EmojisPlugin />
         <GapNodePlugin/>
         <HashtagPlugin />
@@ -139,7 +139,7 @@ export default function Editor( {
           ErrorBoundary={LexicalErrorBoundary}
         />
         <FloatingTextFormatToolbarPlugin />
-        <MarkdownShortcutPlugin />
+        {/* <MarkdownShortcutPlugin /> */}
         <CodeHighlightPlugin />
         <ListPlugin />
         <CheckListPlugin />
@@ -152,14 +152,14 @@ export default function Editor( {
         <ImagesPlugin />
         <InlineImagePlugin />
         <LinkPlugin hasLinkAttributes={hasLinkAttributes} />
-        <PollPlugin />
+        {/* <PollPlugin /> */}
         <TextGeneratorPlugin />
         <QuizPlugin />
         <GenerateDictionaryPlugin />
         <QuestionAnswerPlugin />
         <DescriptionPlugin />
         <YouTubePlugin />
-        <ClickableLinkPlugin disabled={isEditable} />
+        <ClickableLinkPlugin disabled={false} />
         <HorizontalRulePlugin />
         <EquationsPlugin />
         <ExcalidrawPlugin />

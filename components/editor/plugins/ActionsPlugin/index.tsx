@@ -13,22 +13,13 @@ import type { LexicalEditor } from 'lexical';
 import {
   EmailIcon,
   EmailShareButton,
-  FacebookIcon,
   FacebookMessengerIcon,
   FacebookMessengerShareButton,
-  FacebookShareButton,
-  FacebookShareCount,
-  LinkedinIcon,
-  LinkedinShareButton,
-  RedditIcon,
-  RedditShareButton,
-  RedditShareCount,
   TelegramIcon,
   TelegramShareButton,
   TwitterShareButton,
   VKIcon,
   VKShareButton,
-  VKShareCount,
   WhatsappIcon,
   WhatsappShareButton,
   XIcon,
@@ -43,27 +34,21 @@ import {
   $convertFromMarkdownString,
   $convertToMarkdownString,
 } from '@lexical/markdown';
-import { useCollaborationContext } from '@lexical/react/LexicalCollaborationContext';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { mergeRegister } from '@lexical/utils';
-import { CONNECTED_COMMAND, TOGGLE_CONNECT_COMMAND } from '@lexical/yjs';
 import {
   $createTextNode,
   $getRoot,
   $isParagraphNode,
   CLEAR_EDITOR_COMMAND,
   CLEAR_HISTORY_COMMAND,
-  COMMAND_PRIORITY_EDITOR,
 } from 'lexical';
 import { useCallback, useEffect, useState } from 'react';
 
 import { INITIAL_SETTINGS } from '../../appSettings';
-import useFlashMessage from '../../hooks/useFlashMessage';
 import useModal from '../../hooks/useModal';
 import Button from '../../ui/Button';
-import { docFromHash, docToHash } from '../../utils/docSerialization';
+import { docFromHash } from '../../utils/docSerialization';
 import { PLAYGROUND_TRANSFORMERS } from '../MarkdownTransformers';
-import { SPEECH_TO_TEXT_COMMAND, SUPPORT_SPEECH_RECOGNITION } from '../SpeechToTextPlugin';
 // import {
 //   SPEECH_TO_TEXT_COMMAND,
 //   SUPPORT_SPEECH_RECOGNITION,
@@ -305,13 +290,6 @@ function ShareEditorDialog({ hash, onClose }: { hash: string; onClose: () => voi
         </button>
       </div>
       <div className="flex flex-wrap gap-2 justify-center mt-4 w-full">
-        <FacebookShareButton
-          url={shareUrl}
-          className="Demo__some-network__share-button"
-        >
-          <FacebookIcon size={32} round />
-        </FacebookShareButton>
-
         <FacebookMessengerShareButton
           url={shareUrl}
           appId="580840648168709"
@@ -345,13 +323,6 @@ function ShareEditorDialog({ hash, onClose }: { hash: string; onClose: () => voi
           <WhatsappIcon size={32} round />
         </WhatsappShareButton>
 
-        <LinkedinShareButton
-          url={shareUrl}
-          className="Demo__some-network__share-button"
-        >
-          <LinkedinIcon size={32} round />
-        </LinkedinShareButton>
-
         <VKShareButton
           url={shareUrl}
           image={`${String(window.location)}/${exampleImage}`}
@@ -359,16 +330,6 @@ function ShareEditorDialog({ hash, onClose }: { hash: string; onClose: () => voi
         >
           <VKIcon size={32} round />
         </VKShareButton>
-
-        <RedditShareButton
-          url={shareUrl}
-          title={title}
-          windowWidth={660}
-          windowHeight={460}
-          className="Demo__some-network__share-button"
-        >
-          <RedditIcon size={32} round />
-        </RedditShareButton>
 
         <EmailShareButton
           url={shareUrl}

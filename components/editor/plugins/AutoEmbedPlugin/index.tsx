@@ -7,7 +7,6 @@
  */
 
 import type {LexicalEditor} from 'lexical';
-
 import {
   AutoEmbedOption,
   EmbedConfig,
@@ -26,60 +25,33 @@ import {DialogActions} from '../../ui/Dialog';
 import {INSERT_YOUTUBE_COMMAND} from '../YouTubePlugin';
 
 interface PlaygroundEmbedConfig extends EmbedConfig {
-  // Human readable name of the embeded content e.g. Tweet or Google Map.
   contentName: string;
-
-  // Icon for display.
   icon?: JSX.Element;
-
-  // An example of a matching url https://twitter.com/jack/status/20
   exampleUrl: string;
-
-  // For extra searching.
   keywords: Array<string>;
-
-  // Embed a Figma Project.
   description?: string;
 }
 
 export const YoutubeEmbedConfig: PlaygroundEmbedConfig = {
   contentName: 'Youtube Video',
-
   exampleUrl: 'https://www.youtube.com/watch?v=jNQXAC9IVRw',
-
-  // Icon for display.
   icon: <i className="icon youtube" />,
-
   insertNode: (editor: LexicalEditor, result: EmbedMatchResult) => {
     editor.dispatchCommand(INSERT_YOUTUBE_COMMAND, result.id);
   },
-
   keywords: ['youtube', 'video'],
-
-  // Determine if a given URL is a match and return url data.
   parseUrl: async (url: string) => {
-    const match =
-      /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/.exec(url);
-
+    const match = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/.exec(url);
     const id = match ? (match?.[2].length === 11 ? match[2] : null) : null;
-
     if (id != null) {
-      return {
-        id,
-        url,
-      };
+      return { id, url };
     }
-
     return null;
   },
-
   type: 'youtube-video',
 };
 
-
-export const EmbedConfigs = [
-  YoutubeEmbedConfig,
-];
+export const EmbedConfigs = [YoutubeEmbedConfig];
 
 function AutoEmbedMenuItem({
   index,
@@ -102,7 +74,7 @@ function AutoEmbedMenuItem({
     <li
       key={option.key}
       tabIndex={-1}
-      className={className}
+      className={`${className} cursor-pointer p-2 hover:bg-gray-100`}
       ref={option.setRefElement}
       role="option"
       aria-selected={isSelected}
@@ -126,7 +98,7 @@ function AutoEmbedMenu({
   options: Array<AutoEmbedOption>;
 }) {
   return (
-    <div className="typeahead-popover">
+    <div className="typeahead-popover bg-white shadow-lg rounded-lg p-4">
       <ul>
         {options.map((option: AutoEmbedOption, i: number) => (
           <AutoEmbedMenuItem
@@ -189,16 +161,16 @@ export function AutoEmbedDialog({
   };
 
   return (
-    <div style={{width: '600px'}}>
-      <div className="Input__wrapper">
+    <div className="w-full md:w-96 p-4">
+      <div className="Input__wrapper mb-4">
         <input
           type="text"
-          className="Input__input"
+          className="Input__input border-2 border-gray-300 p-2 rounded w-full"
           placeholder={embedConfig.exampleUrl}
           value={text}
           data-test-id={`${embedConfig.type}-embed-modal-url`}
           onChange={(e) => {
-            const {value} = e.target;
+            const { value } = e.target;
             setText(value);
             validateText(value);
           }}
@@ -249,12 +221,12 @@ export default function AutoEmbedPlugin(): JSX.Element {
         getMenuOptions={getMenuOptions}
         menuRenderFn={(
           anchorElementRef,
-          {selectedIndex, options, selectOptionAndCleanUp, setHighlightedIndex},
+          { selectedIndex, options, selectOptionAndCleanUp, setHighlightedIndex },
         ) =>
           anchorElementRef.current
             ? ReactDOM.createPortal(
                 <div
-                  className="typeahead-popover auto-embed-menu"
+                  className="typeahead-popover auto-embed-menu bg-white shadow-lg rounded-lg"
                   style={{
                     marginLeft: `${Math.max(
                       parseFloat(anchorElementRef.current.style.width) - 200,

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useSwipeable } from "react-swipeable";
 import { random } from "lodash";
 
 interface DictionaryComponentProps {
@@ -56,34 +57,26 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
     });
   };
 
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: handleNext,
+    onSwipedRight: handlePrevious,
+    trackMouse: true,
+  });
+
   return (
     <div className="pt-12">
 
 
       {isFlashcardView || isReadonly ? (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center" {...swipeHandlers}>
           {entries.length > 0 && (
             <div
               className={`w-80 h-48 rounded-lg shadow-lg p-6 text-center flex flex-col justify-center items-center ${TAILWIND_COLORS[currentColorIndex]}`}
             >
-              <div className="text-2xl font-bold">{entries[currentIndex][0]}</div>
-              <div className="text-lg mt-4">{entries[currentIndex][1]}</div>
+                <div className="text-2xl font-bold select-none">{entries[currentIndex][0]}</div>
+              <div className="text-lg mt-4 select-none">{entries[currentIndex][1]}</div>
             </div>
           )}
-          <div className="mt-4 flex justify-between w-80">
-            <button
-              onClick={handlePrevious}
-              className="px-4 py-2 w-32 bg-red-500 text-white rounded-full hover:bg-red-600"
-            >
-              Previous
-            </button>
-            <button
-              onClick={handleNext}
-              className="px-4 py-2 w-32 bg-blue-500 text-white rounded-full hover:bg-blue-600"
-            >
-              Next
-            </button>
-          </div>
         </div>
       ) : (
         <div>
@@ -139,14 +132,16 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
           >
             Add Row
           </button>
-                {!isReadonly ? (<button
-        onClick={() => setIsFlashcardView(!isFlashcardView)}
-        className="ml-4 mb-4 pl-4 px-4 py-2 bg-green-500  text-white rounded-full hover:bg-green-600"
-      >
-        {isFlashcardView ? "Table View" : "Flashcard View"}
-      </button>) : null}
         </div>
       )}
+      {!isReadonly ? (      <div className="flex justify-center mt-4">
+        <button
+          onClick={() => setIsFlashcardView(!isFlashcardView)}
+          className="bg-green-500 text-white rounded-full hover:bg-green-600 px-4 py-2"
+        >
+          {isFlashcardView ? "Table View" : "Flashcard View"}
+        </button>
+      </div>) : null}
     </div>
   );
 };

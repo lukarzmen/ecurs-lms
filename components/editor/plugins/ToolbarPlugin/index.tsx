@@ -249,6 +249,15 @@ function BlockFormatDropDown({
 
   const formatCheckList = () => {
     if (blockType !== 'check') {
+
+      editor.update(() => {
+        if(!editor.getRootElement()?.hasChildNodes()){           
+
+            const paragraphNode = $createParagraphNode();
+            const root = $getRoot();
+            root.append(paragraphNode);
+          
+      }});
       editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined);
     } else {
       formatParagraph();
@@ -970,7 +979,7 @@ export default function ToolbarPlugin({
               }`}>
             <i className="format underline" />
           </button>
-          {canViewerSeeInsertCodeButton && (
+          {/* {canViewerSeeInsertCodeButton && (
             <button
               disabled={!isEditable}
               onClick={() => {
@@ -991,7 +1000,7 @@ export default function ToolbarPlugin({
             title="Insert link"
             type="button">
             <i className="format link" />
-          </button>
+          </button> */}
           <DropdownColorPicker
             disabled={!isEditable}
             buttonClassName="toolbar-item color-picker"
@@ -1152,7 +1161,7 @@ export default function ToolbarPlugin({
                   <i className="icon table" />
                   <span className="text">Table</span>
                 </DropDownItem>
-                <DropDownItem
+                {/* <DropDownItem
                   onClick={() => {
                     showModal('Insert Poll', (onClose) => (
                       <InsertPollDialog
@@ -1164,7 +1173,7 @@ export default function ToolbarPlugin({
                   className="item">
                   <i className="icon poll" />
                   <span className="text">Poll</span>
-                </DropDownItem>
+                </DropDownItem> */}
                 <DropDownItem
                   onClick={() => {
                     showModal('Insert Columns Layout', (onClose) => (
