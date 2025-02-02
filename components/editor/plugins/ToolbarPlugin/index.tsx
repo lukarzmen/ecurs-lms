@@ -1338,6 +1338,14 @@ export default function ToolbarPlugin({
           <i className="icon question" />
           <span className="text">Question - answer</span>
         </DropDownItem>
+        <DropDownItem
+          onClick={() => {
+            
+          }}
+          className="item">
+          <i className="icon audio" />
+          <span className="text">Voice Generator</span>
+        </DropDownItem>
       </DropDown>
 
       <Divider />

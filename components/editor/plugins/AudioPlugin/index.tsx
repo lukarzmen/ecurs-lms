@@ -66,6 +66,7 @@ export function TranscriptionDialog({
     
     try {
       let generatedTranscription = "";
+      console.log("Transcription audio uRL :", audioUrl);
       if (generateTranscription) {
         const response = await fetch("/api/transcribe", {
           method: "POST",
@@ -141,6 +142,7 @@ export function TranscriptionDialog({
 
       const data = await response.json();
       setAudioUrl(`${window.location.origin}/api/audio/${data.id}`);
+      console.log("Audio URL:", audioUrl);
     } catch (error) {
       console.error("Error uploading file:", error);
     } finally {

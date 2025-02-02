@@ -33,11 +33,6 @@ export async function POST(req: Request) {
     // Save the audio buffer to a temporary file
     await fs.writeFile(tempFilePath, new Uint8Array(audioBuffer));
 
-    // Step 2: Use OpenAI's transcriptions.create to transcribe the MP3
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {1
-        throw new Error("Missing OpenAI API key");
-    }
     //todo: do przeniesienia na strone serwera
     const audioStream = createReadStream(tempFilePath);
     const openAiService = new OpenAIService();
