@@ -75,8 +75,10 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
             >
                 <div className="text-2xl font-bold select-none">{entries[currentIndex][0]}</div>
               <div className="text-lg mt-4 select-none">{entries[currentIndex][1]}</div>
+              
             </div>
           )}
+          <span className="text-sm mt-2 text-gray-700 select-none">Swipe to change word</span>
         </div>
       ) : (
         <div>
