@@ -7,47 +7,32 @@ import { NextResponse } from "next/server";
 import OpenAIService from "@/services/OpenAIService";
 
 export async function POST(req: Request) {
-
   const { url } = await req.json();
-
+  
   console.log("Transcribing audio from URL:", url);
   try {
-    // Step 1: Download the MP3 file from the URL
-    let response;
-    try {
-      response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch audio file: ${response.statusText}`);
-      }
-    } catch (fetchError) {
-      console.error("Fetch error:", fetchError);
-      return new NextResponse("Failed to fetch audio file.", {
-            status: 500,
-          });
+    // Fetch the MP3 file
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch audio file: ${response.statusText}`);
     }
 
     const arrayBuffer = await response.arrayBuffer();
     const audioBuffer = Buffer.from(arrayBuffer);
-    const tempFilePath = path.join(process.cwd(), "temp.mp3");
 
-    // Save the audio buffer to a temporary file
-    await fs.writeFile(tempFilePath, new Uint8Array(audioBuffer));
+    // Convert Buffer to Blob
+    const audioBlob = new Blob([audioBuffer], { type: "audio/mpeg" });
 
-    //todo: do przeniesienia na strone serwera
-    const audioStream = createReadStream(tempFilePath);
+    // Convert Blob to File (OpenAI requires File)
+    const audioFile = new File([audioBlob], "audio.mp3", { type: "audio/mpeg" });
+
+    // Use your OpenAI service
     const openAiService = new OpenAIService();
+    const transcriptionResponse = await openAiService.transcribeAudio(audioFile);
 
-    const transcriptionResponse = await openAiService.transcribeAudio(audioStream);
-    // Step 3: Clean up the temporary file
-    await fs.unlink(tempFilePath);
-
-    // Step 4: Return the transcription
     return new NextResponse(JSON.stringify({ transcription: transcriptionResponse.text }));
   } catch (error) {
     console.error("Error during transcription:", error);
-    return new NextResponse("Failed to transcribe audio.", {
-      status: 500,
-    });
+    return new NextResponse("Failed to transcribe audio.", { status: 500 });
   }
 }
-

@@ -25,14 +25,14 @@ export default class OpenAIService {
         }
         return content;
     }
-    async transcribeAudio(audioStream: ReadStream) {
+    async transcribeAudio(audioFile: File) {
         const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey) {1
             throw new Error("Missing OpenAI API key");
         }
         const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true  });
         const transcriptionResponse = await openai.audio.transcriptions.create({
-          file: audioStream,
+          file: audioFile,
           model: "whisper-1",
         });
         console.log("transcription: ", transcriptionResponse.text);
