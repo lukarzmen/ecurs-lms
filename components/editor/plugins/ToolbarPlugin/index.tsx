@@ -105,6 +105,7 @@ import { INSERT_GAP_NODE_COMMAND } from '../GapPlugin';
 import { INSERT_DEFINITION_NODE_COMMAND } from '../DescriptionPlugin';
 import { CREATE_AUDIO_NODE_COMMAND, TranscriptionDialog } from '../AudioPlugin';
 import { LanguageSelectorDialog } from '../TranslationPlugin';
+import { createAudioFileFromText } from '@/services/ElevenLabsService';
 
 const blockTypeToBlockName = {
   bullet: 'Bulleted List',
@@ -1340,7 +1341,28 @@ export default function ToolbarPlugin({
         </DropDownItem>
         <DropDownItem
           onClick={() => {
-            
+            activeEditor.read(async () => {
+              const selection = $getSelection()?.getTextContent();
+              if(!selection) {
+                alert('Please select text to generate audio');
+                return;
+              }
+              const response = await fetch("/api/audio/generate", {
+                method: "POST",
+                body: JSON.stringify({ text: selection }),
+              });
+        
+              if (!response.ok) {
+                throw new Error("File upload failed");
+              }
+        
+              const data = await response.json();
+
+              activeEditor.dispatchCommand(CREATE_AUDIO_NODE_COMMAND, {
+                audioSrc: `${window.location.origin}/api/audio/${data.id}`,
+                transcription: undefined,
+              });
+            });
           }}
           className="item">
           <i className="icon audio" />

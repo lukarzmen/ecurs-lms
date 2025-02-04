@@ -11,6 +11,7 @@
     "pretty": "prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json}\""
   },
   "dependencies": {
+    "@11labs/client": "^0.0.6",
     "@azure/storage-blob": "^12.24.0",
     "@clerk/nextjs": "^5.3.1",
     "@excalidraw/excalidraw": "^0.17.6",
@@ -41,6 +42,7 @@
     "cmdk": "^1.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
+    "elevenlabs": "^1.50.4",
     "eslint": "8.57.0",
     "eslint-config-next": "14.2.5",
     "katex": "^0.16.19",
