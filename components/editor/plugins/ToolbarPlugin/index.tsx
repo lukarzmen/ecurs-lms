@@ -105,7 +105,6 @@ import { INSERT_GAP_NODE_COMMAND } from '../GapPlugin';
 import { INSERT_DEFINITION_NODE_COMMAND } from '../DescriptionPlugin';
 import { CREATE_AUDIO_NODE_COMMAND, TranscriptionDialog } from '../AudioPlugin';
 import { LanguageSelectorDialog } from '../TranslationPlugin';
-import { createAudioFileFromText } from '@/services/ElevenLabsService';
 
 const blockTypeToBlockName = {
   bullet: 'Bulleted List',
