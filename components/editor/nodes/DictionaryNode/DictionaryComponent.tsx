@@ -13,7 +13,7 @@ export interface Dictionary {
 
 export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictionary, isReadonly }) => {
   const [entries, setEntries] = useState(Object.entries(dictionary));
-  const [view, setView] = useState<"flashView" | "dictionaryView" | "matchGameView">("dictionaryView");
+  const [view, setView] = useState<"flashView" | "dictionaryView" | "matchGameView">(isReadonly ? "flashView" : "dictionaryView");
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentColorIndex, setCurrentColorIndex] = useState(0);
