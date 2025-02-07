@@ -98,7 +98,7 @@ export function TextGeneratorDialog({
             disabled={!isSystemPromptEditable}
           />
           <button
-            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            className="absolute top-1 right-6 text-gray-500 hover:text-gray-700"
             onClick={() => setIsSystemPromptEditable(!isSystemPromptEditable)}
           >
             ✎

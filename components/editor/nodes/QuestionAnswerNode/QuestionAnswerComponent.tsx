@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { set } from "zod";
+import ProgressSpinner from "../../plugins/TextGeneratorPlugin/ProgressComponent";
 
 export type QAType = {
   question: string;
@@ -10,10 +12,42 @@ function QuestionAnswerComponent({ question, answer, explanation }: QAType) {
   const [userInput, setUserInput] = useState("");
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleCheck = () => {
-    const validationResult = userInput.trim() === answer.trim();
-    setIsCorrect(validationResult);
+    if(!userInput.trim()){
+      return;
+    }
+    setIsLoading(true);
+    fetch('/api/tasks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userPrompt: ``,
+        systemPrompt: `verify correctness of answer based on question and explaination as context. be concise.
+        ###
+        question: ${question}
+        ###
+        answer: ${userInput.trim()}
+        ###
+        explaination: ${explanation}
+        ###
+        answer by exactly one word (no more) true or false.`,
+      }),
+    })
+    .then((response) => response.text())
+    .then((text) => {
+      setIsCorrect(text === 'true');
+    }).catch((error) => 
+    {
+      setIsCorrect(false);
+      console.error('Verification failed:', error);
+    });
+
+    setIsLoading(false);
+    
   };
 
   return (
@@ -40,14 +74,15 @@ function QuestionAnswerComponent({ question, answer, explanation }: QAType) {
           }`}
           placeholder="Your answer"
         />
-        {/* Check Button */}
+        {isLoading ? (<ProgressSpinner />) : (
         <button
           onClick={handleCheck}
           className="absolute right-8 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-blue-600"
           title="Check your answer"
-        >
-          ❓
-        </button>
+        >❓
+        </button>)}
+          
+          
         {/* Show/Hide Answer Button */}
         <button
           onClick={() => setShowAnswer(!showAnswer)}
@@ -73,11 +108,11 @@ function QuestionAnswerComponent({ question, answer, explanation }: QAType) {
       {(showAnswer || isCorrect) && (
         <div className="mt-2">
           <p className="text-sm text-blue-600">
-            <strong>Answer:</strong> {answer}
+            <strong>Answer</strong> {answer}
           </p>
           {explanation && (
             <p className="text-sm text-gray-700 mt-1">
-              <strong>Explanation:</strong> {explanation}
+              <strong>Explanation / Hint</strong> {explanation}
             </p>
           )}
         </div>

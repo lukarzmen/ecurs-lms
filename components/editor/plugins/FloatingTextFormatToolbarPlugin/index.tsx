@@ -33,6 +33,8 @@ import {setFloatingElemPosition} from '../../utils/setFloatingElemPosition';
 import {INSERT_INLINE_COMMAND} from '../CommentPlugin';
 import { INSERT_DEFINITION_NODE_COMMAND } from '../DescriptionPlugin';
 import { INSERT_GAP_NODE_COMMAND } from '../GapPlugin';
+import { TextToVoiceDialog } from '../../TextToVoicePlugin';
+import useModal from '../../hooks/useModal';
 
 function TextFormatFloatingToolbar({
   editor,
@@ -58,7 +60,7 @@ function TextFormatFloatingToolbar({
   isUnderline: boolean;
 }): JSX.Element {
   const popupCharStylesEditorRef = useRef<HTMLDivElement | null>(null);
-
+  const [modal, showModal] = useModal();
   function mouseMoveListener(e: MouseEvent) {
     if (
       popupCharStylesEditorRef?.current &&

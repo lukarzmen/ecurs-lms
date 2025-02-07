@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSwipeable } from "react-swipeable";
-import { random } from "lodash";
+import Confetti from "react-confetti";
 
 interface DictionaryComponentProps {
   dictionary: Dictionary;
@@ -13,12 +13,12 @@ export interface Dictionary {
 
 export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictionary, isReadonly }) => {
   const [entries, setEntries] = useState(Object.entries(dictionary));
-  const [isFlashcardView, setIsFlashcardView] = useState(false);
+  const [view, setView] = useState<"flashView" | "dictionaryView" | "matchGameView">("dictionaryView");
+  
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentColorIndex, setCurrentColorIndex] = useState(0);
 
   const TAILWIND_COLORS = [
-    "bg-red-500",
     "bg-yellow-500",
     "bg-green-500",
     "bg-blue-500",
@@ -63,24 +63,111 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
     trackMouse: true,
   });
 
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [selectedValue, setSelectedValue] = useState<string | null>(null);
+  const [matches, setMatches] = useState<{ [key: string]: string }>({});
+  const [tempColor, setTempColor] = useState<{ [key: string]: string }>({});
+  const [shuffledKeys, setShuffledKeys] = useState<string[]>([]);
+  const [shuffledValues, setShuffledValues] = useState<string[]>([]);
+  const [showConfetti, setShowConfetti] = useState(false);
+  
+  const handleReset = () => {
+    setMatches({});
+    setTempColor({});
+    setSelectedKey(null);
+    setSelectedValue(null);
+  };
+
+  const getRandomColor = () => {
+    const availableColors = TAILWIND_COLORS.filter(color => !Object.values(matches).includes(color));
+    return availableColors.length > 0 ? availableColors[Math.floor(Math.random() * availableColors.length)] : "bg-gray-400";
+  };
+
+  const handleSelection = (keyOrValue: string, isKey: boolean) => {
+    if (isKey) {
+      if (selectedKey === null) {
+        setSelectedKey(keyOrValue);
+        setTempColor((prev) => ({ ...prev, [keyOrValue]: getRandomColor() }));
+      }
+    } else {
+      if (selectedKey !== null && selectedValue === null) {
+        setSelectedValue(keyOrValue);
+        const originalKey = entries.find(([key, value]) => value === keyOrValue)?.[0];
+        if (originalKey === selectedKey) {
+          const assignedColor = tempColor[selectedKey];
+          setMatches((prev) => ({ ...prev, [selectedKey]: assignedColor, [keyOrValue]: assignedColor }));
+        } else {
+          setTempColor({ [selectedKey]: "bg-red-500", [keyOrValue]: "bg-red-500" });
+          setTimeout(() => setTempColor((prev) => {
+            const newTemp = { ...prev };
+            delete newTemp[selectedKey];
+            delete newTemp[keyOrValue];
+            return newTemp;
+          }), 1000);
+        }
+        setSelectedKey(null);
+        setSelectedValue(null);
+      }
+    }
+  };
+
+  const baseColor = "bg-gray-200";
+  useEffect(() => {
+    const keys = entries.map(([key]) => key);
+    const values = entries.map(([_, value]) => value);
+    setShuffledKeys([...keys].sort(() => Math.random() - 0.5));
+    setShuffledValues([...values].sort(() => Math.random() - 0.5));
+  }, [entries]);
+
+  useEffect(() => {
+    if (Object.keys(matches).length === entries.length * 2 && view == "matchGameView" && Object.keys(matches).length > 0) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 7000);
+    }
+  }, [matches]);
+
+
   return (
     <div className="pt-12">
-
-
-      {isFlashcardView || isReadonly ? (
-        <div className="flex flex-col items-center" {...swipeHandlers}>
-          {entries.length > 0 && (
+      {showConfetti && <Confetti />}
+      {view == "matchGameView" && (
+        <div className="pt-12 flex flex-col items-center">
+      <div className="grid grid-cols-2 gap-4 w-80">
+        {/* Left Side (Shuffled Keys) */}
+        <div className="flex flex-col space-y-2">
+          {shuffledKeys.map((key) => (
             <div
-              className={`w-80 h-48 rounded-lg shadow-lg p-6 text-center flex flex-col justify-center items-center ${TAILWIND_COLORS[currentColorIndex]}`}
+              key={key}
+              className={`p-4 rounded-lg shadow text-center cursor-pointer select-none ${matches[key] || tempColor[key] || baseColor}`}
+              onClick={() => handleSelection(key, true)}
             >
-                <div className="text-2xl font-bold select-none">{entries[currentIndex][0]}</div>
-              <div className="text-lg mt-4 select-none">{entries[currentIndex][1]}</div>
-              
+              {key}
             </div>
-          )}
-          <span className="text-sm mt-2 text-gray-700 select-none">Swipe to change word</span>
+          ))}
         </div>
-      ) : (
+        {/* Right Side (Shuffled Values) */}
+        <div className="flex flex-col space-y-2">
+          {shuffledValues.map((value) => (
+            <div
+              key={value}
+              className={`p-4 rounded-lg shadow text-center cursor-pointer select-none ${matches[value] || tempColor[value] || baseColor}`}
+              onClick={() => handleSelection(value, false)}
+            >
+              {value}
+            </div>
+          ))}
+        </div>
+      </div>
+      <span className="text-sm mt-2 text-gray-700 select-none">Match words on the left with translations on the right</span>
+      <button
+        className="mt-4 px-4 py-2 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-700"
+        onClick={handleReset}
+      >
+        Reset Game
+      </button>
+    </div>)} 
+    {view == "dictionaryView" && 
+    (
         <div>
           <table className="table-auto w-full border-collapse border border-gray-300">
             <thead>
@@ -136,12 +223,33 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
           </button>
         </div>
       )}
-      {!isReadonly ? (      <div className="flex justify-center mt-4">
-        <button
-          onClick={() => setIsFlashcardView(!isFlashcardView)}
-          className="bg-green-500 text-white rounded-full hover:bg-green-600 px-4 py-2"
-        >
-          {isFlashcardView ? "Table View" : "Flashcard View"}
+      {view == "flashView" && (
+        <div className="flex flex-col items-center" {...swipeHandlers}>
+        {entries.length > 0 && (
+          <div
+            className={`w-80 h-48 rounded-lg shadow-lg p-6 text-center flex flex-col justify-center items-center ${TAILWIND_COLORS[currentColorIndex]}`}
+          >
+              <div className="text-2xl font-bold select-none">{entries[currentIndex][0]}</div>
+            <div className="text-lg mt-4 select-none">{entries[currentIndex][1]}</div>
+            
+          </div>
+        )}
+        <span className="text-sm mt-2 text-gray-700 select-none">Swipe to change word</span>
+      </div> 
+      )}
+      {!isReadonly && view != "dictionaryView" ? (<div className="flex justify-center mt-4">
+        <button onClick={() => setView("dictionaryView") } className="bg-green-500 text-white rounded-full hover:bg-green-600 px-4 py-2">
+          {"Table View"}
+        </button>
+      </div>) : null}
+      {view != "flashView" ? (<div className="flex justify-center mt-4">
+        <button onClick={() => setView("flashView") } className="bg-orange-500 text-white rounded-full hover:bg-green-600 px-4 py-2">
+          {"Flash Cards"}
+        </button>
+      </div>) : null}
+      {view != "matchGameView" ? (<div className="flex justify-center mt-4">
+        <button onClick={() => setView("matchGameView") } className="bg-yellow-500 text-white rounded-full hover:bg-green-600 px-4 py-2">
+          {"Match Game"}
         </button>
       </div>) : null}
     </div>

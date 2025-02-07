@@ -424,7 +424,9 @@ i.fillgap {
 .icon.fillgap {
   background-image: url(images/icons/fill-gap.svg);
 }
-
+i.voice {
+  background-image: url(images/icons/audio.svg);
+}
 i.strikethrough {
   background-image: url(images/icons/type-strikethrough.svg);
 }

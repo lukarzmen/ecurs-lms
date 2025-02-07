@@ -105,6 +105,8 @@ import { INSERT_GAP_NODE_COMMAND } from '../GapPlugin';
 import { INSERT_DEFINITION_NODE_COMMAND } from '../DescriptionPlugin';
 import { CREATE_AUDIO_NODE_COMMAND, TranscriptionDialog } from '../AudioPlugin';
 import { LanguageSelectorDialog } from '../TranslationPlugin';
+import { TEXT_TO_VOICE_COMMAND, TextToVoiceDialog } from '../../TextToVoicePlugin';
+import { TextToVoice } from 'elevenlabs/api/resources/textToVoice/client/Client';
 
 const blockTypeToBlockName = {
   bullet: 'Bulleted List',
@@ -1038,7 +1040,7 @@ export default function ToolbarPlugin({
               <i className="icon strikethrough" />
               <span className="text">Strikethrough</span>
             </DropDownItem>
-            <DropDownItem
+            {/* <DropDownItem
               onClick={() => {
                 activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'subscript');
               }}
@@ -1060,7 +1062,7 @@ export default function ToolbarPlugin({
               aria-label="Format text with a superscript">
               <i className="icon superscript" />
               <span className="text">Superscript</span>
-            </DropDownItem>
+            </DropDownItem> */}
             <DropDownItem
               onClick={clearFormatting}
               className="item"
@@ -1079,7 +1081,7 @@ export default function ToolbarPlugin({
                 buttonLabel="Insert"
                 buttonAriaLabel="Insert specialized editor node"
                 buttonIconClassName="icon plus">
-                <DropDownItem
+                {/* <DropDownItem
                   onClick={() => {
                     activeEditor.dispatchCommand(
                       INSERT_HORIZONTAL_RULE_COMMAND,
@@ -1097,7 +1099,7 @@ export default function ToolbarPlugin({
                   className="item">
                   <i className="icon page-break" />
                   <span className="text">Page Break</span>
-                </DropDownItem>
+                </DropDownItem> */}
                 <DropDownItem
                   onClick={() => {
                     showModal('Insert Image', (onClose) => (
@@ -1340,32 +1342,17 @@ export default function ToolbarPlugin({
         </DropDownItem>
         <DropDownItem
           onClick={() => {
-            activeEditor.read(async () => {
-              const selection = $getSelection()?.getTextContent();
-              if(!selection) {
-                alert('Please select text to generate audio');
-                return;
-              }
-              const response = await fetch("/api/audio/generate", {
-                method: "POST",
-                body: JSON.stringify({ text: selection }),
-              });
-        
-              if (!response.ok) {
-                throw new Error("File upload failed");
-              }
-        
-              const data = await response.json();
-
-              activeEditor.dispatchCommand(CREATE_AUDIO_NODE_COMMAND, {
-                audioSrc: `${window.location.origin}/api/audio/${data.id}`,
-                transcription: undefined,
-              });
-            });
+            showModal('Text to voice', (onClose) => (
+              <TextToVoiceDialog
+                activeEditor={activeEditor}
+                onClose={onClose}
+              />
+            ));
+            
           }}
           className="item">
           <i className="icon audio" />
-          <span className="text">Voice Generator</span>
+          <span className="text">Text to voice</span>
         </DropDownItem>
       </DropDown>
 

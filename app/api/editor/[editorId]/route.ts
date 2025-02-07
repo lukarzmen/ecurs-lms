@@ -1,6 +1,6 @@
+import { getValue, setValue } from "@/services/RedisService";
 import { SerializedDocument } from "@lexical/file";
 import { NextResponse } from "next/server";
-import { createClient } from "redis";
 
 export async function GET(req: Request, { params }: { params: { editorId: string } }) {
     try {
@@ -12,16 +12,7 @@ export async function GET(req: Request, { params }: { params: { editorId: string
             });
         }
 
-        const client = createClient({
-            url: process.env.AZURE_REDIS_CONNECTIONSTRING
-        });
-        client.on('error', err => console.log('Redis Client Error', err));
-        
-        console.log("Create client");
-        await client.connect();
-        console.log("GEt redis value");
-        const editorJsonString = await client.get(editorId);
-
+        const editorJsonString = await getValue(editorId);
   
         if (!editorJsonString) {
             return new NextResponse("Not Found: No data for given editorId", {
@@ -32,7 +23,6 @@ export async function GET(req: Request, { params }: { params: { editorId: string
         const response = new NextResponse(
             editorJsonString, { status: 200 }
         );
-        await client.disconnect();
         return response;
     } catch (error) {
         console.error("Error in GET /api/editor", error);
@@ -54,20 +44,12 @@ export async function POST(req: Request, { params }: { params: { editorId: strin
                 status: 400,
             });
         }      
-        console.log("Create client");
-        const client = createClient({
-            url: process.env.AZURE_REDIS_CONNECTIONSTRING
-        });
-        client.on('error', err => console.log('Redis Client Error', err));
-        console.log("Set redis value");
-        await client.connect();
-        await client.set(editorId, JSON.stringify(serializedEditorDocument));
 
+        await setValue(editorId, JSON.stringify(serializedEditorDocument));
 
         const response = new NextResponse(
             JSON.stringify({ message: "Created" }), { status: 201 }
         );
-        await client.disconnect();
         return response;
     } catch (error) {
         console.error("Error in POST /api/editor", error);

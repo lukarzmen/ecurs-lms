@@ -1,5 +1,5 @@
+import { getValue } from "@/services/RedisService";
 import { NextResponse } from "next/server";
-import { createClient } from "redis";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
     const { id } = params;
@@ -8,19 +8,10 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         return NextResponse.json({ error: "Id not provided." }, { status: 400 });
     }
 
-    const redisClient = createClient({
-        url: process.env.AZURE_REDIS_CONNECTIONSTRING,
-    });
-
-    redisClient.on("error", (err) => console.error("Redis Client Error:", err));
-
     try {
-        await redisClient.connect();
 
         // Get base64-encoded audio data from Redis
-        const audioData = await redisClient.get(`audio:${id}`);
-
-        await redisClient.disconnect();
+        const audioData = await getValue(`audio:${id}`);
 
         if (!audioData) {
             return NextResponse.json({ error: "Audio not found." }, { status: 404 });
@@ -39,7 +30,6 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         });
     } catch (error) {
         console.error("Error retrieving file from Redis:", error);
-        await redisClient.disconnect();
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
