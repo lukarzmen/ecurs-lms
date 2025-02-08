@@ -27,11 +27,23 @@ export function GenerateDictionaryPlugin() {
               dictionaryData[node.__text] = node.__definition;
             }
         });
-
+        selection.getTextContent().split('\n')
+        .forEach((line) => {
+            const ponentialKeyValue = line.split('–');
+            const key = ponentialKeyValue[0]?.trim() || '';
+            const value = ponentialKeyValue[1]?.trim() || '';
+            const isNotLongText = key.length < 60 && value.length < 60;
+            if(ponentialKeyValue.length == 2 && isNotLongText){
+              dictionaryData[key] = value;
+            }
+          });
         // Create your custom node
-      const dictionaryNode = new DictionaryNode(dictionaryData, true);
+        const dictionaryNode = new DictionaryNode(dictionaryData, true);
 
         const root = $getRoot();
+        if(root.getChildren().length == 0){
+          root.append($createParagraphNode());
+        }
         const paragraphNode = $createParagraphNode();
         paragraphNode.append(dictionaryNode);
         root.append(paragraphNode);

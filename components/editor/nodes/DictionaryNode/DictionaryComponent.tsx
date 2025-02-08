@@ -4,6 +4,7 @@ import Confetti from "react-confetti";
 
 interface DictionaryComponentProps {
   dictionary: Dictionary;
+  onDictionaryChanged: (dictionaryValue: Dictionary) => void;
   isReadonly?: boolean;
 }
 
@@ -11,12 +12,18 @@ export interface Dictionary {
   [Key: string]: string;
 }
 
-export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictionary, isReadonly }) => {
+export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictionary, onDictionaryChanged, isReadonly }) => {
   const [entries, setEntries] = useState(Object.entries(dictionary));
   const [view, setView] = useState<"flashView" | "dictionaryView" | "matchGameView">(isReadonly ? "flashView" : "dictionaryView");
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentColorIndex, setCurrentColorIndex] = useState(0);
+  
+  const handleDictionaryValueChanged = (entries: [string, string][]) => {
+    const dictionary: Dictionary = Object.fromEntries(entries);
+    console.log(dictionary);
+    onDictionaryChanged(dictionary);
+  }
 
   const TAILWIND_COLORS = [
     "bg-yellow-500",
@@ -31,14 +38,17 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
     setEntries((prevEntries) =>
       prevEntries.map(([k, v]) => (k === key ? [k, value] : [k, v]))
     );
+    handleDictionaryValueChanged(entries);
   };
 
   const handleAddRow = () => {
     setEntries((prevEntries) => [...prevEntries, ["", ""]]);
+    handleDictionaryValueChanged(entries);
   };
 
   const handleRemoveRow = (index: number) => {
     setEntries((prevEntries) => prevEntries.filter((_, i) => i !== index));
+    handleDictionaryValueChanged(entries);
   };
 
   const handlePrevious = () => {
@@ -70,18 +80,35 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
   const [shuffledKeys, setShuffledKeys] = useState<string[]>([]);
   const [shuffledValues, setShuffledValues] = useState<string[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [selectedEntries, setSelectedEntries] = useState<[string, string][]>([]);
+
+
+  const getRandomColor = () => {
+    const availableColors = TAILWIND_COLORS.filter(color => !Object.values(matches).includes(color));
+    return availableColors.length > 0 ? availableColors[Math.floor(Math.random() * availableColors.length)] : "bg-gray-400";
+  };
   
-  const handleReset = () => {
+  const getRandomSubset = () => {
+    const shuffled = [...entries].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 5);
+  };
+
+  const initializeMatchGame = () => {
+    const newSubset = getRandomSubset();
+    setSelectedEntries(newSubset);
+    setShuffledKeys([...newSubset.map(([key]) => key)].sort(() => Math.random() - 0.5));
+    setShuffledValues([...newSubset.map(([_, value]) => value)].sort(() => Math.random() - 0.5));
     setMatches({});
     setTempColor({});
     setSelectedKey(null);
     setSelectedValue(null);
   };
 
-  const getRandomColor = () => {
-    const availableColors = TAILWIND_COLORS.filter(color => !Object.values(matches).includes(color));
-    return availableColors.length > 0 ? availableColors[Math.floor(Math.random() * availableColors.length)] : "bg-gray-400";
-  };
+  useEffect(() => {
+    if (view === "matchGameView") {
+      initializeMatchGame();
+    }
+  }, [view]);
 
   const handleSelection = (keyOrValue: string, isKey: boolean) => {
     if (isKey) {
@@ -92,7 +119,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
     } else {
       if (selectedKey !== null && selectedValue === null) {
         setSelectedValue(keyOrValue);
-        const originalKey = entries.find(([key, value]) => value === keyOrValue)?.[0];
+        const originalKey = selectedEntries.find(([key, value]) => value === keyOrValue)?.[0];
         if (originalKey === selectedKey) {
           const assignedColor = tempColor[selectedKey];
           setMatches((prev) => ({ ...prev, [selectedKey]: assignedColor, [keyOrValue]: assignedColor }));
@@ -112,15 +139,9 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
   };
 
   const baseColor = "bg-gray-200";
-  useEffect(() => {
-    const keys = entries.map(([key]) => key);
-    const values = entries.map(([_, value]) => value);
-    setShuffledKeys([...keys].sort(() => Math.random() - 0.5));
-    setShuffledValues([...values].sort(() => Math.random() - 0.5));
-  }, [entries]);
 
   useEffect(() => {
-    if (Object.keys(matches).length === entries.length * 2 && view == "matchGameView" && Object.keys(matches).length > 0) {
+    if (Object.keys(matches).length === selectedEntries.length * 2 && view == "matchGameView" && Object.keys(matches).length > 0) {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 7000);
     }
@@ -161,7 +182,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
       <span className="text-sm mt-2 text-gray-700 select-none">Match words on the left with translations on the right</span>
       <button
         className="mt-4 px-4 py-2 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-700"
-        onClick={handleReset}
+        onClick={initializeMatchGame}
       >
         Reset Game
       </button>
@@ -193,12 +214,15 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
                       type="text"
                       value={keyword}
                       onChange={(e) => {
-                        const newKeyword = e.target.value;
-                        setEntries((prevEntries) =>
-                          prevEntries.map((entry, i) =>
-                            i === index ? [newKeyword, entry[1]] : entry
+                        handleKeywordChanged();
+
+                        function handleKeywordChanged() {
+                          const newKeyword = e.target.value;
+                          setEntries((prevEntries) => prevEntries.map((entry, i) => i === index ? [newKeyword, entry[1]] : entry
                           )
-                        );
+                          );
+                          handleDictionaryValueChanged(entries);
+                        }
                       }}
                       className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
                     />
@@ -255,3 +279,5 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
     </div>
   );
 };
+
+

@@ -21,16 +21,17 @@ export function GapComponent({ hiddenText }: GapComponentProps) {
           onChange={(e) => {
             setUserInput(e.target.value);
             setIsCorrect(null);
-          }}
-          className={`border px-2 py-1 text-sm rounded-md pr-6 focus:outline-none ${
+            }}
+            className={`border px-2 py-1 text-sm rounded-md pr-6 focus:outline-none ${
             isCorrect === null
               ? "border-gray-300"
               : isCorrect
               ? "border-green-500"
               : "border-red-500"
-          }`}
-          placeholder="Type answer"
-        />
+            }`}
+            style={{ width: "150px" }}
+            placeholder="Type answer"
+          />
         <button
           onClick={() => {
             setUserInput(hiddenText);

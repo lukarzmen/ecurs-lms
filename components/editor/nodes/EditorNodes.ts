@@ -44,6 +44,7 @@ import { QuestionAnswerNode } from './QuestionAnswerNode/QuestionAnswer';
 import { Description } from '@radix-ui/react-dialog';
 import { DefinitionNode } from './DefinitionNode';
 import { DescriptionNode } from './DictionaryNode/DescriptionNode';
+import { SelectAnswerNode } from './SelectAnserNode';
 
 const EditorNodes: Array<Klass<LexicalNode>> = [
   HeadingNode,
@@ -79,6 +80,7 @@ const EditorNodes: Array<Klass<LexicalNode>> = [
   LayoutContainerNode,
   LayoutItemNode,
   GapNode,
+  SelectAnswerNode,
   AudioNode,
   QuizNode,
   DictionaryNode,

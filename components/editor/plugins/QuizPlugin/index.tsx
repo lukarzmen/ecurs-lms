@@ -28,7 +28,7 @@ export default function TestPlugin(): JSX.Element | null {
         question,
         answers,
         correctAnswerIndex,
-        correctAnswerDescription,
+      correctAnswerDescription,
       }) => {
         const testNode = new QuizNode(
           question,

@@ -252,6 +252,7 @@ export default function AudioPlugin(): JSX.Element | null {
             const transcriptionNode = $createParagraphNode();
             transcriptionNode.append($createTextNode(transcription));
             root.append(transcriptionNode);
+            root.append($createParagraphNode());
           }
         });
 

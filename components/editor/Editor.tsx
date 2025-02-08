@@ -64,6 +64,7 @@ import TableOfContentsPlugin from './plugins/TableOfContentsPlugin';
 import FloatingTextFormatToolbarPlugin from './plugins/FloatingTextFormatToolbarPlugin';
 import TranslationPlugin from './plugins/TranslationPlugin';
 import AudioPlugin from './plugins/AudioPlugin';
+import SelectAnswerPlugin from './plugins/SelectAnswerPlugin';
 
 
 export default function Editor( {
@@ -126,6 +127,7 @@ export default function Editor( {
         <AutoLinkPlugin />
         <AudioPlugin/>
         <DictionaryPlugin />
+        <SelectAnswerPlugin />
         <HistoryPlugin externalHistoryState={historyState} />        
         <RichTextPlugin
           contentEditable={

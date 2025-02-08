@@ -25,7 +25,22 @@ export class DefinitionNode extends DecoratorNode<JSX.Element> {
     static clone(node: DefinitionNode): DefinitionNode {
         return new DefinitionNode(node.__key, node.__description, node.__key);
     }
-
+    decorate(): JSX.Element {
+        return (
+            <span
+                style={{
+                    backgroundColor: '#ffeb3b',
+                    padding: '2px 4px',
+                    borderRadius: '4px',
+                    cursor: 'help',
+                }}
+                title={this.__description}
+                data-definition="true"
+            >
+                {this.__key}
+            </span>
+        );
+    }
     constructor(key: string, description: string, nodeKey?: NodeKey) {
         super(nodeKey);
         this.__key = key;

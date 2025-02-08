@@ -11,7 +11,7 @@ select {
   -webkit-appearance: none;
   -moz-appearance: none;
   background-color: transparent;
-  border: none;
+  border: 1px solid var(--select-border);
   padding: 0 1em 0 0;
   margin: 0;
   font-family: inherit;

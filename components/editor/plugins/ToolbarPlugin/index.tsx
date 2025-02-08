@@ -107,6 +107,8 @@ import { CREATE_AUDIO_NODE_COMMAND, TranscriptionDialog } from '../AudioPlugin';
 import { LanguageSelectorDialog } from '../TranslationPlugin';
 import { TEXT_TO_VOICE_COMMAND, TextToVoiceDialog } from '../../TextToVoicePlugin';
 import { TextToVoice } from 'elevenlabs/api/resources/textToVoice/client/Client';
+import { INSERT_SELECT_ANSWER_NODE_COMMAND } from '../SelectAnswerPlugin';
+import { InsertSelectAnswerDialog } from '../SelectAnswerPlugin/InsertSelectAnswerDialog';
 
 const blockTypeToBlockName = {
   bullet: 'Bulleted List',
@@ -1292,6 +1294,16 @@ export default function ToolbarPlugin({
           className="item">
           <i className="icon plus" />
           <span className="text">Definition</span>
+        </DropDownItem>
+        <DropDownItem
+          onClick={() => {
+            showModal('Select answer quiz', (onClose) => (
+              <InsertSelectAnswerDialog activeEditor={activeEditor} onClose={onClose} />
+            ));
+          }}
+          className="item">
+          <i className="icon plus" />
+          <span className="text">Select answer quiz</span>
         </DropDownItem>
       </DropDown>
       <Divider />
