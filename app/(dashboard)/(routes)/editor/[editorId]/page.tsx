@@ -9,15 +9,15 @@ import { useAuth } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 
 const EditorPage = ({ params }: { params: { editorId: string } }) => {
-    const { isLoaded, userId } = useAuth();
+    // const { isLoaded, userId } = useAuth();
 
-    if (!isLoaded) {
-        return <div>Loading...</div>;
-    }
+    // if (!isLoaded) {
+    //     return <div>Loading...</div>;
+    // }
 
-    if(!userId) {
-        return redirect(`/sign-in?redirectUrl=/editor/${params.editorId}`);
-      }
+    // if(!userId) {
+    //     return redirect(`/sign-in?redirectUrl=/editor/${params.editorId}`);
+    //   }
     const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
 
     useEffect(() => {

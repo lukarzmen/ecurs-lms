@@ -9,7 +9,7 @@ export function GapComponent({ hiddenText }: GapComponentProps) {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
   const checkAnswer = () => {
-    setIsCorrect(userInput.trim() === hiddenText);
+    setIsCorrect(userInput.trim().toLowerCase() === hiddenText.toLowerCase());
   };
 
   return (
