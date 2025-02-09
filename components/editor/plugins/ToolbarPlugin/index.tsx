@@ -1302,7 +1302,7 @@ export default function ToolbarPlugin({
             ));
           }}
           className="item">
-          <i className="icon plus" />
+          <i className="icon multi-select-checkbox" />
           <span className="text">Select answer quiz</span>
         </DropDownItem>
       </DropDown>

@@ -918,6 +918,10 @@ i.page-break,
   background-image: url(images/icons/code.svg);
 }
 
+.icon.multi-select-checkbox {
+  background-image: url(images/icons/multi-select-checkbox.svg);
+}
+
 .switches {
   position: fixed;
   bottom: 20px;
