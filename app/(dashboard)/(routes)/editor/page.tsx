@@ -6,13 +6,13 @@ import {hashDocument} from "@/services/HashedService";
 import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 export default function EditorPage() {
-  const { userId } = useAuth();
-  
-  if(!userId) {
+  const user = useAuth();
+  console.log("editor page", user);
+  if(!user) {
     return redirect(`/sign-in?redirectUrl=/editor`);
   }
   //youtube & image plugin

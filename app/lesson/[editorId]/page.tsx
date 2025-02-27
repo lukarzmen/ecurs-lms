@@ -5,19 +5,16 @@ import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 import LexicalEditor from "@/components/editor/LexicalEditor";
 import { useState, useEffect } from "react";
 import { Dictionary, DictionaryNode } from "@/components/editor/nodes/DictionaryNode";
-import { useAuth } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 const EditorPage = ({ params }: { params: { editorId: string } }) => {
     
     const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
-    const { isLoaded, userId, sessionId, getToken } = useAuth();
+    const currentUser = useAuth();
 
-    if (!isLoaded) {
-        return <div>Loading...</div>;
-    }
-
-    if(!userId) {
+    if(!currentUser) {
+        console.log("User not logged in");
         return redirect("/sign-in");
     }
     useEffect(() => {

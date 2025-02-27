@@ -5,7 +5,6 @@ import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 import LexicalEditor from "@/components/editor/LexicalEditor";
 import { useState, useEffect } from "react";
 import { Dictionary, DictionaryNode } from "@/components/editor/nodes/DictionaryNode";
-import { useAuth } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 
 const EditorPage = ({ params }: { params: { editorId: string } }) => {

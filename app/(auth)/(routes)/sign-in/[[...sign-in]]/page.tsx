@@ -2,6 +2,7 @@
 
 import { SignIn } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
+import GoogleSignInButton from "./__component/GoogleSigninButton";
 
 const Page = () => {
   const searchParams = useSearchParams();
@@ -9,10 +10,8 @@ const Page = () => {
 
   console.log("redirectUrl", redirectUrl);
 
-  if (redirectUrl) {
-    return <SignIn fallbackRedirectUrl={redirectUrl} />;
-  }
-  return <SignIn />;
+
+  return <GoogleSignInButton redirectUrl={redirectUrl} />; //fallbackRedirectUrl={redirectUrl}
 };
 
 export default Page;

@@ -1,15 +1,18 @@
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
 import { LogOut } from "lucide-react";
 import Link from "next/link";
 import { SearchInput } from "./ui/search-input";
+import SignInButton from "@/app/(auth)/(routes)/sign-in/[[...sign-in]]/__component/SignInButton";
+import { useAuth } from "@/contexts/AuthContext";
+import { signOut } from "firebase/auth";
 
 export const NavbarRoutes = () => {
   const pathName = usePathname();
-
+  const auth = useAuth();
+  const user = auth?.currentUser;
   const isTeacherPage = pathName?.startsWith("/teacher");
   const isCoursesPage = pathName?.startsWith("/courses");
   const isSearchPage = pathName === "/search";
@@ -21,7 +24,7 @@ export const NavbarRoutes = () => {
         <SearchInput></SearchInput>
       </div>
     )}
-      <div className="flex  gap-x-2 ml-auto">
+      <div className="flex gap-x-4 ml-auto">
         {isTeacherPage || isCoursesPage ? (
           <Link href="/">
             <Button size="sm" variant="ghost">
@@ -36,7 +39,23 @@ export const NavbarRoutes = () => {
             </Button>
           </Link>
         )}
-        <UserButton></UserButton>
+        {
+          user ? (
+            <div className="flex items-center pr-4" onClick={() => {
+        
+        
+              
+            }}>
+              <img src={user.photoURL ?? ""} alt="User Avatar" className="w-6 h-6 rounded-full mr-1" referrerPolicy="no-referrer" />
+              <div className="flex flex-col">
+              <h2 className="text-xs font-medium">{user.displayName}</h2>
+              <p className="text-xs text-gray-500">{user.email}</p>
+              </div>
+            </div>
+          ) : (
+            <SignInButton />
+          )
+        }
       </div>
     </>
   );
