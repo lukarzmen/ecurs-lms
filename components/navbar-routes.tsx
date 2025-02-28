@@ -1,6 +1,6 @@
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
+import { useAuth, UserButton, useUser } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
 import { LogOut } from "lucide-react";
@@ -13,7 +13,7 @@ export const NavbarRoutes = () => {
   const isTeacherPage = pathName?.startsWith("/teacher");
   const isCoursesPage = pathName?.startsWith("/courses");
   const isSearchPage = pathName === "/search";
-
+  const user = useUser();
 
   return (
     <>{isSearchPage && (
@@ -21,7 +21,7 @@ export const NavbarRoutes = () => {
         <SearchInput></SearchInput>
       </div>
     )}
-      <div className="flex  gap-x-2 ml-auto">
+      <div className="flex gap-x-2 ml-auto">
         {isTeacherPage || isCoursesPage ? (
           <Link href="/">
             <Button size="sm" variant="ghost">
@@ -36,7 +36,11 @@ export const NavbarRoutes = () => {
             </Button>
           </Link>
         )}
-        <UserButton></UserButton>
+        <div className="flex flex-col items-center">
+          <UserButton />
+          <span className="text-sm">{user.user?.fullName}</span>
+          {/* <span className="text-sm">{user.user?.primaryEmailAddress?.emailAddress}</span> */}
+        </div>
       </div>
     </>
   );

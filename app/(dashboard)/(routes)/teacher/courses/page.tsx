@@ -13,14 +13,15 @@ const CoursesPage = async () => {
     return redirect("/sign-in");
   }
 
-  const courses = await db.course.findMany({
-    where: {
-      userId: userId,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  const courses = [];
+  // const courses = await db.course.findMany({
+  //   where: {
+  //     userId: userId,
+  //   },
+  //   orderBy: {
+  //     createdAt: "desc",
+  //   },
+  // });
 
   return (
       <div className="p-6">
