@@ -1,72 +1,50 @@
 "use client";
 
+import React, { useState, ChangeEvent, FormEvent } from "react";
 import axios from "axios";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormItem,
-  FormField,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { z } from "zod";
-import { Pencil } from "lucide-react";
-import { useState } from "react";
-import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { Textarea } from "@/components/ui/textarea";
-import { BasicEditor } from "@/components/editor";
-
-const formSchema = z.object({
-  description: z.string().min(1, {
-    message: "Description is required",
-  }),
-});
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
 
 interface DescriptionFormProps {
   description: string;
   courseId: string;
 }
-export const DescriptionForm = ({
-  description,
-  courseId,
-}: DescriptionFormProps) => {
+
+const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      description: description,
-    },
-  });
+  const [descriptionValue, setDescriptionValue] = useState(description);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const { isSubmitting, isValid } = form.formState;
-  const toogleEdit = () => {
+
+  const toggleEdit = () => {
     setIsEditing((current) => !current);
   };
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setDescriptionValue(e.target.value);
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
     try {
-      await axios.patch(`/api/courses/${courseId}`, values);
-      toast.success("Course updated");
-      toogleEdit();
+      await axios.patch(`/api/courses/${courseId}`, { description: descriptionValue });
+      alert("Course updated");
+      toggleEdit();
       router.refresh();
     } catch (error) {
-      toast.error("Something went wrong");
+      alert("Something went wrong");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="mt-6 border bg-slate-100 rounded-md p-4">
+    <div className="mt-6 border bg-indigo-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
         Course description
-        <Button onClick={toogleEdit} variant="ghost">
+        <Button onClick={toggleEdit} variant="ghost">
           {isEditing ? (
             <>Cancel</>
           ) : (
@@ -78,38 +56,29 @@ export const DescriptionForm = ({
         </Button>
       </div>
       {isEditing ? (
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 mt-4"
-          >
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <BasicEditor
-                      disabled={isSubmitting}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            ></FormField>
-            <div className="flex items-center gap-x-2">
-              <Button disabled={!isValid || isSubmitting} type="submit">
-                Save
-              </Button>
-            </div>
-          </form>
-        </Form>
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          <div>
+            <textarea
+              value={descriptionValue}
+              onChange={handleChange}
+              disabled={isSubmitting}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
+          <div className="flex items-center gap-x-2">
+            <button
+              type="submit"
+              disabled={!descriptionValue || isSubmitting}
+              className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Save
+            </button>
+          </div>
+        </form>
       ) : (
-        <div
-          className={cn(!description && "text-sm mt-2")}
-          dangerouslySetInnerHTML={{ __html: description || "No description" }}
-        />
+        <div className={!descriptionValue ? "text-sm mt-2" : ""}>
+          {descriptionValue || "No description"}
+        </div>
       )}
     </div>
   );

@@ -90,7 +90,7 @@ export const ChaptersForm = ({ chapters, courseId }: ChaptersFormProps) => {
   }
 
   return (
-    <div className="relative mt-6 border bg-slate-100 rounded-md p-4">
+    <div className="relative mt-6 border bg-indigo-100 rounded-md p-4">
       {isUpdating && (
         <div
           className="absolute h-full w-full bg-slate-500/200

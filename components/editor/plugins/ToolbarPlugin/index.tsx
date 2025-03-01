@@ -1367,8 +1367,6 @@ export default function ToolbarPlugin({
           <span className="text">Text to voice</span>
         </DropDownItem>
       </DropDown>
-
-      <Divider />
       <Settings />
       {modal}
     </div>

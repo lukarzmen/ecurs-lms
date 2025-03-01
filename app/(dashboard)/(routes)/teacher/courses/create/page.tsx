@@ -1,47 +1,24 @@
 "use client";
 
-import * as z from "zod";
+import React, { useState } from "react";
 import axios from "axios";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormItem,
-  FormField,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
 
-const formSchema = z.object({
-  title: z.string().min(1, {
-    message: "Title is required",
-  }),
-});
 const CreatePage = () => {
+  const [title, setTitle] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "",
-    },
-  });
 
-  const { isSubmitting, isValid } = form.formState;
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
     try {
-      const resonse = await axios.post("/api/courses", values);
-      router.push(`/teacher/courses/${resonse.data.id}`);
+      const response = await axios.post("/api/courses", { title });
+      router.push(`/teacher/courses/${response.data.id}`);
     } catch (error) {
-      toast.error("Something went wrong");
+      alert("Something went wrong");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -50,45 +27,43 @@ const CreatePage = () => {
       <div className="text-2xl">
         <h1>Name your course</h1>
         <p className="text-sm text-slate-600">
-          What would you like to call your course? Don&apos;t worry, you can
+          What would you like to call your course? Don't worry, you can
           change this later.
         </p>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-8 mt-8"
-          >
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="title">Course title</FormLabel>
-                  <FormControl>
-                    <Input
-                      disabled={isSubmitting}
-                      placeholder="e.g. 'Advanced web development"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    What wil you teach in this course?
-                  </FormDescription>
-                </FormItem>
-              )}
+        <form onSubmit={onSubmit} className="space-y-8 mt-8">
+          <div className="mb-4">
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+              Course title
+            </label>
+            <input
+              type="text"
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled={isSubmitting}
+              placeholder="e.g. 'Advanced web development'"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
-            <div className="flex items-center gap-x-2">
-              <Link href="/">
-                <Button type="button" variant="ghost">
-                  Cancel
-                </Button>
-              </Link>
-              <Button type="submit" disabled={!isValid || isSubmitting}>
-                Continue
-              </Button>
-            </div>
-          </form>
-        </Form>
+            <p className="text-sm text-slate-600">What will you teach in this course?</p>
+          </div>
+          <div className="flex items-center gap-x-2">
+            <button
+              type="button"
+              className="bg-gray-200 text-black py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              onClick={() => router.push("/")}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              disabled={!title || isSubmitting}
+            >
+              Continue
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

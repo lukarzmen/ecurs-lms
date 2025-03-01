@@ -31,7 +31,7 @@ export default function Settings(): JSX.Element {
   return (
     <>
       <button
-        className={`toolbar-item spaced ${showSettings ? 'active' : ''}`}
+        className={`toolbar-item last spaced ${showSettings ? 'active' : ''}`}
         onClick={() => setShowSettings(!showSettings)}>
           <i className="format settings" />
         </button>

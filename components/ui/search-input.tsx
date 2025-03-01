@@ -45,7 +45,7 @@ export const SearchInput = () => {
         <Input value={value} onChange={(e) => {
             setValue(e.target.value);
             console.log(debouncedSearch);
-        }} className="w-full md:w-[300] pl-9 rounded-full bg-slate-100 focus-visible:ring-slate-200" placeholder="Search for a course"></Input>
+        }} className="w-full md:w-[300] pl-9 rounded-full bg-indigo-100 focus-visible:ring-slate-200" placeholder="Search for a course"></Input>
        </div>
     );
 }

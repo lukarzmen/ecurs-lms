@@ -14,7 +14,6 @@ import { Description } from "@radix-ui/react-dialog";
 import DescriptionForm from "./_components/description-form";
 import ImageForm from "./_components/image-form";
 import CategoryForm from "./_components/category-form";
-import PriceForm from "./_components/price-form";
 import AttachmentForm from "./_components/attachment-form";
 import ChaptersForm from "./_components/chapters-form";
 import { Banner } from "@/components/banner";
@@ -126,7 +125,9 @@ const CourseIdPage = async ({
             })}
             courseId={courseId}
           ></CategoryForm>
-          <div className="space-y-6">
+
+        </div>
+        <div className="space-y-6">
             <div>
               <div className="flex items-center gap-x-2">
                 <IconBadge icon={ListCheck}></IconBadge>
@@ -136,22 +137,7 @@ const CourseIdPage = async ({
                 <ChaptersForm chapters={course.chapters} courseId={courseId} />
               </div>
             </div>
-            <div>
-              <div className="flex items-center gap-x-2">
-                <IconBadge icon={CircleDollarSign}></IconBadge>
-                <h2 className="text-xl">Sell your course</h2>
-              </div>
-              <PriceForm courseId={courseId} price={course.price ?? 0}></PriceForm>
-            </div>
-            <div>
-              <div className="flex items-center gap-x-2">
-                <IconBadge icon={File}></IconBadge>
-                <h2 className="text-xl">Resources & Attachments</h2>
-              </div>
-              <AttachmentForm courseId={courseId} />
-            </div>
           </div>
-        </div>
       </div>
     </>
   );
