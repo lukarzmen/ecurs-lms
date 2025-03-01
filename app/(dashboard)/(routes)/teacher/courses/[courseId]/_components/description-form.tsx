@@ -5,6 +5,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface DescriptionFormProps {
   description: string;
@@ -30,11 +31,11 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
     setIsSubmitting(true);
     try {
       await axios.patch(`/api/courses/${courseId}`, { description: descriptionValue });
-      alert("Course updated");
+      toast.success("Course updated");
       toggleEdit();
       router.refresh();
     } catch (error) {
-      alert("Something went wrong");
+      toast.error("Something went wrong");
     } finally {
       setIsSubmitting(false);
     }

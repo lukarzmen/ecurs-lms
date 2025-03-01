@@ -11,34 +11,12 @@ import toast from "react-hot-toast";
 import { set } from "zod";
 
 interface ActionsProps {
-  disabled: boolean;
   courseId: string;
-  isPublished: boolean;
 }
-export const Actions = ({ disabled, courseId, isPublished }: ActionsProps) => {
+export const Actions = ({ courseId}: ActionsProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const confetti = useConfettiStore();
-  
-  const onConfirm = async () => {
-    try {
-      setIsLoading(true);
-      if (isPublished) {
-        await axios.patch(`/api/courses/${courseId}/unpublish`);
-        toast.success("Chapter unpublished");
-      } else {
-        await axios.patch(`/api/courses/${courseId}/publish`);
-        toast.success("Chapter published");
-        confetti.onOpen();
-      }
-      
-      router.refresh();
-    } catch (error) {
-      toast.error("Failed to delete chapter");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const onDelete = async () => {
     try {
@@ -55,14 +33,6 @@ export const Actions = ({ disabled, courseId, isPublished }: ActionsProps) => {
 
   return (
     <div className="flex items-center gap-x-2">
-      <Button
-        onClick={onConfirm}
-        disabled={disabled || isLoading}
-        variant="outline"
-        size="sm"
-      >
-        {isPublished ? "Unpublish" : "Publish"}
-      </Button>
       <ConfirmModal onConfirm={onDelete}>
         <Button size="sm" disabled={isLoading}>
           <Trash className="h-4 w-4" />

@@ -12,10 +12,7 @@ export default async function Home() {
     return redirect("/sign-in");
   }
 
-  const {completedCourses, coursesInProgress} = await getDashboardCourses(userId);
-
-  console.log(completedCourses);
-  console.log(coursesInProgress);
+  const coursesInProgress= await getDashboardCourses(userId);
 
   return (
     <div className="min-h-screen pl-4">
@@ -30,7 +27,7 @@ export default async function Home() {
               <InfoCard icon={Clock} label="In progress" numberOfItems={10}/>
               <InfoCard icon={CheckCircle} label="Completed" numberOfItems={1} variant="success"/>
           </div>
-          <CoursesList items={[...coursesInProgress, ...completedCourses]}/>
+          <CoursesList items={[...coursesInProgress]}/>
         </div>
       </SignedIn>
     </div>

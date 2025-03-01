@@ -5,23 +5,19 @@ import { IconBadge } from "../icon-badge";
 import { formatPrice } from "@/lib/format";
 
 interface CourseCardProps {
-    id: string;
+    id: number;
     title: string;
-    imageUrl: string;
+    imageId: string;
     chaptersLength: number;
-    price: number;
     category: string;
-    progress: number | null;
 }
 
 export const CourseCard = ({
     id,
     title,
-    imageUrl,
+    imageId: imageUrl,
     chaptersLength,
-    price,
     category,
-    progress,
 }: CourseCardProps) => {
     return (
         <Link href={`/courses/${id}`}>
@@ -43,15 +39,6 @@ export const CourseCard = ({
                         <span>{chaptersLength} {chaptersLength === 1 ? "Chapter" : "Chapters"}</span>
                     </div>
                 </div>
-                {progress !== null ? (
-                    <div>
-                        {/* todo: progress bar */}
-                    </div>
-                ) : (
-                    <p className="text-md md:text-sm font-medium text-slate-700">
-                        {formatPrice(price)}
-                    </p>
-                )}
             </div>
         </Link>
     );

@@ -1,60 +1,32 @@
-import { string } from "zod";
+import React, {  } from "react";
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { IconBadge } from "@/components/icon-badge";
-import {
-  CircleDollarSign,
-  File,
-  LayoutDashboard,
-  ListCheck,
-} from "lucide-react";
+import { LayoutDashboard, ListCheck } from "lucide-react";
 import TitleForm from "./_components/title-form";
-import { Description } from "@radix-ui/react-dialog";
 import DescriptionForm from "./_components/description-form";
 import ImageForm from "./_components/image-form";
 import CategoryForm from "./_components/category-form";
-import AttachmentForm from "./_components/attachment-form";
 import ChaptersForm from "./_components/chapters-form";
-import { Banner } from "@/components/banner";
 import { Actions } from "./_components/actions";
 
-const CourseIdPage = async ({
-  params,
-}: {
-  params: {
-    courseId: string;
-  };
-}) => {
+const CourseIdPage = async ({ params }) => {
   const { userId } = auth() ?? "";
-  if(!userId) {
+  if (!userId) {
     return redirect("/sign-in");
   }
   const { courseId } = await params;
 
   const course = await db.course.findUnique({
-    where: {
-      id: courseId,
-      userId: userId,
-    },
+    where: { id: parseInt(courseId), userId: userId },
     include: {
-      chapters: {
-        orderBy: {
-          position: "asc",
-        },
-      },
-      attachments: {
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
+      modules: { orderBy: { position: "asc" } }
     },
   });
 
   const categories = await db.category.findMany({
-    orderBy: {
-      name: "asc",
-    },
+    orderBy: { name: "asc" },
   });
 
   if (!course) {
@@ -64,82 +36,59 @@ const CourseIdPage = async ({
   const requiredFields = [
     course.title,
     course.description,
-    // course.imageUrl,
-    course.price,
     course.categoryId,
-    course.chapters.some((chapter) => chapter.isPublished),
+    course.modules,
   ];
 
+  console.debug(course);
   const totalFields = requiredFields.length;
   const completedFields = requiredFields.filter(Boolean).length;
-
   const completionText = `${completedFields}/${totalFields}`;
-
-  const isComplete = requiredFields.every(Boolean);
-
   const courseTitle = course.title;
 
-  const sasToken = process.env.NEXT_PUBLIC_AZURE_SAS_TOKEN;
-  const containerName = process.env.NEXT_PUBLIC_AZURE_BLOB_CONTAINER_NAME ?? "default";
-  const accountName = process.env.NEXT_PUBLIC_AZURE_BLOB_ACCOUNT_NAME;
-  const url = `https://${accountName}.blob.core.windows.net/?${sasToken}&timeout=20`;
-  
+
   return (
     <>
-      {!course.isPublished && (
-        <Banner label="This course is unpublished. It will not be visible to the students."></Banner>
-      )}
       <div className="p-6">
         <div className="flex items-center justify-between">
-          <div className="flex flex-col gap-y-2 ">
+          <div className="flex flex-col gap-y-2">
             <h1 className="text-2xl font-medium">Course setup</h1>
-            <span className="text-sm text-slate-800">
-              Complete all fields {completionText}
-            </span>
+            <span className="text-sm text-slate-800">Complete all fields {completionText}</span>
           </div>
-          <Actions
-            disabled={!isComplete}
-            courseId={courseId}
-            isPublished={course.isPublished}
-          ></Actions>
+          <Actions courseId={courseId} />
         </div>
         <div className="flex items-center gap-x-2 mt-8">
-          <IconBadge icon={LayoutDashboard}></IconBadge>
+          <IconBadge icon={LayoutDashboard} />
           <h2 className="text-xl">Customize your course</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TitleForm title={courseTitle} courseId={courseId} />
-          <DescriptionForm
-            description={course.description ?? ''}
-            courseId={courseId}
-          />
-          <ImageForm imageUrl={course.imageUrl ?? ''} courseId={courseId} />
+          <DescriptionForm description={course.description ?? ''} courseId={courseId} />
+          <ImageForm imageUrl={course.imageId ?? ''} courseId={courseId} />
           <CategoryForm
             categoryId={course.categoryId ?? ''}
-            options={categories.map((x) => {
-              return {
-                label: x.name,
-                value: x.id,
-                key: x.id,
-              };
-            })}
+            options={categories.map((x) => ({
+            label: x.name,
+              value: x.id,
+              key: x.id,
+            }))}
             courseId={courseId}
-          ></CategoryForm>
-
+          />
         </div>
-        <div className="space-y-6">
+        <div className="space-y-6 ">
+          <div>
+            <div className="flex items-center gap-x-2 gap-6 mt-6">
+              <IconBadge icon={ListCheck} />
+              <h2 className="text-xl">Modules</h2>
+            </div>
             <div>
-              <div className="flex items-center gap-x-2">
-                <IconBadge icon={ListCheck}></IconBadge>
-                <h2 className="text-xl">Lessons</h2>
-              </div>
-              <div>
-                <ChaptersForm chapters={course.chapters} courseId={courseId} />
-              </div>
+              <ChaptersForm chapters={course.modules} courseId={courseId} />
             </div>
           </div>
+        </div>
       </div>
     </>
   );
 };
+
 export default CourseIdPage;

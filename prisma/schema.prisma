@@ -11,23 +11,19 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["fullTextSearchPostgres"]
 }
 
 model Course {
-  id String @id @default(uuid())
+  id Int @id @default(autoincrement())
   userId String
   title String @db.Text
   description String? @db.Text
-  imageUrl String? @db.Text
-  price Float?
-  isPublished Boolean @default(false)
+  imageId String?
 
-  categoryId String?
+  categoryId Int?
   category Category? @relation(fields: [categoryId], references: [id])
-  attachments Attachment[]
-  chapters Chapter[]
-  purchases Purchase[]
+  modules Module[]
+  userCourses UserCourse[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -35,85 +31,68 @@ model Course {
   @@index([categoryId])
 }
 
-model Attachment {
-  id String @id @default(uuid())
-  courseId String
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  name String
-  url String @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([courseId])
-}
-
 model Category {
-  id String @id @default(uuid())
+  id Int @id @default(autoincrement())
   name String @unique
   courses Course[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Chapter {
-  id String @id @default(uuid())
-  title String
-  description String? @db.Text
-  videoUrl String?
+model User {
+  id Int @id @default(autoincrement())
+  providerId String @unique
+  email String @unique
+  firstName String?
+  lastName String?
+  displayName String?
+  userCourses UserCourse[]
+  userModules UserModule[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Module {
+  id Int @id @default(autoincrement())
+  moduleContentId String @unique @default(uuid())
   position Int
-  isPublished Boolean @default(false)
-  isFree Boolean @default(false)
-  muxData MuxData?
-  courseId String
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  userProgress UserProgress[]
+  courseId Int?
+  course Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userModules UserModule[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([courseId])
 }
-model MuxData {
-  id String @id @default(uuid())
-  chapterId String @unique
-  assetId String
-  playbackId String
 
-  chapter Chapter @relation(fields: [chapterId], references: [id])
-}
-model UserProgress {
-  id String @id @default(uuid())
-  userId String
-  chapterId String
-  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
-  isCompleted Boolean @default(false)
+model UserCourse {
+  id Int @id @default(autoincrement())
+  userId Int
+  courseId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
-  @@index([chapterId])
-
-  @@unique([userId, chapterId])
-}
-
-model Purchase {
-  id String @id @default(uuid())
-  userId String
-  courseId String
-  course Course @relation(fields: [courseId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@index([courseId])
 
   @@unique([userId, courseId])
-  @@index([userId])
-  @@index([courseId])
 }
 
-model StripeCustomer {
-  id String @id @default(uuid())
-  userId String @unique
-  stripeCustomerId String @unique
+model UserModule {
+  id Int @id @default(autoincrement())
+  userId Int
+  moduleId Int
+  isOpen Boolean @default(false)
+  isFinished Boolean @default(false)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([moduleId])
+
+  @@unique([userId, moduleId])
 }

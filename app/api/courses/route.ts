@@ -7,7 +7,7 @@ export async function POST(req: Request) {
   {
     try {
       const { userId } = auth() ?? "";
-      const { title } = await req.json();
+      const { title, description, categoryId } = await req.json();
 
       if (!userId) {
         return new NextResponse("Unauthorized", {
@@ -18,6 +18,8 @@ export async function POST(req: Request) {
         data: {
           userId,
           title,
+          categoryId: categoryId,
+          description
         },
       });
       const response = new NextResponse(JSON.stringify(course), {
@@ -25,6 +27,7 @@ export async function POST(req: Request) {
       });
       return response;
     } catch (error) {
+      console.error("Failed to create course", error);
       return new NextResponse("Internal error", {
         status: 500,
       });

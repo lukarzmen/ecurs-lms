@@ -73,6 +73,7 @@ export const ChaptersForm = ({ chapters, courseId }: ChaptersFormProps) => {
         list: updateData,
       });
       toast.success("Chapters reordered");
+      setIsUpdating(false);
       router.refresh();
     } catch (error) {
       setIsUpdating(false);
@@ -90,7 +91,7 @@ export const ChaptersForm = ({ chapters, courseId }: ChaptersFormProps) => {
   }
 
   return (
-    <div className="relative mt-6 border bg-indigo-100 rounded-md p-4">
+    <div className="relative mt-6 b10order bg-indigo-100 rounded-md p-4">
       {isUpdating && (
         <div
           className="absolute h-full w-full bg-slate-500/200
@@ -100,7 +101,7 @@ export const ChaptersForm = ({ chapters, courseId }: ChaptersFormProps) => {
         </div>
       )}
       <div className="font-medium flex items-center justify-between">
-        Lessons
+      Modules
         <Button onClick={toogleCreating} variant="ghost">
           {isCreating ? (
             <>Cancel</>
@@ -157,7 +158,7 @@ export const ChaptersForm = ({ chapters, courseId }: ChaptersFormProps) => {
             )}
           </p>
           <p className="text-sm text-muted-foreground mt-4">
-            Drag and drop to reorder lessons
+            Drag and drop to reorder modules
           </p>
         </div>
       )}

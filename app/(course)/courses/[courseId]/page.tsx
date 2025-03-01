@@ -7,16 +7,14 @@ const CourseIdPage = async ({
     params: {
         courseId: string;
 }}) => {
-
+    const courseIdNumber = parseInt(params.courseId, 10);
+    console.log(courseIdNumber);
     const course = await db.course.findUnique({
         where: {
-            id: params.courseId
+            id: courseIdNumber
         },
         include: {
-            chapters: {
-                where: {
-                    isPublished: true
-                },
+            modules: {
                 orderBy: {
                     position: 'asc'
                 },
@@ -27,7 +25,7 @@ const CourseIdPage = async ({
     if(!course) {
         return redirect('/');
     }
-    return redirect(`/courses/${params.courseId}/chapters/${course.chapters[0].id}`);
+    return redirect(`/courses/${params.courseId}/chapters/${course.modules[0].id}`);
     };
 
 export default CourseIdPage;

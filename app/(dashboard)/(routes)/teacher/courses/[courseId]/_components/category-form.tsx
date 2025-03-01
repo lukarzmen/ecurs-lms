@@ -1,78 +1,42 @@
 "use client";
 
-import axios from "axios";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormItem,
-  FormField,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { z } from "zod";
-import { Pencil } from "lucide-react";
 import { useState } from "react";
-import toast from "react-hot-toast";
+import axios from "axios";
 import { useRouter } from "next/navigation";
-import Combobox from "@/components/ui/combobox";
-import { cn } from "@/lib/utils";
+import { Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import toast from "react-hot-toast";
 
-const formSchema = z.object({
-  categoryId: z.string().min(1),
-});
-
-interface CategoryFormProps {
-  categoryId: string;
-  courseId: string;
-  options: {
-    label: string;
-    value: string;
-  }[];
-}
-
-export const CategoryForm = ({
-  categoryId,
-  courseId,
-  options,
-}: CategoryFormProps) => {
+const CategoryForm = ({ categoryId, courseId, options }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      categoryId: categoryId,
-    },
-  });
+  const [categoryIdState, setCategoryIdState] = useState(categoryId);
   const router = useRouter();
-  const { isSubmitting, isValid } = form.formState;
-  const toogleEdit = () => {
+
+  const toggleEdit = () => {
     setIsEditing((current) => !current);
   };
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (e) => {
+    e.preventDefault();
     try {
-      await axios.patch(`/api/courses/${courseId}`, values);
+      await axios.patch(`/api/courses/${courseId}`, { categoryId: categoryIdState });
       toast.success("Course updated");
-      toogleEdit();
+      toggleEdit();
       router.refresh();
     } catch (error) {
       toast.error("Something went wrong");
     }
   };
+
   const selectedOption = options.find(
-    (option) => option.value === categoryId,
+    (option) => option.value === categoryId
   )?.label;
 
   return (
     <div className="mt-6 border bg-indigo-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
         Course category
-        <Button onClick={toogleEdit} variant="ghost">
+        <Button onClick={toggleEdit} variant="ghost">
           {isEditing ? (
             <>Cancel</>
           ) : (
@@ -84,34 +48,29 @@ export const CategoryForm = ({
         </Button>
       </div>
       {isEditing ? (
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 mt-4"
-          >
-            <FormField
-              control={form.control}
-              name="categoryId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Combobox options={options} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            ></FormField>
-            <div className="flex items-center gap-x-2">
-              <Button disabled={!isValid || isSubmitting} type="submit">
-                Save
-              </Button>
-            </div>
-          </form>
-        </Form>
+        <form onSubmit={onSubmit} className="space-y-4 mt-4">
+          <div className="form-group">
+            <label className="block text-sm font-medium text-gray-700">Category</label>
+            <select
+              value={categoryIdState}
+              onChange={(e) => setCategoryIdState(e.target.value)}
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            >
+              {options.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-x-2">
+            <button type="submit" className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md">
+              Save
+            </button>
+          </div>
+        </form>
       ) : (
-        <p
-          className={cn("text-sm mt-2", !categoryId && "text-slate-500 italic")}
-        >
+        <p className={`text-sm mt-2 ${!categoryId && "text-slate-500 italic"}`}>
           {selectedOption || "No category selected"}
         </p>
       )}
