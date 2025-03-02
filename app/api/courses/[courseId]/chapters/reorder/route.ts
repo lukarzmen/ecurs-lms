@@ -16,7 +16,7 @@ export async function PUT(
   }
   const ownCourse = await db.course.findFirst({
     where: {
-      id: params.courseId,
+      id: Number(params.courseId),
       userId: userId,
     },
   });
@@ -28,7 +28,7 @@ export async function PUT(
   }
 
   for (let item of list) {
-    await db.chapter.update({
+    await db.module.update({
       where: {
         id: item.id,
       },

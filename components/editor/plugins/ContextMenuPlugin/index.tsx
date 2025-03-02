@@ -24,6 +24,7 @@ import {
 import {useCallback, useMemo} from 'react';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import toast from 'react-hot-toast';
 
 function ContextMenuItem({
   index,
@@ -130,7 +131,7 @@ export default function ContextMenuPlugin(): JSX.Element {
               name: 'clipboard-read',
             });
             if (permission.state === 'denied') {
-              alert('Not allowed to paste from clipboard.');
+              toast.error('Not allowed to paste from clipboard.');
               return;
             }
 
@@ -156,7 +157,7 @@ export default function ContextMenuPlugin(): JSX.Element {
             });
 
             if (permission.state === 'denied') {
-              alert('Not allowed to paste from clipboard.');
+              toast.error('Not allowed to paste from clipboard.');
               return;
             }
 

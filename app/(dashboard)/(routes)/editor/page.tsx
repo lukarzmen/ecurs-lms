@@ -23,7 +23,7 @@ export default function EditorPage() {
   //this is interesting https://playground.lexical.dev/
 
   return (
-    <div className="p-4">
+    <div className="px-4 pt-4">
       <PlaygroundApp onSave={function (serializedDocument: SerializedDocument): SaveResult {
 
         const serializedDocumentJSON = JSON.stringify(serializedDocument);

@@ -3,6 +3,7 @@ import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_EDITOR, createComman
 import { useEffect, useState } from "react";
 import { CREATE_AUDIO_NODE_COMMAND } from "../plugins/AudioPlugin";
 import ProgressSpinner from "../plugins/TextGeneratorPlugin/ProgressComponent";
+import toast from "react-hot-toast";
 
 export const TEXT_TO_VOICE_COMMAND = createCommand(
   "TEXT_TO_VOICE_COMMAND"
@@ -51,12 +52,10 @@ export function TextToVoiceDialog({
               setLoading(false);
             }
         } else {
-          alert('No text selected for create voice.');
-          console.warn('No text selected for create voice.');
+          toast.error('No text selected for create voice.');
         }
       } else {
-        alert('No valid text selection.');
-        console.warn('No valid text selection.');
+        toast.error('No valid text selection.');
       }
     });
   };

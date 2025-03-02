@@ -1,17 +1,13 @@
 import { NavbarRoutes } from "@/components/navbar-routes";
-import { Chapter, Course, UserProgress } from "@prisma/client";
+import { Module, Course } from "@prisma/client";
 
 interface CourseNavbarProps {
     course: Course & {
-        chapters: (Chapter & {
-            userProgress: UserProgress[] | null;
-        })[]
+        modules: Module[] | null;
     };
-    progressCount: number | null;
 }
 export const CourseNavbar = ({
-    course,
-    progressCount,
+    course
 }: CourseNavbarProps) => {
 
     return (

@@ -2,8 +2,8 @@ import { db } from "@/lib/db";
 
 interface GetChapterProps {
     userId: string;
-    courseId: string;
-    chapterId: string;
+    courseId: number;
+    chapterId: number;
 }
 
 export const getChapter = async ({ userId, courseId, chapterId }: GetChapterProps) => {
@@ -11,47 +11,33 @@ export const getChapter = async ({ userId, courseId, chapterId }: GetChapterProp
     try {
         const course = await db.course.findUnique({
             where: {
-                id: courseId,
-                userId,
-            },
-            select: {
-                price: true,
+            id: courseId,
+            userId,
             }
         });
 
-    const chapter = await db.chapter.findUnique({
+    const module = await db.module.findUnique({
         where: {
-            id: chapterId,
-            isPublished: true,
+            id: chapterId
         },
-   
     });
 
-    if(!chapter || !course) {
+    if(!module || !course) {
         throw new Error("Chapter or course not found");
     }
     
-    const attachments = await db.attachment.findMany({
-        where: {
-            courseId : courseId,
-        },
-    });
+ 
 
     return {
-        chapter,
-        course,
-        attachments
+        module,
+        course
     }
 
 } catch (error) {
     console.error("[GET CHAPTER ERROR]", error);
     return {
         chapter: null,
-        course: null,
-        attachments: [],
+        course: null
     }
 }
-    
-
-    return chapterId;
 };

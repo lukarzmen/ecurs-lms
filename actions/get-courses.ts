@@ -1,9 +1,9 @@
 import { Category, Course } from "@prisma/client";
 import { db } from "@/lib/db";
 
-type CourseWithCategory = Course & {
+export type CategoriesCourseAndModules = Course & {
     category: Category | null
-    chapters: { id: number }[]
+    modules: { id: number }[]
 };
 
 type GetCourses = {
@@ -12,7 +12,7 @@ type GetCourses = {
     categoryId?: number;
 }
 
-export const getCourses = async ({ userId, categoryId, title }: GetCourses): Promise<CourseWithCategory[]> => {
+export const getCourses = async ({ userId, categoryId, title }: GetCourses): Promise<CategoriesCourseAndModules[]> => {
     {
         try {
             const courses = await db.course.findMany({
@@ -37,7 +37,7 @@ export const getCourses = async ({ userId, categoryId, title }: GetCourses): Pro
            
             return courses.map(course => ({
                 ...course,
-                chapters: course.modules
+                modules: course.modules
             }));
         } catch (error) {
             console.error("[GET_COURSES]", error);

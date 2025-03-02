@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { Category } from "@prisma/client";
+import toast from "react-hot-toast";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
@@ -11,7 +13,7 @@ const CreatePage = () => {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +26,7 @@ const CreatePage = () => {
       });
       router.push(`/teacher/courses/${response.data.id}`);
     } catch (error) {
-      alert("Something went wrong");
+      toast.error("Something went wrong");
     } finally {
       setIsSubmitting(false);
     }

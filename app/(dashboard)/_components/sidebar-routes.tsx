@@ -30,8 +30,8 @@ const teacherRoutes = [
   },
   {
     icon: GroupIcon,
-    label: "Groups",
-    href: "/teacher/groups",
+    label: "Students",
+    href: "/teacher/students",
   },
 ];
 export const SidebarRoutes = () => {

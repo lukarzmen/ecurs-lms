@@ -2,8 +2,6 @@
 
 import LexicalEditor from "@/components/editor/LexicalEditor";
 import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
-import ReadOnlyEditor from "@/components/editor/ReadonlyEditor";
-import { t } from "@excalidraw/excalidraw/types/i18n";
 
 export default function ChapterContent ({
     content

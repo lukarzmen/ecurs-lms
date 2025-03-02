@@ -23,9 +23,10 @@ export async function DELETE(
     if (!ownCourse) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
+    const chapterIdInt = parseInt(params.chapterId, 10);
     const deletedChapter = await db.module.delete({
       where: {
-        id: params.chapterId,
+      id: chapterIdInt,
       },
     });
 

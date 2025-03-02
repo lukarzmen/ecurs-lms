@@ -11,13 +11,13 @@ import CategoryForm from "./_components/category-form";
 import ChaptersForm from "./_components/chapters-form";
 import { Actions } from "./_components/actions";
 
-const CourseIdPage = async ({ params }) => {
+const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = auth() ?? "";
   if (!userId) {
     return redirect("/sign-in");
   }
   const { courseId } = await params;
-
+  const courseIdNumber = parseInt(courseId, 10);
   const course = await db.course.findUnique({
     where: { id: parseInt(courseId), userId: userId },
     include: {
@@ -40,7 +40,7 @@ const CourseIdPage = async ({ params }) => {
     course.modules,
   ];
 
-  console.debug(course);
+
   const totalFields = requiredFields.length;
   const completedFields = requiredFields.filter(Boolean).length;
   const completionText = `${completedFields}/${totalFields}`;
@@ -66,13 +66,13 @@ const CourseIdPage = async ({ params }) => {
           <DescriptionForm description={course.description ?? ''} courseId={courseId} />
           <ImageForm imageId={course.imageId ?? ''} courseId={courseId} />
           <CategoryForm
-            categoryId={course.categoryId ?? ''}
+            categoryId={course.categoryId ?? -1}
             options={categories.map((x) => ({
             label: x.name,
               value: x.id,
               key: x.id,
             }))}
-            courseId={courseId}
+            courseId={courseIdNumber}
           />
         </div>
         <div className="space-y-6 ">

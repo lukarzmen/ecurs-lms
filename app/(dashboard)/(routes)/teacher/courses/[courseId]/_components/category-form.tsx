@@ -7,7 +7,7 @@ import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 
-const CategoryForm = ({ categoryId, courseId, options }) => {
+const CategoryForm = ({ categoryId, courseId, options }: { categoryId: number; courseId: number; options: { label: string; value: number; }[] }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [categoryIdState, setCategoryIdState] = useState(categoryId);
   const router = useRouter();
@@ -16,7 +16,7 @@ const CategoryForm = ({ categoryId, courseId, options }) => {
     setIsEditing((current) => !current);
   };
 
-  const onSubmit = async (e) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       await axios.patch(`/api/courses/${courseId}`, { categoryId: categoryIdState });
@@ -53,7 +53,7 @@ const CategoryForm = ({ categoryId, courseId, options }) => {
             <label className="block text-sm font-medium text-gray-700">Category</label>
             <select
               value={categoryIdState}
-              onChange={(e) => setCategoryIdState(e.target.value)}
+              onChange={(e) => setCategoryIdState(Number(e.target.value))}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
             >
               {options.map((option) => (

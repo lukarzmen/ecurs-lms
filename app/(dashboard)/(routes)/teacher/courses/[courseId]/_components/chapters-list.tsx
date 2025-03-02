@@ -1,6 +1,5 @@
 "use client";
 
-import { Chapter } from "@prisma/client";
 import { useEffect, useState } from "react";
 import {
   DragDropContext,
@@ -8,21 +7,23 @@ import {
   Draggable,
   DropResult,
 } from "@hello-pangea/dnd";
-import { Button } from "@/components/ui/button";
-import { Grid, Grip, Pencil } from "lucide-react";
+import { Grip, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Module } from "@prisma/client";
 
 interface ChaptersListProps {
-  items: Chapter[];
-  onReorder: (updateData: { id: string; position: number }[]) => void;
-  onEdit: (id: string) => void;
+  items: Module[];
+  onReorder: (updateData: { id: number; position: number }[]) => void;
+  onEdit: (id: number) => void;
+  onDelete: (id: number) => void;
 }
 
 export const ChaptersList = ({
   items,
   onReorder,
   onEdit,
+  onDelete,
 }: ChaptersListProps) => {
   const [isMounted, setIsMounted] = useState(false);
   const [chapters, setChapters] = useState(items);
@@ -69,50 +70,44 @@ export const ChaptersList = ({
         {(provided) => (
           <div {...provided.droppableProps} ref={provided.innerRef}>
             {chapters.map((chapter, index) => (
-              <Draggable
+                <Draggable
                 key={chapter.id}
-                draggableId={chapter.id}
+                draggableId={chapter.id.toString()}
                 index={index}
-              >
+                >
                 {(provided) => (
                   <div
-                    className={cn(
-                      "flex items-center gap-x-2 bg-indigo-200 border text-indigo-700 rounded-md mb-3 text-sm",
-                      chapter.isPublished
-                        ? "border-indigo-100"
-                        : "border-indigo-200 text-indigo-700",
-                    )}
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
+                  className={cn(
+                    "flex items-center gap-x-2 bg-indigo-200 border text-indigo-700 rounded-md mb-3 text-sm",
+                   "border-indigo-100"
+
+                  )}
+                  ref={provided.innerRef}
+                  {...provided.draggableProps}
                   >
-                    <div
-                      className={cn(
-                        "px-2 py-3 border-r border-r-indigo-200 hover:bg-indigo-300 rounded-l-md transition",
-                        chapter.isPublished && "bg-indigo-200 hover:bg-indigo-200",
-                      )}
-                      {...provided.dragHandleProps}
-                    >
-                      <Grip className="h-5 w-5" />
-                    </div>
-                    <div>{chapter.title}</div>
-                    <div className="ml-auto pr-2 flex items-center gap-x-2">
-                      {chapter.isFree && <Badge>Free</Badge>}
-                      <Badge
-                        className={cn(
-                          "bg-indigo-500",
-                          chapter.isPublished && "bg-indigo-700",
-                        )}
-                      >
-                        {chapter.isPublished ? "Published" : "Draft"}
-                      </Badge>
-                      <Pencil
-                        onClick={() => onEdit(chapter.id)}
-                        className="cursor-pointer hover:opacity-75 h-4 w-4 transition"
-                      />
-                    </div>
+                  <div
+                    className={cn(
+                    "px-2 py-3 border-r border-r-indigo-200 hover:bg-indigo-300 rounded-l-md transition",
+                     "bg-indigo-200 hover:bg-indigo-200",
+                    )}
+                    {...provided.dragHandleProps}
+                  >
+                    <Grip className="h-5 w-5" />
+                  </div>
+                  <div>{chapter.title}</div>
+                  <div className="ml-auto pr-2 flex items-center gap-x-2">
+                    <Pencil
+                    onClick={() => onEdit(chapter.id)}
+                    className="cursor-pointer hover:opacity-75 h-4 w-4 transition"
+                    />
+                    <Trash2
+                    onClick={() => onDelete(chapter.id)}
+                    className="cursor-pointer hover:opacity-75 h-4 w-4 transition"
+                    />
+                  </div>
                   </div>
                 )}
-              </Draggable>
+                </Draggable>
             ))}
             {provided.placeholder}
           </div>

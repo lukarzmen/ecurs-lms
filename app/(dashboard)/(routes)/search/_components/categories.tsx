@@ -13,7 +13,7 @@ import { IconType } from "react-icons/lib";
 import { CategoryItem } from "./category-item";
 
 interface Category {
-    id: string;
+    id: number;
     name: string;
 }
 

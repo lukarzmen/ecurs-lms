@@ -15,14 +15,13 @@ ul {
   list-style: initial;
 }
 
-body {
+/* body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, '.SFNSText-Regular',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: #eee;
-  padding: 0 20px;
 }
 
 header {
@@ -50,7 +49,7 @@ header h1 {
   color: #333;
   display: inline-block;
   margin: 20px 0 0 0;
-}
+} */
 
 .editor-shell {
   margin: 10px auto;

@@ -9,6 +9,7 @@ import {
 } from "lexical";
 import { useEffect } from "react";
 import { GapNode } from "../../nodes/GapNode";
+import toast from "react-hot-toast";
 
 export const INSERT_GAP_NODE_COMMAND = createCommand("INSERT_GAP_NODE_COMMAND");
 
@@ -27,7 +28,7 @@ export default function InsertGapNodePlugin(): JSX.Element | null {
             const selectedText = selection.getTextContent();
 
             if (selectedText.trim() === "") {
-              alert("To change selected to gap please select text first.");
+              toast.error("To change selected to gap please select text first.");
               return false; // Early exit if no text is selected
             }
 

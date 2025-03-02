@@ -52,7 +52,7 @@ export const ChapterDescriptionForm = ({
     setIsEditing((current) => !current);
   };
 
-  const onSubmit = async (event) => {
+  const onSubmit = async (event: Event) => {
     event.preventDefault();
     setIsSubmitting(true);
 
@@ -84,7 +84,7 @@ export const ChapterDescriptionForm = ({
           </>}
         </Button>
       </div>
-      <form onSubmit={onSubmit} className="space-y-4 mt-4">
+      <form onSubmit={e => onSubmit} className="space-y-4 mt-4">
         <div>
           <LexicalEditor
             initialStateJSON={serializedEditorStateString}

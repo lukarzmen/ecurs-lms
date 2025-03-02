@@ -15,32 +15,12 @@ interface ChapterActionsProps {
     chapterId: string;
 }
 export const ChapterActions = ({
-disabled,
 courseId,
 chapterId,
 }: ChapterActionsProps) => {
 
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
-    const onPublish = async () => {
-        console.log("onPublish");
-        try {
-        setIsLoading(true);
-        if(isPublished){
-            await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}/unpublish`); 
-            toast.success("Chapter unpublished");  
-        }else{
-            await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}/publish`);  
-            toast.success("Chapter published");
-        }
-        router.refresh();
-    } catch (error) {
-        toast.error("Failed to publish chapter");
-    }
-    finally {
-        setIsLoading(false);
-    }
-    }
 
     const onDelete = async () => {
     try {

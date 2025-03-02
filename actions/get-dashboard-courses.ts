@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { Category, Module, Course } from "@prisma/client";
 
-type CourseWithWithCategory = Course & {
+export type CourseWithWithCategory = Course & {
     modules: Module[];
     category: Category | null;
 }
@@ -20,6 +20,7 @@ export const getDashboardCourses = async (userId: string): Promise<CourseWithWit
                     select: {
                         id: true,
                         moduleContentId: true,
+                        title: true,
                         position: true,
                         courseId: true,
                         createdAt: true,

@@ -49,6 +49,7 @@ import useModal from '../../hooks/useModal';
 import Button from '../../ui/Button';
 import { docFromHash } from '../../utils/docSerialization';
 import { PLAYGROUND_TRANSFORMERS } from '../MarkdownTransformers';
+import toast from 'react-hot-toast';
 // import {
 //   SPEECH_TO_TEXT_COMMAND,
 //   SUPPORT_SPEECH_RECOGNITION,
@@ -282,7 +283,7 @@ function ShareEditorDialog({ hash, onClose }: { hash: string; onClose: () => voi
         <button
           onClick={() => {
             navigator.clipboard.writeText(shareUrl);
-            alert('Link copied to clipboard!');
+            toast.success('Link copied to clipboard!');
           }}
           className="ml-2 border border-gray-300 rounded px-2 py-1"
         >

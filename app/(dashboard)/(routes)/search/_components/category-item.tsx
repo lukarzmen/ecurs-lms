@@ -7,7 +7,7 @@ import { url } from "inspector";
 
 interface CategoryItemProps {
     label: string;
-    value?: string;
+    value?: number;
     icon?: IconType;
 }
 
@@ -15,7 +15,7 @@ export const CategoryItem = ({ label, icon: Icon, value }: CategoryItemProps) =>
     const pathName = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const currentCategoryId = searchParams.get("categoryId");
+    const currentCategoryId = searchParams.get("categoryId") ? Number(searchParams.get("categoryId")) : null;
     const currentTitle = searchParams.get("title");
     const onClick = () => {
         const url = qs.stringifyUrl({

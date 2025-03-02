@@ -22,8 +22,8 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
-import { Chapter } from "@prisma/client";
 import { ChaptersList } from "./chapters-list";
+import { Module } from "@prisma/client";
 
 const formSchema = z.object({
   title: z.string().min(1, {
@@ -31,17 +31,13 @@ const formSchema = z.object({
   }),
 });
 
-interface ChaptersFormProps {
-  chapters: Chapter[];
+interface ModulesFormProps {
+  chapters: Module[];
   courseId: string;
 }
-export const ChaptersForm = ({ chapters, courseId }: ChaptersFormProps) => {
+export const ChaptersForm = ({ chapters, courseId }: ModulesFormProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-
-
-  //todo: adding notes https://github.com/marisabrantley/sticky-notes-app
- //https://www.npmjs.com/package/react-quiz-component quiz
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -65,7 +61,7 @@ export const ChaptersForm = ({ chapters, courseId }: ChaptersFormProps) => {
       toast.error("Something went wrong");
     }
   };
-  const onReorder = async (updateData: { id: string; position: number }[]) => {
+  const onReorder = async (updateData: { id: number; position: number }[]) => {
     try {
       setIsUpdating(true);
       console.log(`courseId: ${courseId}`);
@@ -82,11 +78,11 @@ export const ChaptersForm = ({ chapters, courseId }: ChaptersFormProps) => {
     }
   };
 
-  const onEdit = (chapterId: string) => {
+  const onEdit = (chapterId: number) => {
     router.push(`/teacher/courses/${courseId}/chapters/${chapterId}`);
   };
 
-  function onDelete(chapterId: string): void {
+  function onDelete(chapterId: number): void {
     throw new Error("Function not implemented.");
   }
 
@@ -151,6 +147,7 @@ export const ChaptersForm = ({ chapters, courseId }: ChaptersFormProps) => {
               <ChaptersList
                 onEdit={onEdit}
                 onReorder={onReorder}
+                onDelete={onDelete}
                 items={chapters || []}
               />
             ) : (

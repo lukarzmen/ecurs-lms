@@ -7,6 +7,7 @@ import {
 } from "lexical";
 import { useEffect, useState } from "react";
 import { DescriptionNode } from "../../nodes/DictionaryNode/DescriptionNode";
+import toast from "react-hot-toast";
 
 export const INSERT_DEFINITION_NODE_COMMAND = createCommand("INSERT_DEFINITION_NODE_COMMAND");
 
@@ -84,7 +85,7 @@ export default function DescriptionPlugin(): JSX.Element | null {
           if ($isRangeSelection(selection)) {
             const textContent = selection.getTextContent().trim();
             if (!textContent) {
-              alert("To add definition to selected text please select text first.");
+              toast.error("To add definition to selected text please select text first.");
               return false;
             }
 

@@ -27,43 +27,33 @@ const ChapterIdPage = async ({
     } = await params;
     const getChapterInputParams = {
         userId: user.userId ?? "",
-        courseId: courseId,
-        chapterId: chapterId,
+        courseId: parseInt(courseId, 10),
+        chapterId: parseInt(chapterId, 10),
     };
     const chapterData = await getChapter(getChapterInputParams);
     if (typeof chapterData === 'string') {
         return redirect("/");
     }
-    const { chapter, course, attachments } = chapterData;
+    const { module, course } = chapterData;
 
     // Redirect if chapter or course is not found
-    if (!chapter || !course) {
+    if (!module || !course) {
         return redirect("/");
     }
 
-    // Determine if the chapter is locked or completed
-    const isLocked = !chapter.isFree;// && !course.isPurchased;
     const isCompleted = false;//!!chapter.userProgress?.[0]?.isCompleted;
-
-    console.log("content", chapter.description);
     return (
         <div>
             {/* Display banners based on the chapter state */}
             {isCompleted && (
                 <Banner variant="success" label="Chapter completed" />
             )}
-            {isLocked && (
-                <Banner
-                    variant="warning"
-                    label="You need to purchase this course to watch this chapter"
-                />
-            )}
             
             {/* Chapter content */}
             <div className="flex flex-col mx-auto pb-20">
-                <h1 className="text-3xl font-semibold pl-5">{chapter.title}</h1>
+                <h1 className="text-3xl font-semibold pl-5">{module.title}</h1>
                 <div className="p-4">
-                    <ChapterContent content={chapter.description} />
+                    <ChapterContent content={module.moduleContentId} />
                 </div>
             </div>
         </div>
