@@ -13,12 +13,6 @@ export async function GET(req: Request, { params }: { params: { editorId: string
         }
 
         const editorJsonString = await getValue(editorId);
-  
-        if (!editorJsonString) {
-            return new NextResponse("Not Found: No data for given editorId", {
-                status: 404,
-            });
-        }
 
         const response = new NextResponse(
             editorJsonString, { status: 200 }

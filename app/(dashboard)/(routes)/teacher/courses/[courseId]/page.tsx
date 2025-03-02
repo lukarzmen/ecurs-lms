@@ -64,7 +64,7 @@ const CourseIdPage = async ({ params }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TitleForm title={courseTitle} courseId={courseId} />
           <DescriptionForm description={course.description ?? ''} courseId={courseId} />
-          <ImageForm imageUrl={course.imageId ?? ''} courseId={courseId} />
+          <ImageForm imageId={course.imageId ?? ''} courseId={courseId} />
           <CategoryForm
             categoryId={course.categoryId ?? ''}
             options={categories.map((x) => ({

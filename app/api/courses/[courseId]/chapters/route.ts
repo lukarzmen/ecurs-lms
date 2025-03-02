@@ -7,7 +7,12 @@ export async function POST(
   { params }: { params: { courseId: string } },
 ) {
   const { courseId } = params;
-
+  const courseIdInt = parseInt(courseId, 10);
+  if (isNaN(courseIdInt)) {
+    return new NextResponse("Invalid courseId", {
+      status: 400,
+    });
+  }
   try {
     const { title } = await req.json();
     const { userId } = auth() ?? "";
@@ -18,7 +23,7 @@ export async function POST(
     }
     const courseOwner = await db.course.findUnique({
       where: {
-        id: courseId,
+        id: courseIdInt,
         userId: userId,
       },
     });
@@ -28,10 +33,9 @@ export async function POST(
       });
     }
 
-    const lastChapters = await db.chapter.findFirst({
+    const lastChapters = await db.module.findFirst({
       where: {
-        courseId: courseId,
-        isPublished: true,
+        courseId: courseIdInt
       },
       orderBy: {
         position: "desc",
@@ -40,9 +44,9 @@ export async function POST(
 
     const newPosition = lastChapters ? lastChapters.position + 1 : 1;
 
-    const chapter = await db.chapter.create({
+    const chapter = await db.module.create({
       data: {
-        courseId: courseId,
+        courseId: courseIdInt,
         position: newPosition,
         title: title,
       },

@@ -18,7 +18,7 @@ export async function PATCH(
     }
     const course = await db.course.update({
       where: {
-        id: courseId,
+        id: parseInt(courseId, 10),
         userId,
       },
       data: {
@@ -39,7 +39,7 @@ export async function POST(
   { params }: { params: { courseId: string } },
 ) {
   const { courseId } = params;
-  const { imageUrl } = await req.json();
+  const { imageId } = await req.json();
   try {
     const { userId } = auth() ?? "";
     if (!userId) {
@@ -49,11 +49,11 @@ export async function POST(
     }
     const course = await db.course.update({
       where: {
-        id: courseId,
-        userId,
+      id: parseInt(courseId, 10),
+      userId,
       },
       data: {
-        imageUrl: imageUrl,
+      imageId: imageId,
       },
     });
     return NextResponse.json(course);
@@ -76,7 +76,7 @@ export async function DELETE(
     }
     const ownCourse = await db.course.findFirst({
       where: {
-        id: params.courseId,
+        id: parseInt(params.courseId, 10),
         userId,
       },
     });
@@ -85,11 +85,11 @@ export async function DELETE(
     }
     const deletedCourse = await db.course.delete({
       where: {
-        id: params.courseId,
+        id: parseInt(params.courseId, 10),
         userId: userId,
       },
       include: {
-        chapters: true,
+        modules: true,
       },
     });
     if (!deletedCourse) {
@@ -97,7 +97,7 @@ export async function DELETE(
     }
     return NextResponse.json(deletedCourse);
   } catch (error) {
-    console.log("[COURSES_ID]", error);
+    console.error(error);
     return new NextResponse("Internal server error", { status: 500 });
   }
 }

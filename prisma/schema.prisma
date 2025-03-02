@@ -55,6 +55,7 @@ model User {
 model Module {
   id Int @id @default(autoincrement())
   moduleContentId String @unique @default(uuid())
+  title String @db.Text
   position Int
   courseId Int?
   course Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)

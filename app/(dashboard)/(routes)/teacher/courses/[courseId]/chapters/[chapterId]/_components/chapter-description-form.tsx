@@ -1,117 +1,106 @@
 "use client";
 
 import axios from "axios";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import {
-  Form,
-  FormControl,
-  FormItem,
-  FormField,
-  FormMessage,
-} from "@/components/ui/form";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
-import { z } from "zod";
 import { Pencil } from "lucide-react";
-import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
 import LexicalEditor from "@/components/editor/LexicalEditor";
 import { SerializedDocument } from "@lexical/file";
 import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 
-const formSchema = z.object({
-  description: z.string().min(1),
-});
-
 interface ChapterDescriptionFormProps {
-  description: string;
+  moduleContentId: string;
   courseId: string;
   chapterId: string;
 }
 export const ChapterDescriptionForm = ({
-  description,
+  moduleContentId,
   courseId,
   chapterId,
 }: ChapterDescriptionFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      description: description,
-    },
-  });
-  
-  useEffect(() => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
 
-    console.log('description', description);  
-  }, [isEditing]);
+  useEffect(() => {
+      const fetchData = async () => {
+          const response = await fetch(`/api/editor/${moduleContentId}`, {
+              method: 'GET'
+          });
+
+          if (!response.ok) {
+              throw new Error('Error fetching initial state');
+          }
+          if(response){
+            const text = await response.text();
+            if (text) {
+              const serializedEditorState: SerializedDocument = JSON.parse(text);
+              setSerializedEditorStateString(JSON.stringify(serializedEditorState.editorState));
+            }
+          }
+      };
+
+      fetchData();
+  }, []);
 
   const router = useRouter();
-  const { isSubmitting, isValid } = form.formState;
-  const toogleEdit = () => {
+
+  const toggleEdit = () => {
     setIsEditing((current) => !current);
   };
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (event) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+
     try {
-      await axios.patch(
-        `/api/courses/${courseId}/chapters/${chapterId}`,
-        values,
-      );
+    
       toast.success("Chapter updated");
-      toogleEdit();
+      toggleEdit();
       router.refresh();
     } catch (error) {
       toast.error("Something went wrong");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleOnSave = (serializedDocument: SerializedDocument): SaveResult => {
     console.log(serializedDocument);
     return { success: true, hash: "" };
-  }
+  };
 
   return (
     <div className="mt-6 border bg-indigo-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
         Content
-        <Button onClick={toogleEdit} variant="ghost">
-          {isEditing ? (
-            <>Cancel</>
-          ) : (
-            <>
-              <Pencil className="h-4 w-4 mr-2"></Pencil>
-              Edit
-            </>
-          )}
+        <Button onClick={toggleEdit} variant="ghost">
+          {isEditing ? <>Cancel</> : <>
+            <Pencil className="h-4 w-4 mr-2"></Pencil>
+            Edit
+          </>}
         </Button>
       </div>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 mt-4"
-          >
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <LexicalEditor initialStateJSON={description} disabled={isSubmitting} onSave={handleOnSave} 
-                    isEditable={isEditing}
-                    onEditorChange={(content: string) => {
-                      form.setValue('description', content);
-                    }}  {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            ></FormField>
-          </form>
-        </Form>
-     
+      <form onSubmit={onSubmit} className="space-y-4 mt-4">
+        <div>
+          <LexicalEditor
+            initialStateJSON={serializedEditorStateString}
+            onSave={handleOnSave}
+            isEditable={isEditing}
+            onEditorChange={(content: string) => {
+              setSerializedEditorStateString(content);
+            }}
+          />
+        </div>
+        {isEditing && (
+          <Button type="submit" disabled={isSubmitting}>
+            Save
+          </Button>
+        )}
+      </form>
     </div>
   );
 };

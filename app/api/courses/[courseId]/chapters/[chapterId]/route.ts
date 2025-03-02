@@ -12,35 +12,29 @@ export async function DELETE(
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
+
+    const courseIdInt = parseInt(params.courseId, 10);
     const ownCourse = await db.course.findFirst({
       where: {
-        id: params.courseId,
+        id: courseIdInt,
         userId,
       },
     });
     if (!ownCourse) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
-    const deletedChapter = await db.chapter.delete({
+    const deletedChapter = await db.module.delete({
       where: {
         id: params.chapterId,
       },
     });
 
-    const publishedChaptersInCourse = await db.chapter.findMany({
+    const publishedChaptersInCourse = await db.module.findMany({
       where: {
-        courseId: params.courseId,
-        isPublished: true,
+        courseId: courseIdInt,
       },
     });
-    await db.course.update({
-      where: {
-        id: params.courseId,
-      },
-      data: {
-        isPublished: false,
-      },
-    });
+
     return NextResponse.json(deletedChapter);
   } catch (error) {
     console.log("[COURSES_CHAPTER_ID]", error);
@@ -57,9 +51,12 @@ export async function PATCH(
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
+
+    const courseIdInt = parseInt(params.courseId, 10);
+    const chapterIdInt = parseInt(params.chapterId, 10);
     const ownCourse = await db.course.findFirst({
       where: {
-        id: params.courseId,
+        id: courseIdInt,
         userId,
       },
     });
@@ -67,9 +64,9 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
     const { isPublished, ...values } = await req.json();
-    const chapter = await db.chapter.update({
+    const chapter = await db.module.update({
       where: {
-        id: params.chapterId,
+        id: chapterIdInt,
       },
       data: {
         ...values,

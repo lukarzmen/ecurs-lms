@@ -5,17 +5,19 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Pencil, PlusCircle, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import toast from "react-hot-toast";
 
 interface ImageFormProps {
-  imageUrl: string;
+  imageId: string;
   courseId: string;
 }
 
-const ImageForm: React.FC<ImageFormProps> = ({ imageUrl, courseId }) => {
+const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [image, setImage] = useState<File | null>(null);
   const router = useRouter();
-
+  const imageUrl = `/api/image/${imageId}`;
+  console.debug("imageUrl", imageUrl);
   const toggleEdit = () => {
     setIsEditing((current) => !current);
   };
@@ -30,30 +32,43 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageUrl, courseId }) => {
     e.preventDefault();
     if (!image) return;
     try {
-      const formData = new FormData();
-      formData.append("image", image);
-      await axios.patch(`/api/courses/${courseId}`, formData);
-      alert("Course updated");
+      const uploadImageForm = new FormData();
+      uploadImageForm.append("file", image);
+
+      const response = await fetch("/api/image", {
+        method: "POST",
+        body: uploadImageForm,
+      });
+
+      if (!response.ok) {
+        throw new Error("File upload failed");
+      }
+      const { id } = await response.json();
+
+      const values = { imageId: id };
+      await axios.patch(`/api/courses/${courseId}`, values);
+
+      toast.success("Course updated");
       toggleEdit();
       router.refresh();
     } catch (error) {
-      alert("Something went wrong");
+      toast.error("Something went wrong");
     }
   };
 
   return (
     <div className="mt-6 border bg-indigo-100 rounded-md p-4">
-      <div className="font-medium flex items-center justify-between">
+      <div className="font-medium flex items-center justify-between pb-2">
         Image
         <Button onClick={toggleEdit} variant="ghost">
           {isEditing && <>Cancel</>}
-          {!isEditing && imageUrl && (
+          {!isEditing && imageId && (
             <>
               <Pencil className="h-4 w-4 mr-2"></Pencil>
               Edit
             </>
           )}
-          {!isEditing && !imageUrl && (
+          {!isEditing && !imageId && (
             <>
               <PlusCircle className="h-4 w-4 mr-2"></PlusCircle>
               Add
@@ -61,20 +76,20 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageUrl, courseId }) => {
           )}
         </Button>
       </div>
-      {!isEditing && !imageUrl ? (
+      {!isEditing && !imageId ? (
         <div className="flex items-center justify-center h-40 bg-slate-200 rounded-md">
           <ImageIcon className="h-10 w-10 text-slate-500" />
         </div>
       ) : (
         <div className="flex items-center justify-center h-40 bg-indigo-100 rounded-md overflow-hidden">
-          {imageUrl ? (
+          {imageId ? (
             <img
               src={imageUrl}
               alt="Course Image"
               className="object-cover rounded-md h-full w-full"
             />
           ) : (
-            <div className="flex items-center justify-center h-full w-full text-indigo-600">
+            <div className="flex items-center justify-center h-full w-full text-indigo-600  mt-4">
               No Image Available
             </div>
           )}
@@ -96,7 +111,7 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageUrl, courseId }) => {
             type="submit"
             className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ml-4"
           >
-            Save
+            Upload
           </button>
         </form>
       )}
