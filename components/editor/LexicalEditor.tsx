@@ -1,13 +1,7 @@
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- */
 import './index.css';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import * as React from 'react';
+import { useEffect, useState } from 'react';
 
 import { SettingsContext } from './context/SettingsContext';
 import { SharedHistoryContext } from './context/SharedHistoryContext';
@@ -31,7 +25,7 @@ export default function LexicalEditor({
   isEditable: boolean;
 }): JSX.Element {
 
-  const initialConfig = {
+  const [editorConfig, setEditorConfig] = useState({
     editorState: initialStateJSON,
     namespace: 'Playground',
     nodes: [...EditorNodes],
@@ -40,12 +34,20 @@ export default function LexicalEditor({
       throw error;
     },
     theme: PlaygroundEditorTheme
-  };
+  });
+
+  useEffect(() => {
+    setEditorConfig((prevConfig) => ({
+      ...prevConfig,
+      editorState: initialStateJSON,
+      editable: isEditable,
+    }));
+  }, [initialStateJSON, isEditable]);
 
   return (
     <SettingsContext>
       <FlashMessageContext>
-        <LexicalComposer initialConfig={initialConfig}>
+        <LexicalComposer initialConfig={editorConfig}>
           <SharedHistoryContext>
             <div className='flex flex-row'>
               <div className="editor-shell ">
