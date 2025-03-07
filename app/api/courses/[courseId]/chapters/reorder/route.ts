@@ -4,9 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function PUT(
   req: Request,
-  params: {
-    courseId: string;
-  },
+  { params }: { params: { courseId: string } }
 ) {
   const { userId } = auth();
   if (!userId) {

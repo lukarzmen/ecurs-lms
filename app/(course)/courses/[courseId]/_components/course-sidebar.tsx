@@ -11,11 +11,6 @@ interface CourseSidebarProps {
     };
 }
 export const CourseSidebar = async ({ course }: CourseSidebarProps) => {
-    const { userId } = auth();
-    if(!userId) {
-        return redirect("/sign-in");
-      }
-
     return (
         <div className="h-full border-r flex flex-col overflow-y-auto shadow-sm rounded-md">
             <div className="p-8 flex flex-col border-b">

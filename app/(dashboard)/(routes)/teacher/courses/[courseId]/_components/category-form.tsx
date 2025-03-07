@@ -35,7 +35,7 @@ const CategoryForm = ({ categoryId, courseId, options }: { categoryId: number; c
   return (
     <div className="mt-6 border bg-indigo-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Course category
+        Category
         <Button onClick={toggleEdit} variant="ghost">
           {isEditing ? (
             <>Cancel</>

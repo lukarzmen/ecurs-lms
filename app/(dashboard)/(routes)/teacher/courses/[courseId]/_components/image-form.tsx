@@ -86,10 +86,11 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
             <img
               src={imageUrl}
               alt="Course Image"
-              className="object-cover rounded-md h-full w-full"
+              className="object-contain rounded-md h-full w-full"
+              style={{ objectFit: "contain", width: "100%", height: "100%" }}
             />
           ) : (
-            <div className="flex items-center justify-center h-full w-full text-indigo-600  mt-4">
+            <div className="flex items-center justify-center h-full w-full text-indigo-600 mt-4">
               No Image Available
             </div>
           )}
@@ -107,12 +108,15 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
            file:bg-indigo-50 file:text-indigo-600
            hover:file:bg-indigo-100"
           />
-          <button
+            <button
             type="submit"
-            className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ml-4"
-          >
+            className={`bg-indigo-600 text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ml-4 ${
+              image ? "hover:bg-indigo-700" : "opacity-50 cursor-not-allowed"
+            }`}
+            disabled={!image}
+            >
             Upload
-          </button>
+            </button>
         </form>
       )}
     </div>

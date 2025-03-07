@@ -50,8 +50,8 @@ const ChapterIdPage = async ({
             )}
             
             {/* Chapter content */}
-            <div className="flex flex-col mx-auto pb-20">
-                <h1 className="text-3xl font-semibold pl-5">{module.title}</h1>
+            <div className="flex flex-col mx-auto">
+                <h1 className="text-2xl font-semibold text-center p-2">{module.title}</h1>
                 <div className="p-4">
                     <ChapterContent content={module.moduleContentId} />
                 </div>

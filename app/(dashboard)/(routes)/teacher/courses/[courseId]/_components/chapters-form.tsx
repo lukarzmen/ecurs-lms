@@ -48,7 +48,7 @@ export const ChaptersForm = ({ chapters, courseId }: ModulesFormProps) => {
   const router = useRouter();
   const { isSubmitting, isValid } = form.formState;
 
-  const toogleCreating = () => {
+const toogleCreating = () => {
     setIsCreating((current) => !current);
   };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -64,7 +64,6 @@ export const ChaptersForm = ({ chapters, courseId }: ModulesFormProps) => {
   const onReorder = async (updateData: { id: number; position: number }[]) => {
     try {
       setIsUpdating(true);
-      console.log(`courseId: ${courseId}`);
       await axios.put(`/api/courses/${courseId}/chapters/reorder`, {
         list: updateData,
       });

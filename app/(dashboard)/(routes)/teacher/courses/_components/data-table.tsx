@@ -57,18 +57,17 @@ export function DataTable<TData, TValue>({
 
     return (
         <div>
-            <div className="flex items-center py-4 justify-between">
+            <div className="flex flex-col space-y-4 py-4 md:flex-row md:space-y-0 md:space-x-4 md:justify-between">
                 <Input
                     placeholder="Filter courses..."
                     value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
                     onChange={(event) => {
                         console.log("Event target value " + event.target.value);
                         table.getColumn("title")?.setFilterValue(event.target.value)
-                    }
-                    }
+                    }}
                     className="max-w-sm"
                 />
-                <Link href="/teacher/courses/create">
+                <Link href="/teacher/courses/create" className="md:ml-auto">
                     <Button>
                         <PlusCircle className="h-4 w-4 mr-2"></PlusCircle>
                         New course
@@ -80,9 +79,12 @@ export function DataTable<TData, TValue>({
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => {
+                                {headerGroup.headers.map((header, index) => {
                                     return (
-                                        <TableHead key={header.id}>
+                                        <TableHead
+                                            key={header.id}
+                                            className={index === 1 ? "w-1/12 text-right" : ""}
+                                        >
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(
@@ -102,8 +104,11 @@ export function DataTable<TData, TValue>({
                                     key={row.id}
                                     data-state={row.getIsSelected() && "selected"}
                                 >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
+                                    {row.getVisibleCells().map((cell, index) => (
+                                        <TableCell
+                                            key={cell.id}
+                                            className={index === 1 ? "w-1/12 text-right" : ""}
+                                        >
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </TableCell>
                                     ))}

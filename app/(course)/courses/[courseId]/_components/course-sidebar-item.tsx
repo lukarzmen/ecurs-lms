@@ -35,14 +35,14 @@ export default function CourseSidebarItem({ id, label, courseId, isCompleted, is
             )}
         >
             <div className="flex items-center gap-x-2">
-                <Icon
+                {/* <Icon
                     size={22}
                     className={cn(
                         "text-indigo-600",
                         isActive && "text-indigo-700",
                         isCompleted && "text-emerald-600"
                     )}
-                />
+                /> */}
                 <span>{label}</span>
             </div>
             <div className={
