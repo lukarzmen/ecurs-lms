@@ -6,7 +6,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import ChapterTitleForm from "./_components/chapter-title-form";
 import ChapterDescriptionForm from "./_components/chapter-description-form";
-import { ChapterActions } from "../../_components/chapter-actions";
 
 const ChapterEditPage = async ({
   params,
