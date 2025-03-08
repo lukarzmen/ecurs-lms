@@ -82,7 +82,15 @@ const toogleCreating = () => {
   };
 
   function onDelete(chapterId: number): void {
-    throw new Error("Function not implemented.");
+    axios
+    .delete(`/api/courses/${courseId}/chapters/${chapterId}`)
+      .then(() => {
+        toast.success("Chapter deleted");
+        router.refresh();
+      })
+      .catch(() => {
+        toast.error("Something went wrong");
+      });
   }
 
   return (

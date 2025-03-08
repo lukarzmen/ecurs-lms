@@ -3,17 +3,15 @@ import { Course, Module,  } from "@prisma/client";
 import {Menu} from "lucide-react"
 import { CourseSidebar } from "./course-sidebar";
 
-interface CourseMobileSidebarProps {
+export interface CourseMobileSidebarProps {
     course: Course & {
         modules: (Module & {
         })[]
     };
-    progressCount: number | null;
 }
 
 export const CourseMobileSidebar = ({
     course,
-    progressCount,
 }: CourseMobileSidebarProps) => {
     return (
         <Sheet>

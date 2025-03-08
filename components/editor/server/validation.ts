@@ -40,8 +40,6 @@ const getJSONData = (req: http.IncomingMessage): Promise<string> => {
         resolve(Buffer.concat(body).toString());
       })
       .on('error', (error: Error) => {
-        // eslint-disable-next-line no-console
-        console.log(error);
       });
   });
 };
@@ -77,13 +75,9 @@ const validateEditorState = async (
   const assertion = JSON.stringify(editor.getEditorState().toJSON());
   const success = assertion === stringifiedEditorStateJSON;
   if (success) {
-    // eslint-disable-next-line no-console
-    console.log('Editor state updated successfully.');
     editor.setEditorState(nextEditorState);
     stringifiedEditorStateJSON = assertion;
   } else {
-    // eslint-disable-next-line no-console
-    console.log('Editor state was rejected!');
     editor.setEditorState(prevEditorState);
   }
   return success;
@@ -125,7 +119,6 @@ const server = http.createServer(async (req: http.IncomingMessage, res: http.Ser
 });
 
 server.listen(port, hostname, () => {
-  // eslint-disable-next-line no-console
   console.log(
     `Read-only validation server running at http://${hostname}:${port}/`,
   );

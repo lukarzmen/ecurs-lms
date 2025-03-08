@@ -17,11 +17,6 @@ export const NavbarRoutes = () => {
 
   return (
     <>
-      {isSearchPage && (
-        <div className="hidden md:block">
-          <SearchInput></SearchInput>
-        </div>
-      )}
       <div className="flex gap-x-2 ml-auto items-center">
         {isTeacherPage || isCoursesPage ? (
           <Link href="/">

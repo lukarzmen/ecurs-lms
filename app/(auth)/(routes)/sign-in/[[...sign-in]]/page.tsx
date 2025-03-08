@@ -7,8 +7,6 @@ const Page = () => {
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get("redirectUrl");
 
-  console.log("redirectUrl", redirectUrl);
-
   if (redirectUrl) {
     return <SignIn fallbackRedirectUrl={redirectUrl} />;
   }

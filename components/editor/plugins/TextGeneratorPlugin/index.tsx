@@ -39,8 +39,6 @@ export function TextGeneratorDialog({
   const handleSubmit = () => {
     if (userPrompt.trim()) {
       const payload: LLMPrompt = { userPrompt: userPrompt.trim(), systemPrompt: systemPrompt.trim() };
-
-      console.log("Generating text with:", payload);
       setLoading(true);
       activeEditor.dispatchCommand(GENERATE_TEXT_COMMAND, payload);
     } else {

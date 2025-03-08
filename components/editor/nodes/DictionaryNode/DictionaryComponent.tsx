@@ -21,7 +21,6 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
   
   const handleDictionaryValueChanged = (entries: [string, string][]) => {
     const dictionary: Dictionary = Object.fromEntries(entries);
-    console.log(dictionary);
     onDictionaryChanged(dictionary);
   }
 

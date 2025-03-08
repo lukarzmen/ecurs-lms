@@ -14,7 +14,5 @@ export function convertLexicalJsonToHtml(lexicalJson: string) {
   editorState.read(() => {
     html = $generateHtmlFromNodes(editor, null); // Generate HTML from nodes
   });
-  console.log("html");
-  console.log(html);
   return html;
 }

@@ -1,16 +1,34 @@
 import { createClient } from "redis";
 
+// Create the Redis client
 const redisClient = createClient({
     url: process.env.AZURE_REDIS_CONNECTIONSTRING,
+    socket: {
+        reconnectStrategy: (retries) => {
+            console.log(`Reconnecting attempt #${retries}`);
+            return Math.min(retries * 50, 500); // Delay grows with retries but caps at 500ms
+        },
+    },
 });
 
+// Listen for error events
 redisClient.on("error", (err) => console.error("Redis Client Error:", err));
 
+// Ensure connection is established at startup
 (async () => {
+    try {
+        await connectRedis();
+    } catch (error) {
+        console.error("Redis Connection Error:", error);
+    }
+})();
+
+// Helper function to check and connect to Redis
+async function connectRedis() {
     if (!redisClient.isOpen) {
         await redisClient.connect();
     }
-})();
+}
 
 /**
  * Retrieves a value from Redis by key.
@@ -19,9 +37,7 @@ redisClient.on("error", (err) => console.error("Redis Client Error:", err));
  */
 export async function getValue(key: string): Promise<string | null> {
     try {
-        if (!redisClient.isOpen) {
-            await redisClient.connect();
-        }
+        await connectRedis();
         return await redisClient.get(key);
     } catch (error) {
         console.error("Redis GET Error:", error);
@@ -37,13 +53,11 @@ export async function getValue(key: string): Promise<string | null> {
  */
 export async function setValue(key: string, value: string, ttl?: number): Promise<void> {
     try {
-        if (!redisClient.isOpen) {
-            await redisClient.connect();
-        }
+        await connectRedis();
         if (ttl) {
-            await redisClient.set(key, value, { EX: ttl });
+            await redisClient.set(key, value, { EX: ttl }); // Set with expiration
         } else {
-            await redisClient.set(key, value);
+            await redisClient.set(key, value); // Set without expiration
         }
     } catch (error) {
         console.error("Redis SET Error:", error);

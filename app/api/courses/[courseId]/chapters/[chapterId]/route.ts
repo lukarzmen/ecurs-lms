@@ -30,13 +30,7 @@ export async function DELETE(
       },
     });
 
-    const publishedChaptersInCourse = await db.module.findMany({
-      where: {
-        courseId: courseIdInt,
-      },
-    });
-
-    return NextResponse.json(deletedChapter);
+    return new NextResponse("Chapter deleted successfully", { status: 200 });
   } catch (error) {
     console.log("[COURSES_CHAPTER_ID]", error);
     return new NextResponse("Internal server error", { status: 500 });

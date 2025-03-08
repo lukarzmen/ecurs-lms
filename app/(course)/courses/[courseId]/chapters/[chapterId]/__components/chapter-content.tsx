@@ -10,7 +10,6 @@ export default function ChapterContent ({
 }: {
     content: string | null;
 }) {
-    console.log('content', content);
     const [isLoading, setIsLoading] = useState(false);
     const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
 

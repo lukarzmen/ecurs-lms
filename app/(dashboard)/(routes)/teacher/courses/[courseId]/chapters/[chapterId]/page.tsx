@@ -47,16 +47,9 @@ const ChapterEditPage = async ({
               <ArrowLeft className="h-4 w-4 mr-2"></ArrowLeft>
               Back to course setup
             </Link>
-            <div className="flex items-center justify-between w-full">
-              <ChapterActions
-                disabled={false}
-                courseId={courseId}
-                chapterId={chapterId}
-              ></ChapterActions>
-            </div>
           </div>
         </div>
-        <div className="space-y-4 mt-16">
+        <div className="space-y-4">
           <div className="w-full">
             <div className="flex items-center gap-x-2">
               <IconBadge icon={LayoutDashboard} />

@@ -7,6 +7,22 @@ import { ArrowUpDown, Pencil, Trash2 } from "lucide-react"
 import Link from "next/link"
 import toast from "react-hot-toast"
 
+const handleDelete = async (id: string) => {
+  try {
+    const response = await fetch(`/api/courses/${id}`, {
+      method: 'DELETE',
+    });
+    if (response.ok) {
+      toast.success("Course deleted successfully");
+      // Optionally, you can add code here to refresh the table or remove the deleted row from the UI
+    } else {
+      toast.error("Failed to delete course");
+    }
+  } catch (error) {
+    toast.error("An error occurred while deleting the course");
+  }
+};
+
 export const columns: ColumnDef<Course>[] = [
   {
     accessorKey: "title",
@@ -34,9 +50,12 @@ export const columns: ColumnDef<Course>[] = [
               <Pencil className="h-4 w-4" />
               </Button>
           </Link>
-          <Button variant="ghost" className="h-4 w-8 p-0" onClick={() => {toast.error("Not implemented")}}>
+            <Button variant="ghost" className="h-4 w-8 p-0" onClick={async () => {
+            await handleDelete(id.toString());
+            window.location.reload();
+            }}>
             <Trash2 className="h-4 w-4" />
-          </Button>
+            </Button>
         </>
       );
     }

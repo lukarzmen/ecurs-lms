@@ -29,12 +29,10 @@ export const FileUpload = ({ courseId }: { courseId: string }) => {
   };
 
   const handleUpload = async () => {
-    console.log(`uploading file ${file}`);
     if (file) {
       setStatus("uploading");
 
       try {
-        console.log(`uploading file ${file}`);
         const fileName: string = await azureBlobService.uploadFile(
           file,
           `${courseId}-${file.name}`,

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { use } from "react";
 import { CourseSidebar } from "./_components/course-sidebar";
 import { CourseNavbar } from "./_components/course-navbar";
+import { CourseMobileSidebar } from "./_components/course-mobile-sidebar";
 
 const CourseLayout = async ({ children, params }: {
     children: React.ReactNode;

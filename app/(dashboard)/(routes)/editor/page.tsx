@@ -27,8 +27,6 @@ export default function EditorPage() {
       <PlaygroundApp onSave={function (serializedDocument: SerializedDocument): SaveResult {
 
         const serializedDocumentJSON = JSON.stringify(serializedDocument);
-        console.log(serializedDocumentJSON);
-
         const hash = hashDocument(serializedDocumentJSON);
         fetch(`/api/editor/${hash}`, {
           method: 'POST',

@@ -267,7 +267,6 @@ export default function ActionsPlugin({
     });
     const saveResult = onSave(serializedDocument);
     setHash(saveResult.hash);
-    console.log(`Save result: ${saveResult}`);
     return saveResult.hash;
   }
 }

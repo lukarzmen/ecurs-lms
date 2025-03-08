@@ -3,13 +3,13 @@ import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { IconBadge } from "@/components/icon-badge";
-import { LayoutDashboard, ListCheck } from "lucide-react";
+import { ArrowLeft, LayoutDashboard, ListCheck } from "lucide-react";
 import TitleForm from "./_components/title-form";
 import DescriptionForm from "./_components/description-form";
 import ImageForm from "./_components/image-form";
 import CategoryForm from "./_components/category-form";
 import ChaptersForm from "./_components/chapters-form";
-import { Actions } from "./_components/actions";
+import Link from "next/link";
 
 const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = auth() ?? "";
@@ -52,10 +52,16 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
       <div className="p-6">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-y-2">
+          <Link
+              href={`/teacher/courses`}
+              className="flex items-center text-sm hover:opacity-75 transition mb-6">
+              <ArrowLeft className="h-4 w-4 mr-2"></ArrowLeft>
+              Back to course setup
+            </Link>
             <h1 className="text-2xl font-medium">Course setup</h1>
+
             <span className="text-sm text-slate-800">Complete all fields {completionText}</span>
           </div>
-          <Actions courseId={courseId} />
         </div>
         <div className="flex items-center gap-x-2 mt-8">
           <IconBadge icon={LayoutDashboard} />
