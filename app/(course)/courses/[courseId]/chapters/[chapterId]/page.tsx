@@ -1,6 +1,5 @@
 import { getChapter } from "@/actions/get-chapter";
 import { Banner } from "@/components/banner";
-import LexicalEditor from "@/components/editor/LexicalEditor"; // Assuming this is used elsewhere
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import ChapterContent from "./__components/chapter-content";
@@ -16,19 +15,36 @@ const ChapterIdPage = async ({
     };
 }) => {
     // Await authentication
-    const user = await auth();
+    const userAuth = await auth();
 
     // Redirect to home if user is not authenticated
-    if (!user) {
+    if (!userAuth) {
         return redirect("/sign-in");
     }
+    const user = userAuth.userId;
+    const { courseId, chapterId } = params;
+    // Post user permission using user data
+    const response = await fetch(`${process.env.URL}/api/permissions`, {
+        method: 'POST',
+        body: JSON.stringify({
+            courseId,
+            userId: userAuth.userId,
+            sessionId : userAuth.sessionId,
+        }),
+    });
 
+    const result = await response.json();
+
+    if (!result.exists) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full">
+                <p className="text-lg text-gray-700">Ask teacher for permission to access this course.</p>
+            </div>
+        );
+    }
     // Fetch chapter data
-    const {
-        courseId, chapterId
-    } = await params;
     const getChapterInputParams = {
-        userId: user.userId ?? "",
+        userId: userAuth.userId ?? "",
         courseId: parseInt(courseId, 10),
         chapterId: parseInt(chapterId, 10),
     };
