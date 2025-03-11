@@ -11,7 +11,7 @@ import { redirect } from "next/navigation";
 const EditorPage = ({ params }: { params: { editorId: string } }) => {
     
     const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
-    const { isLoaded, userId, sessionId, getToken } = useAuth();
+    const { isLoaded, userId } = useAuth();
 
     if (!isLoaded) {
         return <div>Loading...</div>;

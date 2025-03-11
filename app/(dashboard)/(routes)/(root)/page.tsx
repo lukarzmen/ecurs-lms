@@ -5,14 +5,21 @@ import { auth } from "@clerk/nextjs/server";
 import { CheckCircle, Clock } from "lucide-react";
 import { InfoCard } from "./_components/info-card";
 import { redirect } from "next/navigation";
+import {authorizeUser} from "@/hooks/use-auth";
 
 export default async function Home() {
-  const {userId} = auth();
+  const {userId, sessionId} = auth();
   if(!userId) {
     return redirect("/sign-in");
   }
+  const authState = await authorizeUser(userId, sessionId);
 
-  const coursesInProgress= await getDashboardCourses(userId);
+  if (authState === 'userNotExists') {
+    return redirect("/register");
+  }
+
+
+  const coursesInProgress = userId ? await getDashboardCourses(userId) : [];
 
   return (
     <div className="min-h-screen px-4 pt-4">

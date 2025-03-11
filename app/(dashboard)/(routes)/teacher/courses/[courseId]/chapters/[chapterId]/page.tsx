@@ -41,9 +41,9 @@ const ChapterEditPage = async ({
           <div className="w-full">
             <Link
               href={`/teacher/courses/${courseId}`}
-              className="flex items-center text-sm hover:opacity-75 transition mb-6"
+              className="flex items-center text-sm hover:opacity-75 transition p-4"
             >
-              <ArrowLeft className="h-4 w-4 mr-2"></ArrowLeft>
+              <ArrowLeft className="h-4 w-4 p-4"></ArrowLeft>
               Back to course setup
             </Link>
           </div>

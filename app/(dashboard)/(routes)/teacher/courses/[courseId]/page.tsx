@@ -54,7 +54,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
           <div className="flex flex-col gap-y-2">
           <Link
               href={`/teacher/courses`}
-              className="flex items-center text-sm hover:opacity-75 transition mb-6">
+              className="flex items-center text-sm hover:opacity-75 transition p-4">
               <ArrowLeft className="h-4 w-4 mr-2"></ArrowLeft>
               Back to course setup
             </Link>

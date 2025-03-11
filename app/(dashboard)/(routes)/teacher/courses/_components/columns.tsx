@@ -1,20 +1,21 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Course } from "@prisma/client"
-import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown, Pencil, Trash2 } from "lucide-react"
-import Link from "next/link"
-import toast from "react-hot-toast"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Course } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
+import { ArrowUpDown, Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
+import toast from "react-hot-toast";
 
 const handleDelete = async (id: string) => {
   try {
     const response = await fetch(`/api/courses/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
     if (response.ok) {
       toast.success("Course deleted successfully");
-      // Optionally, you can add code here to refresh the table or remove the deleted row from the UI
+      // Optionally, refresh the UI or remove the row
     } else {
       toast.error("Failed to delete course");
     }
@@ -26,38 +27,67 @@ const handleDelete = async (id: string) => {
 export const columns: ColumnDef<Course>[] = [
   {
     accessorKey: "title",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Title
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Title
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
   },
   {
     id: "actions",
     header: "Actions",
     cell: ({ row }) => {
       const { id } = row.original;
+      const [isModalOpen, setIsModalOpen] = useState(false);
+
+      const handleConfirmDelete = async () => {
+        await handleDelete(id.toString());
+        setIsModalOpen(false);
+        window.location.reload();
+      };
+
       return (
         <>
           <Link href={`/teacher/courses/${id}`}>
-              <Button variant="ghost" className="h-4 w-8 p-0">
+            <Button variant="ghost" className="h-4 w-8 p-0">
               <Pencil className="h-4 w-4" />
-              </Button>
-          </Link>
-            <Button variant="ghost" className="h-4 w-8 p-0" onClick={async () => {
-            await handleDelete(id.toString());
-            window.location.reload();
-            }}>
-            <Trash2 className="h-4 w-4" />
             </Button>
+          </Link>
+          <Button
+            variant="ghost"
+            className="h-4 w-8 p-0"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+          {isModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+              <div className="bg-white p-4 rounded shadow-lg">
+                <p>Are you sure you want to delete this course?</p>
+                <div className="flex justify-end mt-4">
+                  <Button
+                    variant="secondary"
+                    className="mr-2"
+                    onClick={() => setIsModalOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleConfirmDelete}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       );
-    }
-  }
-]
+    },
+  },
+];
