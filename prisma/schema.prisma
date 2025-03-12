@@ -52,6 +52,11 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
+model Role {
+  id Int @id @default(autoincrement())
+  name String @unique
+  modules Module[]
+}
 model Module {
   id Int @id @default(autoincrement())
   moduleContentId String @unique @default(uuid())
@@ -62,8 +67,10 @@ model Module {
   userModules UserModule[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
+  roleId Int
+  role Role? @relation(fields: [roleId], references: [id], onDelete: Cascade)
   @@index([courseId])
+  @@index([roleId])
 }
 
 model UserCourse {
@@ -82,7 +89,7 @@ model UserCourse {
 }
 
 model UserModule {
-  id Int @id @default(autoincrement())
+id Int @id @default(autoincrement())
   userId Int
   moduleId Int
   isOpen Boolean @default(false)

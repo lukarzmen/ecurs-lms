@@ -1,9 +1,9 @@
 import { db } from "@/lib/db";
 import { Categories } from "./_components/categories";
 import { SearchInput } from "@/components/ui/search-input";
-import { getCourses } from "@/actions/get-courses";
 import { auth } from "@clerk/nextjs/server";
 import { CoursesList } from "@/components/ui/courses-list";
+import { env } from "process";
 
 interface SearchPageProps {
   searchParams: {
@@ -21,12 +21,10 @@ const SearchPage = async ({
       name: "asc",
     },
   });
+  const apiUrl = `${process.env.URL}/api/courses?userId=${userId}&title=${searchParams.title || ''}&categoryId=${searchParams.categoryId || ''}`;
+  const res = await fetch(apiUrl);
+  const courses = await res.json();
 
-  const courses = await getCourses({
-    userId: userId || '',
-    ...searchParams,
-    categoryId: Number(searchParams.categoryId)
-  });
   return (
     <>
     <div className="px-6 mt-4 pt-6 mb-0 block w-full">

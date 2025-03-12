@@ -1,6 +1,5 @@
 import { SignedIn, SignedOut, SignIn } from "@clerk/nextjs";
 import { CoursesList } from "@/components/ui/courses-list";
-import { getDashboardCourses } from "@/actions/get-dashboard-courses";
 import { auth } from "@clerk/nextjs/server";
 import { CheckCircle, Clock } from "lucide-react";
 import { InfoCard } from "./_components/info-card";
@@ -19,7 +18,7 @@ export default async function Home() {
   }
 
 
-  const coursesInProgress = userId ? await getDashboardCourses(userId) : [];
+  const userCourses = userId ? await fetch(`${process.env.URL}/api/user/courses?userId=${userId}`).then(res => res.json()) : [];
 
   return (
     <div className="min-h-screen px-4 pt-4">
@@ -31,10 +30,10 @@ export default async function Home() {
       <SignedIn>
       <div className="p-6 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <InfoCard icon={Clock} label="In progress" numberOfItems={coursesInProgress.length} />
+        <InfoCard icon={Clock} label="In progress" numberOfItems={userCourses.length} />
         <InfoCard icon={CheckCircle} label="Completed" numberOfItems={0} variant="success" />
         </div>
-        <CoursesList items={[...coursesInProgress]} />
+        <CoursesList items={[...userCourses]} />
       </div>
       </SignedIn>
     </div>

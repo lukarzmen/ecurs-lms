@@ -1,4 +1,3 @@
-import { getChapter } from "@/actions/get-chapter";
 import { Banner } from "@/components/banner";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
@@ -14,6 +13,7 @@ const ChapterIdPage = async ({
         chapterId: string;
     };
 }) => {
+    console.log("chapter id page");
     // Await authentication
     const userAuth = await auth();
 
@@ -21,8 +21,8 @@ const ChapterIdPage = async ({
     if (!userAuth) {
         return redirect("/sign-in");
     }
-    const user = userAuth.userId;
     const { courseId, chapterId } = params;
+    console.log("fetch chapter", courseId, chapterId);
     // Post user permission using user data
     const response = await fetch(`${process.env.URL}/api/permissions`, {
         method: 'POST',
@@ -38,22 +38,19 @@ const ChapterIdPage = async ({
     if (!result.exists) {
         return (
             <div className="flex flex-col items-center justify-center h-full">
-                <p className="text-lg text-gray-700">Ask teacher for permission to access this course.</p>
+                <p className="text-lg text-gray-700">You don't have permission to access this course.</p>
+                <p className="text-sm text-gray-500">Ask teacher for permission to access this course.</p>
             </div>
         );
     }
-    // Fetch chapter data
-    const getChapterInputParams = {
-        userId: userAuth.userId ?? "",
-        courseId: parseInt(courseId, 10),
-        chapterId: parseInt(chapterId, 10),
-    };
-    const chapterData = await getChapter(getChapterInputParams);
-    if (typeof chapterData === 'string') {
-        return redirect("/");
-    }
-    const { module, course } = chapterData;
 
+    console.log("fetch chapter", courseId, chapterId);
+    // Fetch chapter data
+    const chapterResponse = await fetch(`${process.env.URL}/api/courses/${courseId}/chapters/${chapterId}`);
+    const chapterData = await chapterResponse.json();
+    console.log("chapter data", chapterData);
+
+    const { module, course } = chapterData;
     // Redirect if chapter or course is not found
     if (!module || !course) {
         return redirect("/");
@@ -69,7 +66,7 @@ return (
             <Link
                 href={`/`}
                 className="flex items-center text-sm hover:opacity-75 transition p-4 ">
-                <ArrowLeft className="h-4 w-4 mr-2"></ArrowLeft>
+                <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to dashboard
             </Link>
             <div className="flex flex-col mx-auto">

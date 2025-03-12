@@ -101,3 +101,39 @@ export async function DELETE(
     return new NextResponse("Internal server error", { status: 500 });
   }
 }
+
+export async function GET(
+    req: Request,
+    { params }: { params: { courseId: string } },
+  ) {
+    try {
+      const courseIdNumber = parseInt(params.courseId, 10);
+
+      if (isNaN(courseIdNumber)) {
+        return new NextResponse("Invalid courseId", { status: 400 });
+      }
+
+      const course = await db.course.findUnique({
+        where: {
+          id: courseIdNumber,
+        },
+        include: {
+          modules: {
+            orderBy: {
+              position: "asc",
+            },
+          },
+        },
+      });
+
+      if (!course) {
+        return new NextResponse("Course not found", { status: 404 });
+      }
+
+      return NextResponse.json(course);
+    } catch (error) {
+      console.error(error);
+      return new NextResponse("Internal server error", { status: 500 });
+    }
+  }
+

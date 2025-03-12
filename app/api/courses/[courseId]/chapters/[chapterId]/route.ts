@@ -73,3 +73,38 @@ export async function PATCH(
     return new Response("Internal server error", { status: 500 });
   }
 }
+
+
+export async function GET(
+  req: Request,
+  { params }: { params: { courseId: string; chapterId: string } },
+) {
+  try {
+
+    const courseIdInt = parseInt(params.courseId, 10);
+    const chapterIdInt = parseInt(params.chapterId, 10);
+
+    const course = await db.course.findUnique({
+      where: {
+        id: courseIdInt
+      },
+    });
+
+    const module = await db.module.findUnique({
+      where: {
+        id: chapterIdInt,
+      },
+    });
+
+    if (!module || !course) {
+      return new NextResponse("Chapter or course not found", {
+        status: 404,
+      });
+    }
+
+    return NextResponse.json({ module, course });
+  } catch (error) {
+    console.error("[GET_CHAPTER]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
