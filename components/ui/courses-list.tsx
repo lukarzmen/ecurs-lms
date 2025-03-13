@@ -1,7 +1,6 @@
 import { Category, Course } from "@prisma/client";
 import { CourseCard } from "./course-card";
-import { CourseWithWithCategory } from "@/actions/get-dashboard-courses";
-import { CategoriesCourseAndModules } from "@/actions/get-courses";
+import { CategoriesCourseAndModules } from "@/app/api/courses/route";
 
 interface CoursesListProps {
     items: CategoriesCourseAndModules[];

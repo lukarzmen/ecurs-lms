@@ -3,7 +3,7 @@ import { Course, Module,  } from "@prisma/client";
 import {Menu} from "lucide-react"
 import { CourseSidebar } from "./course-sidebar";
 
-export interface CourseMobileSidebarProps {
+export interface CourseSidebarProps {
     course: Course & {
         modules: (Module & {
         })[]
@@ -12,7 +12,7 @@ export interface CourseMobileSidebarProps {
 
 export const CourseMobileSidebar = ({
     course,
-}: CourseMobileSidebarProps) => {
+}: CourseSidebarProps) => {
     return (
         <Sheet>
             <SheetTrigger className="md:hidden pr-4 hover:opacity-75 transition">

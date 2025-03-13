@@ -15,26 +15,26 @@ const CourseIdPage = async ({
     if (!userAuth) {
         return redirect("/sign-in");
     }
-    const { courseId } = params;
+    // const { courseId } = params;
     // Post user permission using user data
-    const response = await fetch(`${process.env.URL}/api/permissions`, {
-        method: 'POST',
-        body: JSON.stringify({
-            courseId,
-            userId: userAuth.userId,
-            sessionId: userAuth.sessionId,
-        }),
-    });
-    console.log(response);
-    const result = await response.json();
+    // const response = await fetch(`${process.env.URL}/api/permissions`, {
+    //     method: 'POST',
+    //     body: JSON.stringify({
+    //         courseId,
+    //         userId: userAuth.userId,
+    //         sessionId: userAuth.sessionId,
+    //     }),
+    // });
+    // console.log(response);
+    // const result = await response.json();
 
-    if (!result.exists) {
-        return (
-            <div className="flex flex-col items-center justify-center h-full">
-                <p className="text-lg text-gray-700">Ask teacher for permission to access this course.</p>
-            </div>
-        );
-    }
+    // if (!result.exists) {
+    //     return (
+    //         <div className="flex flex-col items-center justify-center h-full">
+    //             <p className="text-lg text-gray-700">Ask teacher for permission to access this course.</p>
+    //         </div>
+    //     );
+    // }
     const courseIdNumber = parseInt(params.courseId, 10);
     console.log("fetch course", courseIdNumber);
     const courseResponse = await fetch(`${process.env.URL}/api/courses/${courseIdNumber}`);

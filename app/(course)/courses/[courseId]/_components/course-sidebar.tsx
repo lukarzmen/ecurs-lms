@@ -3,13 +3,9 @@ import { Module, Course } from "@prisma/client";
 import { redirect } from "next/navigation";
 import CourseSidebarItem from "./course-sidebar-item";
 import { auth } from "@clerk/nextjs/server";
-;
+import { CourseSidebarProps } from "./course-mobile-sidebar";
 
-interface CourseSidebarProps {
-    course: Course & {
-        modules: Module[] | null;
-    };
-}
+
 export const CourseSidebar = async ({ course }: CourseSidebarProps) => {
     return (
         <div className="h-full border-r flex flex-col overflow-y-auto shadow-sm rounded-md">

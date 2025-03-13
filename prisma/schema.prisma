@@ -50,12 +50,15 @@ model User {
   userModules UserModule[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  roleId Int @default(0)
+  role Role? @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  @@index([roleId])
 }
 
 model Role {
   id Int @id @default(autoincrement())
   name String @unique
-  modules Module[]
+  users User[]
 }
 model Module {
   id Int @id @default(autoincrement())
@@ -67,10 +70,8 @@ model Module {
   userModules UserModule[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  roleId Int
-  role Role? @relation(fields: [roleId], references: [id], onDelete: Cascade)
   @@index([courseId])
-  @@index([roleId])
+
 }
 
 model UserCourse {

@@ -3,13 +3,13 @@ import { db } from "@/lib/db";
 import { Category, Module, Course } from "@prisma/client";
 import { NextResponse } from 'next/server';
 
-export type CourseWithWithCategory = Course & {
+export type CourseWithCategory = Course & {
     modules: Module[];
     category: Category | null;
 }
 
 
-export const getDashboardCourses = async (userId: string): Promise<CourseWithWithCategory[]> => {
+const getDashboardCourses = async (userId: string): Promise<CourseWithCategory[]> => {
     try {
         const user = await db.user.findUnique({
             where: {

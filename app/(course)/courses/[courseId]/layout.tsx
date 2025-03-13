@@ -15,21 +15,8 @@ const CourseLayout = async ({ children, params }: {
         return redirect("/sign-in");
       }
 
-    const courseId = parseInt(params.courseId, 10);
-    const course = await db.course.findFirst({
-        where: {
-            id: courseId,
-            userId,
-        },
-        include: {
-            modules: {
-                
-                orderBy: {
-                    position: 'asc',
-                },
-            },
-        },
-    });
+    const courseResponse = await fetch(`${process.env.URL}/api/courses/${params.courseId}/chapters`);
+    const course = await courseResponse.json();
 
     if(!course) {
         return redirect('/');

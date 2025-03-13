@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
+import { Course, Module } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -57,5 +58,40 @@ export async function POST(
     return new NextResponse("Internal error", {
       status: 500,
     });
+  }
+}
+
+export async function GET(
+  req: Request,
+  { params }: { params: { courseId: string } },
+) {
+  try {
+    const courseId = parseInt(params.courseId, 10);
+
+    if (isNaN(courseId)) {
+      return new NextResponse("Invalid courseId", { status: 400 });
+    }
+
+    const course = await db.course.findUnique({
+      where: {
+        id: courseId,
+      },
+      include: {
+        modules: {
+          orderBy: {
+            position: "asc",
+          },
+        },
+      },
+    });
+
+    if (!course) {
+      return new NextResponse("Course not found", { status: 404 });
+    }
+
+    return NextResponse.json(course);
+  } catch (error) {
+    console.error("[COURSE_ID_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }

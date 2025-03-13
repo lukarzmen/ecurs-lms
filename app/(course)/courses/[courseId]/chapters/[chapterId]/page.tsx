@@ -22,27 +22,27 @@ const ChapterIdPage = async ({
         return redirect("/sign-in");
     }
     const { courseId, chapterId } = params;
-    console.log("fetch chapter", courseId, chapterId);
-    // Post user permission using user data
-    const response = await fetch(`${process.env.URL}/api/permissions`, {
-        method: 'POST',
-        body: JSON.stringify({
-            courseId,
-            userId: userAuth.userId,
-            sessionId : userAuth.sessionId,
-        }),
-    });
+    // console.log("fetch chapter", courseId, chapterId);
+    // // Post user permission using user data
+    // const response = await fetch(`${process.env.URL}/api/permissions`, {
+    //     method: 'POST',
+    //     body: JSON.stringify({
+    //         courseId,
+    //         userId: userAuth.userId,
+    //         sessionId : userAuth.sessionId,
+    //     }),
+    // });
 
-    const result = await response.json();
+    // const result = await response.json();
 
-    if (!result.exists) {
-        return (
-            <div className="flex flex-col items-center justify-center h-full">
-                <p className="text-lg text-gray-700">You don't have permission to access this course.</p>
-                <p className="text-sm text-gray-500">Ask teacher for permission to access this course.</p>
-            </div>
-        );
-    }
+    // if (!result.exists) {
+    //     return (
+    //         <div className="flex flex-col items-center justify-center h-full">
+    //             <p className="text-lg text-gray-700">You don't have permission to access this course.</p>
+    //             <p className="text-sm text-gray-500">Ask teacher for permission to access this course.</p>
+    //         </div>
+    //     );
+    // }
 
     console.log("fetch chapter", courseId, chapterId);
     // Fetch chapter data
