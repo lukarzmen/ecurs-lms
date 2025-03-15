@@ -13,12 +13,12 @@ export default async function Home() {
   }
   const authState = await authorizeUser(userId, sessionId);
 
-  if (authState === 'userNotExists') {
+  if (authState.authState === 'userNotExists') {
     return redirect("/register");
   }
 
 
-  const userCourses = userId ? await fetch(`${process.env.URL}/api/user/courses?userId=${userId}`).then(res => res.json()) : [];
+  const userCourses = userId ? await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/courses?userId=${userId}`).then(res => res.json()) : [];
 
   return (
     <div className="min-h-screen px-4 pt-4">

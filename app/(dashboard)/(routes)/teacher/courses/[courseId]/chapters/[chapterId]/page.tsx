@@ -21,16 +21,10 @@ const ChapterEditPage = async ({
   }
   const { courseId, chapterId } = await params;
 
-  const courseIdInt = parseInt(params.courseId, 10);
-  const chapterIdInt = parseInt(params.chapterId, 10);
-  const chapter = await db.module.findFirst({
-    where: {
-      id: chapterIdInt,
-      courseId: courseIdInt,
-    },
-  });
+  const moduleResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/module/${chapterId}`);
+  const module = await moduleResponse.json(); 
 
-  if (!chapter) {
+  if (!module) {
     redirect("/");
   }
 
@@ -56,7 +50,7 @@ const ChapterEditPage = async ({
             </div>
             <ChapterTitleForm
               chapterId={chapterId}
-              title={chapter.title}
+              title={module.title}
               courseId={courseId}
             />
           </div>
@@ -64,7 +58,7 @@ const ChapterEditPage = async ({
           <div className="w-full">
             <ChapterDescriptionForm
               chapterId={chapterId}
-              moduleContentId={chapter.moduleContentId}
+              moduleContentId={module.moduleContentId}
               courseId={courseId}
             />
           </div>

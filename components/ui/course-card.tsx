@@ -10,6 +10,7 @@ interface CourseCardProps {
     imageId: string;
     chaptersLength: number;
     category: string;
+    moduleId: number;
 }
 
 export const CourseCard = ({
@@ -18,12 +19,13 @@ export const CourseCard = ({
     imageId,
     chaptersLength,
     category,
+    moduleId
 }: CourseCardProps) => {
     const imageUrl = imageId ? `/api/image/${imageId}` : null;
     const placeholderImageUrl = "/logo.png"; // Replace with your placeholder image path
 
     return (
-        <Link href={`/courses/${id}`}>
+        <Link href={`/courses/${id}/chapters/${moduleId}`}>
             <div className="group hover:shadow-sm transition overflow-hidden border rounded-lg p-3 h-full">
                 <div className="relative w-full aspect-square rounded-md overflow-hidden">
                     <Image fill className="object-cover" alt={title} src={imageUrl || placeholderImageUrl}></Image>

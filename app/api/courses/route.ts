@@ -43,7 +43,7 @@ export async function DELETE(req: Request) {
         status: 401,
       });
     }
-    const course = await db.course.delete({
+    await db.course.delete({
       where: {
         id: courseId,
         userId: userId,
@@ -59,47 +59,21 @@ export async function DELETE(req: Request) {
     });
   }
 }
-export type CategoriesCourseAndModules = Course & {
-  category: Category | null
-  modules: { id: number }[]
-};
 
+  export async function GET(req: Request) {
+    try {
 
-export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const title = searchParams.get('title') || undefined;
-    const categoryId = searchParams.get('categoryId') ? parseInt(searchParams.get('categoryId')!) : undefined;
-
-    const courses = await db.course.findMany({
-      where: {
-        title: {
-          contains: title,
+      const courses = await db.course.findMany({
+        orderBy: {
+          createdAt: "desc",
         },
-        categoryId: categoryId
-      },
-      include: {
-        category: true,
-        modules: {
-          select: {
-            id: true
-          }
-        },
-      },
-      orderBy: {
-        createdAt: "desc"
-      }
-    });
+      });
 
-    const response = courses.map(course => ({
-      ...course,
-      modules: course.modules
-    }));
-
-    return NextResponse.json(response);
-
-  } catch (error) {
-    console.error("[GET_COURSES]", error);
-    return new NextResponse("Internal error", { status: 500 });
+      return NextResponse.json(courses);
+    } catch (error) {
+      console.log("[COURSES_GET]", error);
+      return new NextResponse("Internal Error", { status: 500 });
+    }
   }
-}
+
+

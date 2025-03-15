@@ -2,9 +2,8 @@ import { db } from "@/lib/db";
 import DataCard from "./_components/data-card";
 
 const AnalyticsPage = async () => {
-  const userCount = await db.user.count();
-  const coursesCount = await db.course.count();
-  const modulesCount = await db.module.count();
+  const analyticsData = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics`);
+  const { userCount, coursesCount, modulesCount } = await analyticsData.json();
 
   return (
     <div className="p-6">

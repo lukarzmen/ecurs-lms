@@ -18,17 +18,11 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   }
   const { courseId } = await params;
   const courseIdNumber = parseInt(courseId, 10);
-  const course = await db.course.findUnique({
-    where: { id: parseInt(courseId), userId: userId },
-    include: {
-      modules: { orderBy: { position: "asc" } }
-    },
-  });
 
-  const categories = await db.category.findMany({
-    orderBy: { name: "asc" },
-  });
-
+  const coursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}`);
+  const course = await coursesResponse.json();
+  const categoriesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`);
+  const categories = await categoriesResponse.json();
   if (!course) {
     return <div>Course not found</div>;
   }

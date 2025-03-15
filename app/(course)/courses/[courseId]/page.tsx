@@ -1,4 +1,3 @@
-import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
@@ -17,7 +16,7 @@ const CourseIdPage = async ({
     }
     // const { courseId } = params;
     // Post user permission using user data
-    // const response = await fetch(`${process.env.URL}/api/permissions`, {
+    // const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/permissions`, {
     //     method: 'POST',
     //     body: JSON.stringify({
     //         courseId,
@@ -36,15 +35,13 @@ const CourseIdPage = async ({
     //     );
     // }
     const courseIdNumber = parseInt(params.courseId, 10);
-    console.log("fetch course", courseIdNumber);
-    const courseResponse = await fetch(`${process.env.URL}/api/courses/${courseIdNumber}`);
+    const courseResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseIdNumber}`);
     const course = await courseResponse.json();
     console.log("course", course);
     if (!course) {
         return redirect('/');
     }
-    console.log("redirecting to", `/courses/${params.courseId}/chapters/${course.modules[0].id}`);
-    return redirect(`/courses/${params.courseId}/chapters/${course.modules[0].id}`);
+    return redirect(`/courses/${params.courseId}/chapters/${course.lastNotFinishedModuleId}`);
 };
 
 export default CourseIdPage;

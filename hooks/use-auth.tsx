@@ -1,19 +1,16 @@
-type AuthState = 'notAuthorized' | 'userNotExists' | 'userExists';
+import { UserResponse } from "@/app/api/user/route";
 
-interface UserResponse {
-  exists: boolean;
-}
+export type AuthState = 'notAuthorized' | 'userNotExists' | 'userExists';
 
-export const authorizeUser = async (userId: string | null, sessionId: string | null): Promise<AuthState> => {
+export const authorizeUser = async (userId: string | null, sessionId: string | null): Promise<{ authState: AuthState, userResponse?: UserResponse }> => {
   if (!userId || !sessionId) {
-    return 'notAuthorized';
+    return { authState: 'notAuthorized' };
   }
-
   try {
-    const response = await fetch(`${process.env.URL}/api/user?userId=${encodeURIComponent(userId)}&sessionId=${encodeURIComponent(sessionId)}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user?userId=${encodeURIComponent(userId)}&sessionId=${encodeURIComponent(sessionId)}`, {
       method: 'GET',
       headers: {
-      'Content-Type': 'application/json',
+        'Content-Type': 'application/json',
       }
     });
 
@@ -24,12 +21,12 @@ export const authorizeUser = async (userId: string | null, sessionId: string | n
     const data: UserResponse = await response.json();
 
     if (data.exists) {
-      return 'userExists'; // User exists
+      return { authState: 'userExists', userResponse: data }; // User exists
     } else {
-      return 'userNotExists';
+      return { authState: 'userNotExists' };
     }
   } catch (error) {
     console.error('Authorization error:', error);
-    return 'notAuthorized';
+    return { authState: 'notAuthorized' };
   }
 };

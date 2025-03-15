@@ -11,6 +11,7 @@ import { Pencil } from "lucide-react";
 import { SerializedDocument } from "@lexical/file";
 import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 import LexicalEditor from "@/components/editor/LexicalEditor";
+import { set } from "zod";
 
 interface ChapterDescriptionFormProps {
   moduleContentId: string;
@@ -51,9 +52,6 @@ export const ChapterDescriptionForm = ({
 
     fetchData();
   }, [moduleContentId]);
-  
-
-  const router = useRouter();
 
   const toggleEdit = () => {
     setIsEditing((current) => !current);
@@ -86,6 +84,7 @@ export const ChapterDescriptionForm = ({
       return { success: false, hash: moduleContentId };
     } finally {
       setIsLoading(false);
+      setIsEditing(false);
     }
   };
   return (

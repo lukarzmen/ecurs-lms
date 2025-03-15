@@ -1,10 +1,7 @@
-import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { use } from "react";
 import { CourseSidebar } from "./_components/course-sidebar";
 import { CourseNavbar } from "./_components/course-navbar";
-import { CourseMobileSidebar } from "./_components/course-mobile-sidebar";
 
 const CourseLayout = async ({ children, params }: {
     children: React.ReactNode;
@@ -15,7 +12,7 @@ const CourseLayout = async ({ children, params }: {
         return redirect("/sign-in");
       }
 
-    const courseResponse = await fetch(`${process.env.URL}/api/courses/${params.courseId}/chapters`);
+    const courseResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${params.courseId}/chapters`);
     const course = await courseResponse.json();
 
     if(!course) {

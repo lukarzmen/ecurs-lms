@@ -13,7 +13,6 @@ const ChapterIdPage = async ({
         chapterId: string;
     };
 }) => {
-    console.log("chapter id page");
     // Await authentication
     const userAuth = await auth();
 
@@ -24,7 +23,7 @@ const ChapterIdPage = async ({
     const { courseId, chapterId } = params;
     // console.log("fetch chapter", courseId, chapterId);
     // // Post user permission using user data
-    // const response = await fetch(`${process.env.URL}/api/permissions`, {
+    // const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/permissions`, {
     //     method: 'POST',
     //     body: JSON.stringify({
     //         courseId,
@@ -44,9 +43,8 @@ const ChapterIdPage = async ({
     //     );
     // }
 
-    console.log("fetch chapter", courseId, chapterId);
     // Fetch chapter data
-    const chapterResponse = await fetch(`${process.env.URL}/api/courses/${courseId}/chapters/${chapterId}`);
+    const chapterResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}/chapters/${chapterId}`);
     const chapterData = await chapterResponse.json();
     console.log("chapter data", chapterData);
 

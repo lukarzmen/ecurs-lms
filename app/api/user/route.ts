@@ -2,6 +2,18 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { clerkClient } from '@clerk/nextjs/server';
 
+export interface UserResponse {
+  exists: boolean;
+  id: string;
+  name: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  displayName: string;
+  providerId: string;
+  roleId: number;
+}
+
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const sessionId = searchParams.get('sessionId');
@@ -16,13 +28,34 @@ export async function GET(req: Request) {
     try {
         const user = await db.user.findUnique({
             where: { providerId: userId },
+            select: {
+                id: true,
+                providerId: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                displayName: true,
+                roleId: true,
+            },
         });
 
         if (!user) {
             return NextResponse.json({ exists: false });
         }
+
+        const userResponse: UserResponse = {
+            exists: true,
+            id: user.id.toString(),
+            name: `${user.firstName} ${user.lastName}`,
+            email: user.email,
+            firstName: user.firstName ?? '',
+            lastName: user.lastName ?? '',
+            displayName: user.displayName ?? '',
+            providerId: user.providerId,
+            roleId: user.roleId
+        };
         
-        return NextResponse.json({ exists: true, user });
+        return NextResponse.json(userResponse);
     } catch (error) {
         console.error(error);
         return new NextResponse("Internal error", {

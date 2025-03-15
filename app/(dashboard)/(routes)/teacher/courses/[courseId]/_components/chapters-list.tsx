@@ -138,7 +138,7 @@ export const ChaptersList = ({
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded shadow-lg">
-            <p>Are you sure you want to delete this chapter?</p>
+            <div>Are you sure you want to delete this chapter?</div>
             <div className="flex justify-end mt-4">
               <Button
                 variant="secondary"

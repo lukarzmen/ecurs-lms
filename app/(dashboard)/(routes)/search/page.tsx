@@ -16,12 +16,10 @@ const SearchPage = async ({
 }: SearchPageProps) => {
   const { userId } = auth() || { userId: '' };
   
-  const categories = await db.category.findMany({
-    orderBy: {
-      name: "asc",
-    },
-  });
-  const apiUrl = `${process.env.URL}/api/courses?userId=${userId}&title=${searchParams.title || ''}&categoryId=${searchParams.categoryId || ''}`;
+  const resCategories = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`);
+  const categories = await resCategories.json();
+  
+  const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/courses/search?title=${searchParams.title || ''}&categoryId=${searchParams.categoryId || ''}`;
   const res = await fetch(apiUrl);
   const courses = await res.json();
 

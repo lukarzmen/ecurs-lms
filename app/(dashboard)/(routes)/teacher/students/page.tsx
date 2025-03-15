@@ -3,7 +3,8 @@ import { User } from '@prisma/client';
 import React from 'react';
 
 const StudentsPage: React.FC = async () => {
-    const students = await db.user.findMany();
+    const strudentsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/student`);
+    const students = await strudentsResponse.json();
     return (
         <div className="container mx-auto p-4">
             <h1 className="text-2xl font-bold mb-4">Students</h1>
@@ -11,7 +12,7 @@ const StudentsPage: React.FC = async () => {
                 <table className="min-w-full bg-white">
                     <thead>
                         <tr>
-                            <th className="py-2 px-4 bg-gray-200 text-left">ID</th>
+                            <th className="py-2 px-4 bg-gray-200 text-left">Id</th>
                             <th className="py-2 px-4 bg-gray-200 text-left">First Name</th>
                             <th className="py-2 px-4 bg-gray-200 text-left">Last Name</th>
                             <th className="py-2 px-4 bg-gray-200 text-left">Email</th>

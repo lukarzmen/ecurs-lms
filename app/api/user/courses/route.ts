@@ -4,7 +4,7 @@ import { Category, Module, Course } from "@prisma/client";
 import { NextResponse } from 'next/server';
 
 export type CourseWithCategory = Course & {
-    modules: Module[];
+    modules: { id: number }[];
     category: Category | null;
 }
 
@@ -33,13 +33,7 @@ const getDashboardCourses = async (userId: string): Promise<CourseWithCategory[]
             category: true,
             modules: {
                 select: {
-                id: true,
-                moduleContentId: true,
-                title: true,
-                position: true,
-                courseId: true,
-                createdAt: true,
-                updatedAt: true,
+                id: true
                 },
             },
             },
@@ -64,5 +58,20 @@ export async function GET(req: Request) {
     }
 
     const courses = await getDashboardCourses(userId);
-    return NextResponse.json(courses, { status: 200 });
+    const coursesWithNonFinishedModules: CourseDetails[] = courses.map((course: CourseWithCategory) => {
+        const modules = course.modules;
+        const lastModuleId = modules.length > 0 ? Math.max(...modules.map(module => module.id)) : 0;
+
+        return {
+            ...course,
+            nonFinishedModuleId: lastModuleId,
+        };
+    });
+
+    return NextResponse.json(coursesWithNonFinishedModules, { status: 200 });
 }
+
+export type CourseDetails = Course & {
+    category: Category | null
+    nonFinishedModuleId: number
+  };

@@ -13,14 +13,8 @@ const CoursesPage = async () => {
     return redirect("/sign-in");
   }
 
-  const courses = await db.course.findMany({
-    where: {
-      userId: userId,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  const coursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses`);
+  const courses = await coursesResponse.json();
 
   return (
       <div className="p-6">
