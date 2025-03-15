@@ -54,7 +54,7 @@ const toogleCreating = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await axios.post(`/api/courses/${courseId}/chapters`, values);
-      toast.success("Chapter created");
+      toast.success("Module created");
       toogleCreating();
       router.refresh();
     } catch (error) {
@@ -67,7 +67,7 @@ const toogleCreating = () => {
       await axios.put(`/api/courses/${courseId}/chapters/reorder`, {
         list: updateData,
       });
-      toast.success("Chapters reordered");
+      toast.success("Modules reordered");
       setIsUpdating(false);
       router.refresh();
     } catch (error) {
@@ -85,7 +85,7 @@ const toogleCreating = () => {
     axios
     .delete(`/api/courses/${courseId}/chapters/${chapterId}`)
       .then(() => {
-        toast.success("Chapter deleted");
+        toast.success("Module deleted");
         router.refresh();
       })
       .catch(() => {
@@ -148,14 +148,14 @@ const toogleCreating = () => {
       ) : (
         <div>
           <p
-            className={cn("text-sm mt-2", !chapters && "text-slate-500 italic")}
+            className={cn("text-sm mt-2", !chapters.length && "text-slate-500 italic")}
           >
-            {chapters ? (
+            {chapters.length > 0 ? (
               <ChaptersList
                 onEdit={onEdit}
                 onReorder={onReorder}
                 onDelete={onDelete}
-                items={chapters || []}
+                items={chapters}
               />
             ) : (
               "No chapters"

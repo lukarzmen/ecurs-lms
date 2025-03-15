@@ -59,7 +59,7 @@ export const TitleForm = ({ title, courseId }: TitleFormProps) => {
   return (
     <div className="mt-6 border bg-indigo-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Course title
+        Title
         <Button onClick={toogleEdit} variant="ghost">
           {isEditing ? (
             <>Cancel</>

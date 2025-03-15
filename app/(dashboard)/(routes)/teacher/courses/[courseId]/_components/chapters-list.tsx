@@ -26,7 +26,7 @@ export const ChaptersList = ({
   onDelete,
 }: ChaptersListProps) => {
   const [isMounted, setIsMounted] = useState(false);
-  const [chapters, setChapters] = useState(items);
+  const [chapters, setChapters] = useState<Module[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedChapterId, setSelectedChapterId] = useState<number | null>(
     null
@@ -86,7 +86,7 @@ export const ChaptersList = ({
   }
 
   return (
-    <div>
+    <section className="w-full">
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="chapters">
           {(provided) => (
@@ -154,6 +154,6 @@ export const ChaptersList = ({
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 };

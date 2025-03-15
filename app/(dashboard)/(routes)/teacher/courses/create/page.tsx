@@ -61,7 +61,7 @@ const CreatePage = () => {
           {step === 1 && (
             <div className="mb-4">
               <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                Course title
+                Title
               </label>
               <p className="text-sm text-slate-600">
                 What would you like to call your course? Don't worry, you can change this later.
