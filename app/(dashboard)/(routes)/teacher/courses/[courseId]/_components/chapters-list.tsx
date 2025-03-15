@@ -145,10 +145,10 @@ export const ChaptersList = ({
                 className="mr-2"
                 onClick={cancelDeletion}
               >
-                Cancel
+                Anuluj
               </Button>
               <Button variant="destructive" onClick={confirmDeletion}>
-                Delete
+                Usuń
               </Button>
             </div>
           </div>

@@ -45,7 +45,7 @@ export function SelectAnswerComponent({ answers, correctAnswerIndex }: SelectAns
             }`}
           onClick={toggleDropdown}
         >
-          {selectedAnswer || "Select an answer"}
+          {selectedAnswer || "Wybierz odpowiedź"}
         </div>
         {dropdownOpen && (
           <div className="absolute w-full bg-white border border-gray-300 rounded-md mt-1 z-10">

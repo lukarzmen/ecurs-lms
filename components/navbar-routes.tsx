@@ -52,14 +52,14 @@ export const NavbarRoutes = () => {
           <Link href="/">
             <Button size="sm" variant="ghost">
               <LogOut className="h-4 w-4 mr-2" />
-              User mode
+              Uczeń
             </Button>
           </Link>
         ) : isTeacher ? (
           <Link href="/teacher/courses">
             <Button size="sm" variant="ghost">
               <User2 className="h-4 w-4 mr-2" />
-              Teacher Mode
+              Nauczyciel
             </Button>
           </Link>
         ) : null}

@@ -36,7 +36,7 @@ export const ChapterDescriptionForm = ({
       })
         .then(response => {
           if (!response.ok) {
-            throw new Error('Error fetching initial state');
+            throw new Error('Błąd pobierania dokumentu edytora');
           }
           return response.json();
         })
@@ -70,9 +70,9 @@ export const ChapterDescriptionForm = ({
       }).then((res) => {
 
         if (!res.ok) {
-          throw new Error('Error saving document');
+          toast.error("Błąd zapisu dokumentu");
         }
-        toast.success("Chapter updated");
+        toast.success("Zapisano dokument");
       
       });
       
@@ -80,7 +80,7 @@ export const ChapterDescriptionForm = ({
       return { success: true, hash: moduleContentId };
     } catch (error) {
       console.error('Error:', error);
-      toast.error("Error saving document");
+      toast.error("Coś poszło nie tak podczas zapisywania dokumentu");
       return { success: false, hash: moduleContentId };
     } finally {
       setIsLoading(false);
@@ -90,17 +90,17 @@ export const ChapterDescriptionForm = ({
   return (
     <div className="mt-6 border bg-indigo-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Content
+        Treść
         <Button onClick={toggleEdit} variant="ghost">
-          {isEditing ? <>Cancel</> : <>
+          {isEditing ? <>Anuluj</> : <>
             <Pencil className="h-4 w-4 mr-2"></Pencil>
-            Edit
+            Edytuj
           </>}
         </Button>
       </div>
       {isLoading ? (
         <div className="flex justify-center items-center">
-          Loading...
+          Ładowanie...
         </div>
       ) : (
         <div className="space-y-4 mt-4">
@@ -111,7 +111,6 @@ export const ChapterDescriptionForm = ({
               onSave={handleOnSave}
               isEditable={isEditing}
               onEditorChange={(content: string) => {
-                // setSerializedEditorStateString(content);
               }}
             />
           </div>

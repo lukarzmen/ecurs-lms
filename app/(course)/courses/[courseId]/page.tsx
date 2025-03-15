@@ -37,7 +37,6 @@ const CourseIdPage = async ({
     const courseIdNumber = parseInt(params.courseId, 10);
     const courseResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseIdNumber}`);
     const course = await courseResponse.json();
-    console.log("course", course);
     if (!course) {
         return redirect('/');
     }

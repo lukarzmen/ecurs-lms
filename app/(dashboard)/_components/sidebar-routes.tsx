@@ -7,12 +7,12 @@ import { usePathname } from "next/navigation";
 const guestRoutes = [
   {
     icon: Layout,
-    label: "Dashboard",
+    label: "Panel",
     href: "/",
   },
   {
     icon: Compass,
-    label: "Browse",
+    label: "Odkrywaj",
     href: "/search",
   },
 ];
@@ -20,17 +20,17 @@ const guestRoutes = [
 const teacherRoutes = [
   {
     icon: List,
-    label: "Courses",
+    label: "Kursy",
     href: "/teacher/courses",
   },
   {
     icon: BarChart,
-    label: "Analytics",
+    label: "Statystyki",
     href: "/teacher/analytics",
   },
   {
     icon: GroupIcon,
-    label: "Students",
+    label: "Uczniowie",
     href: "/teacher/students",
   },
 ];

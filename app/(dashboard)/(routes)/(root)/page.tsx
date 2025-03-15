@@ -18,7 +18,8 @@ export default async function Home() {
   }
 
 
-  const userCourses = userId ? await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/courses?userId=${userId}`).then(res => res.json()) : [];
+  const userCourses = userId ? await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/courses?userId=${userId}`)
+  .then(res => res.json()) : [];
 
   return (
     <div className="min-h-screen px-4 pt-4">
@@ -30,8 +31,8 @@ export default async function Home() {
       <SignedIn>
       <div className="p-6 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <InfoCard icon={Clock} label="In progress" numberOfItems={userCourses.length} />
-        <InfoCard icon={CheckCircle} label="Completed" numberOfItems={0} variant="success" />
+        <InfoCard icon={Clock} label="W trakcie" numberOfItems={userCourses.length} />
+        <InfoCard icon={CheckCircle} label="Ukończono" numberOfItems={0} variant="success" />
         </div>
         <CoursesList items={[...userCourses]} />
       </div>

@@ -11,7 +11,7 @@ export default function RegisterPage() {
     const router = useRouter();
     const handleSignUp = async () => {
         if (!isSignedIn) {
-            alert("You need to sign in first");
+            toast.error("Zaloguj się, aby zakończyć rejestrację");
             return;
         }
 
@@ -30,16 +30,16 @@ export default function RegisterPage() {
             });
 
             if (response.ok) {
-                toast.success("Registration successful!");
+                toast.success("Rejestracja zakończona sukcesem!");
                 router.push("/");
             } else {
                 const errorData = await response.json();
-                console.error("Error registering user:", errorData);
-                toast.error("Registration failed");
+                console.error("Błąd rejestracji użytkownika:", errorData);
+                toast.error("Rejestracja nie powiodła się");
             }
         } catch (error) {
-            console.error("Error registering user:", error);
-            toast.error("Failed to register");
+            console.error("Błąd rejestracji użytkownika:", error);
+            toast.error("Nie udało się zarejestrować");
         } finally {
             setIsLoading(false);
         }
@@ -48,13 +48,13 @@ export default function RegisterPage() {
     return (
         <div className="min-h-screen flex items-center justify-center">
             <div className="flex flex-col items-center max-w-md mx-auto text-center p-6 space-y-6 bg-white rounded-xl shadow-md">
-                <h1 className="text-3xl font-bold text-gray-800">Welcome to eCurs LMS</h1>
+                <h1 className="text-3xl font-bold text-gray-800">Witamy w eCurs LMS</h1>
                 <p className="text-gray-600">
-                    Join our learning platform to get access to all courses, resources, and personalized learning experiences.
+                    Dołącz do naszej platformy edukacyjnej, aby uzyskać dostęp do wszystkich kursów, zasobów i spersonalizowanych doświadczeń edukacyjnych.
                 </p>
                 <div className="w-16 h-1 bg-blue-500 mx-auto my-2"></div>
                 <p className="text-sm text-gray-500">
-                    Click the button below to complete your registration and start your learning journey.
+                    Kliknij przycisk poniżej, aby zakończyć rejestrację i rozpocząć swoją edukacyjną podróż.
                 </p>
                 <button
                     onClick={handleSignUp}
@@ -65,11 +65,11 @@ export default function RegisterPage() {
                             : "bg-blue-600 hover:bg-blue-700 transition-colors"
                         }`}
                 >
-                    {isLoading ? "Processing..." : "Register for Platform Access"}
+                    {isLoading ? "Przetwarzanie..." : "Zarejestruj się na platformie"}
                 </button>
                 {!isSignedIn && (
                     <p className="text-sm text-amber-600">
-                        Please sign in first to complete registration
+                        Proszę najpierw się zalogować, aby zakończyć rejestrację
                     </p>
                 )}
             </div>

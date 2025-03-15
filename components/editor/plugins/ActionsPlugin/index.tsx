@@ -278,15 +278,15 @@ function ShareEditorDialog({ hash, onClose }: { hash: string; onClose: () => voi
   return (
     <div className="flex flex-col items-start border p-4 rounded w-full max-w-lg mx-auto">
       <div className="text-center w-full break-words">
-        Share this link: {shareUrl}
+        Udostępnij ten link: {shareUrl}
         <button
           onClick={() => {
             navigator.clipboard.writeText(shareUrl);
-            toast.success('Link copied to clipboard!');
+            toast.success('Skopiowano link do schowka');
           }}
           className="ml-2 border border-gray-300 rounded px-2 py-1"
         >
-          Copy
+          Kopiuj
         </button>
       </div>
       <div className="flex flex-wrap gap-2 justify-center mt-4 w-full">

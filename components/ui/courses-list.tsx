@@ -12,7 +12,7 @@ export const CoursesList = ( {items} : CoursesListProps) => {
     if (items && items.length === 0) {
         return (
             <div className="flex justify-center items-center w-full h-full">
-                <div className="text-center text-sm text-muted-foreground mt-10">No courses found</div>
+                <div className="text-center text-sm text-muted-foreground mt-10">Nie znaleziono kursów</div>
             </div>
         );
     }

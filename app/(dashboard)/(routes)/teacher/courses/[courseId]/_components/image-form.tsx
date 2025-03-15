@@ -48,30 +48,30 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
       const values = { imageId: id };
       await axios.patch(`/api/courses/${courseId}`, values);
 
-      toast.success("Course updated");
+      toast.success("Zaktualizowano kurs");
       toggleEdit();
       router.refresh();
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error("Coś poszło nie tak");
     }
   };
 
   return (
     <div className="mt-6 border bg-indigo-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between pb-2">
-        Image
+        Miniatura
         <Button onClick={toggleEdit} variant="ghost">
-          {isEditing && <>Cancel</>}
+          {isEditing && <>Anuluj</>}
           {!isEditing && imageId && (
             <>
               <Pencil className="h-4 w-4 mr-2"></Pencil>
-              Edit
+              Edytuj
             </>
           )}
           {!isEditing && !imageId && (
             <>
               <PlusCircle className="h-4 w-4 mr-2"></PlusCircle>
-              Add
+              Dodaj
             </>
           )}
         </Button>
@@ -91,7 +91,7 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
             />
           ) : (
             <div className="flex items-center justify-center h-full w-full text-indigo-600 mt-4">
-              No Image Available
+              Nie wybrano obrazka
             </div>
           )}
         </div>
@@ -115,7 +115,7 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
             }`}
             disabled={!image}
             >
-            Upload
+            Prześlij
             </button>
         </form>
       )}

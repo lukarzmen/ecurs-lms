@@ -23,7 +23,7 @@ import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   title: z.string().min(1, {
-    message: "Title is required",
+    message: "Nazwa jest wymagana",
   }),
 });
 
@@ -48,25 +48,25 @@ export const TitleForm = ({ title, courseId }: TitleFormProps) => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await axios.patch(`/api/courses/${courseId}`, values);
-      toast.success("Course updated");
+      toast.success("Zaktualizowano kurs");
       toogleEdit();
       router.refresh();
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error("Coś poszło nie tak");
     }
   };
 
   return (
     <div className="mt-6 border bg-indigo-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Title
+        Nazwa
         <Button onClick={toogleEdit} variant="ghost">
           {isEditing ? (
-            <>Cancel</>
+            <>Anuluj</>
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2"></Pencil>
-              Edit
+              Edytuj
             </>
           )}
         </Button>
@@ -95,7 +95,7 @@ export const TitleForm = ({ title, courseId }: TitleFormProps) => {
             ></FormField>
             <div className="flex items-center gap-x-2">
               <Button disabled={!isValid || isSubmitting} type="submit">
-                Save
+                Zapisz
               </Button>
             </div>
           </form>

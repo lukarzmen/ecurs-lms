@@ -31,11 +31,11 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
     setIsSubmitting(true);
     try {
       await axios.patch(`/api/courses/${courseId}`, { description: descriptionValue });
-      toast.success("Course updated");
+      toast.success("Zaktualizowano kurs");
       toggleEdit();
       router.refresh();
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error("Coś poszło nie tak");
     } finally {
       setIsSubmitting(false);
     }
@@ -44,14 +44,14 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
   return (
     <div className="mt-6 border bg-indigo-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        About
+        O kursie
         <Button onClick={toggleEdit} variant="ghost">
           {isEditing ? (
-            <>Cancel</>
+            <>Anuluj</>
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2"></Pencil>
-              Edit
+              Edytuj
             </>
           )}
         </Button>
@@ -72,13 +72,13 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
               disabled={!descriptionValue || isSubmitting}
               className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              Save
+              Zapisz
             </button>
           </div>
         </form>
       ) : (
         <div className={!descriptionValue ? "text-sm mt-2" : ""}>
-          {descriptionValue || "No description"}
+          {descriptionValue || "Brak opisu"}
         </div>
       )}
     </div>

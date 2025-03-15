@@ -438,7 +438,7 @@ function ShowDeleteCommentOrThreadDialog({
             deleteCommentOrThread(commentOrThread, thread);
             onClose();
           }}>
-          Delete
+          Usuń
         </Button>{' '}
         <Button
           onClick={() => {

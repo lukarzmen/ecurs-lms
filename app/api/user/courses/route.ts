@@ -49,7 +49,7 @@ const getDashboardCourses = async (userId: string): Promise<CourseWithCategory[]
     }
 }
 
-export async function GET(req: Request) {
+export async function GET(req: Request): Promise<NextResponse<CourseDetails[] | { error: string }>> {
     const { searchParams } = new URL(req.url)
     const userId = searchParams.get('userId') as string;
 

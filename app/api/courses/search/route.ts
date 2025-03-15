@@ -1,8 +1,9 @@
 import { db } from "@/lib/db";
 import { Category, Course } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { CourseDetails, CourseWithCategory } from "../../user/courses/route";
 
-export async function GET(req: Request) {
+export async function GET(req: Request) : Promise<NextResponse<CourseDetails[] | { error: string }>> {
     try {
       const { searchParams } = new URL(req.url);
       const title = searchParams.get('title') || undefined;
@@ -28,12 +29,18 @@ export async function GET(req: Request) {
         }
       });
   
-      const response = courses.map(course => ({
-        ...course,
-        modules: course.modules
-      }));
-  
-      return NextResponse.json(response);
+      const response: CourseDetails[] = courses.map((course: CourseWithCategory) => {
+            const modules = course.modules;
+            const lastModuleId = modules.length > 0 ? Math.max(...modules.map(module => module.id)) : 0;
+    
+            return {
+                ...course,
+                modulesCount: modules.length,
+                nonFinishedModuleId: lastModuleId,
+            };
+          });
+      
+          return NextResponse.json(response);
   
     } catch (error) {
       console.error("[GET_COURSES]", error);

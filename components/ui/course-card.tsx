@@ -40,7 +40,7 @@ export const CourseCard = ({
                     <div className="my-3 flex items-center gap-x-2 text-sm">
                         <div className="flex items-center gap-x-2 text-indigo-500">
                             <IconBadge size="sm" icon={BookOpen}/>
-                            <span>{chaptersLength} {chaptersLength === 1 ? "module" : "modules"}</span>
+                            <span>{chaptersLength} {chaptersLength === 1 ? "lekcja" : "lekcje"}</span>
                         </div>
                     </div>
                 </div>

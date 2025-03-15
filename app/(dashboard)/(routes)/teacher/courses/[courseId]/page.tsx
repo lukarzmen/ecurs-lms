@@ -25,7 +25,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const categoriesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`);
   const categories = await categoriesResponse.json();
   if (!course) {
-    return <div>Course not found</div>;
+    return <div>Kurs nie znaleziony</div>;
   }
 
   const requiredFields = [
@@ -51,16 +51,16 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
               href={`/teacher/courses`}
               className="flex items-center text-sm hover:opacity-75 transition p-4">
               <ArrowLeft className="h-4 w-4 mr-2"></ArrowLeft>
-              Back to course setup
+              Powrót do konfiguracji kursu
             </Link>
-            <h1 className="text-2xl font-medium">Course setup</h1>
+            <h1 className="text-2xl font-medium">Konfiguracja kursu</h1>
 
-            <span className="text-sm text-slate-800">Complete all fields {completionText}</span>
+            <span className="text-sm text-slate-800">Wypełnij wszystkie pola {completionText}</span>
           </div>
         </div>
         <div className="flex items-center gap-x-2 mt-8">
           <IconBadge icon={LayoutDashboard} />
-          <h2 className="text-xl">Customize your course</h2>
+          <h2 className="text-xl">Dostosuj swój kurs</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TitleForm title={courseTitle} courseId={courseId} />
@@ -81,7 +81,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
           <div>
             <div className="flex items-center gap-x-2 gap-6 mt-6">
               <IconBadge icon={ListCheck} />
-              <h2 className="text-xl">Modules</h2>
+              <h2 className="text-xl">Lekcje</h2>
             </div>
             <div>
               <ChaptersForm chapters={course.modules} courseId={courseId} />

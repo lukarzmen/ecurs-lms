@@ -14,13 +14,13 @@ const handleDelete = async (id: string) => {
       method: "DELETE",
     });
     if (response.ok) {
-      toast.success("Course deleted successfully");
+      toast.success("Kurs został pomyślnie usunięty");
       // Optionally, refresh the UI or remove the row
     } else {
-      toast.error("Failed to delete course");
+      toast.error("Nie udało się usunąć kursu");
     }
   } catch (error) {
-    toast.error("An error occurred while deleting the course");
+    toast.error("Wystąpił błąd podczas usuwania kursu");
   }
 };
 
@@ -32,14 +32,14 @@ export const columns: ColumnDef<Course>[] = [
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Title
+        Nazwa
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
   },
   {
     id: "actions",
-    header: "Actions",
+    header: "Wykonaj",
     cell: ({ row }) => {
       const { id } = row.original;
       const [isModalOpen, setIsModalOpen] = useState(false);
@@ -67,20 +67,20 @@ export const columns: ColumnDef<Course>[] = [
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
               <div className="bg-white p-4 rounded shadow-lg">
-                <div>Are you sure you want to delete this course?</div>
+                <div>Czy na pewno chcesz usunąć ten kurs?</div>
                 <div className="flex justify-end mt-4">
                   <Button
                     variant="secondary"
                     className="mr-2"
                     onClick={() => setIsModalOpen(false)}
                   >
-                    Cancel
+                    Anuluj
                   </Button>
                   <Button
                     variant="destructive"
                     onClick={handleConfirmDelete}
                   >
-                    Delete
+                    Usuń
                   </Button>
                 </div>
               </div>

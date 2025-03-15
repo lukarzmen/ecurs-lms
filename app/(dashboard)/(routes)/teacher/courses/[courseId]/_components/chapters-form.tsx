@@ -27,7 +27,7 @@ import { Module } from "@prisma/client";
 
 const formSchema = z.object({
   title: z.string().min(1, {
-    message: "Title is required",
+    message: "Tytuł jest wymagany",
   }),
 });
 
@@ -54,11 +54,11 @@ const toogleCreating = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await axios.post(`/api/courses/${courseId}/chapters`, values);
-      toast.success("Module created");
+      toast.success("Moduł utworzony");
       toogleCreating();
       router.refresh();
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error("Coś poszło nie tak");
     }
   };
   const onReorder = async (updateData: { id: number; position: number }[]) => {
@@ -67,12 +67,12 @@ const toogleCreating = () => {
       await axios.put(`/api/courses/${courseId}/chapters/reorder`, {
         list: updateData,
       });
-      toast.success("Modules reordered");
+      toast.success("Zmieniono kolejność modułów");
       setIsUpdating(false);
       router.refresh();
     } catch (error) {
       setIsUpdating(false);
-      toast.error("Something went wrong");
+      toast.error("Coś poszło nie tak");
       console.error(error);
     }
   };
@@ -85,11 +85,11 @@ const toogleCreating = () => {
     axios
     .delete(`/api/courses/${courseId}/chapters/${chapterId}`)
       .then(() => {
-        toast.success("Module deleted");
+        toast.success("Moduł usunięty");
         router.refresh();
       })
       .catch(() => {
-        toast.error("Something went wrong");
+        toast.error("Coś poszło nie tak");
       });
   }
 
@@ -104,14 +104,14 @@ const toogleCreating = () => {
         </div>
       )}
       <div className="font-medium flex items-center justify-between">
-      Modules
+      Lekcje
         <Button onClick={toogleCreating} variant="ghost">
           {isCreating ? (
-            <>Cancel</>
+            <>Anuluj</>
           ) : (
             <>
               <PlusCircle className="h-4 w-4 mr-2"></PlusCircle>
-              Add
+              Dodaj
             </>
           )}
         </Button>
@@ -130,7 +130,7 @@ const toogleCreating = () => {
                   <FormControl>
                     <Input
                       disabled={isSubmitting}
-                      placeholder="e.g. Introduction to the course"
+                      placeholder="np. Wprowadzenie do kursu"
                       {...field}
                     />
                   </FormControl>
@@ -140,7 +140,7 @@ const toogleCreating = () => {
             ></FormField>
             <div className="flex items-center gap-x-2">
               <Button disabled={!isValid || isSubmitting} type="submit">
-                Create
+                Utwórz
               </Button>
             </div>
           </form>
@@ -158,11 +158,11 @@ const toogleCreating = () => {
                 items={chapters}
               />
             ) : (
-              "No chapters"
+              "Nie znaleziono lekcji"
             )}
           </p>
           <p className="text-sm text-muted-foreground mt-4">
-            Drag and drop to reorder modules
+            Przeciągnij i upuść, aby zmienić kolejność
           </p>
         </div>
       )}

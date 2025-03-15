@@ -26,7 +26,7 @@ const CreatePage = () => {
       });
       router.push(`/teacher/courses/${response.data.id}`);
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error("Coś poszło nie tak");
     } finally {
       setIsSubmitting(false);
     }
@@ -41,7 +41,7 @@ const CreatePage = () => {
         const response = await axios.get("/api/categories");
         setCategories(response.data);
       } catch (error) {
-        console.error("Failed to fetch categories", error);
+        console.error("Nie udało się pobrać kategorii", error);
       }
     };
 
@@ -51,20 +51,20 @@ const CreatePage = () => {
   return (
     <div className="max-w-5xl mx-auto flex md:items-center md:justify-center h-full p-6">
       <div className="text-2xl">
-      <h1>
-          {step === 1 && "Name your course"}
-          {step === 2 && "Select a category for your course"}
-          {step === 3 && "Describe your course"}
-          {step === 4 && "Add an image for your course"}
+        <h1>
+          {step === 1 && "Nazwij swój kurs"}
+          {step === 2 && "Wybierz kategorię dla swojego kursu"}
+          {step === 3 && "Opisz swój kurs"}
+          {step === 4 && "Dodaj obraz do swojego kursu"}
         </h1>
         <form onSubmit={onSubmit} className="space-y-8 mt-8">
           {step === 1 && (
             <div className="mb-4">
               <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                Title
+                Tytuł
               </label>
               <p className="text-sm text-slate-600">
-                What would you like to call your course? Don't worry, you can change this later.
+                Jak chciałbyś nazwać swój kurs? Nie martw się, możesz to później zmienić.
               </p>
               <input
                 type="text"
@@ -72,10 +72,10 @@ const CreatePage = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={isSubmitting}
-                placeholder="e.g. 'Advanced web development'"
+                placeholder="np. 'Zaawansowane programowanie aplikacji web'"
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               />
-              <p className="text-sm text-slate-600">What will you teach in this course?</p>
+              <p className="text-sm text-slate-600">Czego będziesz uczyć w tym kursie?</p>
               <div className="flex items-center gap-x-2 mt-4">
                 <button
                   type="button"
@@ -83,7 +83,7 @@ const CreatePage = () => {
                   onClick={() => router.push("/")}
                   disabled={isSubmitting}
                 >
-                  Cancel
+                  Anuluj
                 </button>
                 <button
                   type="button"
@@ -91,7 +91,7 @@ const CreatePage = () => {
                   disabled={!title || isSubmitting}
                   onClick={nextStep}
                 >
-                  Next
+                  Kontynuuj
                 </button>
               </div>
             </div>
@@ -100,10 +100,10 @@ const CreatePage = () => {
           {step === 2 && (
             <div className="mb-4">
               <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                Category
+                Kategoria
               </label>
               <p className="text-sm text-slate-600">
-                Which category best fits your course? You can choose from the list of available categories. Don't stress too much about it; you can always modify this later if needed.
+                Która kategoria najlepiej pasuje do twojego kursu? Możesz wybrać z listy dostępnych kategorii. Nie przejmuj się zbytnio; zawsze możesz to później zmienić.
               </p>
               <select
                 id="category"
@@ -112,7 +112,7 @@ const CreatePage = () => {
                 disabled={isSubmitting}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               >
-                <option value="">Select a category</option>
+                <option value="">Wybierz kategorię</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
@@ -126,7 +126,7 @@ const CreatePage = () => {
                   onClick={prevStep}
                   disabled={isSubmitting}
                 >
-                  Back
+                  Wstecz
                 </button>
                 <button
                   type="button"
@@ -134,7 +134,7 @@ const CreatePage = () => {
                   disabled={isSubmitting}
                   onClick={nextStep}
                 >
-                  Next
+                  Dalej
                 </button>
               </div>
             </div>
@@ -142,19 +142,18 @@ const CreatePage = () => {
 
           {step === 3 && (
             <div className="mb-4">
-
               <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                Description
+                Opis
               </label>
               <p className="text-sm text-slate-600">
-                How would you describe your course? Provide a brief overview that captures the essence of what you’ll be teaching. You can refine or expand this description as you go along.
+                Jak opisałbyś swój kurs? Podaj krótki przegląd, który uchwyci istotę tego, czego będziesz uczyć. Możesz dopracować lub rozszerzyć ten opis w miarę postępów.
               </p>
               <textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 disabled={isSubmitting}
-                placeholder="e.g. 'This course covers...'"
+                placeholder="np. 'Ten kurs obejmuje...'"
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               />
               <div className="flex items-center gap-x-2 mt-4">
@@ -164,14 +163,14 @@ const CreatePage = () => {
                   onClick={prevStep}
                   disabled={isSubmitting}
                 >
-                  Back
+                  Wstecz
                 </button>
                 <button
                   type="submit"
                   className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                   disabled={isSubmitting}
                 >
-                  Submit
+                  Zakończ i przejdź dalej
                 </button>
               </div>
             </div>

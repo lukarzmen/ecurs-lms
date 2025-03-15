@@ -20,11 +20,11 @@ const CategoryForm = ({ categoryId, courseId, options }: { categoryId: number; c
     e.preventDefault();
     try {
       await axios.patch(`/api/courses/${courseId}`, { categoryId: categoryIdState });
-      toast.success("Course updated");
+      toast.success("Zaktualizowano kategorię");
       toggleEdit();
       router.refresh();
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error("Coś poszło nie tak");
     }
   };
 
@@ -35,14 +35,14 @@ const CategoryForm = ({ categoryId, courseId, options }: { categoryId: number; c
   return (
     <div className="mt-6 border bg-indigo-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Category
+        Kategoria
         <Button onClick={toggleEdit} variant="ghost">
           {isEditing ? (
-            <>Cancel</>
+            <>Anuluj</>
           ) : (
             <>
               <Pencil className="h-4 w-4 mr-2"></Pencil>
-              Edit
+              Edytuj
             </>
           )}
         </Button>
@@ -50,7 +50,7 @@ const CategoryForm = ({ categoryId, courseId, options }: { categoryId: number; c
       {isEditing ? (
         <form onSubmit={onSubmit} className="space-y-4 mt-4">
           <div className="form-group">
-            <label className="block text-sm font-medium text-gray-700">Category</label>
+            <label className="block text-sm font-medium text-gray-700">Kategoria</label>
             <select
               value={categoryIdState}
               onChange={(e) => setCategoryIdState(Number(e.target.value))}
@@ -65,7 +65,7 @@ const CategoryForm = ({ categoryId, courseId, options }: { categoryId: number; c
           </div>
           <div className="flex items-center gap-x-2">
             <button type="submit" className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md">
-              Save
+              Zapisz
             </button>
           </div>
         </form>

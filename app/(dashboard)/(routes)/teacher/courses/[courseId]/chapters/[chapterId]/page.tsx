@@ -37,8 +37,8 @@ const ChapterEditPage = async ({
               href={`/teacher/courses/${courseId}`}
               className="flex items-center text-sm hover:opacity-75 transition p-4"
             >
-              <ArrowLeft className="h-4 w-4 p-4"></ArrowLeft>
-              Back to course setup
+              <ArrowLeft className="h-4 w-4"></ArrowLeft>
+              Wróc do konfiguracji kursu
             </Link>
           </div>
         </div>
@@ -46,7 +46,7 @@ const ChapterEditPage = async ({
           <div className="w-full">
             <div className="flex items-center gap-x-2">
               <IconBadge icon={LayoutDashboard} />
-              <h2 className="text-xl">Create your lesson content</h2>
+              <h2 className="text-xl">Stwórz treść swojej lekcji</h2>
             </div>
             <ChapterTitleForm
               chapterId={chapterId}
