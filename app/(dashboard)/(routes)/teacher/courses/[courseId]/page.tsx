@@ -10,6 +10,7 @@ import ImageForm from "./_components/image-form";
 import CategoryForm from "./_components/category-form";
 import ChaptersForm from "./_components/chapters-form";
 import Link from "next/link";
+import { Category } from "@prisma/client";
 
 const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = auth() ?? "";
@@ -65,7 +66,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
           <TitleForm title={courseTitle} courseId={courseId} />
           <CategoryForm
             categoryId={course.categoryId ?? -1}
-            options={categories.map((x) => ({
+            options={categories.map((x: Category) => ({
             label: x.name,
               value: x.id,
               key: x.id,

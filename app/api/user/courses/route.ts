@@ -64,6 +64,7 @@ export async function GET(req: Request) {
 
         return {
             ...course,
+            modulesCount: modules.length,
             nonFinishedModuleId: lastModuleId,
         };
     });
@@ -74,4 +75,5 @@ export async function GET(req: Request) {
 export type CourseDetails = Course & {
     category: Category | null
     nonFinishedModuleId: number
+    modulesCount: number
   };
