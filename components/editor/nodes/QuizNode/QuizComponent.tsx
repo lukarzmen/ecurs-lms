@@ -36,6 +36,8 @@ export default function QuizComponent({ question, answers, correctAnswerIndex, n
                   : selectedAnswer === index
                   ? 'bg-red-500 text-white'
                   : 'bg-gray-200'
+                : selectedAnswer === index
+                ? 'bg-purple-500 text-white hover:bg-purple-600'
                 : 'bg-blue-300 text-white hover:bg-blue-600'
             }`}
           >
@@ -46,7 +48,7 @@ export default function QuizComponent({ question, answers, correctAnswerIndex, n
       {isSubmitted ? (
         <div>
         <p className="mt-4 text-center font-medium text-lg">
-          {selectedAnswer === correctAnswerIndex ? 'Correct!' : 'Incorrect. Try again!'}
+          {selectedAnswer === correctAnswerIndex ? 'Poprawna odpowiedź!' : 'Niepoprawna odpowiedź. Spróbuj ponownie!'}
         </p>
         {correctAnswerDescription ? <p className="mt-4 text-center font-medium italic">{correctAnswerDescription}</p> : null}
         </div>
@@ -61,7 +63,7 @@ export default function QuizComponent({ question, answers, correctAnswerIndex, n
               : 'bg-green-500 hover:bg-green-600'
           }`}
         >
-          Submit
+          Sprawdź
         </button>
       )}
     </div>
