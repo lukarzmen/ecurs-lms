@@ -80,7 +80,7 @@ const CreatePage = () => {
                 <button
                   type="button"
                   className="bg-gray-200 text-black py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                  onClick={() => router.push("/")}
+                  onClick={() => router.push("/teacher/courses")}
                   disabled={isSubmitting}
                 >
                   Anuluj

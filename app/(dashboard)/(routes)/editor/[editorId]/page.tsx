@@ -20,40 +20,56 @@ const EditorPage = ({ params }: { params: { editorId: string } }) => {
     //   }
     const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const response = await fetch(`/api/editor/${params.editorId}`, {
-                method: 'GET'
+
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchData = () => {
+        setIsLoading(true);
+        fetch(`/api/editor/${params.editorId}`, {
+            method: 'GET'
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Błąd pobierania dokumentu edytora');
+                }
+                return response.json();
+            })
+            .then((serializedEditorState: SerializedDocument) => {
+                setSerializedEditorStateString(JSON.stringify(serializedEditorState.editorState));
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                setIsLoading(false);
             });
+    };
 
-            if (!response.ok) {
-                throw new Error('Error fetching initial state');
-            }
-
-            const serializedEditorState: SerializedDocument = await response.json();
-            setSerializedEditorStateString(JSON.stringify(serializedEditorState.editorState));
-        };
-
+    useEffect(() => {
         fetchData();
     }, [params.editorId]);
 
-    if (serializedEditorStateString === null) {
-        return <div>Loading...</div>;
-    }
-
     return (
-        <div className="p-2 h-full">
-            
-            <LexicalEditor initialStateJSON={serializedEditorStateString} isEditable={false} onEditorChange={() => {
-
-            }} onSave={() => {
-                const saveResult: SaveResult = {
-                    success: true,
-                    hash: ''
-                };
-                return saveResult;
-            }}/>
-        </div>
+<div>
+        {isLoading ? (
+          <div className="flex justify-center items-center">
+            Loading...
+          </div>
+        ) : (
+          <LexicalEditor
+            initialStateJSON={serializedEditorStateString}
+            isEditable={false}
+            onEditorChange={() => {}}
+            onSave={(serializedDocument) => {
+              const saveResult: SaveResult = {
+                success: true,
+                hash: ''
+              };
+              return saveResult;
+            }}
+          />
+        )}
+      </div>
     );
 };
 
