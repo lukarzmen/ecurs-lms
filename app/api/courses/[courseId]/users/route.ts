@@ -36,8 +36,13 @@ export async function GET(req: Request, { params }: { params: { courseId: string
             },
             });
 
+            const userCourseData = course.userCourses.find(uc => uc.userId === userCourse.userId);
+            const state = userCourseData?.state ?? 0;
+
             return {
             ...user,
+            userCourseId: userCourse.id,
+            state: state,
             roleName: user?.role?.name || "No Role",
             };
         }));

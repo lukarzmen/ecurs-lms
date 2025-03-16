@@ -19,17 +19,7 @@ export async function POST(req: Request) {
         });
 
         if (!user) {
-            user = await db.user.create({
-                data: {
-                    providerId: userId,
-                    email: clerkUser.emailAddresses[0].emailAddress, 
-                    firstName: clerkUser.firstName,
-                    lastName: clerkUser.lastName,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    displayName: `${clerkUser.firstName} ${clerkUser.lastName}`,
-                },
-            });
+            return NextResponse.json({ message: 'User not exists', exists: false });
         }
 
         // Add user to UserCourse table with state 1
@@ -43,7 +33,10 @@ export async function POST(req: Request) {
         });
 
         if (userCourse) {
+            if (userCourse.state === 1) {
             return NextResponse.json({ message: 'User already has permission', exists: true });
+            }
+            return NextResponse.json({ message: 'User has no permission to course. Ask teacher.', exists: false });
         }
 
         await db.userCourse.create({

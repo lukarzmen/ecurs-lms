@@ -48,13 +48,13 @@ export default function RegisterPage() {
     return (
         <div className="min-h-screen flex items-center justify-center">
             <div className="flex flex-col items-center max-w-md mx-auto text-center p-6 space-y-6 bg-white rounded-xl shadow-md">
-                <h1 className="text-3xl font-bold text-gray-800">Witamy w eCurs LMS</h1>
+                <h1 className="text-3xl font-bold text-gray-800">Witamy w Ecurs</h1>
                 <p className="text-gray-600">
                     Dołącz do naszej platformy edukacyjnej, aby uzyskać dostęp do wszystkich kursów, zasobów i spersonalizowanych doświadczeń edukacyjnych.
                 </p>
                 <div className="w-16 h-1 bg-blue-500 mx-auto my-2"></div>
                 <p className="text-sm text-gray-500">
-                    Kliknij przycisk poniżej, aby zakończyć rejestrację i rozpocząć swoją edukacyjną podróż.
+                    Kliknij przycisk poniżej, aby zakończyć rejestrację i rozpocząć swoją edukacyjną podróż. Przechodząc dalej akceptujesz regulamin.
                 </p>
                 <button
                     onClick={handleSignUp}
