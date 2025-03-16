@@ -52,18 +52,18 @@ function QuestionAnswerComponent({ question, answer, explanation }: QAType) {
 
   return (
     <div className="mb-4">
-      {/* Question */}
+      {/* Pytanie */}
       <p className="text-gray-800 font-bold mb-2 text-xl">{question}</p>
 
-      {/* Input with icons inside */}
+      {/* Pole tekstowe z ikonami wewnątrz */}
       <div className="relative">
         <input
           type="text"
           value={userInput}
           onChange={(e) => {
             setUserInput(e.target.value);
-            setIsCorrect(null); // Reset correctness when typing
-            setShowAnswer(false); // Hide answer when typing
+            setIsCorrect(null); // Resetowanie poprawności podczas pisania
+            setShowAnswer(false); // Ukrywanie odpowiedzi podczas pisania
           }}
           className={`w-full border rounded-md p-2 pr-16 focus:outline-none ${
             isCorrect === null
@@ -72,47 +72,47 @@ function QuestionAnswerComponent({ question, answer, explanation }: QAType) {
               ? "border-green-500"
               : "border-red-500"
           }`}
-          placeholder="Your answer"
+          placeholder="Twoja odpowiedź"
         />
         {isLoading ? (<ProgressSpinner />) : (
         <button
           onClick={handleCheck}
           className="absolute right-8 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-blue-600"
-          title="Check your answer"
+          title="Sprawdź swoją odpowiedź"
         >❓
         </button>)}
           
           
-        {/* Show/Hide Answer Button */}
+        {/* Przycisk Pokaż/Ukryj odpowiedź */}
         <button
           onClick={() => setShowAnswer(!showAnswer)}
           className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-blue-600"
-          title={showAnswer ? "Hide Answer" : "Show Answer"}
+          title={showAnswer ? "Ukryj odpowiedź" : "Pokaż odpowiedź"}
         >
           {showAnswer ? "🙈" : "👁️"}
         </button>
       </div>
 
-      {/* Correctness Feedback */}
+      {/* Informacja zwrotna o poprawności */}
       {isCorrect !== null && (
         <p
           className={`mt-2 text-sm font-medium ${
             isCorrect ? "text-green-600" : "text-red-600"
           }`}
         >
-          {isCorrect ? "Correct!" : "Incorrect, try again!"}
+          {isCorrect ? "Super!" : "Niestety musisz spróbować jeszcze raz!"}
         </p>
       )}
 
-      {/* Display Answer and Explanation */}
+      {/* Wyświetlanie odpowiedzi i wyjaśnienia */}
       {(showAnswer || isCorrect) && (
         <div className="mt-2">
           <p className="text-sm text-blue-600">
-            <strong>Answer</strong> {answer}
+            <strong>Odpowiedź</strong> {answer}
           </p>
           {explanation && (
             <p className="text-sm text-gray-700 mt-1">
-              <strong>Explanation / Hint</strong> {explanation}
+              <strong>Wyjaśnienie / Wskazówka</strong> {explanation}
             </p>
           )}
         </div>

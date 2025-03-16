@@ -28,7 +28,7 @@ export default function InsertGapNodePlugin(): JSX.Element | null {
             const selectedText = selection.getTextContent();
 
             if (selectedText.trim() === "") {
-              toast.error("To change selected to gap please select text first.");
+                toast.error("Zaznacz tekst, żeby zamienić go na lukę.");
               return false; // Early exit if no text is selected
             }
 

@@ -36,7 +36,7 @@ export function TextToVoiceDialog({
           
             if (!response.ok) {
               setLoading(false);
-              throw new Error("File upload failed");
+              throw new Error("Generowanie pliku nie powiodło się");
             }
           
             const data = await response.json();
@@ -47,15 +47,15 @@ export function TextToVoiceDialog({
             });
             onClose();
             } catch (error) {
-            console.error("Error generating voice:", error);
+            console.error("Błąd podczas generowania głosu:", error);
             } finally {
               setLoading(false);
             }
         } else {
-          toast.error('No text selected for create voice.');
+          toast.error('Nie wybrano tekstu do stworzenia głosu.');
         }
       } else {
-        toast.error('No valid text selection.');
+        toast.error('Nie zaznaczono tekstu.');
       }
     });
   };
@@ -84,7 +84,7 @@ export function TextToVoiceDialog({
         >
           ✕
         </button>
-        <h2 className="text-xl font-bold mb-4 text-center">Change text to voice</h2>
+        <h2 className="text-xl font-bold mb-4 text-center">Zmień tekst na głos</h2>
         
         <div className="flex justify-center space-x-2 mt-8">
           {loading ? (
@@ -95,12 +95,12 @@ export function TextToVoiceDialog({
                 className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md"
                 onClick={onClose}
               >
-                Cancel
+                Anuluj
               </button>
               <button
                 className="px-4 py-2 bg-blue-500 text-white rounded-md"
                 onClick={handleTextToVoice}>
-                Generate voice
+                Generuj głos lektora
               </button>
             </>
           )}

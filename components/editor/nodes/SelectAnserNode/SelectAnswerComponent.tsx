@@ -69,7 +69,7 @@ export function SelectAnswerComponent({ answers, correctAnswerIndex }: SelectAns
       </div>
       {isCorrect !== null && (
         <span className={`text-sm ${isCorrect ? "text-green-600" : "text-red-600"}`}>
-          {isCorrect ? "Correct! 🎉" : "Incorrect. Try again! ❌"}
+          {isCorrect ? "Poprawna odpowiedź! 🎉" : "Niepoprawna odpowiedź. Spróbuj ponownie! ❌"}
         </span>
       )}
     </div>

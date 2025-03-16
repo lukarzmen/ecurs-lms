@@ -17,12 +17,11 @@ import * as React from 'react';
 
 import OpenAIService from '@/services/OpenAIService';
 import ProgressSpinner from './ProgressComponent';
+import toast from 'react-hot-toast';
 
 export const GENERATE_TEXT_COMMAND: LexicalCommand<LLMPrompt> = createCommand(
   'GENERATE_TEXT_COMMAND',
 );
-
-
 
 export function TextGeneratorDialog({
   activeEditor,
@@ -42,7 +41,7 @@ export function TextGeneratorDialog({
       setLoading(true);
       activeEditor.dispatchCommand(GENERATE_TEXT_COMMAND, payload);
     } else {
-      console.warn("User prompt cannot be empty.");
+      toast.error("Polecenie użytkownika nie może być puste.");
     }
   };
 
@@ -73,19 +72,19 @@ export function TextGeneratorDialog({
         >
           ✕
         </button>
-        <h2 className="text-xl font-bold mb-4">Text Generator</h2>
+        <h2 className="text-xl font-bold mb-4">Generator treść</h2>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          What do you want to generate?
+          Co chcesz wygenerować?
         </label>
         <textarea
           className="w-full p-2 border border-gray-300 rounded-md mb-4"
           rows={4}
-          placeholder="Enter your prompt..."
+          placeholder="Wpisz swoje polecenie..."
           value={userPrompt}
           onChange={(e) => setUserPrompt(e.target.value)}
         />
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          System Prompt
+          Informacje systemowe (kontekstowe) dla AI
         </label>
         <div className="relative">
           <textarea
@@ -113,14 +112,14 @@ export function TextGeneratorDialog({
                 className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md"
                 onClick={onClose}
               >
-                Cancel
+                Anuluj
               </button>
               <button
                 className="px-4 py-2 bg-blue-500 text-white rounded-md"
                 onClick={handleSubmit}
                 disabled={userPrompt.trim() === ""}
               >
-                Confirm
+                Generuj
               </button>
             </>
           )}
@@ -129,7 +128,6 @@ export function TextGeneratorDialog({
     </div>
   );
 }
-
 
 export default function TextGeneratorPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();

@@ -27,12 +27,16 @@ function DefinitionModal({
   const handleSubmit = () => {
     if (definition.trim()) {
       onSubmit(definition.trim());
+      setDefinition("");
       onClose();
     } else {
-      console.warn("Definition cannot be empty.");
+      toast.error("Definicja nie może być pusta.");
     }
   };
-
+  const handleClose = () => {
+    setDefinition("");
+    onClose();
+  };
   if (!isOpen) return null;
 
   return (
@@ -44,26 +48,26 @@ function DefinitionModal({
         >
           ✕
         </button>
-        <h2 className="text-xl font-bold mb-4">Define "{selectedText}"</h2>
+        <h2 className="text-xl font-bold mb-4">Napisz coś o {selectedText}</h2>
         <textarea
           className="w-full p-2 border border-gray-300 rounded-md mb-4"
           rows={4}
-          placeholder="Enter the definition..."
+          placeholder="Tu wprowadź definicję..."
           value={definition}
           onChange={(e) => setDefinition(e.target.value)}
         />
         <div className="flex justify-end space-x-2">
           <button
             className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md"
-            onClick={onClose}
+            onClick={handleClose}
           >
-            Cancel
+            Anuluj
           </button>
           <button
             className="px-4 py-2 bg-blue-500 text-white rounded-md"
             onClick={handleSubmit}
           >
-            Accept
+            Zatwierdź
           </button>
         </div>
       </div>
@@ -80,12 +84,13 @@ export default function DescriptionPlugin(): JSX.Element | null {
     return editor.registerCommand(
       INSERT_DEFINITION_NODE_COMMAND,
       () => {
+        console.debug("Inserting definition node");
         editor.update(() => {
           const selection = $getSelection();
           if ($isRangeSelection(selection)) {
             const textContent = selection.getTextContent().trim();
             if (!textContent) {
-              toast.error("To add definition to selected text please select text first.");
+                toast.error("Zaznacz tekst, aby dodać definicję.");
               return false;
             }
 

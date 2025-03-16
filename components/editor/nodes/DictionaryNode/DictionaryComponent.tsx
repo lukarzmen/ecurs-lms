@@ -18,6 +18,8 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentColorIndex, setCurrentColorIndex] = useState(0);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
+  const [isSliding, setIsSliding] = useState(false);
   
   const handleDictionaryValueChanged = (entries: [string, string][]) => {
     const dictionary: Dictionary = Object.fromEntries(entries);
@@ -33,6 +35,8 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
     "bg-pink-500",
   ];
 
+
+
   const handleInputChange = (key: string, value: string) => {
     setEntries((prevEntries) =>
       prevEntries.map(([k, v]) => (k === key ? [k, value] : [k, v]))
@@ -45,25 +49,42 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
     handleDictionaryValueChanged(entries);
   };
 
+  const handleAddRowAtTop = () => {
+    setEntries((prevEntries) => [["", ""], ...prevEntries]);
+    handleDictionaryValueChanged(entries);
+  };
+
   const handleRemoveRow = (index: number) => {
     setEntries((prevEntries) => prevEntries.filter((_, i) => i !== index));
     handleDictionaryValueChanged(entries);
   };
 
   const handlePrevious = () => {
-    setCurrentIndex((prevIndex) => {
-      const newIndex = prevIndex > 0 ? prevIndex - 1 : entries.length - 1;
-      setCurrentColorIndex((prevColorIndex) => (prevColorIndex > 0 ? prevColorIndex - 1 : TAILWIND_COLORS.length - 1));
-      return newIndex;
-    });
+    setSlideDirection('left');
+    setIsSliding(true);
+    setTimeout(() => {
+      setCurrentIndex((prevIndex) => {
+        const newIndex = prevIndex > 0 ? prevIndex - 1 : entries.length - 1;
+        setCurrentColorIndex((prevColorIndex) => (prevColorIndex > 0 ? prevColorIndex - 1 : TAILWIND_COLORS.length - 1));
+        return newIndex;
+      });
+      setIsSliding(false);
+      setSlideDirection(null);
+    }, 300);
   };
 
   const handleNext = () => {
-    setCurrentIndex((prevIndex) => {
-      const newIndex = prevIndex < entries.length - 1 ? prevIndex + 1 : 0;
-      setCurrentColorIndex((prevColorIndex) => (prevColorIndex < TAILWIND_COLORS.length - 1 ? prevColorIndex + 1 : 0));
-      return newIndex;
-    });
+    setSlideDirection('right');
+    setIsSliding(true);
+    setTimeout(() => {
+      setCurrentIndex((prevIndex) => {
+        const newIndex = prevIndex < entries.length - 1 ? prevIndex + 1 : 0;
+        setCurrentColorIndex((prevColorIndex) => (prevColorIndex < TAILWIND_COLORS.length - 1 ? prevColorIndex + 1 : 0));
+        return newIndex;
+      });
+      setIsSliding(false);
+      setSlideDirection(null);
+    }, 300);
   };
 
   const swipeHandlers = useSwipeable({
@@ -178,23 +199,29 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
           ))}
         </div>
       </div>
-      <span className="text-sm mt-2 text-gray-700 select-none">Match words on the left with translations on the right</span>
+      <span className="text-sm mt-2 text-gray-700 select-none">Dopasuj słowa po lewej stronie do tłumaczeń po prawej stronie</span>
       <button
         className="mt-4 px-4 py-2 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-700"
         onClick={initializeMatchGame}
       >
-        Reset Game
+        Resetuj grę
       </button>
     </div>)} 
     {view == "dictionaryView" && 
     (
         <div>
+            <button
+              onClick={handleAddRowAtTop}
+              className="mt-4 mb-4 px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
+            >
+              Dodaj wiersz na górze
+            </button>
           <table className="table-auto w-full border-collapse border border-gray-300">
             <thead>
               <tr>
                 <th className="border border-gray-300 px-4 py-2 text-left" style={{ width: "3rem" }}></th>
-                <th className="border border-gray-300 px-4 py-2 text-left">Keyword</th>
-                <th className="border border-gray-300 px-4 py-2 text-left">Definition</th>
+                <th className="border border-gray-300 px-4 py-2 text-left">Słowo kluczowe</th>
+                <th className="border border-gray-300 px-4 py-2 text-left">Definicja</th>
               </tr>
             </thead>
             <tbody>
@@ -242,41 +269,39 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
             onClick={handleAddRow}
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
           >
-            Add Row
+            Dodaj wiersz na dole
           </button>
         </div>
       )}
       {view == "flashView" && (
         <div className="flex flex-col items-center" {...swipeHandlers}>
         {entries.length > 0 && (
-          <div
-            className={`w-80 h-48 rounded-lg shadow-lg p-6 text-center flex flex-col justify-center items-center ${TAILWIND_COLORS[currentColorIndex]}`}
-          >
+            <div
+              className={`w-80 h-48 rounded-lg shadow-lg p-6 text-center flex flex-col justify-center items-center transition-transform duration-300 ${TAILWIND_COLORS[currentColorIndex]}
+              ${isSliding ? (slideDirection === 'right' ? 'translate-x-full' : '-translate-x-full') : ''}`}
+            >
               <div className="text-2xl font-bold select-none">{entries[currentIndex][0]}</div>
-            <div className="text-lg mt-4 select-none">{entries[currentIndex][1]}</div>
-            
-          </div>
+              <div className="text-lg mt-4 select-none">{entries[currentIndex][1]}</div>
+            </div>
         )}
-        <span className="text-sm mt-2 text-gray-700 select-none">Swipe to change word</span>
+        <span className="text-sm mt-2 text-gray-700 select-none">Przesuń, aby zmienić słowo</span>
       </div> 
       )}
       {!isReadonly && view != "dictionaryView" ? (<div className="flex justify-center mt-4">
-        <button onClick={() => setView("dictionaryView") } className="bg-green-500 text-white rounded-full hover:bg-green-600 px-4 py-2">
-          {"Table View"}
+        <button onClick={() => setView("dictionaryView") } className="bg-green-500 text-white rounded-full hover:bg-green-600 px-4 py-2 w-48">
+          {"Widok tabeli"}
         </button>
       </div>) : null}
       {view != "flashView" ? (<div className="flex justify-center mt-4">
-        <button onClick={() => setView("flashView") } className="bg-orange-500 text-white rounded-full hover:bg-green-600 px-4 py-2">
-          {"Flash Cards"}
+        <button onClick={() => setView("flashView") } className="bg-orange-500 text-white rounded-full hover:bg-green-600 px-4 py-2 w-48">
+          {"Fiszki"}
         </button>
       </div>) : null}
       {view != "matchGameView" ? (<div className="flex justify-center mt-4">
         <button onClick={() => setView("matchGameView") } className="bg-yellow-500 text-white rounded-full hover:bg-green-600 px-4 py-2">
-          {"Match Game"}
+          {"Gra w dopasowywanie"}
         </button>
       </div>) : null}
     </div>
   );
 };
-
-

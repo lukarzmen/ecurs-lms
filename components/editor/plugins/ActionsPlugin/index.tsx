@@ -229,12 +229,12 @@ export default function ActionsPlugin({
         className="action-button clear"
         disabled={isEditorEmpty}
         onClick={() => {
-          showModal('Clear editor', (onClose) => (
+          showModal('Wyczyść edytor', (onClose) => (
             <ShowClearDialog editor={editor} onClose={onClose} />
           ));
         }}
-        title="Clear"
-        aria-label="Clear editor contents">
+        title="Wyczyść"
+        aria-label="Wyczyść edytor">
         <i className="clear" />
       </button>
       {/* <button
@@ -354,7 +354,7 @@ function ShowClearDialog({
 }): JSX.Element {
   return (
     <>
-      Are you sure you want to clear the editor?
+      Czy na pewno chcesz wyczyścić obszar roboczy?
       <div className="Modal__content">
         <Button
           onClick={() => {
@@ -362,14 +362,14 @@ function ShowClearDialog({
             editor.focus();
             onClose();
           }}>
-          Clear
+          Wyczyść
         </Button>{' '}
         <Button
           onClick={() => {
             editor.focus();
             onClose();
           }}>
-          Cancel
+          Anuluj
         </Button>
       </div>
     </>

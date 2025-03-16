@@ -11,6 +11,7 @@ import CategoryForm from "./_components/category-form";
 import ChaptersForm from "./_components/chapters-form";
 import Link from "next/link";
 import { Category } from "@prisma/client";
+import { StudentsForm } from "./_components/students-form";
 
 const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = auth() ?? "";
@@ -78,7 +79,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
    
         </div>
         <div className="space-y-6 ">
-          <div>
+            <div>
             <div className="flex items-center gap-x-2 gap-6 mt-6">
               <IconBadge icon={ListCheck} />
               <h2 className="text-xl">Lekcje</h2>
@@ -86,7 +87,8 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
             <div>
               <ChaptersForm chapters={course.modules} courseId={courseId} />
             </div>
-          </div>
+            </div>
+            <StudentsForm courseId={courseId} />
         </div>
       </div>
     </>

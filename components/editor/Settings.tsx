@@ -40,19 +40,19 @@ export default function Settings(): JSX.Element {
           <Switch
             onClick={() => setOption('isMaxLength', !isMaxLength)}
             checked={isMaxLength}
-            text="Max Length"
+            text="Maksymalna długość"
           />
           <Switch
             onClick={() => setOption('isAutocomplete', !isAutocomplete)}
             checked={isAutocomplete}
-            text="Autocomplete"
+            text="Autouzupełnianie"
           />
           <Switch
             onClick={() => {
               setOption('showTableOfContents', !showTableOfContents);
             }}
             checked={showTableOfContents}
-            text="Table Of Contents"
+            text="Spis treści"
           />
           <Switch
             onClick={() => {
@@ -62,7 +62,7 @@ export default function Settings(): JSX.Element {
               );
             }}
             checked={shouldUseLexicalContextMenu}
-            text="Use Lexical Context Menu"
+            text="Użyj menu kontekstowego Lexical"
           />
           <Switch
             onClick={() => {
@@ -72,7 +72,7 @@ export default function Settings(): JSX.Element {
               );
             }}
             checked={shouldPreserveNewLinesInMarkdown}
-            text="Preserve newlines in Markdown"
+            text="Zachowaj nowe linie w Markdown"
           />
         </div>
       ) : null}

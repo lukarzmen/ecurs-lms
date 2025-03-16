@@ -22,31 +22,31 @@ export function QuestionAnswerDialog({
     <div className="p-4">
       <div className="grid grid-cols-[1fr_3fr] gap-4 items-center mb-4">
         {/* Question */}
-        <label className="text-sm font-medium text-gray-700 text-left">Question:</label>
+        <label className="text-sm font-medium text-gray-700 text-left">Pytanie:</label>
         <input
           type="text"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           className="w-full border border-gray-300 rounded-md p-2"
-          placeholder="Enter your question"
+          placeholder="Wpisz swoje pytanie"
         />
         {/* Answer */}
-        <label className="text-sm font-medium text-gray-700 text-left">Answer:</label>
+        <label className="text-sm font-medium text-gray-700 text-left">Odpowiedź:</label>
         <input
           type="text"
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
           className="w-full border border-gray-300 rounded-md p-2"
-          placeholder="Enter the correct answer"
+          placeholder="Wpisz poprawną odpowiedź"
         />
          {/* Explanation */}
-        <label className="text-sm font-medium text-gray-700 text-left">Explanation:</label>
+        <label className="text-sm font-medium text-gray-700 text-left">Wyjaśnienie:</label>
         <input
           type="text"
           value={explanation}
           onChange={(e) => setExplanation(e.target.value)}
           className="w-full border border-gray-300 rounded-md p-2"
-          placeholder="Enter the explanation (optional)"
+          placeholder="Wpisz wyjaśnienie (opcjonalnie)"
         />
       </div>
 
@@ -61,14 +61,14 @@ export function QuestionAnswerDialog({
               : 'bg-blue-600 hover:bg-blue-700'
           }`}
         >
-          Confirm
+          Potwierdź
         </button>
         {/* Cancel Button */}
         <button
           onClick={onClose}
           className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200"
         >
-          Cancel
+          Anuluj
         </button>
       </div>
     </div>

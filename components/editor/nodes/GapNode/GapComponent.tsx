@@ -29,8 +29,8 @@ export function GapComponent({ hiddenText }: GapComponentProps) {
               ? "border-green-500"
               : "border-red-500"
             }`}
-            style={{ width: "150px" }}
-            placeholder="Type answer"
+            style={{ width: "200px" }}
+            placeholder="Wpisz odpowiedź"
           />
         <button
           onClick={() => {

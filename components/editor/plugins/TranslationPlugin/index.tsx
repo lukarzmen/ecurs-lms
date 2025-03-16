@@ -11,6 +11,7 @@ import {
 import { useState, useEffect } from 'react';
 import * as React from 'react';
 import ProgressSpinner from '../TextGeneratorPlugin/ProgressComponent';
+import toast from 'react-hot-toast';
 
 export const TRANSLATE_TEXT_COMMAND: LexicalCommand<LLMPrompt> = createCommand('TRANSLATE_TEXT_COMMAND');
 
@@ -38,10 +39,10 @@ export function LanguageSelectorDialog({
             systemPrompt: `translate to ${selectedLanguage}`,
           });
         } else {
-          console.warn('No text selected for translation.');
+          toast.error('Nie wybrano tekstu do tłumaczenia.');
         }
       } else {
-        console.warn('No valid text selection.');
+        toast.error('Nie zaznaczono tekstu.');
       }
     });
   };
@@ -70,18 +71,18 @@ export function LanguageSelectorDialog({
         >
           ✕
         </button>
-        <h2 className="text-xl font-bold mb-4">Translate Text</h2>
+        <h2 className="text-xl font-bold mb-4">Tłumaczenie tekstu</h2>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Select Language
+          Wybierz język
         </label>
         <select
           className="w-full p-2 border border-gray-300 rounded-md mb-4"
           value={selectedLanguage}
           onChange={(e) => setSelectedLanguage(e.target.value)}
         >
-          <option value="polish">Polish</option>
-          <option value="english">English</option>
-          <option value="russian">Russian</option>
+          <option value="polish">Polski</option>
+          <option value="english">Angielski</option>
+          <option value="russian">Rosyjski</option>
         </select>
         <div className="flex justify-end space-x-2">
           {loading ? (
@@ -92,13 +93,13 @@ export function LanguageSelectorDialog({
                 className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md"
                 onClick={onClose}
               >
-                Cancel
+                Anuluj
               </button>
               <button
                 className="px-4 py-2 bg-blue-500 text-white rounded-md"
                 onClick={handleTranslate}
               >
-                Translate
+                Tłumacz
               </button>
             </>
           )}
@@ -138,7 +139,7 @@ export default function TranslationPlugin(): JSX.Element | null {
               const event = new Event('translationComplete');
               document.dispatchEvent(event);
             })
-            .catch((error) => console.error('Translation failed:', error));
+            .catch((error) => console.error('Tłumaczenie nie powiodło się:', error));
         }
 
         return true;
