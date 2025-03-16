@@ -53,20 +53,20 @@ export function InsertSelectAnswerDialog({
 
   return (
     <div className="p-4 space-y-4 max-w-lg mx-auto">
-      <div className="grid grid-cols-2 gap-4 items-center">
+      <div className="grid grid-cols-5 gap-4 items-center">
         
         {answers.map((answer, index) => (
           <React.Fragment key={index}>
-            <label className="text-sm font-medium text-gray-700">
-              Answer {String.fromCharCode(65 + index)}
+            <label className="text-sm font-medium text-gray-700 col-span-2">
+              Odpowiedź {String.fromCharCode(65 + index)}
             </label>
-            <div className="flex space-x-2 items-center">
+            <div className="flex space-x-2 items-center col-span-3">
               <input
                 type="text"
                 value={answer}
                 onChange={(e) => onAnswerChange(index, e.target.value)}
                 className="w-full border border-gray-300 rounded-md p-2"
-                placeholder={`Answer ${String.fromCharCode(65 + index)}`}
+                placeholder={`Odpowiedź ${String.fromCharCode(65 + index)}`}
               />
               <button
                 type="button"
@@ -82,23 +82,23 @@ export function InsertSelectAnswerDialog({
         <button
           type="button"
           onClick={addAnswer}
-          className="col-span-2 bg-green-500 text-white rounded-md p-2"
+          className="col-span-5 bg-green-500 text-white rounded-md p-2"
         >
-          Add Answer
+          Dodaj odpowiedź
         </button>
 
-        <label className="text-sm font-medium text-gray-700">
-          Correct Answer
+        <label className="text-sm font-medium text-gray-700 col-span-2">
+          Poprawna odpowiedź
         </label>
         <select
           value={correctAnswerIndex !== null ? correctAnswerIndex.toString() : ""}
           onChange={(e) =>
             setCorrectAnswerIndex(e.target.value ? parseInt(e.target.value, 10) : null)
           }
-          className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none col-span-3"
         >
           <option value="" disabled>
-            Select correct answer
+            Wybierz poprawną odpowiedź
           </option>
           {answers.map((_, index) => (
             <option key={index} value={index}>
@@ -115,13 +115,13 @@ export function InsertSelectAnswerDialog({
           className={`px-4 py-2 rounded-md text-white ${isFormValid ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400"
             }`}
         >
-          Confirm
+          Potwierdź
         </button>
         <button
           onClick={onClose}
           className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200"
         >
-          Cancel
+          Anuluj
         </button>
       </div>
     </div>

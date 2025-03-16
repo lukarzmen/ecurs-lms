@@ -73,7 +73,6 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
         <div className="mt-6 border bg-indigo-100 rounded-md p-4">
             <div className="mt-4">
                 <Table>
-                    <TableCaption>Lista studentów zapisanych na kurs.</TableCaption>
                     <TableHeader>
                         <TableRow>
                             <TableHead>Imię</TableHead>
