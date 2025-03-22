@@ -79,6 +79,12 @@ export class InlineImageNode extends DecoratorNode<JSX.Element> {
     return 'inline-image';
   }
 
+  setSize(width: number | 'inherit', height: number | 'inherit'): void {
+    const writable = this.getWritable();
+    writable.__width = width;
+    writable.__height = height;
+  }
+
   static clone(node: InlineImageNode): InlineImageNode {
     return new InlineImageNode(
       node.__src,

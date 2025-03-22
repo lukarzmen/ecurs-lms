@@ -108,56 +108,67 @@ export function InsertInlineImageDialog({
   };
 
   return (
-    <>
-      <div style={{marginBottom: '1em'}}>
-        <FileInput
-          label="Image Upload"
-          onChange={loadImage}
+    <div className="p-4 space-y-4 max-w-lg mx-auto">
+      <div className="grid grid-cols-2 gap-4 items-center">
+        <label className="text-sm font-medium text-gray-700">Image Upload</label>
+        <input
+          type="file"
           accept="image/*"
+          onChange={(e) => loadImage(e.target.files)}
+          className="w-full border border-gray-300 rounded-md p-2"
           data-test-id="image-modal-file-upload"
         />
-      </div>
-      <div style={{marginBottom: '1em'}}>
-        <TextInput
-          label="Alt Text"
-          placeholder="Descriptive alternative text"
-          onChange={setAltText}
+
+        <label className="text-sm font-medium text-gray-700">Alt Text</label>
+        <input
+          type="text"
           value={altText}
+          onChange={(e) => setAltText(e.target.value)}
+          className="w-full border border-gray-300 rounded-md p-2"
+          placeholder="Descriptive alternative text"
           data-test-id="image-modal-alt-text-input"
         />
-      </div>
 
-      <Select
-        style={{marginBottom: '1em', width: '290px'}}
-        label="Position"
-        name="position"
-        id="position-select"
-        onChange={handlePositionChange}>
-        <option value="left">Left</option>
-        <option value="right">Right</option>
-        <option value="full">Full Width</option>
-      </Select>
+        <label className="text-sm font-medium text-gray-700">Position</label>
+        <select
+          value={position}
+          onChange={handlePositionChange}
+          className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          id="position-select"
+        >
+          <option value="left">Left</option>
+          <option value="right">Right</option>
+          <option value="full">Full Width</option>
+        </select>
 
-      <div className="Input__wrapper">
+        <label className="text-sm font-medium text-gray-700">Show Caption</label>
         <input
-          id="caption"
-          className="InlineImageNode_Checkbox"
           type="checkbox"
           checked={showCaption}
           onChange={handleShowCaptionChange}
+          className="h-5 w-5 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+          id="caption"
         />
-        <label htmlFor="caption">Show Caption</label>
       </div>
 
-      <DialogActions>
-        <Button
-          data-test-id="image-modal-file-upload-btn"
+      <div className="flex justify-end space-x-4 mt-4">
+        <button
+          onClick={handleOnClick}
           disabled={isDisabled}
-          onClick={() => handleOnClick()}>
+          className={`px-4 py-2 rounded-md text-white ${isDisabled ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          data-test-id="image-modal-file-upload-btn"
+        >
           Confirm
-        </Button>
-      </DialogActions>
-    </>
+        </button>
+        <button
+          onClick={onClose}
+          className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
   );
 }
 

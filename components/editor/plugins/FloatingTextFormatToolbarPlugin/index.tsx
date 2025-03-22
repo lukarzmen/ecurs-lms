@@ -10,7 +10,7 @@
 import './index.css';
 
 import {$isCodeHighlightNode} from '@lexical/code';
-import {$isLinkNode, TOGGLE_LINK_COMMAND} from '@lexical/link';
+import {$isLinkNode} from '@lexical/link';
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {mergeRegister} from '@lexical/utils';
 import {
@@ -23,17 +23,15 @@ import {
   LexicalEditor,
   SELECTION_CHANGE_COMMAND,
 } from 'lexical';
-import {Dispatch, useCallback, useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import * as React from 'react';
 import {createPortal} from 'react-dom';
 
 import {getDOMRangeRect} from '../../utils/getDOMRangeRect';
 import {getSelectedNode} from '../../utils/getSelectedNode';
 import {setFloatingElemPosition} from '../../utils/setFloatingElemPosition';
-import {INSERT_INLINE_COMMAND} from '../CommentPlugin';
 import { INSERT_DEFINITION_NODE_COMMAND } from '../DescriptionPlugin';
 import { INSERT_GAP_NODE_COMMAND } from '../GapPlugin';
-import { TextToVoiceDialog } from '../../TextToVoicePlugin';
 import useModal from '../../hooks/useModal';
 
 function TextFormatFloatingToolbar({

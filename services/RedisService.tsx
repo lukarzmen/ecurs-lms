@@ -1,11 +1,14 @@
-import { createClient } from "redis";
+import { createClient, RedisClientType } from "redis";
 
 // Create the Redis client
-const redisClient = createClient({
+const redisClient: RedisClientType = createClient({
     url: process.env.AZURE_REDIS_CONNECTIONSTRING,
     socket: {
         reconnectStrategy: (retries) => {
             console.log(`Reconnecting attempt #${retries}`);
+            if (retries > 20) {
+                return new Error('Too many reconnection attempts')
+            }
             return Math.min(retries * 50, 500); // Delay grows with retries but caps at 500ms
         },
     },
@@ -13,6 +16,14 @@ const redisClient = createClient({
 
 // Listen for error events
 redisClient.on("error", (err) => console.error("Redis Client Error:", err));
+
+redisClient.on('reconnecting', () => {
+    console.log('Redis client reconnecting...');
+});
+
+redisClient.on('connect', () => {
+    console.log('Redis client connected');
+});
 
 // Ensure connection is established at startup
 (async () => {
@@ -25,8 +36,14 @@ redisClient.on("error", (err) => console.error("Redis Client Error:", err));
 
 // Helper function to check and connect to Redis
 async function connectRedis() {
-    if (!redisClient.isOpen) {
-        await redisClient.connect();
+    try {
+        if (!redisClient.isOpen) {
+            await redisClient.connect();
+            console.log('Redis connected');
+        }
+    } catch (error) {
+        console.error("Failed to connect to Redis:", error);
+        throw error;
     }
 }
 

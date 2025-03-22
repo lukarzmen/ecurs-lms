@@ -110,29 +110,36 @@ export function InsertImageUploadedDialogBody({
   };
 
   return (
-    <>
+    <div className="grid grid-cols-2 gap-4 items-center">
+      <label className="text-sm font-medium text-gray-700">
+      Wybierz obraz
+      </label>
       <FileInput
-        label="Image Upload"
-        onChange={loadImage}
-        accept="image/*"
-        data-test-id="image-modal-file-upload"
+      label=""
+      onChange={loadImage}
+      accept="image/*"
+      data-test-id="image-modal-file-upload"
       />
+      <label className="text-sm font-medium text-gray-700">
+      Tekst alternatywny
+      </label>
       <TextInput
-        label="Alt Text"
-        placeholder="Descriptive alternative text"
-        onChange={setAltText}
-        value={altText}
-        data-test-id="image-modal-alt-text-input"
+      label=""
+      placeholder="Opisowy tekst alternatywny"
+      onChange={setAltText}
+      value={altText}
+      data-test-id="image-modal-alt-text-input"
       />
       <DialogActions>
-        <Button
-          data-test-id="image-modal-file-upload-btn"
-          disabled={isDisabled}
-          onClick={() => onClick({altText, src})}>
-          Confirm
-        </Button>
+      <Button
+        data-test-id="image-modal-file-upload-btn"
+        disabled={isDisabled}
+        onClick={() => onClick({ altText, src })}
+      >
+        Potwierdź
+      </Button>
       </DialogActions>
-    </>
+    </div>
   );
 }
 

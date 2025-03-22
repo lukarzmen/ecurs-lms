@@ -432,6 +432,7 @@
 }
 .PlaygroundEditorTheme__layoutItem {
   border: 1px dashed #ddd;
+  border-radius: 5px;
   padding: 8px 16px;
 }
 .PlaygroundEditorTheme__autocomplete {

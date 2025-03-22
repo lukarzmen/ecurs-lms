@@ -202,6 +202,9 @@ export default function InlineImageComponent({
   const [selection, setSelection] = useState<BaseSelection | null>(null);
   const activeEditorRef = useRef<LexicalEditor | null>(null);
   const isEditable = useLexicalEditable();
+  const [imageWidth, setImageWidth] = useState<number | 'inherit'>(width);
+  const [imageHeight, setImageHeight] = useState<number | 'inherit'>(height);
+  const resizeHandleRef = useRef<HTMLDivElement | null>(null);
 
   const $onDelete = useCallback(
     (payload: KeyboardEvent) => {
@@ -355,26 +358,67 @@ export default function InlineImageComponent({
 
   const draggable = isSelected && $isNodeSelection(selection);
   const isFocused = isSelected && isEditable;
+
+  const imageWidthRef = useRef(imageWidth);
+const imageHeightRef = useRef(imageHeight);
+
+// Update refs whenever the state changes
+useEffect(() => {
+  imageWidthRef.current = imageWidth;
+  imageHeightRef.current = imageHeight;
+}, [imageWidth, imageHeight]);
+
+const startResizing = useCallback(
+  (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const initialWidth = imageRef.current ? imageRef.current.width : 0;
+    const initialHeight = imageRef.current ? imageRef.current.height : 0;
+
+    const doResize = (e: MouseEvent) => {
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+      const width = initialWidth + deltaX;
+      const height = initialHeight + deltaY;
+
+      if (width > 0 && height > 0) {
+        setImageWidth(width);
+        setImageHeight(height);
+      }
+    };
+
+    const stopResize = () => {
+      document.removeEventListener('mousemove', doResize);
+      document.removeEventListener('mouseup', stopResize);
+
+      console.log(
+        'Resizing stopped at',
+        imageWidthRef.current,
+        imageHeightRef.current
+      );
+
+      // Use latest values from refs to update the node
+      editor.update(() => {
+        const node = $getNodeByKey(nodeKey);
+        if ($isInlineImageNode(node)) {
+          node.setSize(imageWidthRef.current, imageHeightRef.current);
+        }
+      });
+    };
+
+    document.addEventListener('mousemove', doResize);
+    document.addEventListener('mouseup', stopResize);
+  },
+  [editor, nodeKey] // Remove imageWidth and imageHeight from dependencies
+);
+
   return (
     <Suspense fallback={null}>
       <>
         <span draggable={draggable}>
-          {isEditable && (
-            <button
-              className="image-edit-button"
-              ref={buttonRef}
-              onClick={() => {
-                showModal('Update Inline Image', (onClose) => (
-                  <UpdateInlineImageDialog
-                    activeEditor={editor}
-                    nodeKey={nodeKey}
-                    onClose={onClose}
-                  />
-                ));
-              }}>
-              Edit
-            </button>
-          )}
           <LazyImage
             className={
               isFocused
@@ -384,10 +428,26 @@ export default function InlineImageComponent({
             src={src}
             altText={altText}
             imageRef={imageRef}
-            width={width}
-            height={height}
+            width={imageWidth}
+            height={imageHeight}
             position={position}
           />
+          {isFocused && (
+            <div
+              ref={resizeHandleRef}
+              className="image-resize-handle"
+              onMouseDown={startResizing}
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                right: 0,
+                width: '10px',
+                height: '10px',
+                background: 'rgba(0, 0, 0, 0.5)',
+                cursor: 'nwse-resize',
+              }}
+            />
+          )}
         </span>
         {showCaption && (
           <span className="image-caption-container">

@@ -1154,17 +1154,27 @@ i.page-break,
   left: -6px;
   cursor: nw-resize;
 }
-
 .editor-shell span.inline-editor-image {
   cursor: default;
   display: inline-block;
+  width: auto;
+  height: auto;
   position: relative;
   z-index: 1;
 }
 
+.editor-shell .inline-editor-image {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+}
 .editor-shell .inline-editor-image img {
   max-width: 100%;
+  height: auto;
   cursor: default;
+  display: block; /* Make sure the image is a block-level element */
 }
 
 .editor-shell .inline-editor-image img.focused {
@@ -1186,18 +1196,22 @@ i.page-break,
 
 .editor-shell .inline-editor-image.position-full {
   margin: 1em 0 1em 0;
+  display: block; /* Ensure full-width images are block-level */
+  max-width: 100%; /* Take up the full width of the container */
 }
 
 .editor-shell .inline-editor-image.position-left {
   float: left;
-  width: 50%;
-  margin: 1em 1em 0 0;
+  width: auto; /* Adjust width to content */
+  max-width: 50%; /* Ensure it doesn't exceed 50% */
+  margin: 0 1em 1em 1em;
 }
 
 .editor-shell .inline-editor-image.position-right {
-  float: right;
-  width: 50%;
-  margin: 1em 0 0 1em;
+  width: auto; /* Adjust width to content */
+  max-width: 50%; /* Ensure it doesn't exceed 50% */
+  margin: 0 1em 1em 1em;
+  display: inline-block; /* Allows floating while respecting content size */
 }
 
 .editor-shell .inline-editor-image .image-edit-button {
