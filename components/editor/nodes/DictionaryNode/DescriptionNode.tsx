@@ -70,7 +70,7 @@ export function DescriptionComponent({ text, definition }: DescriptionComponentP
   return (
     <span className="relative group">
       <span
-        className="bg-yellow-200 border border-yellow-400 cursor-pointer text-blue-500 p-1 rounded"
+        className="bg-yellow-200 border border-yellow-400 cursor-pointer text-orange-500 p-1 rounded"
         onClick={() => setIsModalOpen(true)}
       >
         {text}

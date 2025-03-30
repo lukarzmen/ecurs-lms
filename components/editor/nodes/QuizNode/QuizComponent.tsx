@@ -38,7 +38,7 @@ export default function QuizComponent({ question, answers, correctAnswerIndex, n
                   : 'bg-gray-200'
                 : selectedAnswer === index
                 ? 'bg-purple-500 text-white hover:bg-purple-600'
-                : 'bg-blue-300 text-white hover:bg-blue-600'
+                : 'bg-orange-300 text-white hover:bg-orange-600'
             }`}
           >
             {answer}         

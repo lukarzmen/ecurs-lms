@@ -37,7 +37,7 @@ export function GapComponent({ hiddenText }: GapComponentProps) {
             setUserInput(hiddenText);
             setIsCorrect(true);
           }}
-          className="absolute right-8 bg-transparent text-gray-600 hover:text-blue-600 text-xs"
+          className="absolute right-8 bg-transparent text-gray-600 hover:text-orange-600 text-xs"
         >
           👁️
         </button>

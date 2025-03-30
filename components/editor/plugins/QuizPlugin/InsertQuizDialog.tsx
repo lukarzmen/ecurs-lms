@@ -78,7 +78,7 @@ export function InsertQuizDialog({
           onChange={(e) =>
             setCorrectAnswerIndex(e.target.value ? parseInt(e.target.value, 10) : null)
           }
-          className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-orange-500 focus:outline-none"
         >
           <option value="" disabled>
             Wybierz poprawną odpowiedź
@@ -106,7 +106,7 @@ export function InsertQuizDialog({
         <button
           onClick={onClick}
           disabled={!isFormValid}
-          className={`px-4 py-2 rounded-md text-white ${isFormValid ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400"
+          className={`px-4 py-2 rounded-md text-white ${isFormValid ? "bg-orange-600 hover:bg-orange-700" : "bg-gray-400"
             }`}
         >
           Potwierdź

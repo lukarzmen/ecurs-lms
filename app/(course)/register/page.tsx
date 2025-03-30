@@ -52,7 +52,7 @@ export default function RegisterPage() {
                 <p className="text-gray-600">
                     Dołącz do naszej platformy edukacyjnej, aby uzyskać dostęp do wszystkich kursów, zasobów i spersonalizowanych doświadczeń edukacyjnych.
                 </p>
-                <div className="w-16 h-1 bg-blue-500 mx-auto my-2"></div>
+                <div className="w-16 h-1 bg-orange-500 mx-auto my-2"></div>
                 <p className="text-sm text-gray-500">
                     Kliknij przycisk poniżej, aby zakończyć rejestrację i rozpocząć swoją edukacyjną podróż. Przechodząc dalej akceptujesz regulamin.
                 </p>
@@ -62,7 +62,7 @@ export default function RegisterPage() {
                     className={`w-full py-4 px-8 rounded-lg font-medium text-white text-lg
                         ${isLoading || !isSignedIn
                             ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-blue-600 hover:bg-blue-700 transition-colors"
+                            : "bg-orange-600 hover:bg-orange-700 transition-colors"
                         }`}
                 >
                     {isLoading ? "Przetwarzanie..." : "Zarejestruj się na platformie"}

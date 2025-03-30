@@ -29,8 +29,8 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
   const TAILWIND_COLORS = [
     "bg-yellow-500",
     "bg-green-500",
-    "bg-blue-500",
-    "bg-indigo-500",
+    "bg-orange-500",
+    "bg-orange-500",
     "bg-purple-500",
     "bg-pink-500",
   ];
@@ -212,7 +212,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
         <div>
             <button
               onClick={handleAddRowAtTop}
-              className="mt-4 mb-4 px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
+              className="mt-4 mb-4 px-4 py-2 bg-orange-500 text-white rounded-full hover:bg-orange-600"
             >
               Dodaj wiersz na górze
             </button>
@@ -250,7 +250,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
                           handleDictionaryValueChanged(entries);
                         }
                       }}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
+                      className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-orange-200"
                     />
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
@@ -258,7 +258,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
                       type="text"
                       value={definition}
                       onChange={(e) => handleInputChange(keyword, e.target.value)}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
+                      className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-orange-200"
                     />
                   </td>
                 </tr>
@@ -267,7 +267,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
           </table>
           <button
             onClick={handleAddRow}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
+            className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-full hover:bg-orange-600"
           >
             Dodaj wiersz na dole
           </button>

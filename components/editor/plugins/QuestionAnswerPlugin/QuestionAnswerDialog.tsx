@@ -58,7 +58,7 @@ export function QuestionAnswerDialog({
           className={`px-4 py-2 rounded-md text-white ${
             question.trim() === '' || answer.trim() === ''
               ? 'bg-gray-400'
-              : 'bg-blue-600 hover:bg-blue-700'
+              : 'bg-orange-600 hover:bg-orange-700'
           }`}
         >
           Potwierdź

@@ -42,7 +42,7 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
   };
 
   return (
-    <div className="mt-6 border bg-indigo-100 rounded-md p-4">
+    <div className="mt-6 border bg-orange-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
         O kursie
         <Button onClick={toggleEdit} variant="ghost">
@@ -63,14 +63,14 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
               value={descriptionValue}
               onChange={handleChange}
               disabled={isSubmitting}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
             />
           </div>
           <div className="flex items-center gap-x-2">
             <button
               type="submit"
               disabled={!descriptionValue || isSubmitting}
-              className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
             >
               Zapisz
             </button>

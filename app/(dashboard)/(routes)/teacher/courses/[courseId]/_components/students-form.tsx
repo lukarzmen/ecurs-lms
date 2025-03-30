@@ -70,7 +70,7 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
     }
 
     return (
-        <div className="mt-6 border bg-indigo-100 rounded-md p-4">
+        <div className="mt-6 border bg-orange-100 rounded-md p-4">
             <div className="mt-4">
                 <Table>
                     <TableHeader>

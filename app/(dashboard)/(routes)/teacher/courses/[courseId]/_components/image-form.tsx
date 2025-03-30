@@ -57,7 +57,7 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
   };
 
   return (
-    <div className="mt-6 border bg-indigo-100 rounded-md p-4">
+    <div className="mt-6 border bg-orange-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between pb-2">
         Miniatura
         <Button onClick={toggleEdit} variant="ghost">
@@ -81,7 +81,7 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
           <ImageIcon className="h-10 w-10 text-slate-500" />
         </div>
       ) : (
-        <div className="flex items-center justify-center h-40 bg-indigo-100 rounded-md overflow-hidden">
+        <div className="flex items-center justify-center h-40 bg-orange-100 rounded-md overflow-hidden">
           {imageId ? (
             <img
               src={imageUrl}
@@ -90,7 +90,7 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
               style={{ objectFit: "contain", width: "100%", height: "100%" }}
             />
           ) : (
-            <div className="flex items-center justify-center h-full w-full text-indigo-600 mt-4">
+            <div className="flex items-center justify-center h-full w-full text-orange-600 mt-4">
               Nie wybrano obrazka
             </div>
           )}
@@ -105,13 +105,13 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
            file:mr-4 file:py-2 file:px-4
            file:rounded-full file:border-0
            file:text-sm file:font-semibold
-           file:bg-indigo-50 file:text-indigo-600
-           hover:file:bg-indigo-100"
+           file:bg-orange-50 file:text-orange-600
+           hover:file:bg-orange-100"
           />
             <button
             type="submit"
-            className={`bg-indigo-600 text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ml-4 ${
-              image ? "hover:bg-indigo-700" : "opacity-50 cursor-not-allowed"
+            className={`bg-orange-600 text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 ml-4 ${
+              image ? "hover:bg-orange-700" : "opacity-50 cursor-not-allowed"
             }`}
             disabled={!image}
             >

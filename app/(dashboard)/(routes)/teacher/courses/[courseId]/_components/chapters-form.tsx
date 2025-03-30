@@ -94,7 +94,7 @@ const toogleCreating = () => {
   }
 
   return (
-    <div className="relative mt-6 b10order bg-indigo-100 rounded-md p-4">
+    <div className="relative mt-6 b10order bg-orange-100 rounded-md p-4">
       {isUpdating && (
         <div
           className="absolute h-full w-full bg-slate-500/200

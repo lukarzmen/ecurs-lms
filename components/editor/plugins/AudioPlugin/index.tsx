@@ -154,7 +154,7 @@ export function TranscriptionDialog({
         <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-700" onClick={onClose}>✕</button>
         <h2 className="text-xl font-bold mb-4">Choose Upload Type</h2>
         <div className="flex flex-col space-y-2 mb-4">
-          <button className="px-4 py-2 bg-blue-500 text-white rounded-md" onClick={() => setUploadType("url")}>
+          <button className="px-4 py-2 bg-orange-500 text-white rounded-md" onClick={() => setUploadType("url")}>
             Enter Source URL
           </button>
           <button className="px-4 py-2 bg-green-500 text-white rounded-md" onClick={() => setUploadType("record")}>
@@ -184,7 +184,7 @@ export function TranscriptionDialog({
                   <source src={recordingUrl} type="audio/mp3" />
                   Your browser does not support the audio tag.
                 </audio>
-                <button className="px-4 py-2 bg-blue-500 text-white rounded-md mt-2" onClick={handleUploadRecorded} disabled={loading}>
+                <button className="px-4 py-2 bg-orange-500 text-white rounded-md mt-2" onClick={handleUploadRecorded} disabled={loading}>
                   {loading ? "Uploading..." : "Upload Recording"}
                 </button>
               </div>
@@ -194,7 +194,7 @@ export function TranscriptionDialog({
         {uploadType === "file" && (
           <>
             <input type="file" accept="audio/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-            <button className="px-4 py-2 bg-blue-500 text-white rounded-md mt-2" onClick={handleUpload} disabled={!file || loading}>
+            <button className="px-4 py-2 bg-orange-500 text-white rounded-md mt-2" onClick={handleUpload} disabled={!file || loading}>
               {loading ? "Uploading..." : "Upload File"}
             </button>
             {file && (
@@ -218,7 +218,7 @@ export function TranscriptionDialog({
         <div className="flex justify-end space-x-2 mt-4">
           <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md" onClick={onClose}>Cancel</button>
           {(audioUrl && !loading) ? (
-            <button className="px-4 py-2 bg-blue-500 text-white rounded-md" onClick={handleGenerate}>
+            <button className="px-4 py-2 bg-orange-500 text-white rounded-md" onClick={handleGenerate}>
               Confirm
             </button>
           ) : null}

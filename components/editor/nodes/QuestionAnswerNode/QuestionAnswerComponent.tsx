@@ -77,7 +77,7 @@ function QuestionAnswerComponent({ question, answer, explanation }: QAType) {
         {isLoading ? (<ProgressSpinner />) : (
         <button
           onClick={handleCheck}
-          className="absolute right-8 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-blue-600"
+          className="absolute right-8 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-orange-600"
           title="Sprawdź swoją odpowiedź"
         >❓
         </button>)}
@@ -86,7 +86,7 @@ function QuestionAnswerComponent({ question, answer, explanation }: QAType) {
         {/* Przycisk Pokaż/Ukryj odpowiedź */}
         <button
           onClick={() => setShowAnswer(!showAnswer)}
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-blue-600"
+          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-orange-600"
           title={showAnswer ? "Ukryj odpowiedź" : "Pokaż odpowiedź"}
         >
           {showAnswer ? "🙈" : "👁️"}
@@ -107,7 +107,7 @@ function QuestionAnswerComponent({ question, answer, explanation }: QAType) {
       {/* Wyświetlanie odpowiedzi i wyjaśnienia */}
       {(showAnswer || isCorrect) && (
         <div className="mt-2">
-          <p className="text-sm text-blue-600">
+          <p className="text-sm text-orange-600">
             <strong>Odpowiedź</strong> {answer}
           </p>
           {explanation && (

@@ -17,7 +17,6 @@ export const SearchInput = () => {
     const currentCategoryId = searchParams.get("categoryId");
 
     useEffect(() => {
-        console.log(`search ${debouncedSearch}`);
         const url = qs.stringifyUrl(
             {
             url: pathName,
@@ -44,8 +43,7 @@ export const SearchInput = () => {
         <Search className="h-4 w-4 absolute top-3 left-3 text-slate-600"/>
         <Input value={value} onChange={(e) => {
             setValue(e.target.value);
-            console.log(debouncedSearch);
-        }} className="w-full md:w-[300] pl-9 rounded-full bg-indigo-100 focus-visible:ring-slate-200" placeholder="Wyszukaj..."></Input>
+        }} className="w-full md:w-[300] pl-9 rounded-full bg-orange-100 focus-visible:ring-slate-200" placeholder="Wyszukaj..."></Input>
        </div>
     );
 }

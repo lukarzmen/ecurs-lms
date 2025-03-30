@@ -27,8 +27,8 @@ export default function CourseSidebarItem({ id, label, courseId, isCompleted, is
             onClick={onClick}
             type="button"
             className={cn(
-                "flex items-center gap-x-2 text-indigo-600 text-sm font-[500] pl-6 transition-all border border-transparent rounded-md hover:text-indigo-700 hover:bg-indigo-100",
-                isActive && "text-indigo-700 bg-indigo-200 border-indigo-300",
+                "flex items-center gap-x-2 text-orange-600 text-sm font-[500] pl-6 transition-all border border-transparent rounded-md hover:text-orange-700 hover:bg-orange-100",
+                isActive && "text-orange-700 bg-orange-200 border-orange-300",
                 isCompleted && "text-emerald-600 hover:text-emerald-700",
                 isCompleted && isActive && "bg-emerald-200 border-emerald-300",
                 "min-h-[50px]"
@@ -38,8 +38,8 @@ export default function CourseSidebarItem({ id, label, courseId, isCompleted, is
                 {/* <Icon
                     size={22}
                     className={cn(
-                        "text-indigo-600",
-                        isActive && "text-indigo-700",
+                        "text-orange-600",
+                        isActive && "text-orange-700",
                         isCompleted && "text-emerald-600"
                     )}
                 /> */}

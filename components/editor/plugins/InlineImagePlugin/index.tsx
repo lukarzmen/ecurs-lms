@@ -133,7 +133,7 @@ export function InsertInlineImageDialog({
         <select
           value={position}
           onChange={handlePositionChange}
-          className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-orange-500 focus:outline-none"
           id="position-select"
         >
           <option value="left">Left</option>
@@ -146,7 +146,7 @@ export function InsertInlineImageDialog({
           type="checkbox"
           checked={showCaption}
           onChange={handleShowCaptionChange}
-          className="h-5 w-5 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+          className="h-5 w-5 border-gray-300 rounded focus:ring-2 focus:ring-orange-500"
           id="caption"
         />
       </div>
@@ -155,7 +155,7 @@ export function InsertInlineImageDialog({
         <button
           onClick={handleOnClick}
           disabled={isDisabled}
-          className={`px-4 py-2 rounded-md text-white ${isDisabled ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+          className={`px-4 py-2 rounded-md text-white ${isDisabled ? "bg-gray-400" : "bg-orange-600 hover:bg-orange-700"
             }`}
           data-test-id="image-modal-file-upload-btn"
         >

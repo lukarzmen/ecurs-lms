@@ -13,8 +13,8 @@ import { ConfettiProvider } from "@/components/providers/confetti-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Ecurs",
-  description: "Ecurs is a platform for creating and selling courses",
+  title: "Ecurs - nowoczesna edukacja",
+  description: "Ecurs to nowoczesna i innowacyjna platforma edukacyjna, która oferuje tworzenie i uczestnictwo w intekarkywnych kursach wykorzystujących sztuczna inteligencję.",
 };
 
 export default function RootLayout({

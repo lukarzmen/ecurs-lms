@@ -57,7 +57,7 @@ export const TitleForm = ({ title, courseId }: TitleFormProps) => {
   };
 
   return (
-    <div className="mt-6 border bg-indigo-100 rounded-md p-4">
+    <div className="mt-6 border bg-orange-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
         Nazwa
         <Button onClick={toogleEdit} variant="ghost">

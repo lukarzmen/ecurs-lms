@@ -12,16 +12,17 @@ export async function GET(req: Request) : Promise<NextResponse<CourseDetails[] |
       const courses = await db.course.findMany({
         where: {
           title: {
-            contains: title,
+        contains: title,
+        mode: "insensitive",
           },
           categoryId: categoryId
         },
         include: {
           category: true,
           modules: {
-            select: {
-              id: true
-            }
+        select: {
+          id: true
+        }
           },
         },
         orderBy: {

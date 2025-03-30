@@ -115,7 +115,7 @@ export function TextGeneratorDialog({
                 Anuluj
               </button>
               <button
-                className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                className="px-4 py-2 bg-orange-500 text-white rounded-md"
                 onClick={handleSubmit}
                 disabled={userPrompt.trim() === ""}
               >
