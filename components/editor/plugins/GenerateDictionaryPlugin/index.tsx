@@ -10,11 +10,16 @@ export const GENERATE_DICTIONARY_COMMAND: LexicalCommand<string> = createCommand
 
 export function GenerateDictionaryPlugin() {
     const [editor] = useLexicalComposerContext();
+    editor.registerEditableListener((isEditable) => {
+      editor._nodes.forEach((node) => {
+          if (node instanceof DictionaryNode) {
+              node.isEditable = isEditable;
+          }
+      });
+  
+});
     editor.registerNodeTransform(DictionaryNode, dictionaryNode => {
-
-      if (!editor.isEditable()) {
-        dictionaryNode.isEditable = false;
-      }
+        dictionaryNode.isEditable = editor.isEditable();
     });
     const generateDictionary = useCallback(() => {
       const dictionaryData: Dictionary = {};

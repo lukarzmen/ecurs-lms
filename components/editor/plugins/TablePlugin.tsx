@@ -123,7 +123,7 @@ export function InsertTableDialog({
     <>
       <TextInput
         placeholder={'# of rows (1-500)'}
-        label="Rows"
+        label="Wiersze"
         onChange={setRows}
         value={rows}
         data-test-id="table-modal-rows"
@@ -131,7 +131,7 @@ export function InsertTableDialog({
       />
       <TextInput
         placeholder={'# of columns (1-50)'}
-        label="Columns"
+        label="Kolumny"
         onChange={setColumns}
         value={columns}
         data-test-id="table-modal-columns"
@@ -139,7 +139,7 @@ export function InsertTableDialog({
       />
       <DialogActions data-test-id="table-model-confirm-insert">
         <Button disabled={isDisabled} onClick={onClick}>
-          Confirm
+          Zatwierdź
         </Button>
       </DialogActions>
     </>

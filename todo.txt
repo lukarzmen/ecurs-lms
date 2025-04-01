@@ -1,0 +1,11 @@
+instrukcja - wezel lexicatl i funckjonalnopść
+przetłumacz wstaw równanie, excalidraw, Embed Youtube Video
+logowanie i zarzadzanie uzytkonwnikami
+platnosci
+dns
+tłumaczenia
+tabela edytowalna
+
+nawigacja po aplikacji
+poprawki związane z edycją np czy każdy element można usunąć lub zrobić coś za elementem
+

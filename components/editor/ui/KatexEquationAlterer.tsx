@@ -1,11 +1,3 @@
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- */
-
 import './KatexEquationAlterer.css';
 
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
@@ -40,10 +32,15 @@ export default function KatexEquationAlterer({
   return (
     <>
       <div className="KatexEquationAlterer_defaultRow">
-        Inline
-        <input type="checkbox" checked={inline} onChange={onCheckboxChange} />
+        Czy w linii?
+        <input
+          type="checkbox"
+          checked={inline}
+          onChange={onCheckboxChange}
+          className="bg-orange-100"
+        />
       </div>
-      <div className="KatexEquationAlterer_defaultRow">Equation </div>
+      <div className="KatexEquationAlterer_defaultRow">Równanie </div>
       <div className="KatexEquationAlterer_centerRow">
         {inline ? (
           <input
@@ -51,7 +48,7 @@ export default function KatexEquationAlterer({
               setEquation(event.target.value);
             }}
             value={equation}
-            className="KatexEquationAlterer_textArea"
+            className="KatexEquationAlterer_textArea bg-orange-100 rounded-md"
           />
         ) : (
           <textarea
@@ -59,11 +56,11 @@ export default function KatexEquationAlterer({
               setEquation(event.target.value);
             }}
             value={equation}
-            className="KatexEquationAlterer_textArea"
+            className="KatexEquationAlterer_textArea bg-orange-100 rounded-md"
           />
         )}
       </div>
-      <div className="KatexEquationAlterer_defaultRow">Visualization </div>
+      <div className="KatexEquationAlterer_defaultRow">Podgląd </div>
       <div className="KatexEquationAlterer_centerRow">
         <ErrorBoundary onError={(e) => editor._onError(e)} fallback={null}>
           <KatexRenderer
@@ -74,7 +71,9 @@ export default function KatexEquationAlterer({
         </ErrorBoundary>
       </div>
       <div className="KatexEquationAlterer_dialogActions">
-        <Button onClick={onClick}>Confirm</Button>
+        <Button onClick={onClick} className="bg-orange-500 text-white">
+          Zatwiedź
+        </Button>
       </div>
     </>
   );

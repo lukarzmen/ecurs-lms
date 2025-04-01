@@ -181,7 +181,7 @@ export function InsertImageDialog({
           <Button
             data-test-id="image-modal-option-file"
             onClick={() => setMode('file')}>
-            File
+            Plik
           </Button>
         </DialogButtonsList>
       )}
