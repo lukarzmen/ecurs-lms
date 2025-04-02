@@ -27,6 +27,8 @@ interface User {
     state: number;
 }
 
+const activeState = 1;
+const deactivatedState = 0;
 export const StudentsForm = ({ courseId }: StudentsFormProps) => {
     const [students, setStudents] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -49,16 +51,16 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
         fetchStudents();
     }, [courseId]);
 
-    const handleActivate = async (userCourseId: number) => {
+    const handleStateChange = async (userCourseId: number, state: number) => {
         try {
-            await axios.patch(`/api/permissions/${userCourseId}`);
-
+            await axios.patch(`/api/permissions/${userCourseId}`, { state: state });
+            
             setStudents(
                 students.map((student) =>
-                    student.userCourseId === userCourseId ? { ...student, state: 1 } : student
+                    student.userCourseId === userCourseId ? { ...student, state: state } : student
                 )
             );
-            toast.success("Student został aktywowany.");
+            toast.success(state === 1 ? "Student został aktywowany." : "Student został deaktywowany.");
         } catch (error) {
             console.error("Error updating student state:", error);
             toast.error("Error updating student state");
@@ -91,11 +93,13 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
                                 <TableCell>{student.roleName}</TableCell>
                                 <TableCell>
                                     {student.state === 0 ? (
-                                        <Button onClick={() => handleActivate(student.userCourseId)}>
+                                        <Button className="w-[90px]" onClick={() => handleStateChange(student.userCourseId, activeState)}>
                                             Aktywuj
                                         </Button>
                                     ) : (
-                                        "Zapisany"
+                                        <Button className="bg-blue-300 w-[90px]" onClick={() => handleStateChange(student.userCourseId, deactivatedState)}>
+                                            Deaktywuj
+                                        </Button>
                                     )}
                                 </TableCell>
                             </TableRow>

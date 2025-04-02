@@ -255,7 +255,7 @@ function getBaseOptions(editor: LexicalEditor, showModal: ShowModal) {
     }),
     ...EmbedConfigs.map(
       (embedConfig) =>
-        new ComponentPickerOption(`Embed ${embedConfig.contentName}`, {
+        new ComponentPickerOption(`Wstaw ${embedConfig.contentName}`, {
           icon: embedConfig.icon,
           keywords: [...embedConfig.keywords, 'embed'],
           onSelect: () =>

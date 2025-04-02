@@ -31,7 +31,7 @@ export function TextGeneratorDialog({
   onClose: () => void;
 }): JSX.Element {
   const [userPrompt, setUserPrompt] = useState("");
-  const [systemPrompt, setSystemPrompt] = useState("Tworzysz materiały dla szkoły języka rosyjskiego. Generuj tekst na podstawie poleceń w języku rosyjskim na poziomie A2. Generuj tekst i nic więcej. Nie dodawaj znaków specjalnych jak **.");
+  const [systemPrompt, setSystemPrompt] = useState("Nie dodawaj do tekstu znaczników jak ### ani znaków specjalnych ** i tym podobnych. Sam tekst bez formatowania znakami.");
   const [isSystemPromptEditable, setIsSystemPromptEditable] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -95,7 +95,7 @@ export function TextGeneratorDialog({
             disabled={!isSystemPromptEditable}
           />
           <button
-            className="absolute top-1 right-6 text-gray-500 hover:text-gray-700"
+            className="absolute top-1 right-2 text-gray-500 hover:text-gray-700"
             onClick={() => setIsSystemPromptEditable(!isSystemPromptEditable)}
           >
             ✎

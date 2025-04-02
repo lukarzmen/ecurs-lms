@@ -201,7 +201,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
       </div>
       <span className="text-sm mt-2 text-gray-700 select-none">Dopasuj słowa po lewej stronie do tłumaczeń po prawej stronie</span>
       <button
-        className="mt-4 px-4 py-2 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-700"
+        className="mt-4 px-4 py-2 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-700 select-none"
         onClick={initializeMatchGame}
       >
         Resetuj grę
@@ -288,17 +288,17 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
       </div> 
       )}
       {!isReadonly && view != "dictionaryView" ? (<div className="flex justify-center mt-4">
-        <button onClick={() => setView("dictionaryView") } className="bg-green-500 text-white rounded-full hover:bg-green-600 px-4 py-2 w-48">
+        <button onClick={() => setView("dictionaryView") } className="bg-green-500 text-white rounded-full hover:bg-green-600 px-4 py-2 w-48 select-none">
           {"Widok tabeli"}
         </button>
       </div>) : null}
       {view != "flashView" ? (<div className="flex justify-center mt-4">
-        <button onClick={() => setView("flashView") } className="bg-orange-500 text-white rounded-full hover:bg-green-600 px-4 py-2 w-48">
+        <button onClick={() => setView("flashView") } className="bg-orange-500 text-white rounded-full hover:bg-green-600 px-4 py-2 w-48 select-none">
           {"Fiszki"}
         </button>
       </div>) : null}
       {view != "matchGameView" ? (<div className="flex justify-center mt-4">
-        <button onClick={() => setView("matchGameView") } className="bg-yellow-500 text-white rounded-full hover:bg-green-600 px-4 py-2">
+        <button onClick={() => setView("matchGameView") } className="bg-yellow-500 text-white rounded-full hover:bg-green-600 px-4 py-2 select-none">
           {"Gra w dopasowywanie"}
         </button>
       </div>) : null}

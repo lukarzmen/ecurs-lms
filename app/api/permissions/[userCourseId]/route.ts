@@ -6,13 +6,14 @@ export async function PATCH(
     { params }: { params: { userCourseId: string } }
 ) {
     try {
+        const { state } = await req.json();
 
         const userCourse = await db.userCourse.update({
             where: {
                 id: parseInt(params.userCourseId)
             },
             data: {
-                state: 1,
+                state: state,
             },
         });
 

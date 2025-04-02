@@ -8,6 +8,8 @@ import {
 import { useEffect, useState } from "react";
 import { DescriptionNode } from "../../nodes/DictionaryNode/DescriptionNode";
 import toast from "react-hot-toast";
+import OpenAIService from "@/services/OpenAIService";
+import { set } from "zod";
 
 export const INSERT_DEFINITION_NODE_COMMAND = createCommand("INSERT_DEFINITION_NODE_COMMAND");
 
@@ -22,8 +24,8 @@ function DefinitionModal({
   onSubmit: (definition: string) => void;
   selectedText: string;
 }) {
+  const [isLoading, setIsLoading] = useState(false);
   const [definition, setDefinition] = useState("");
-
   const handleSubmit = () => {
     if (definition.trim()) {
       onSubmit(definition.trim());
@@ -63,6 +65,40 @@ function DefinitionModal({
           >
             Anuluj
           </button>
+            {isLoading ? (
+            <div className="px-4 py-2 bg-blue-300 text-white rounded-md">
+              Ładowanie...
+            </div>
+            ) : (
+            <button
+              className="px-4 py-2 bg-blue-300 text-white rounded-md"
+              onClick={() => {
+              setIsLoading(true);
+              fetch('/api/tasks', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ systemPrompt: "Jesteś ekspertem w danej dziedzinie. Wyjaśnij znaczenie w 3 zdaniach.",
+                userPrompt: `Napisz definicję dla słowa "${selectedText}".`,
+                }),
+              })
+              .then((response) => response.text())
+              .then((data) => {
+                setDefinition(data);
+                toast.success("Definicja została wygenerowana przez AI.");
+              })
+              .catch(() => {
+                toast.error("Błąd podczas generowania definicji.");
+              })
+              .finally(() => {
+                setIsLoading(false);
+              });
+              }}
+            >
+              Generuj AI
+            </button>
+            )}
           <button
             className="px-4 py-2 bg-orange-500 text-white rounded-md"
             onClick={handleSubmit}

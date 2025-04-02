@@ -33,7 +33,7 @@ interface PlaygroundEmbedConfig extends EmbedConfig {
 }
 
 export const YoutubeEmbedConfig: PlaygroundEmbedConfig = {
-  contentName: 'Youtube Video',
+  contentName: 'YouTube',
   exampleUrl: 'https://www.youtube.com/watch?v=jNQXAC9IVRw',
   icon: <i className="icon youtube" />,
   insertNode: (editor: LexicalEditor, result: EmbedMatchResult) => {
@@ -181,7 +181,7 @@ export function AutoEmbedDialog({
           disabled={!embedResult}
           onClick={onClick}
           data-test-id={`${embedConfig.type}-embed-modal-submit-btn`}>
-          Embed
+          Wstaw
         </Button>
       </DialogActions>
     </div>
@@ -192,7 +192,7 @@ export default function AutoEmbedPlugin(): JSX.Element {
   const [modal, showModal] = useModal();
 
   const openEmbedModal = (embedConfig: PlaygroundEmbedConfig) => {
-    showModal(`Embed ${embedConfig.contentName}`, (onClose) => (
+    showModal(`Wstaw ${embedConfig.contentName}`, (onClose) => (
       <AutoEmbedDialog embedConfig={embedConfig} onClose={onClose} />
     ));
   };
@@ -203,10 +203,10 @@ export default function AutoEmbedPlugin(): JSX.Element {
     dismissFn: () => void,
   ) => {
     return [
-      new AutoEmbedOption('Dismiss', {
+      new AutoEmbedOption('Odrzuć', {
         onSelect: dismissFn,
       }),
-      new AutoEmbedOption(`Embed ${activeEmbedConfig.contentName}`, {
+      new AutoEmbedOption(`Wstaw ${activeEmbedConfig.contentName}`, {
         onSelect: embedFn,
       }),
     ];

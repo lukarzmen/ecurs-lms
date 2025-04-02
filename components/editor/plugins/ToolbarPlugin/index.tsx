@@ -1261,6 +1261,19 @@ export default function ToolbarPlugin({
         </DropDownItem>
         <DropDownItem
           onClick={() => {
+            showModal('Zadanie', (onClose) => (
+              <QuestionAnswerDialog
+                activeEditor={activeEditor}
+                onClose={onClose}
+              />
+            ));
+          }}
+          className="item">
+          <i className="icon task" />
+          <span className="text">Zadanie</span>
+        </DropDownItem>
+        <DropDownItem
+          onClick={() => {
             showModal('Wstaw pytanie i odpowiedź', (onClose) => (
               <QuestionAnswerDialog
                 activeEditor={activeEditor}

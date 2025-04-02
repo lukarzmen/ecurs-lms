@@ -139,7 +139,7 @@ export default function Editor( {
           }
           ErrorBoundary={LexicalErrorBoundary}
         />
-        <FloatingTextFormatToolbarPlugin />
+        {/* <FloatingTextFormatToolbarPlugin /> */}
         {/* <MarkdownShortcutPlugin /> */}
         <CodeHighlightPlugin />
         <ListPlugin />

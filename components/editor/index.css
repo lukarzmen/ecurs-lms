@@ -60,7 +60,7 @@ header h1 {
   position: relative;
   line-height: 1.7;
   font-weight: 400;
-  height: 100vh; /* Full screen height */
+  height: 80vh; /* Full screen height */
 }
 
 .editor-shell .editor-container {
@@ -87,7 +87,7 @@ header h1 {
   z-index: 0;
   overflow: auto;
   /* resize: vertical; */
-  max-height: 85vh;
+  max-height: 75vh;
 }
 
 .editor {
@@ -377,6 +377,9 @@ i.palette {
 
 .icon.ai {
   background-image: url(images/icons/magic.svg);
+}
+.icon.task {
+  background-image: url(images/icons/task1.svg);
 }
 .icon.audio {
   background-image: url(images/icons/audio.svg);
