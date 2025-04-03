@@ -24,7 +24,6 @@ import {
 import { INSERT_EMBED_COMMAND } from '@lexical/react/LexicalAutoEmbedPlugin';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $isDecoratorBlockNode } from '@lexical/react/LexicalDecoratorBlockNode';
-import { INSERT_HORIZONTAL_RULE_COMMAND } from '@lexical/react/LexicalHorizontalRuleNode';
 import {
   $createHeadingNode,
   $createQuoteNode,
@@ -51,7 +50,6 @@ import {
   $getNodeByKey,
   $getRoot,
   $getSelection,
-  $getTextContent,
   $isElementNode,
   $isRangeSelection,
   $isRootOrShadowRoot,
@@ -91,24 +89,20 @@ import {
 } from '../ImagesPlugin';
 import { InsertInlineImageDialog } from '../InlineImagePlugin';
 import InsertLayoutDialog from '../LayoutPlugin/InsertLayoutDialog';
-import { INSERT_PAGE_BREAK } from '../PageBreakPlugin';
-import { InsertPollDialog } from '../PollPlugin';
 import { InsertTableDialog } from '../TablePlugin';
 import FontSize from './fontSize';
 import Settings from '../../Settings';
 import { InsertQuizDialog } from '../QuizPlugin/InsertQuizDialog';
-import { DictionaryKeywordNode } from '../../nodes/DictionaryNode/DictionaryKeywordNode';
 import { GENERATE_DICTIONARY_COMMAND } from '../GenerateDictionaryPlugin';
 import { TextGeneratorDialog } from '../TextGeneratorPlugin';
 import { QuestionAnswerDialog } from '../QuestionAnswerPlugin/QuestionAnswerDialog';
 import { INSERT_GAP_NODE_COMMAND } from '../GapPlugin';
 import { INSERT_DEFINITION_NODE_COMMAND } from '../DescriptionPlugin';
-import { CREATE_AUDIO_NODE_COMMAND, TranscriptionDialog } from '../AudioPlugin';
+import { TranscriptionDialog } from '../AudioPlugin';
 import { LanguageSelectorDialog } from '../TranslationPlugin';
-import { TEXT_TO_VOICE_COMMAND, TextToVoiceDialog } from '../../TextToVoicePlugin';
-import { TextToVoice } from 'elevenlabs/api/resources/textToVoice/client/Client';
-import { INSERT_SELECT_ANSWER_NODE_COMMAND } from '../SelectAnswerPlugin';
+import { TextToVoiceDialog } from '../../TextToVoicePlugin';
 import { InsertSelectAnswerDialog } from '../SelectAnswerPlugin/InsertSelectAnswerDialog';
+import { DoTaskDialog } from '../TaskPlugin/DoTaskDialog';
 
 const blockTypeToBlockName = {
   bullet: 'Lista punktowana',
@@ -1262,7 +1256,7 @@ export default function ToolbarPlugin({
         <DropDownItem
           onClick={() => {
             showModal('Zadanie', (onClose) => (
-              <QuestionAnswerDialog
+              <DoTaskDialog
                 activeEditor={activeEditor}
                 onClose={onClose}
               />

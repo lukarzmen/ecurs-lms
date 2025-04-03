@@ -65,6 +65,7 @@ import FloatingTextFormatToolbarPlugin from './plugins/FloatingTextFormatToolbar
 import TranslationPlugin from './plugins/TranslationPlugin';
 import AudioPlugin from './plugins/AudioPlugin';
 import SelectAnswerPlugin from './plugins/SelectAnswerPlugin';
+import TaskPlugin from './plugins/TaskPlugin';
 
 
 export default function Editor( {
@@ -157,6 +158,7 @@ export default function Editor( {
         <TextGeneratorPlugin />
         <QuizPlugin />
         <GenerateDictionaryPlugin />
+        <TaskPlugin/>
         <QuestionAnswerPlugin />
         <DescriptionPlugin />
         <YouTubePlugin />
