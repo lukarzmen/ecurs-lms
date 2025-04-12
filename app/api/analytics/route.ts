@@ -1,10 +1,10 @@
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+    const { searchParams } = req.nextUrl;
+    const userId = searchParams.get("userId");
     try {
-        const { searchParams } = new URL(req.url);
-        const userId = searchParams.get("userId");
 
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
