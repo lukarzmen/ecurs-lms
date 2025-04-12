@@ -54,18 +54,10 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const { userId } = auth() ?? "";
     const { courseId } = await req.json();
-
-    if (!userId) {
-      return new NextResponse("Unauthorized", {
-        status: 401,
-      });
-    }
     await db.course.delete({
       where: {
-        id: courseId,
-        userId: userId,
+        id: courseId
       },
     });
     return new NextResponse("Course deleted", {

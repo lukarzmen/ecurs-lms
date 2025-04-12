@@ -1,21 +1,13 @@
 import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export async function PUT(
   req: Request,
   { params }: { params: { courseId: string } }
 ) {
-  const { userId } = auth();
-  if (!userId) {
-    return new NextResponse("Unauthorized", {
-      status: 401,
-    });
-  }
   const ownCourse = await db.course.findFirst({
     where: {
-      id: Number(params.courseId),
-      userId: userId,
+      id: Number(params.courseId)
     },
   });
   const { list } = await req.json();

@@ -8,16 +8,10 @@ export async function DELETE(
   { params }: { params: { courseId: string; chapterId: string } },
 ) {
   try {
-    const { userId } = auth() ?? "";
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
     const courseIdInt = parseInt(params.courseId, 10);
     const ownCourse = await db.course.findFirst({
       where: {
-        id: courseIdInt,
-        userId,
+        id: courseIdInt
       },
     });
     if (!ownCourse) {
@@ -42,22 +36,8 @@ export async function PATCH(
   { params }: { params: { courseId: string; chapterId: string } },
 ) {
   try {
-    const { userId } = auth() ?? "";
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
     const courseIdInt = parseInt(params.courseId, 10);
     const chapterIdInt = parseInt(params.chapterId, 10);
-    const ownCourse = await db.course.findFirst({
-      where: {
-        id: courseIdInt,
-        userId,
-      },
-    });
-    if (!ownCourse) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
     const { isPublished, ...values } = await req.json();
     const chapter = await db.module.update({
       where: {

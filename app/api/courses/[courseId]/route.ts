@@ -56,23 +56,9 @@ export async function DELETE(
   { params }: { params: { courseId: string } },
 ) {
   try {
-    const { userId } = auth() ?? "";
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-    const ownCourse = await db.course.findFirst({
-      where: {
-        id: parseInt(params.courseId, 10),
-        userId,
-      },
-    });
-    if (!ownCourse) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
     const deletedCourse = await db.course.delete({
       where: {
-        id: parseInt(params.courseId, 10),
-        userId: userId,
+        id: parseInt(params.courseId, 10)
       },
       include: {
         modules: true,
