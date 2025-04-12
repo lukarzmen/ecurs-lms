@@ -1,9 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { NextResponse } from 'next/server';
 import { generateAudioFromText } from '@/services/ElevenLabsService';
-import { setValue } from '@/services/RedisService';
-
-
+import { db } from '@/lib/db';
 
 export async function POST(req: Request) {
     const { text } = await req.json();
@@ -16,14 +14,21 @@ export async function POST(req: Request) {
 
     try {
         const blob = await generateAudioFromText(text);
-
         const fileBuffer = Buffer.from(await blob.arrayBuffer());
 
-        await setValue(`audio:${id}`, fileBuffer.toString('base64'));
+        // Store the buffer in the database
+        const filename = `${text.substring(0, 10)}-${new Date().toISOString()}.mp3`;
+        await db.attachment.create({
+            data: {
+            guid: id,
+            filename: filename, // Or determine the actual filename/extension
+            fileData: fileBuffer,
+            },
+        });
 
         return new NextResponse(JSON.stringify({ message: "Created", id }), { status: 201 });
     } catch (error) {
-        console.error('Error storing file in Redis:', error);
+        console.error('Error storing file in database:', error);
         return new NextResponse("Internal Server Error", { status: 500 });
     }
 }

@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { NextResponse } from 'next/server';
-import { setValue } from '@/services/RedisService';
+import { db } from '@/lib/db'; // Import your Prisma client
 
 export async function POST(req: Request) {
     const formData = await req.formData();
@@ -16,12 +16,18 @@ export async function POST(req: Request) {
         // Convert file to buffer
         const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-        // Store the buffer in Redis using base64 encoding
-        await setValue(`audio:${id}`, fileBuffer.toString('base64'));
+        // Store the buffer in the database
+        await db.attachment.create({
+            data: {
+                guid: id,
+                filename: file.name,
+                fileData: fileBuffer,
+            },
+        });
 
         return new NextResponse(JSON.stringify({ message: "Created", id }), { status: 201 });
     } catch (error) {
-        console.error('Error storing file in Redis:', error);
+        console.error('Error storing file in database:', error);
         return new NextResponse("Internal Server Error", { status: 500 });
     }
 }

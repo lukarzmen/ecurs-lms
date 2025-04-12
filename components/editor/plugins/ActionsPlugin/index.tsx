@@ -266,8 +266,8 @@ export default function ActionsPlugin({
       source: 'Playground',
     });
     const saveResult = onSave(serializedDocument);
-    setHash(saveResult.hash);
-    return saveResult.hash;
+
+    return "";
   }
 }
 
@@ -378,6 +378,5 @@ function ShowClearDialog({
 
 export interface SaveResult {
   success: boolean;
-  hash: string;
 }
 

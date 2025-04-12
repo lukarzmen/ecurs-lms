@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { set } from "zod";
 import ProgressSpinner from "../../plugins/TextGeneratorPlugin/ProgressComponent";
 import { DoTaskType } from "../../plugins/TaskPlugin";
 

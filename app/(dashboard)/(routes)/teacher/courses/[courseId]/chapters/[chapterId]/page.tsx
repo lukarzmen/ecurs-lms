@@ -58,7 +58,6 @@ const ChapterEditPage = async ({
           <div className="w-full">
             <ChapterDescriptionForm
               chapterId={chapterId}
-              moduleContentId={module.moduleContentId}
               courseId={courseId}
             />
           </div>

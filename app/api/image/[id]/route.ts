@@ -1,5 +1,5 @@
-import { getValue } from "@/services/RedisService";
 import { NextResponse } from "next/server";
+import { db } from '@/lib/db';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
     const { id } = params;
@@ -9,26 +9,27 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     }
 
     try {
-        // Get base64-encoded image data from Redis
-        const imageData = await getValue(`image:${id}`);
+        // Get attachment from the database by guid
+        const attachment = await db.attachment.findUnique({
+            where: {
+                guid: id,
+            },
+        });
 
-        if (!imageData) {
+        if (!attachment) {
             return NextResponse.json({ error: "Image not found." }, { status: 404 });
         }
 
-        // Convert base64 string back to a Buffer
-        const imageBuffer = Buffer.from(imageData, "base64");
-
-        return new NextResponse(imageBuffer, {
+        return new Response(attachment.fileData, {
             status: 200,
             headers: {
-                "Content-Type": "image/png",
-                "Content-Length": imageBuffer.byteLength.toString(),
-                "Content-Disposition": `inline; filename="${id}.png"`, // Ensures direct display
+            "Content-Type": "image/png",
+            "Content-Length": attachment.fileData.length.toString(),
+            "Content-Disposition": `inline; filename="${encodeURIComponent(attachment.filename)}"`,
             },
         });
     } catch (error) {
-        console.error("Error retrieving file from Redis:", error);
+        console.error("Error retrieving file from database:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

@@ -1,5 +1,4 @@
 instrukcja - wezel lexicatl i funckjonalnopść
-logowanie i zarzadzanie uzytkonwnikami
 platnosci
 tabela edytowalna
 

@@ -16,7 +16,7 @@ export default function ChapterContent ({
     useEffect(() => {
       const fetchData = () => {
         setIsLoading(true);
-        fetch(`/api/editor/${content}`, {
+        fetch(`/api/content/${content}`, {
           method: 'GET'
         })
           .then(response => {
@@ -25,8 +25,9 @@ export default function ChapterContent ({
             }
             return response.json();
           })
-          .then((serializedEditorState: SerializedDocument) => {
-            setSerializedEditorStateString(JSON.stringify(serializedEditorState.editorState));
+          .then((serializedEditorState: string) => {
+            const data: SerializedDocument = JSON.parse(serializedEditorState);
+            setSerializedEditorStateString(JSON.stringify(data.editorState));
             setIsLoading(false);
           })
           .catch(error => {
@@ -51,8 +52,7 @@ export default function ChapterContent ({
             onEditorChange={() => {}}
             onSave={(serializedDocument) => {
               const saveResult: SaveResult = {
-                success: true,
-                hash: ''
+                success: true
               };
               return saveResult;
             }}

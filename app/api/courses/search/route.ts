@@ -1,14 +1,13 @@
 import { db } from "@/lib/db";
-import { Category, Course } from "@prisma/client";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { CourseDetails, CourseWithCategory } from "../../user/courses/route";
 
-export async function GET(req: Request) : Promise<NextResponse<CourseDetails[] | { error: string }>> {
+export async function GET(req: NextRequest) : Promise<NextResponse<CourseDetails[] | { error: string }>> {
+    const { searchParams } = req.nextUrl;
+    const title = searchParams.get('title') || undefined;
+    const categoryId = searchParams.get('categoryId') ? parseInt(searchParams.get('categoryId')!) : undefined;
+
     try {
-      const { searchParams } = new URL(req.url);
-      const title = searchParams.get('title') || undefined;
-      const categoryId = searchParams.get('categoryId') ? parseInt(searchParams.get('categoryId')!) : undefined;
-  
       const courses = await db.course.findMany({
         where: {
           title: {

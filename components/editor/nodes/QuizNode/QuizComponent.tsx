@@ -21,50 +21,50 @@ export default function QuizComponent({ question, answers, correctAnswerIndex, n
   };
 
   return (
-    <div className="quiz-component p-4 max-w-md mx-auto border border-gray-300 rounded-lg shadow-md">
+    <div className="quiz-component p-4 max-w-md mx-auto border border-gray-300 rounded-lg shadow-md bg-white/80 backdrop-blur-sm">
       <h3 className="text-lg font-bold mb-4 text-center">{question}</h3>
       <div className="grid grid-cols-2 gap-4">
-        {answers.map((answer, index) => (
-          <button
-            key={index}
-            onClick={() => handleAnswerSelect(index)}
-            disabled={isSubmitted}
-            className={`p-2 border rounded-lg text-center transition-all duration-200 hover:shadow-md ${
-              isSubmitted
-                ? index === correctAnswerIndex
-                  ? 'bg-green-500 text-white'
-                  : selectedAnswer === index
-                  ? 'bg-red-500 text-white'
-                  : 'bg-gray-200'
-                : selectedAnswer === index
-                ? 'bg-purple-500 text-white hover:bg-purple-600'
-                : 'bg-orange-300 text-white hover:bg-orange-600'
-            }`}
-          >
-            {answer}         
-          </button>
-        ))}
+      {answers.map((answer, index) => (
+        <button
+        key={index}
+        onClick={() => handleAnswerSelect(index)}
+        disabled={isSubmitted}
+        className={`p-2 border rounded-lg text-center transition-all duration-200 hover:shadow-md ${
+          isSubmitted
+          ? index === correctAnswerIndex
+            ? 'bg-green-500 text-white'
+            : selectedAnswer === index
+            ? 'bg-red-500 text-white'
+            : 'bg-gray-200'
+          : selectedAnswer === index
+          ? 'bg-purple-500 text-white hover:bg-purple-600'
+          : 'bg-orange-300 text-white hover:bg-orange-600'
+        }`}
+        >
+        {answer}         
+        </button>
+      ))}
       </div>
       {isSubmitted ? (
-        <div>
-        <p className="mt-4 text-center font-medium text-lg">
-          {selectedAnswer === correctAnswerIndex ? 'Poprawna odpowiedź!' : 'Niepoprawna odpowiedź. Spróbuj ponownie!'}
-        </p>
-        {correctAnswerDescription ? <p className="mt-4 text-center font-medium italic">{correctAnswerDescription}</p> : null}
-        </div>
+      <div>
+      <p className="mt-4 text-center font-medium text-lg">
+        {selectedAnswer === correctAnswerIndex ? 'Poprawna odpowiedź!' : 'Niepoprawna odpowiedź. Spróbuj ponownie!'}
+      </p>
+      {correctAnswerDescription ? <p className="mt-4 text-center font-medium italic">{correctAnswerDescription}</p> : null}
+      </div>
      
       ) : (
-        <button
-          onClick={handleSubmit}
-          disabled={selectedAnswer === null}
-          className={`mt-4 w-full py-2 px-4 rounded-lg text-white font-bold transition-all duration-200 ${
-            selectedAnswer === null
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-green-500 hover:bg-green-600'
-          }`}
-        >
-          Sprawdź
-        </button>
+      <button
+        onClick={handleSubmit}
+        disabled={selectedAnswer === null}
+        className={`mt-4 w-full py-2 px-4 rounded-lg text-white font-bold transition-all duration-200 ${
+        selectedAnswer === null
+          ? 'bg-gray-400 cursor-not-allowed'
+          : 'bg-green-500 hover:bg-green-600'
+        }`}
+      >
+        Sprawdź
+      </button>
       )}
     </div>
   );

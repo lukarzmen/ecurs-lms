@@ -27,12 +27,11 @@ const ChapterIdPage = async ({
         body: JSON.stringify({
             courseId,
             userId: userAuth.userId,
-            sessionId : userAuth.sessionId,
+            sessionId: userAuth.sessionId,
         }),
     });
 
     const result = await response.json();
-    console.log("result", result);
     if (!result.exists) {
         return (
             <div className="flex flex-col items-center justify-center h-full">
@@ -45,7 +44,6 @@ const ChapterIdPage = async ({
     // Fetch chapter data
     const chapterResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}/chapters/${chapterId}`);
     const chapterData = await chapterResponse.json();
-    console.log("chapter data", chapterData);
 
     const { module, course } = chapterData;
     // Redirect if chapter or course is not found
@@ -54,7 +52,7 @@ const ChapterIdPage = async ({
     }
 
     const isCompleted = false;//!!chapter.userProgress?.[0]?.isCompleted;
-return (
+    return (
         <div>
             {/* Display banners based on the chapter state */}
             {isCompleted && (
@@ -70,7 +68,7 @@ return (
 
                 <h1 className="text-2xl font-semibold text-center p-2">{module.title}</h1>
                 <div className="p-4">
-                    <ChapterContent content={module.moduleContentId} />
+                    <ChapterContent content={chapterId} />
                 </div>
             </div>
         </div>

@@ -1,21 +1,43 @@
-import { db } from '@/lib/db';
-import { User } from '@prisma/client';
-import React from 'react';
+'use client';
 
-const StudentsPage: React.FC = async () => {
-    const strudentsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/student`);
-    const students = await strudentsResponse.json();
+import { User } from '@prisma/client';
+import React, { useEffect, useState } from 'react';
+
+const StudentsPage: React.FC = () => {
+    const [students, setStudents] = useState<User[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStudents = async () => {
+            try {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/student`);
+                const data = await response.json();
+                setStudents(data);
+            } catch (error) {
+                console.error('Error fetching students:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStudents();
+    }, []);
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
     return (
         <div className="container mx-auto p-4">
             <h1 className="text-2xl font-bold mb-4 mt-4">Uczniowie</h1>
             <div className="bg-white shadow-md rounded-lg overflow-hidden">
                 <table className="min-w-full bg-white">
                     <thead>
-                        <tr>
-                            <th className="py-2 px-4 bg-gray-200 text-left">Id</th>
-                            <th className="py-2 px-4 bg-gray-200 text-left">Imię</th>
-                            <th className="py-2 px-4 bg-gray-200 text-left">Nazwisko</th>
-                            <th className="py-2 px-4 bg-gray-200 text-left">Email</th>
+                        <tr className="bg-orange-200">
+                            <th className="py-2 px-4 text-left">Id</th>
+                            <th className="py-2 px-4 text-left">Imię</th>
+                            <th className="py-2 px-4 text-left">Nazwisko</th>
+                            <th className="py-2 px-4 text-left">Email</th>
                         </tr>
                     </thead>
                     <tbody>

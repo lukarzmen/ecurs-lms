@@ -62,7 +62,6 @@ model Role {
 }
 model Module {
   id Int @id @default(autoincrement())
-  moduleContentId String @unique @default(uuid())
   title String @db.Text
   position Int
   courseId Int?
@@ -71,7 +70,17 @@ model Module {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@index([courseId])
+  ModuleContent ModuleContent[]
+}
 
+model ModuleContent {
+  id         Int      @id @default(autoincrement())
+  guid String @default(uuid()) @unique
+  data       Json     @db.JsonB
+  createdAt  DateTime @default(now())
+  moduleId   Int? @unique
+  module     Module?  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  @@index([moduleId])
 }
 
 model UserCourse {
@@ -104,4 +113,12 @@ id Int @id @default(autoincrement())
   @@index([moduleId])
 
   @@unique([userId, moduleId])
+}
+
+model Attachment {
+  id         Int      @id @default(autoincrement())
+  guid String @default(uuid()) @unique
+  filename   String
+  fileData   Bytes  @db.ByteA 
+  createdAt  DateTime @default(now())
 }

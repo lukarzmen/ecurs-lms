@@ -12,17 +12,15 @@ import { SerializedDocument } from "@lexical/file";
 import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 import LexicalEditor from "@/components/editor/LexicalEditor";
 import { set } from "zod";
+import { json } from "stream/consumers";
 
 interface ChapterDescriptionFormProps {
-  moduleContentId: string;
   courseId: string;
   chapterId: string;
 }
 
 export const ChapterDescriptionForm = ({
-  moduleContentId,
-  courseId,
-  chapterId,
+  chapterId: moduleId,
 }: ChapterDescriptionFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,7 +29,7 @@ export const ChapterDescriptionForm = ({
   useEffect(() => {
     const fetchData = () => {
       setIsLoading(true);
-      fetch(`/api/editor/${moduleContentId}`, {
+      fetch(`/api/content/${moduleId}`, {
         method: 'GET'
       })
         .then(response => {
@@ -40,8 +38,9 @@ export const ChapterDescriptionForm = ({
           }
           return response.json();
         })
-        .then((serializedEditorState: SerializedDocument) => {
-          setSerializedEditorStateString(JSON.stringify(serializedEditorState.editorState));
+        .then((serializedEditorState: string) => {
+          const data: SerializedDocument = JSON.parse(serializedEditorState);
+          setSerializedEditorStateString(JSON.stringify(data.editorState));
           setIsLoading(false);
         })
         .catch(error => {
@@ -51,7 +50,7 @@ export const ChapterDescriptionForm = ({
     };
 
     fetchData();
-  }, [moduleContentId]);
+  }, [moduleId]);
 
   const toggleEdit = () => {
     setIsEditing((current) => !current);
@@ -61,7 +60,7 @@ export const ChapterDescriptionForm = ({
   const handleOnSave = (serializedDocument: SerializedDocument): SaveResult => {
     setIsLoading(true);
     try {
-      const response = fetch(`/api/editor/${moduleContentId}`, {
+      fetch(`/api/content/${moduleId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,11 +76,11 @@ export const ChapterDescriptionForm = ({
       });
       
 
-      return { success: true, hash: moduleContentId };
+      return { success: true };
     } catch (error) {
       console.error('Error:', error);
       toast.error("Coś poszło nie tak podczas zapisywania dokumentu");
-      return { success: false, hash: moduleContentId };
+      return { success: false };
     } finally {
       setIsLoading(false);
       setIsEditing(false);
@@ -110,7 +109,7 @@ export const ChapterDescriptionForm = ({
               initialStateJSON={serializedEditorStateString}
               onSave={handleOnSave}
               isEditable={isEditing}
-              onEditorChange={(content: string) => {
+              onEditorChange={() => {
               }}
             />
           </div>

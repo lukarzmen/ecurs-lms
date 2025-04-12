@@ -177,25 +177,25 @@ export default function ExcalidrawModal({
   function ShowDiscardDialog(): JSX.Element {
     return (
       <Modal
-        title="Discard"
+        title="Odrzucić zmiany?"
         onClose={() => {
-          setDiscardModalOpen(false);
-        }}
-        closeOnClickOutside={false}>
-        Are you sure you want to discard the changes?
+            setDiscardModalOpen(false);
+          }}
+          closeOnClickOutside={false}>
+          Czy na pewno chcesz odrzucić zmiany?
         <div className="ExcalidrawModal__discardModal">
           <Button
             onClick={() => {
               setDiscardModalOpen(false);
               onClose();
             }}>
-            Discard
+            Odrzuć
           </Button>{' '}
           <Button
             onClick={() => {
               setDiscardModalOpen(false);
             }}>
-            Cancel
+            Anuluj
           </Button>
         </div>
       </Modal>
@@ -234,10 +234,10 @@ export default function ExcalidrawModal({
           />
           <div className="ExcalidrawModal__actions">
             <button className="action-button" onClick={discard}>
-              Discard
+              Odrzuć
             </button>
             <button className="action-button" onClick={save}>
-              Save
+              Zapisz
             </button>
           </div>
         </div>

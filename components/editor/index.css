@@ -1523,7 +1523,6 @@ button.action-button:disabled {
   padding-bottom: 2px;
   position: sticky;
   top: 0;
-  z-index: 2;
 }
 
 /* @media screen and (max-width: 600px) {

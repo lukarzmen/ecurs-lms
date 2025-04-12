@@ -14,6 +14,7 @@ export interface Definition {
     description: string;
 }
 
+const TOOLTIP_CHARACTER_LIMIT = 50; // Limit for tooltip description length
 export class DefinitionNode extends DecoratorNode<JSX.Element> {
     __key: string;
     __description: string;
@@ -66,7 +67,8 @@ export class DefinitionNode extends DecoratorNode<JSX.Element> {
             
             tooltip = document.createElement('div');
             tooltip.className = 'definition-tooltip';
-            tooltip.textContent = this.__description;
+            const shortTooltipDescription = this.__description.length >  TOOLTIP_CHARACTER_LIMIT ? `${this.__description.substring(0, TOOLTIP_CHARACTER_LIMIT)}...` : this.__description;
+            tooltip.textContent = shortTooltipDescription;
             tooltip.style.position = 'absolute';
             tooltip.style.backgroundColor = '#333';
             tooltip.style.color = '#fff';

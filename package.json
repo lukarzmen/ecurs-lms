@@ -37,6 +37,7 @@
     "@types/react-dom": "18.3.0",
     "autoprefixer": "10.4.20",
     "axios": "^1.7.4",
+    "bun": "^1.2.9",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
@@ -82,6 +83,7 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@types/bun": "^1.2.9",
     "@types/lodash-es": "^4.17.12",
     "prettier": "^3.3.3",
     "prisma": "^5.18.0"

@@ -65,7 +65,7 @@ export type DescriptionComponentProps = {
 export function DescriptionComponent({ text, definition }: DescriptionComponentProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const shortDefinition = definition.split(" ").slice(0, 100).join(" ");
+  const shortDefinition = definition.split(" ").slice(0, 10).join(" ");
 
   return (
     <span className="relative group">
@@ -80,10 +80,10 @@ export function DescriptionComponent({ text, definition }: DescriptionComponentP
       </span>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative">
             <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 z-40"
               onClick={() => setIsModalOpen(false)}
             >
               ✕
