@@ -1,6 +1,4 @@
 import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
-import { Course, Module } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -16,16 +14,9 @@ export async function POST(
   }
   try {
     const { title } = await req.json();
-    const { userId } = auth() ?? "";
-    if (!userId) {
-      return new NextResponse("Unauthorized", {
-        status: 401,
-      });
-    }
     const courseOwner = await db.course.findUnique({
       where: {
-        id: courseIdInt,
-        userId: userId,
+        id: courseIdInt
       },
     });
     if (!courseOwner) {

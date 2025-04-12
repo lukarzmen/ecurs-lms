@@ -1,35 +1,71 @@
 "use client";
 import { useEffect, useState } from "react";
 import DataCard from "./_components/data-card";
+import { useAuth } from "@clerk/nextjs";
+
+interface AnalyticsData {
+  userCount: number;
+  coursesCount: number;
+  modulesCount: number;
+  mostPopularCourse: string;
+  newUsersLastMonth: number;
+  newCoursesLastMonth: number;
+  leastPopularCourse: string;
+}
 
 const AnalyticsPage = () => {
-  const [analyticsData, setAnalyticsData] = useState({
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
     userCount: 0,
     coursesCount: 0,
     modulesCount: 0,
+    mostPopularCourse: "???",
+    newUsersLastMonth: 0,
+    newCoursesLastMonth: 0,
+    leastPopularCourse: "???",
   });
+  const { userId } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics`, { cache: "no-store" });
-      const data = await response.json();
-      setAnalyticsData(data);
+      if (userId) {
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/analytics?userId=${userId}`,
+            { cache: "no-store" }
+          );
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data: AnalyticsData = await response.json();
+          setAnalyticsData(data);
+        } catch (error) {
+          console.error("Error fetching analytics:", error);
+          // Handle error appropriately, e.g., display an error message to the user
+        }
+      }
     };
 
     fetchData();
-  }, []);
+  }, [userId]);
 
-  const { userCount, coursesCount, modulesCount } = analyticsData;
+  const {
+    userCount,
+    coursesCount,
+    mostPopularCourse,
+    newUsersLastMonth,
+    newCoursesLastMonth,
+    leastPopularCourse,
+  } = analyticsData;
 
   return (
     <div className="p-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <DataCard label="Wszyscy użytkownicy" value={userCount.toString()}></DataCard>
-        <DataCard label="Nowi użytkownicy" value={userCount.toString()}></DataCard>
-        <DataCard label="Wszystkie kursy" value={coursesCount.toString()}></DataCard>
-        <DataCard label="Wszystkie lekcje" value={modulesCount.toString()}></DataCard>
-        <DataCard label="Średnia liczba lekcji na rozdział" value={(modulesCount / coursesCount || 0).toFixed(2)}></DataCard>
-        <DataCard label="Kurs z największą liczbą studentów" value={userCount.toString()}></DataCard>
+        <DataCard label="Wszyscy kursanci" value={userCount.toString()} />
+        <DataCard label="Nowi kursanci (Ostatni miesiąc)" value={newUsersLastMonth.toString()} />
+        <DataCard label="Wszystkie kursy" value={coursesCount.toString()} />
+        <DataCard label="Nowe kursy (Ostatni miesiąc)" value={newCoursesLastMonth.toString()} />
+        <DataCard label="Najpopularniejszy kurs" value={mostPopularCourse} />
+        <DataCard label="Najmniej popularny kurs" value={leastPopularCourse} />
       </div>
     </div>
   );

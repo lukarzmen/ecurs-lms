@@ -5,22 +5,41 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { userId } = auth() ?? "";
-    const { title, description, categoryId } = await req.json();
+    const { title, description, categoryId, userProviderId } = await req.json();
 
-    if (!userId) {
+    if (!userProviderId) {
       return new NextResponse("Unauthorized", {
         status: 401,
       });
     }
+    const user = await db.user.findUnique({
+      where: {
+        providerId: userProviderId,
+      },
+    });
+
+    if (!user) {
+      return new NextResponse("User not found", { status: 404 });
+    }
+
     const course = await db.course.create({
       data: {
-        userId,
+        authorId: user.id,
         title,
         categoryId: categoryId,
         description
       },
     });
+
+    await db.userCourse.create({
+      data: {
+        userId: user.id,
+        courseId: course.id,
+        state: 1,
+        roleId: 1, // Assuming 1 is the role ID for the teacher
+      },
+    });
+
     const response = new NextResponse(JSON.stringify(course), {
       status: 201,
     });
@@ -55,25 +74,25 @@ export async function DELETE(req: Request) {
   } catch (error) {
     console.error("Failed to delete course", error);
     return new NextResponse("Internal error", {
-      status: 500,
-    });
+      status: 500 },
+    );
   }
 }
 
-  export async function GET(req: Request) {
-    try {
+export async function GET(req: Request) {
+  try {
 
-      const courses = await db.course.findMany({
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
+    const courses = await db.course.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
-      return NextResponse.json(courses);
-    } catch (error) {
-      console.log("[COURSES_GET]", error);
-      return new NextResponse("Internal Error", { status: 500 });
-    }
+    return NextResponse.json(courses);
+  } catch (error) {
+    console.log("[COURSES_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
+}
 
 

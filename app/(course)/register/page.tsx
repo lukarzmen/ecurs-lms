@@ -9,7 +9,7 @@ export default function RegisterPage() {
     const { isSignedIn, userId, sessionId } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
-    const handleSignUp = async () => {
+    const handleSignUp = async (roleId: number) => {
         if (!isSignedIn) {
             toast.error("Zaloguj się, aby zakończyć rejestrację");
             return;
@@ -26,6 +26,7 @@ export default function RegisterPage() {
                 body: JSON.stringify({
                     userId: userId,
                     sessionId: sessionId,
+                    roleId: roleId, 
                 }),
             });
 
@@ -57,7 +58,7 @@ export default function RegisterPage() {
                     Kliknij przycisk poniżej, aby zakończyć rejestrację i rozpocząć swoją edukacyjną podróż. Przechodząc dalej akceptujesz regulamin.
                 </p>
                 <button
-                    onClick={handleSignUp}
+                    onClick={() => handleSignUp(0)}
                     disabled={isLoading || !isSignedIn}
                     className={`w-full py-4 px-8 rounded-lg font-medium text-white text-lg
                         ${isLoading || !isSignedIn
@@ -65,7 +66,18 @@ export default function RegisterPage() {
                             : "bg-orange-600 hover:bg-orange-700 transition-colors"
                         }`}
                 >
-                    {isLoading ? "Przetwarzanie..." : "Zarejestruj się na platformie"}
+                    {isLoading ? "Przetwarzanie..." : "Dołącz jako student"}
+                </button>
+                <button
+                    onClick={() => handleSignUp(1)}
+                    disabled={isLoading || !isSignedIn}
+                    className={`w-full py-4 px-8 rounded-lg font-medium text-white text-lg
+                        ${isLoading || !isSignedIn
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-blue-600 hover:bg-blue-700 transition-colors"
+                        }`}
+                >
+                    {isLoading ? "Przetwarzanie..." : "Dołącz jako nauczyciel"}
                 </button>
                 {!isSignedIn && (
                     <p className="text-sm text-amber-600">

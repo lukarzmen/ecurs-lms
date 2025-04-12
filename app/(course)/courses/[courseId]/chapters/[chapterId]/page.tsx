@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import ChapterContent from "./__components/chapter-content";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 const ChapterIdPage = async ({
     params,
@@ -35,14 +36,22 @@ const ChapterIdPage = async ({
     if (!result.exists) {
         return (
             <div className="flex flex-col items-center justify-center h-full">
-                <p className="text-lg text-gray-700">You don't have permission to access this course.</p>
-                <p className="text-sm text-gray-500">Ask teacher for permission to access this course.</p>
+                <p className="text-lg text-gray-700">Nie masz uprawnień do dostępu do tego kursu.</p>
+                <p className="text-sm text-gray-500">Poproś nauczyciela o pozwolenie na dostęp do tego kursu.</p>
             </div>
         );
     }
 
     // Fetch chapter data
     const chapterResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}/chapters/${chapterId}`);
+    if (!chapterResponse.ok) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full">
+                <p className="text-lg text-gray-700">Kurs jest niedostępny dla uczniów lub występują problemy.</p>
+                <p className="text-sm text-gray-500">Skontaktuj się z autorem.</p>
+            </div>
+        );
+    }
     const chapterData = await chapterResponse.json();
 
     const { module, course } = chapterData;
@@ -51,12 +60,12 @@ const ChapterIdPage = async ({
         return redirect("/");
     }
 
-    const isCompleted = false;//!!chapter.userProgress?.[0]?.isCompleted;
+    const isCompleted = false; // !!chapter.userProgress?.[0]?.isCompleted;
     return (
         <div>
             {/* Display banners based on the chapter state */}
             {isCompleted && (
-                <Banner variant="success" label="Chapter completed" />
+                <Banner variant="success" label="Rozdział ukończony" />
             )}
             <Link
                 href={`/`}

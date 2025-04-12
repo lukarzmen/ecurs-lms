@@ -5,6 +5,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Category } from "@prisma/client";
 import toast from "react-hot-toast";
+import { useAuth } from "@clerk/nextjs";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
@@ -14,7 +15,7 @@ const CreatePage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
-
+  const { userId } = useAuth(); // Assuming you have a way to get the current user's ID
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -22,7 +23,8 @@ const CreatePage = () => {
       const response = await axios.post("/api/courses", {
         title,
         categoryId: parseInt(category) || undefined,
-        description: description || undefined
+        description: description || undefined,
+        userProviderId: userId, // Replace with actual user ID
       });
       router.push(`/teacher/courses/${response.data.id}`);
     } catch (error) {

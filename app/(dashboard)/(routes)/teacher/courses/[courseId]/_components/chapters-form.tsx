@@ -140,7 +140,7 @@ const toogleCreating = () => {
             ></FormField>
             <div className="flex items-center gap-x-2">
               <Button disabled={!isValid || isSubmitting} type="submit">
-                Utwórz
+                Dodaj
               </Button>
             </div>
           </form>

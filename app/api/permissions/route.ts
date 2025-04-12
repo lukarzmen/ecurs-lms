@@ -12,7 +12,6 @@ export async function POST(req: Request) {
     }
 
     try {
-        const clerkUser = await clerkClient().users.getUser(userId);
         // Check if user exists, if not, create a new user
         let user = await db.user.findUnique({
             where: { providerId: userId },

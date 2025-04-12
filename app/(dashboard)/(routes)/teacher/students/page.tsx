@@ -1,57 +1,117 @@
 'use client';
 
+import { useAuth } from '@clerk/nextjs';
 import { User } from '@prisma/client';
 import React, { useEffect, useState } from 'react';
 
 const StudentsPage: React.FC = () => {
     const [students, setStudents] = useState<User[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { userId } = useAuth(); // Assuming you have a way to get the current user's ID
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedEmail, setSelectedEmail] = useState('');
+    const [message, setMessage] = useState('');
 
     useEffect(() => {
         const fetchStudents = async () => {
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/student`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/student?userId=${userId}`);
                 const data = await response.json();
                 setStudents(data);
             } catch (error) {
-                console.error('Error fetching students:', error);
-            } finally {
-                setLoading(false);
+                console.error('Błąd podczas pobierania studentów:', error);
             }
         };
 
         fetchStudents();
     }, []);
 
-    if (loading) {
-        return <div>Loading...</div>;
-    }
+    const handleContact = (email: string) => {
+        setSelectedEmail(email);
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setMessage('');
+    };
+
+    const sendMessage = () => {
+        // Here you would implement the logic to send the email
+        console.log('Wysyłanie wiadomości:', message, 'do', selectedEmail);
+        closeModal();
+        // You can add your email sending logic here, for example using an API call
+    };
 
     return (
         <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4 mt-4">Uczniowie</h1>
-            <div className="bg-white shadow-md rounded-lg overflow-hidden">
+            <h1 className="text-2xl font-bold mb-4 mt-4">Twoi kursanci</h1>
+            <div className="bg-white shadow-md rounded-lg overflow-hidden select-none">
                 <table className="min-w-full bg-white">
                     <thead>
                         <tr className="bg-orange-200">
-                            <th className="py-2 px-4 text-left">Id</th>
-                            <th className="py-2 px-4 text-left">Imię</th>
-                            <th className="py-2 px-4 text-left">Nazwisko</th>
-                            <th className="py-2 px-4 text-left">Email</th>
+                            <th className="py-2 px-4 text-center">Id</th>
+                            <th className="py-2 px-4 text-center">Imię</th>
+                            <th className="py-2 px-4 text-center">Nazwisko</th>
+                            <th className="py-2 px-4 text-center">Email</th>
+                            <th className="py-2 px-4 text-center">Akcja</th>
                         </tr>
                     </thead>
                     <tbody>
                         {students.map((student: User) => (
                             <tr key={student.id} className="border-t">
-                                <td className="py-2 px-4">{student.id}</td>
-                                <td className="py-2 px-4">{student.firstName}</td>
-                                <td className="py-2 px-4">{student.lastName}</td>
-                                <td className="py-2 px-4">{student.email}</td>
+                                <td className="py-2 px-4 text-center">{student.id}</td>
+                                <td className="py-2 px-4 text-center">{student.firstName}</td>
+                                <td className="py-2 px-4 text-center">{student.lastName}</td>
+                                <td className="py-2 px-4 text-center">{student.email}</td>
+                                <td className="py-2 px-4 text-center">
+                                    <button
+                                        className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-700"
+                                        onClick={() => handleContact(student.email)} // Assuming you have a function to handle contact
+                                        >
+                                        Napisz wiadomość
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
+
+            {/* Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+                    <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                        <div className="mt-3 text-center">
+                            <h3 className="text-lg leading-6 font-medium text-gray-900">Skontaktuj się ze studentem</h3>
+                            <div className="mt-2">
+                                <p className="text-sm text-gray-500">
+                                    Napisz wiadomość do <span className="font-semibold">{selectedEmail}</span>:
+                                </p>
+                                <textarea
+                                    className="mt-4 w-full border rounded-md p-2"
+                                    rows={4}
+                                    placeholder="Twoja wiadomość tutaj"
+                                    value={message}
+                                    onChange={(e) => setMessage(e.target.value)}
+                                />
+                            </div>
+                            <div className="items-center px-4 py-3">
+                                <button
+                                    className="px-4 py-2 bg-orange-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                                    onClick={sendMessage}>
+                                    Wyślij wiadomość
+                                </button>
+                                <button
+                                    className="px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 mt-2"
+                                    onClick={closeModal}
+                                >
+                                    Anuluj
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

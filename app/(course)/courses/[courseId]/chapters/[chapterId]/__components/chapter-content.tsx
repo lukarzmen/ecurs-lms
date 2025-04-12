@@ -43,7 +43,7 @@ export default function ChapterContent ({
       <div>
         {isLoading ? (
           <div className="flex justify-center items-center">
-            Loading...
+            Ładowanie...
           </div>
         ) : (
           <LexicalEditor

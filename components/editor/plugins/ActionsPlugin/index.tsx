@@ -148,7 +148,7 @@ export default function ActionsPlugin({
   }, [editor, shouldPreserveNewLinesInMarkdown]);
 
   return (
-    <div className="actions">
+    <div className="actions select-none">
       <button
         className="action-button save"
         onClick={() => {

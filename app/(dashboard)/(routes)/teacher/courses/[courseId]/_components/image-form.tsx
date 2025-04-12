@@ -57,7 +57,7 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
   };
 
   return (
-    <div className="mt-6 border bg-orange-100 rounded-md p-4">
+    <div className="mt-6 border bg-orange-100 rounded-md p-4 select-none">
       <div className="font-medium flex items-center justify-between pb-2">
         Miniatura
         <Button onClick={toggleEdit} variant="ghost">

@@ -10,16 +10,9 @@ export async function PATCH(
   const values = await req.json();
 
   try {
-    const { userId } = auth() ?? "";
-    if (!userId) {
-      return new NextResponse("Unauthorized", {
-        status: 401,
-      });
-    }
     const course = await db.course.update({
       where: {
-        id: parseInt(courseId, 10),
-        userId,
+        id: parseInt(courseId, 10)
       },
       data: {
         ...values,
@@ -41,16 +34,9 @@ export async function POST(
   const { courseId } = params;
   const { imageId } = await req.json();
   try {
-    const { userId } = auth() ?? "";
-    if (!userId) {
-      return new NextResponse("Unauthorized", {
-        status: 401,
-      });
-    }
     const course = await db.course.update({
       where: {
       id: parseInt(courseId, 10),
-      userId,
       },
       data: {
       imageId: imageId,

@@ -30,7 +30,7 @@ const teacherRoutes = [
   },
   {
     icon: GroupIcon,
-    label: "Uczniowie",
+    label: "Kursanci",
     href: "/teacher/students",
   },
 ];

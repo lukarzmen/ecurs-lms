@@ -50,14 +50,14 @@ export const NavbarRoutes = () => {
       <div className="flex gap-x-2 ml-auto items-center">
         {isTeacher && (isTeacherPage || isCoursesPage) ? (
           <Link href="/">
-            <Button size="sm" variant="ghost">
+            <Button size="sm" variant="ghost" className="select-none">
               <LogOut className="h-4 w-4 mr-2" />
               Uczeń
             </Button>
           </Link>
         ) : isTeacher ? (
           <Link href="/teacher/courses">
-            <Button size="sm" variant="ghost">
+            <Button size="sm" variant="ghost" className="select-none">
               <User2 className="h-4 w-4 mr-2" />
               Nauczyciel
             </Button>

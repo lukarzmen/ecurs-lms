@@ -65,7 +65,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-    const { userId, sessionId } = await req.json();
+    const { userId, sessionId, roleId } = await req.json();
     if (!userId || !sessionId) {
         return new NextResponse("Invalid parameters", {
             status: 400,
@@ -88,6 +88,7 @@ export async function POST(req: Request) {
                     lastName: clerkUser.lastName,
                     createdAt: new Date(),
                     updatedAt: new Date(),
+                    roleId: roleId,
                     displayName: `${clerkUser.firstName} ${clerkUser.lastName}`,
                 },
             });
