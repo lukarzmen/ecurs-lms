@@ -6,6 +6,10 @@ import { NextResponse } from 'next/server';
 export type CourseWithCategory = Course & {
     modules: { id: number }[];
     category: Category | null;
+    author: {
+        firstName: string | null;
+        lastName: string | null;
+    } | null;
 }
 
 
@@ -36,6 +40,12 @@ const getDashboardCourses = async (userId: string): Promise<CourseWithCategory[]
                 id: true
                 },
             },
+            author: {
+                select: {
+                    firstName: true,
+                    lastName: true,
+                }
+            }
             },
             orderBy: {
             createdAt: "desc",
@@ -61,9 +71,10 @@ export async function GET(req: Request): Promise<NextResponse<CourseDetails[] | 
     const coursesWithNonFinishedModules: CourseDetails[] = courses.map((course: CourseWithCategory) => {
         const modules = course.modules;
         const lastModuleId = modules.length > 0 ? Math.max(...modules.map(module => module.id)) : 0;
-
+        const author = course.author;
         return {
             ...course,
+            author: author,
             modulesCount: modules.length,
             nonFinishedModuleId: lastModuleId,
         };
@@ -76,4 +87,8 @@ export type CourseDetails = Course & {
     category: Category | null
     nonFinishedModuleId: number
     modulesCount: number
+    author: {
+        firstName: string | null;
+        lastName: string | null;
+    } | null;
   };
