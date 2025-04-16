@@ -16,7 +16,6 @@ export const NavbarRoutes = () => {
 
   const isTeacherPage = pathName?.startsWith("/teacher");
   const isCoursesPage = pathName?.startsWith("/courses");
-  const user = useUser();
   const clerkAuth = useAuth();
   const { userId, sessionId} = clerkAuth;
   const [userResponse, setUserResponse] = useState<UserResponse | null>(null);

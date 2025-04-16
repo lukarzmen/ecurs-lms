@@ -46,7 +46,7 @@ const AnalyticsPage = () => {
     };
 
     fetchData();
-  }, [userId]);
+  }, []);
 
   const {
     userCount,
