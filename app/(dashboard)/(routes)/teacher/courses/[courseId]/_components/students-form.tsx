@@ -92,14 +92,16 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
                                 <TableCell>{student.email}</TableCell>
                                 <TableCell>{student.roleName}</TableCell>
                                 <TableCell>
-                                    {student.state === 0 ? (
-                                        <Button className="w-[90px]" onClick={() => handleStateChange(student.userCourseId, activeState)}>
-                                            Aktywuj
-                                        </Button>
-                                    ) : (
-                                        <Button className="bg-blue-300 w-[90px]" onClick={() => handleStateChange(student.userCourseId, deactivatedState)}>
-                                            Deaktywuj
-                                        </Button>
+                                    {student.id === 1 && (
+                                        student.state === 0 ? (
+                                            <Button className="w-[90px]" onClick={() => handleStateChange(student.userCourseId, activeState)}>
+                                                Aktywuj
+                                            </Button>
+                                        ) : (
+                                            <Button className="bg-blue-300 w-[90px]" onClick={() => handleStateChange(student.userCourseId, deactivatedState)}>
+                                                Deaktywuj
+                                            </Button>
+                                        )
                                     )}
                                 </TableCell>
                             </TableRow>

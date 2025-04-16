@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Category } from "@prisma/client";
 import toast from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
+import next from "next";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
@@ -25,6 +26,7 @@ const CreatePage = () => {
         categoryId: parseInt(category) || undefined,
         description: description || undefined,
         userProviderId: userId, // Replace with actual user ID
+        next: { revalidate: 60 }
       });
       router.push(`/teacher/courses/${response.data.id}`);
     } catch (error) {
@@ -40,8 +42,12 @@ const CreatePage = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get("/api/categories");
-        setCategories(response.data);
+        const response = await fetch("/api/categories", { next: { revalidate: 60 } });
+        if (!response.ok) {
+          throw new Error("Failed to fetch categories");
+        }
+        const data = await response.json();
+        setCategories(data);
       } catch (error) {
         console.error("Nie udało się pobrać kategorii", error);
       }

@@ -16,7 +16,7 @@ const SearchPage = async ({
 }: SearchPageProps) => {
   const { userId } = auth() || { userId: '' };
   
-  const resCategories = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`);
+  const resCategories = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, { next: { revalidate: 60 } });
   const categories = await resCategories.json();
   
   const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/courses/search?title=${searchParams.title || ''}&categoryId=${searchParams.categoryId || ''}`;

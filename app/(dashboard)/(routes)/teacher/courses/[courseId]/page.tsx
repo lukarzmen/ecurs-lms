@@ -22,7 +22,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
 
   const coursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}`);
   const course = await coursesResponse.json();
-  const categoriesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`);
+  const categoriesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, { next: { revalidate: 60 } });
   const categories = await categoriesResponse.json();
   if (!course) {
     return <div>Kurs nie znaleziony</div>;

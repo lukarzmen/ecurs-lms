@@ -158,7 +158,7 @@ const toogleCreating = () => {
                 items={chapters}
               />
             ) : (
-              "Nie znaleziono lekcji"
+              "Brak lekcji w tym kursie"
             )}
           </p>
           <p className="text-sm text-muted-foreground mt-4">

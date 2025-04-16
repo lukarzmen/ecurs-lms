@@ -44,6 +44,7 @@ export async function GET(req: Request, { params }: { params: { courseId: string
             userCourseId: userCourse.id,
             state: state,
             roleName: user?.role?.name || "No Role",
+            roleId: user?.role?.id || 0,
             };
         }));
 

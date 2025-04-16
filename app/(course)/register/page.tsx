@@ -66,7 +66,7 @@ export default function RegisterPage() {
                             : "bg-orange-600 hover:bg-orange-700 transition-colors"
                         }`}
                 >
-                    {isLoading ? "Przetwarzanie..." : "Dołącz jako student"}
+                    {isLoading ? "Przetwarzanie..." : "Jestem uczniem"}
                 </button>
                 <button
                     onClick={() => handleSignUp(1)}
@@ -77,7 +77,7 @@ export default function RegisterPage() {
                             : "bg-blue-600 hover:bg-blue-700 transition-colors"
                         }`}
                 >
-                    {isLoading ? "Przetwarzanie..." : "Dołącz jako nauczyciel"}
+                    {isLoading ? "Przetwarzanie..." : "Jestem nauczycielem"}
                 </button>
                 {!isSignedIn && (
                     <p className="text-sm text-amber-600">

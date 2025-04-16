@@ -36,8 +36,8 @@ const ChapterIdPage = async ({
     if (!result.exists) {
         return (
             <div className="flex flex-col items-center justify-center h-full">
-                <p className="text-lg text-gray-700">Nie masz uprawnień do dostępu do tego kursu.</p>
-                <p className="text-sm text-gray-500">Poproś nauczyciela o pozwolenie na dostęp do tego kursu.</p>
+                <p className="text-lg text-gray-700">Nie masz dostępu do tego kursu.</p>
+                <p className="text-sm text-gray-500">Poproś nauczyciela o dodanie Cię do tego kursu.</p>
             </div>
         );
     }
