@@ -87,7 +87,7 @@ header h1 {
   z-index: 0;
   overflow: auto;
   /* resize: vertical; */
-  max-height: 75vh;
+  max-height: 70vh;
 }
 
 .editor {
