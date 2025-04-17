@@ -1,16 +1,20 @@
 'use client';
 
+import { UserResponse } from '@/app/api/user/route';
+import { authorizeUser } from '@/hooks/use-auth';
 import { useAuth } from '@clerk/nextjs';
 import { User } from '@prisma/client';
 import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+
 
 const StudentsPage: React.FC = () => {
     const [students, setStudents] = useState<User[]>([]);
-    const { userId } = useAuth(); // Assuming you have a way to get the current user's ID
+    const { userId, sessionId } = useAuth(); // Assuming you have a way to get the current user's ID
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedEmail, setSelectedEmail] = useState('');
     const [message, setMessage] = useState('');
-
+    const [author, setAuthor] = useState('');
     useEffect(() => {
         const fetchStudents = async () => {
             try {
@@ -23,7 +27,23 @@ const StudentsPage: React.FC = () => {
         };
 
         fetchStudents();
-    }, []);
+
+    if (userId && sessionId) {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user?userId=${encodeURIComponent(userId)}&sessionId=${encodeURIComponent(sessionId)}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          }).then((res) => res.json())
+        .then((result: UserResponse) => {
+            setAuthor(result.displayName);
+            
+        }).catch((error) => {
+           console.error('Error fetching user data:', error);
+        });
+    }
+    }
+    ,[userId, sessionId]);
 
     const handleContact = (email: string) => {
         setSelectedEmail(email);
@@ -38,6 +58,26 @@ const StudentsPage: React.FC = () => {
     const sendMessage = () => {
         // Here you would implement the logic to send the email
         console.log('Wysyłanie wiadomości:', message, 'do', selectedEmail);
+        fetch('https://ecurs.app.n8n.cloud/webhook/439187fc-4dda-45ab-a78c-f014e6f1c8fc', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: selectedEmail, message, author: author }),
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to send message');
+                }
+                return response.json();
+            })
+            .then((data) => {
+                toast.success('Wysłano wiadomość pomyślnie!');
+            })
+            .catch((error) => {
+                console.error('Error fetching user data:', error);
+                toast.error('Nie udało się wysłać wiadomości. Spróbuj ponownie później.');
+            });
         closeModal();
         // You can add your email sending logic here, for example using an API call
     };
