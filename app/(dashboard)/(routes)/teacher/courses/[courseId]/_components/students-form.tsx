@@ -12,32 +12,25 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
+import { UserResponse } from "@/app/api/user/route";
+import { UserCourseResponse } from "@/app/api/courses/[courseId]/users/route";
+import { useAuth } from "@clerk/nextjs";
 
 interface StudentsFormProps {
     courseId: string;
 }
 
-interface User {
-    id: number;
-    userCourseId: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-    roleName: string;
-    state: number;
-}
-
 const activeState = 1;
 const deactivatedState = 0;
 export const StudentsForm = ({ courseId }: StudentsFormProps) => {
-    const [students, setStudents] = useState<User[]>([]);
+    const [students, setStudents] = useState<UserCourseResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-
+    const { userId } = useAuth();
     useEffect(() => {
         const fetchStudents = async () => {
             setIsLoading(true);
             try {
-                const response = await axios.get(`/api/courses/${courseId}/users`);
+                const response = await axios.get(`/api/courses/${courseId}/users?userId=${userId}`);
                 setStudents(response.data);
                 setIsLoading(false);
             } catch (error: any) {
@@ -77,22 +70,20 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Imię</TableHead>
-                            <TableHead>Nazwisko</TableHead>
+                            <TableHead>Imię i nazwisko</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Rola</TableHead>
                             <TableHead>Uprawnienia</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {students.map((student) => (
+                        {students.map((student: UserCourseResponse) => (
                             <TableRow key={student.id}>
-                                <TableCell className="font-medium">{student.firstName}</TableCell>
-                                <TableCell className="font-medium">{student.lastName}</TableCell>
+                                <TableCell className="font-medium">{student.name}</TableCell>
                                 <TableCell>{student.email}</TableCell>
                                 <TableCell>{student.roleName}</TableCell>
                                 <TableCell>
-                                    {student.id === 1 && (
+                                    {student.roleId === 0 && (
                                         student.state === 0 ? (
                                             <Button className="w-[90px]" onClick={() => handleStateChange(student.userCourseId, activeState)}>
                                                 Aktywuj

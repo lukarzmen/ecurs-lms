@@ -1,56 +1,75 @@
 import { db } from "@/lib/db";
 import { NextResponse } from 'next/server';
 
-export async function GET(req: Request, { params }: { params: { courseId: string } }) {
+export interface UserCourseResponse {
+    id: number; // User ID
+    name: string | null;
+    email: string | null;
+    userCourseId: number; // UserCourse ID
+    state: number;
+    roleName: string;
+    roleId: number;
+    authorId: number; // Course Author ID
+}
+
+export async function GET(req: Request, { params }: { params: { courseId: string } }): Promise<NextResponse<UserCourseResponse[] | string>> {
     try {
         const { courseId } = params;
+        const courseIdNumber = Number(courseId);
 
-        if (!courseId) {
-            return new NextResponse("Course ID is required", { status: 400 });
+        if (isNaN(courseIdNumber)) {
+            return new NextResponse("Invalid Course ID", { status: 400 });
         }
 
+        // Fetch the course to get the authorId
         const course = await db.course.findUnique({
-            where: {
-                id: Number(courseId),
-            },
-            include: {
-                userCourses: {
-                    include: {
-                        user: true,
-                    },
-                },
-            },
+            where: { id: courseIdNumber },
+            select: { authorId: true }
         });
 
         if (!course) {
             return new NextResponse("Course not found", { status: 404 });
         }
 
-        const users = await Promise.all(course.userCourses.map(async (userCourse) => {
-            const user = await db.user.findUnique({
+        const userCourses = await db.userCourse.findMany({
             where: {
-                id: userCourse.userId,
+                courseId: courseIdNumber,
             },
             include: {
-                role: true,
+                user: { // Include related User data
+                    select: {
+                        id: true,
+                        displayName: true,
+                        email: true,
+                    }
+                },
+                role: { // Include related Role data
+                    select: {
+                        id: true,
+                        name: true,
+                    }
+                }
             },
-            });
+        });
 
-            const userCourseData = course.userCourses.find(uc => uc.userId === userCourse.userId);
-            const state = userCourseData?.state ?? 0;
+        if (!userCourses) {
+            return new NextResponse("No users found for this course", { status: 404 });
+        }
 
-            return {
-            ...user,
-            userCourseId: userCourse.id,
-            state: state,
-            roleName: user?.role?.name || "No Role",
-            roleId: user?.role?.id || 0,
-            };
+        const usersResponse: UserCourseResponse[] = userCourses.map(uc => ({
+            id: uc.user.id,
+            name: uc.user.displayName,
+            email: uc.user.email,
+            userCourseId: uc.id,
+            state: uc.state,
+            roleName: uc.role?.name || "No Role", // Use optional chaining and provide default
+            roleId: uc.role?.id || 0, // Use optional chaining and provide default
+            authorId: course.authorId, // Add authorId from the fetched course
         }));
 
-        return NextResponse.json(users);
+        return NextResponse.json(usersResponse);
     } catch (error) {
-        console.log("[COURSE_ID_USERS]", error);
+        console.log("[COURSE_ID_USERS_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
