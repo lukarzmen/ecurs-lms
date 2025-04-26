@@ -15,18 +15,29 @@ const StudentsPage: React.FC = () => {
     const [selectedEmail, setSelectedEmail] = useState('');
     const [message, setMessage] = useState('');
     const [author, setAuthor] = useState('');
+    const [isLoading, setIsLoading] = useState(true); // Add loading state
+
     useEffect(() => {
         const fetchStudents = async () => {
+            setIsLoading(true); // Start loading
             try {
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/student?userId=${userId}`);
                 const data = await response.json();
                 setStudents(data);
             } catch (error) {
                 console.error('Błąd podczas pobierania studentów:', error);
+                toast.error('Nie udało się pobrać listy studentów.'); // Inform user about the error
+            } finally {
+                setIsLoading(false); // Stop loading regardless of outcome
             }
         };
 
-        fetchStudents();
+        if (userId) {
+            fetchStudents();
+        } else {
+            setIsLoading(false); // Stop loading if no userId
+        }
+
 
     if (userId && sessionId) {
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user?userId=${encodeURIComponent(userId)}&sessionId=${encodeURIComponent(sessionId)}`, {
@@ -37,7 +48,7 @@ const StudentsPage: React.FC = () => {
           }).then((res) => res.json())
         .then((result: UserResponse) => {
             setAuthor(result.displayName);
-            
+
         }).catch((error) => {
            console.error('Error fetching user data:', error);
         });
@@ -82,6 +93,15 @@ const StudentsPage: React.FC = () => {
         // You can add your email sending logic here, for example using an API call
     };
 
+    if (isLoading) {
+        return (
+            <div className="container mx-auto p-4 text-center">
+                <p>Ładowanie studentów...</p>
+                {/* You can replace this with a spinner component */}
+            </div>
+        );
+    }
+
     return (
         <div className="container mx-auto p-4">
             <h1 className="text-2xl font-bold mb-4 mt-4">Twoi kursanci</h1>
@@ -97,22 +117,28 @@ const StudentsPage: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {students.map((student: User) => (
-                            <tr key={student.id} className="border-t">
-                                <td className="py-2 px-4 text-center">{student.id}</td>
-                                <td className="py-2 px-4 text-center">{student.firstName}</td>
-                                <td className="py-2 px-4 text-center">{student.lastName}</td>
-                                <td className="py-2 px-4 text-center">{student.email}</td>
-                                <td className="py-2 px-4 text-center">
-                                    <button
-                                        className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-700"
-                                        onClick={() => handleContact(student.email)} // Assuming you have a function to handle contact
-                                        >
-                                        Napisz wiadomość
-                                    </button>
-                                </td>
+                        {students.length > 0 ? (
+                            students.map((student: User) => (
+                                <tr key={student.id} className="border-t">
+                                    <td className="py-2 px-4 text-center">{student.id}</td>
+                                    <td className="py-2 px-4 text-center">{student.firstName || '-'}</td>
+                                    <td className="py-2 px-4 text-center">{student.lastName || '-'}</td>
+                                    <td className="py-2 px-4 text-center">{student.email}</td>
+                                    <td className="py-2 px-4 text-center">
+                                        <button
+                                            className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-700"
+                                            onClick={() => handleContact(student.email)} // Assuming you have a function to handle contact
+                                            >
+                                            Napisz wiadomość
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan={5} className="text-center py-4">Brak studentów do wyświetlenia.</td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
             </div>

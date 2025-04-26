@@ -86,6 +86,7 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
             <img
               src={imageUrl}
               alt="Course Image"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Adjust sizes based on your layout breakpoints
               className="object-contain rounded-md h-full w-full"
               style={{ objectFit: "contain", width: "100%", height: "100%" }}
             />

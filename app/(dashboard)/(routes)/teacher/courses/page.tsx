@@ -13,7 +13,8 @@ const CoursesPage = async () => {
     return redirect("/sign-in");
   }
 
-  const coursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses`);
+  const coursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses?userId=${userId}`
+    , { next: { revalidate: 60 } });
   const courses = await coursesResponse.json();
 
   return (

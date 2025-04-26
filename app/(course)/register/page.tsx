@@ -32,7 +32,10 @@ export default function RegisterPage() {
 
             if (response.ok) {
                 toast.success("Rejestracja zakończona sukcesem!");
+                // Try forcing a full page reload for redirection as a test
+                // window.location.href = "/"; 
                 router.push("/");
+                router.refresh(); // Explicitly refresh router state
             } else {
                 const errorData = await response.json();
                 console.error("Błąd rejestracji użytkownika:", errorData);

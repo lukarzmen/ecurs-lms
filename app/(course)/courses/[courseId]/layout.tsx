@@ -12,13 +12,12 @@ const CourseLayout = async ({ children, params }: {
         return redirect("/sign-in");
       }
 
-    const courseResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${params.courseId}/chapters`);
+    const courseResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${params.courseId}/chapters?providerId=${userId}`);
     const course = await courseResponse.json();
 
     if(!course) {
         return redirect('/');
     }
-
     return (
         <div className="h-full">
             <div className="h-[80px] md:pl-80 fixed inset-y-0 w-full z-50">

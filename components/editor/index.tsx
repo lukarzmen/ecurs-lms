@@ -48,6 +48,8 @@ createRoot(document.getElementById('root') as HTMLElement).render(
       throw new Error('Function not implemented.');
     } } onEditorChange={function (editorState: string): void {
       throw new Error('Function not implemented.');
-    } } initialStateJSON={null} isEditable={false} />
+    } } initialStateJSON={null} isEditable={false} onCompleted={function (): void {
+      throw new Error('Function not implemented.');
+    } } />
   </React.StrictMode>,
 );

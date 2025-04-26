@@ -11,7 +11,7 @@ interface CourseCardProps {
     author: string;
     chaptersLength: number;
     category: string;
-    moduleId: number;
+    moduleId: number | null;
 }
 
 export const CourseCard = ({
@@ -25,12 +25,14 @@ export const CourseCard = ({
 }: CourseCardProps) => {
     const imageUrl = imageId ? `/api/image/${imageId}` : null;
     const placeholderImageUrl = "/logo.png"; // Replace with your placeholder image path
-
+    if(!moduleId) {
+        throw new Error("moduleId is required but was null or undefined.");
+    }
     return (
         <Link href={`/courses/${id}/chapters/${moduleId}`}>
             <div className="group hover:shadow-sm transition overflow-hidden border rounded-lg p-3 h-full text-center">
                 <div className="relative w-full aspect-square rounded-md overflow-hidden">
-                    <Image fill className="object-cover" alt={title} src={imageUrl || placeholderImageUrl}></Image>
+                    <Image fill className="object-cover" alt={title} src={imageUrl || placeholderImageUrl} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"></Image>
                 </div>
                 <div className="flex flex-col pt-2">
                     <div className="text-lg md:text-base font-medium group-hover:text-orange-700 transition line-clamp-2">

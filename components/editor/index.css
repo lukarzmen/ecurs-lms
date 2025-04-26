@@ -371,6 +371,7 @@ pre::-webkit-scrollbar-thumb {
 i.palette {
   background-image: url(images/icons/palette.svg);
 }
+
 .icon.quiz {
   background-image: url(images/icons/quiz.svg);
 }
@@ -555,7 +556,12 @@ i.markdown {
 i.outdent {
   background-image: url(images/icons/outdent.svg);
 }
-
+i.save {
+  background-image: url(images/icons/save.svg);
+}
+i.clear {
+  background-image: url(images/icons/trash.svg);
+}
 i.undo {
   background-image: url(images/icons/arrow-counterclockwise.svg);
 }

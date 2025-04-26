@@ -19,7 +19,11 @@ export async function POST(req: Request) {
         let fileBuffer = Buffer.from(arrayBuffer);
         
         if (file.type === 'image/jpeg' || file.type === 'image/jpg') {
-            fileBuffer = await sharp(fileBuffer).png().toBuffer();
+            // Rescale the image (e.g., max width 1024px) and convert to PNG
+            fileBuffer = await sharp(fileBuffer)
+                .resize({ width: 800 }) // Adjust width as needed, height scales automatically
+                .png()
+                .toBuffer();
         }
         
         // Store the buffer directly in the database

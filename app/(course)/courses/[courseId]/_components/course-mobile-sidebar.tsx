@@ -3,9 +3,13 @@ import { Course, Module,  } from "@prisma/client";
 import {Menu} from "lucide-react"
 import { CourseSidebar } from "./course-sidebar";
 
+// Define the possible progress states (assuming this type is used)
+export type ProgressState = "NOT_STARTED" | "OPEN" | "FINISHED";
+
 export interface CourseSidebarProps {
     course: Course & {
         modules: (Module & {
+            progressState: ProgressState; // Add the progressState type here
         })[]
     };
 }

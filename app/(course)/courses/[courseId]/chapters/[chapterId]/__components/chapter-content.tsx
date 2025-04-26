@@ -3,12 +3,17 @@
 import LexicalEditor from "@/components/editor/LexicalEditor";
 import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 import { SerializedDocument } from "@lexical/file";
+import { set } from "lodash-es";
 import { useEffect, useState } from "react";
 
 export default function ChapterContent ({
-    content
+    moduleId: moduleId,
+    isCompleted,
+    onCompleted
 }: {
-    content: string | null;
+    moduleId: string | null;
+    isCompleted: boolean;
+    onCompleted: () => void;
 }) {
     const [isLoading, setIsLoading] = useState(false);
     const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
@@ -16,7 +21,7 @@ export default function ChapterContent ({
     useEffect(() => {
       const fetchData = () => {
         setIsLoading(true);
-        fetch(`/api/content/${content}`, {
+        fetch(`/api/content/${moduleId}`, {
           method: 'GET'
         })
           .then(response => {
@@ -27,6 +32,11 @@ export default function ChapterContent ({
           })
           .then((serializedEditorState: string) => {
             const data: SerializedDocument = JSON.parse(serializedEditorState);
+            if(data.editorState.root.children.length === 0){
+              setSerializedEditorStateString(null);
+              setIsLoading(false);
+              return;
+            }              
             setSerializedEditorStateString(JSON.stringify(data.editorState));
             setIsLoading(false);
           })
@@ -37,7 +47,7 @@ export default function ChapterContent ({
       };
 
       fetchData();
-    }, [content]);
+    }, [moduleId]);
 
     return (
       <div>
@@ -49,12 +59,16 @@ export default function ChapterContent ({
           <LexicalEditor
             initialStateJSON={serializedEditorStateString}
             isEditable={false}
+            isCompleted={isCompleted}
             onEditorChange={() => {}}
             onSave={(serializedDocument) => {
               const saveResult: SaveResult = {
                 success: true
               };
               return saveResult;
+            }}
+            onCompleted={() => {
+              onCompleted();
             }}
           />
         )}

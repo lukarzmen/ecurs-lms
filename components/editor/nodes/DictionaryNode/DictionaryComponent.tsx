@@ -1,70 +1,80 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react"; // Added useMemo
 import { useSwipeable } from "react-swipeable";
 import Confetti from "react-confetti";
-
-interface DictionaryComponentProps {
-  dictionary: Dictionary;
-  onDictionaryChanged: (dictionaryValue: Dictionary) => void;
-  isReadonly?: boolean;
-}
 
 export interface Dictionary {
   [Key: string]: string;
 }
 
-export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictionary, onDictionaryChanged, isReadonly }) => {
-  const [entries, setEntries] = useState(Object.entries(dictionary));
+interface DictionaryComponentProps {
+  dictionary: Dictionary;
+  onDictionaryChanged: (dictionaryValue: Dictionary) => void;
+  isReadonly?: boolean;
+  initialCompleted: boolean; // Receive initial state
+  onComplete: (isCorrect: boolean) => void; // Callback to update node
+}
+
+export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
+    dictionary,
+    onDictionaryChanged,
+    isReadonly,
+    onComplete // Use callback
+}) => {
+  // Derive entries from the dictionary prop instead of keeping separate state
+  const currentEntries = useMemo(() => Object.entries(dictionary), [dictionary]);
+
   const [view, setView] = useState<"flashView" | "dictionaryView" | "matchGameView">(isReadonly ? "flashView" : "dictionaryView");
-  
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentColorIndex, setCurrentColorIndex] = useState(0);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
   const [isSliding, setIsSliding] = useState(false);
-  
-  const handleDictionaryValueChanged = (entries: [string, string][]) => {
-    const dictionary: Dictionary = Object.fromEntries(entries);
-    onDictionaryChanged(dictionary);
-  }
+
+  // Removed handleDictionaryValueChanged - call onDictionaryChanged directly
 
   const TAILWIND_COLORS = [
     "bg-yellow-500",
     "bg-green-500",
     "bg-orange-500",
-    "bg-orange-500",
+    "bg-blue-500", // Changed one orange to blue for variety
     "bg-purple-500",
     "bg-pink-500",
   ];
 
-
-
-  const handleInputChange = (key: string, value: string) => {
-    setEntries((prevEntries) =>
-      prevEntries.map(([k, v]) => (k === key ? [k, value] : [k, v]))
-    );
-    handleDictionaryValueChanged(entries);
+  // --- Dictionary View State & Handlers ---
+  const handleInputChange = (index: number, type: 'key' | 'value', value: string) => {
+    // Create the new dictionary based on the change
+    const updatedEntries = currentEntries.map((entry, i) => {
+        if (i === index) {
+            return type === 'key' ? [value, entry[1]] : [entry[0], value];
+        }
+        return entry;
+    });
+    const newDictionary = Object.fromEntries(updatedEntries);
+    onDictionaryChanged(newDictionary); // Update node state directly
   };
 
-  const handleAddRow = () => {
-    setEntries((prevEntries) => [...prevEntries, ["", ""]]);
-    handleDictionaryValueChanged(entries);
-  };
-
-  const handleAddRowAtTop = () => {
-    setEntries((prevEntries) => [["", ""], ...prevEntries]);
-    handleDictionaryValueChanged(entries);
+  const handleAddRow = (atTop: boolean = false) => {
+    const newRow: [string, string] = ["", ""];
+    const updatedEntries = atTop ? [newRow, ...currentEntries] : [...currentEntries, newRow];
+    const newDictionary = Object.fromEntries(updatedEntries);
+    onDictionaryChanged(newDictionary); // Update node state directly
   };
 
   const handleRemoveRow = (index: number) => {
-    setEntries((prevEntries) => prevEntries.filter((_, i) => i !== index));
-    handleDictionaryValueChanged(entries);
+    const updatedEntries = currentEntries.filter((_, i) => i !== index);
+    const newDictionary = Object.fromEntries(updatedEntries);
+    onDictionaryChanged(newDictionary); // Update node state directly
   };
 
+  // --- Flashcard View State & Handlers ---
   const handlePrevious = () => {
+    if (currentEntries.length === 0) return;
     setSlideDirection('left');
     setIsSliding(true);
     setTimeout(() => {
       setCurrentIndex((prevIndex) => {
-        const newIndex = prevIndex > 0 ? prevIndex - 1 : entries.length - 1;
+        const newIndex = prevIndex > 0 ? prevIndex - 1 : currentEntries.length - 1;
         setCurrentColorIndex((prevColorIndex) => (prevColorIndex > 0 ? prevColorIndex - 1 : TAILWIND_COLORS.length - 1));
         return newIndex;
       });
@@ -74,11 +84,12 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
   };
 
   const handleNext = () => {
+    if (currentEntries.length === 0) return;
     setSlideDirection('right');
     setIsSliding(true);
     setTimeout(() => {
       setCurrentIndex((prevIndex) => {
-        const newIndex = prevIndex < entries.length - 1 ? prevIndex + 1 : 0;
+        const newIndex = prevIndex < currentEntries.length - 1 ? prevIndex + 1 : 0;
         setCurrentColorIndex((prevColorIndex) => (prevColorIndex < TAILWIND_COLORS.length - 1 ? prevColorIndex + 1 : 0));
         return newIndex;
       });
@@ -93,6 +104,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
     trackMouse: true,
   });
 
+  // --- Match Game State & Handlers ---
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [selectedValue, setSelectedValue] = useState<string | null>(null);
   const [matches, setMatches] = useState<{ [key: string]: string }>({});
@@ -102,116 +114,162 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
   const [showConfetti, setShowConfetti] = useState(false);
   const [selectedEntries, setSelectedEntries] = useState<[string, string][]>([]);
 
-
   const getRandomColor = () => {
     const availableColors = TAILWIND_COLORS.filter(color => !Object.values(matches).includes(color));
     return availableColors.length > 0 ? availableColors[Math.floor(Math.random() * availableColors.length)] : "bg-gray-400";
   };
-  
-  const getRandomSubset = () => {
-    const shuffled = [...entries].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 5);
+
+  // Use currentEntries derived from props
+  const getRandomSubset = (count: number = 5) => {
+    const validEntries = currentEntries.filter(([key, value]) => key.trim() !== "" && value.trim() !== "");
+    const shuffled = [...validEntries].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(count, validEntries.length)); // Ensure count doesn't exceed available entries
   };
 
   const initializeMatchGame = () => {
     const newSubset = getRandomSubset();
-    setSelectedEntries(newSubset);
-    setShuffledKeys([...newSubset.map(([key]) => key)].sort(() => Math.random() - 0.5));
-    setShuffledValues([...newSubset.map(([_, value]) => value)].sort(() => Math.random() - 0.5));
+    if (newSubset.length === 0) { // Handle case with no valid entries
+        setSelectedEntries([]);
+        setShuffledKeys([]);
+        setShuffledValues([]);
+    } else {
+        setSelectedEntries(newSubset);
+        setShuffledKeys([...newSubset.map(([key]) => key)].sort(() => Math.random() - 0.5));
+        setShuffledValues([...newSubset.map(([_, value]) => value)].sort(() => Math.random() - 0.5));
+    }
     setMatches({});
     setTempColor({});
     setSelectedKey(null);
     setSelectedValue(null);
+    setShowConfetti(false); // Ensure confetti is off on reset
+    // Reset node completion state when game restarts
+    onComplete(false);
   };
 
+  // Initialize game when view changes or dictionary data changes
   useEffect(() => {
     if (view === "matchGameView") {
       initializeMatchGame();
     }
-  }, [view]);
+    // Reset flashcard index when dictionary changes
+    setCurrentIndex(0);
+    setCurrentColorIndex(0);
+    // No need to update local 'entries' state as it's derived now
+  }, [view, dictionary]); // Rerun if dictionary data changes externally
+
+  // Removed useEffect that synced dictionary prop to local entries state
 
   const handleSelection = (keyOrValue: string, isKey: boolean) => {
+    // Prevent interaction if already matched
+    if (matches[keyOrValue]) return;
+
     if (isKey) {
-      if (selectedKey === null) {
-        setSelectedKey(keyOrValue);
-        setTempColor((prev) => ({ ...prev, [keyOrValue]: getRandomColor() }));
+      if (selectedKey === keyOrValue) { // Deselect if clicking the same key
+          setSelectedKey(null);
+          setTempColor({}); // Clear temp color
+      } else if (selectedKey === null) { // Select a key
+          setSelectedKey(keyOrValue);
+          setTempColor({ [keyOrValue]: getRandomColor() }); // Assign temp color
       }
-    } else {
-      if (selectedKey !== null && selectedValue === null) {
-        setSelectedValue(keyOrValue);
-        const originalKey = selectedEntries.find(([key, value]) => value === keyOrValue)?.[0];
-        if (originalKey === selectedKey) {
-          const assignedColor = tempColor[selectedKey];
-          setMatches((prev) => ({ ...prev, [selectedKey]: assignedColor, [keyOrValue]: assignedColor }));
-        } else {
-          setTempColor({ [selectedKey]: "bg-red-500", [keyOrValue]: "bg-red-500" });
-          setTimeout(() => setTempColor((prev) => {
-            const newTemp = { ...prev };
-            delete newTemp[selectedKey];
-            delete newTemp[keyOrValue];
-            return newTemp;
-          }), 1000);
-        }
-        setSelectedKey(null);
-        setSelectedValue(null);
+      // If a value is already selected, ignore key click
+    } else { // It's a value
+      if (selectedValue === keyOrValue) { // Deselect if clicking the same value
+          setSelectedValue(null);
+          setTempColor({}); // Clear temp color
+      } else if (selectedValue === null && selectedKey !== null) { // Select a value *only if* a key is selected
+          // setSelectedValue(keyOrValue); // Don't set state here yet, check match first
+          const originalEntry = selectedEntries.find(([k, v]) => k === selectedKey);
+
+          if (originalEntry && originalEntry[1] === keyOrValue) { // Correct match!
+              const assignedColor = tempColor[selectedKey]; // Use the key's temp color
+              setMatches((prev) => ({ ...prev, [selectedKey]: assignedColor, [keyOrValue]: assignedColor }));
+              setTempColor({}); // Clear temp colors
+              setSelectedKey(null); // Reset selection
+              setSelectedValue(null);
+          } else { // Incorrect match
+              setTempColor({ [selectedKey]: "bg-red-500", [keyOrValue]: "bg-red-500" });
+              // Reset selection immediately on incorrect match
+              setSelectedKey(null);
+              setSelectedValue(null);
+              setTimeout(() => setTempColor({}), 1000); // Clear temp colors after delay
+          }
+          // Removed redundant reset here
       }
+      // If a key is not selected, ignore value click
     }
   };
 
   const baseColor = "bg-gray-200";
 
+  // Check for game completion
   useEffect(() => {
-    if (Object.keys(matches).length === selectedEntries.length * 2 && view == "matchGameView" && Object.keys(matches).length > 0) {
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 7000);
+    // Check if all selected entries are matched and there are entries to match
+    const allMatched = selectedEntries.length > 0 && Object.keys(matches).length === selectedEntries.length * 2;
+    if (allMatched && view === "matchGameView") {
+      // Only trigger confetti and completion if not already completed in this render cycle
+      if (!showConfetti) {
+          setShowConfetti(true);
+          onComplete(true); // <<<<<< UPDATE NODE STATE HERE
+          setTimeout(() => setShowConfetti(false), 7000);
+      }
     }
-  }, [matches]);
+  }, [matches, selectedEntries, view, onComplete, showConfetti]); // Added showConfetti dependency
 
 
   return (
     <div className="pt-12">
       {showConfetti && <Confetti />}
-      {view == "matchGameView" && (
+
+      {/* Match Game View */}
+      {view === "matchGameView" && (
         <div className="pt-12 flex flex-col items-center">
-      <div className="grid grid-cols-2 gap-4 w-80">
-        {/* Left Side (Shuffled Keys) */}
-        <div className="flex flex-col space-y-2">
-          {shuffledKeys.map((key) => (
-            <div
-              key={key}
-              className={`p-4 rounded-lg shadow text-center cursor-pointer select-none ${matches[key] || tempColor[key] || baseColor}`}
-              onClick={() => handleSelection(key, true)}
-            >
-              {key}
-            </div>
-          ))}
+          {selectedEntries.length > 0 ? (
+            <>
+              <div className="grid grid-cols-2 gap-4 w-80">
+                {/* Left Side (Shuffled Keys) */}
+                <div className="flex flex-col space-y-2">
+                  {shuffledKeys.map((key) => (
+                    <div
+                      key={key}
+                      className={`p-4 rounded-lg shadow text-center cursor-pointer select-none transition-colors duration-300 ${matches[key] || tempColor[key] || (selectedKey === key ? tempColor[key] : baseColor)}`}
+                      onClick={() => handleSelection(key, true)}
+                    >
+                      {key}
+                    </div>
+                  ))}
+                </div>
+                {/* Right Side (Shuffled Values) */}
+                <div className="flex flex-col space-y-2">
+                  {shuffledValues.map((value) => (
+                    <div
+                      key={value}
+                      className={`p-4 rounded-lg shadow text-center cursor-pointer select-none transition-colors duration-300 ${matches[value] || tempColor[value] || (selectedValue === value ? tempColor[value] : baseColor)}`}
+                      onClick={() => handleSelection(value, false)}
+                    >
+                      {value}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <span className="text-sm mt-2 text-gray-700 select-none">Dopasuj słowa po lewej stronie do tłumaczeń po prawej stronie</span>
+              <button
+                className="mt-4 px-4 py-2 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-700 select-none"
+                onClick={initializeMatchGame}
+              >
+                Resetuj grę
+              </button>
+            </>
+          ) : (
+              <p className="text-gray-500">Dodaj wpisy w widoku tabeli, aby zagrać.</p>
+          )}
         </div>
-        {/* Right Side (Shuffled Values) */}
-        <div className="flex flex-col space-y-2">
-          {shuffledValues.map((value) => (
-            <div
-              key={value}
-              className={`p-4 rounded-lg shadow text-center cursor-pointer select-none ${matches[value] || tempColor[value] || baseColor}`}
-              onClick={() => handleSelection(value, false)}
-            >
-              {value}
-            </div>
-          ))}
-        </div>
-      </div>
-      <span className="text-sm mt-2 text-gray-700 select-none">Dopasuj słowa po lewej stronie do tłumaczeń po prawej stronie</span>
-      <button
-        className="mt-4 px-4 py-2 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-700 select-none"
-        onClick={initializeMatchGame}
-      >
-        Resetuj grę
-      </button>
-    </div>)} 
-    {view == "dictionaryView" && 
-    (
+      )}
+
+      {/* Dictionary View */}
+      {view === "dictionaryView" && !isReadonly && (
         <div>
             <button
-              onClick={handleAddRowAtTop}
+              onClick={() => handleAddRow(true)} // Pass true for adding at top
               className="mt-4 mb-4 px-4 py-2 bg-orange-500 text-white rounded-full hover:bg-orange-600"
             >
               Dodaj wiersz na górze
@@ -225,7 +283,8 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
               </tr>
             </thead>
             <tbody>
-              {entries.map(([keyword, definition], index) => (
+              {/* Use currentEntries derived from props */}
+              {currentEntries.map(([keyword, definition], index) => (
                 <tr key={index}>
                   <td className="border border-gray-300 px-4 py-2 text-center">
                     <button
@@ -239,17 +298,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
                     <input
                       type="text"
                       value={keyword}
-                      onChange={(e) => {
-                        handleKeywordChanged();
-
-                        function handleKeywordChanged() {
-                          const newKeyword = e.target.value;
-                          setEntries((prevEntries) => prevEntries.map((entry, i) => i === index ? [newKeyword, entry[1]] : entry
-                          )
-                          );
-                          handleDictionaryValueChanged(entries);
-                        }
-                      }}
+                      onChange={(e) => handleInputChange(index, 'key', e.target.value)}
                       className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-orange-200"
                     />
                   </td>
@@ -257,7 +306,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
                     <input
                       type="text"
                       value={definition}
-                      onChange={(e) => handleInputChange(keyword, e.target.value)}
+                      onChange={(e) => handleInputChange(index, 'value', e.target.value)}
                       className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-orange-200"
                     />
                   </td>
@@ -266,42 +315,53 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({ dictio
             </tbody>
           </table>
           <button
-            onClick={handleAddRow}
+            onClick={() => handleAddRow(false)} // Pass false or nothing for adding at bottom
             className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-full hover:bg-orange-600"
           >
             Dodaj wiersz na dole
           </button>
         </div>
       )}
-      {view == "flashView" && (
+
+      {/* Flashcard View */}
+      {view === "flashView" && (
         <div className="flex flex-col items-center" {...swipeHandlers}>
-        {entries.length > 0 && (
-            <div
-              className={`w-80 h-48 rounded-lg shadow-lg p-6 text-center flex flex-col justify-center items-center transition-transform duration-300 ${TAILWIND_COLORS[currentColorIndex]}
-              ${isSliding ? (slideDirection === 'right' ? 'translate-x-full' : '-translate-x-full') : ''}`}
-            >
-              <div className="text-2xl font-bold select-none">{entries[currentIndex][0]}</div>
-              <div className="text-lg mt-4 select-none">{entries[currentIndex][1]}</div>
-            </div>
+        {/* Use currentEntries derived from props */}
+        {currentEntries.length > 0 ? (
+            <>
+                <div
+                  className={`w-80 h-48 rounded-lg shadow-lg p-6 text-center flex flex-col justify-center items-center transition-transform duration-300 ${TAILWIND_COLORS[currentColorIndex % TAILWIND_COLORS.length]} ${isSliding ? (slideDirection === 'right' ? 'translate-x-full opacity-0' : '-translate-x-full opacity-0') : 'opacity-100'}`}
+                  style={{ backfaceVisibility: 'hidden' }} // Helps with smoother transitions
+                >
+                  <div className="text-2xl font-bold select-none">{currentEntries[currentIndex]?.[0] ?? ''}</div>
+                  <div className="text-lg mt-4 select-none">{currentEntries[currentIndex]?.[1] ?? ''}</div>
+                </div>
+                <span className="text-sm mt-2 text-gray-700 select-none">Przesuń, aby zmienić słowo ({currentIndex + 1}/{currentEntries.length})</span>
+            </>
+        ) : (
+            <p className="text-gray-500">Brak fiszek do wyświetlenia.</p>
         )}
-        <span className="text-sm mt-2 text-gray-700 select-none">Przesuń, aby zmienić słowo</span>
-      </div> 
+      </div>
       )}
-      {!isReadonly && view != "dictionaryView" ? (<div className="flex justify-center mt-4">
-        <button onClick={() => setView("dictionaryView") } className="bg-green-500 text-white rounded-full hover:bg-green-600 px-4 py-2 w-48 select-none">
-          {"Widok tabeli"}
-        </button>
-      </div>) : null}
-      {view != "flashView" ? (<div className="flex justify-center mt-4">
-        <button onClick={() => setView("flashView") } className="bg-orange-500 text-white rounded-full hover:bg-green-600 px-4 py-2 w-48 select-none">
-          {"Fiszki"}
-        </button>
-      </div>) : null}
-      {view != "matchGameView" ? (<div className="flex justify-center mt-4">
-        <button onClick={() => setView("matchGameView") } className="bg-yellow-500 text-white rounded-full hover:bg-green-600 px-4 py-2 select-none">
-          {"Gra w dopasowywanie"}
-        </button>
-      </div>) : null}
+
+      {/* View Switch Buttons */}
+      <div className="flex justify-center space-x-2 mt-4">
+          {!isReadonly && view !== "dictionaryView" && (
+              <button onClick={() => setView("dictionaryView")} className="bg-blue-500 text-white rounded-full hover:bg-blue-600 px-4 py-2 select-none">
+                  Widok tabeli
+              </button>
+          )}
+          {view !== "flashView" && (
+              <button onClick={() => setView("flashView")} className="bg-orange-500 text-white rounded-full hover:bg-orange-600 px-4 py-2 select-none">
+                  Fiszki
+              </button>
+          )}
+          {view !== "matchGameView" && (
+              <button onClick={() => setView("matchGameView")} className="bg-yellow-500 text-black rounded-full hover:bg-yellow-600 px-4 py-2 select-none">
+                  Gra w dopasowywanie
+              </button>
+          )}
+      </div>
     </div>
   );
 };

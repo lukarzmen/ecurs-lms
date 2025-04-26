@@ -4,7 +4,6 @@ import axios from "axios";
 import {
     Table,
     TableBody,
-    TableCaption,
     TableCell,
     TableHead,
     TableHeader,
@@ -15,6 +14,7 @@ import { toast } from "react-hot-toast";
 import { UserResponse } from "@/app/api/user/route";
 import { UserCourseResponse } from "@/app/api/courses/[courseId]/users/route";
 import { useAuth } from "@clerk/nextjs";
+import { PlusCircle } from "lucide-react";
 
 interface StudentsFormProps {
     courseId: string;
@@ -65,7 +65,14 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
     }
 
     return (
-        <div className="mt-6 border bg-orange-100 rounded-md p-4">
+        <div className="mt-6 border bg-orange-100 rounded-md p-4 select-none">
+            <div className="flex items-center justify-between">
+                <h2 className="text-lg font-medium">Uczniowie</h2>
+                <Button variant="ghost" size="sm" className="bg-orange-100 hover:bg-slate-100">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Zaproś
+                </Button>
+            </div>
             <div className="mt-4">
                 <Table>
                     <TableHeader>

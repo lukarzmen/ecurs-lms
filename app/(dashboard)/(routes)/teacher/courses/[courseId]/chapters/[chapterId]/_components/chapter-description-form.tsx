@@ -40,6 +40,11 @@ export const ChapterDescriptionForm = ({
         })
         .then((serializedEditorState: string) => {
           const data: SerializedDocument = JSON.parse(serializedEditorState);
+          if (data.editorState.root.children.length === 0) {
+            setSerializedEditorStateString(null);
+            setIsLoading(false);
+            return;
+          }
           setSerializedEditorStateString(JSON.stringify(data.editorState));
           setIsLoading(false);
         })
@@ -111,6 +116,9 @@ export const ChapterDescriptionForm = ({
               isEditable={isEditing}
               onEditorChange={() => {
               }}
+              onCompleted={() => {
+              }}
+              isCompleted={true}
             />
           </div>
         </div>

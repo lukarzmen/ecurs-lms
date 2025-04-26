@@ -147,7 +147,7 @@ const toogleCreating = () => {
         </Form>
       ) : (
         <div>
-          <p
+          <div
             className={cn("text-sm mt-2", !chapters.length && "text-slate-500 italic")}
           >
             {chapters.length > 0 ? (
@@ -160,7 +160,7 @@ const toogleCreating = () => {
             ) : (
               "Brak lekcji w tym kursie"
             )}
-          </p>
+          </div>
           <p className="text-sm text-muted-foreground mt-4">
             Przeciągnij i upuść, aby zmienić kolejność
           </p>

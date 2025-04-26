@@ -47,12 +47,12 @@ export function InsertQuizDialog({
     <div className="p-4 space-y-4 max-w-lg mx-auto">
       <div className="grid grid-cols-2 gap-4 items-center">
         <label className="text-sm font-medium text-gray-700">Zadaj pytanie</label>
-        <input
-          type="text"
+        <textarea
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           className="w-full border border-gray-300 rounded-md p-2"
           placeholder="Wpisz swoje pytanie"
+          rows={3} // Optional: Set the initial number of rows
         />
 
         {answers.map((answer, index) => (

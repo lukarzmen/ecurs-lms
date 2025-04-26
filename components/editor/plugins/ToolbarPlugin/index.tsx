@@ -51,11 +51,13 @@ import {
   $getRoot,
   $getSelection,
   $isElementNode,
+  $isParagraphNode,
   $isRangeSelection,
   $isRootOrShadowRoot,
   $isTextNode,
   CAN_REDO_COMMAND,
   CAN_UNDO_COMMAND,
+  CLEAR_EDITOR_COMMAND,
   COMMAND_PRIORITY_CRITICAL,
   COMMAND_PRIORITY_NORMAL,
   ElementFormatType,
@@ -103,6 +105,10 @@ import { LanguageSelectorDialog } from '../TranslationPlugin';
 import { TextToVoiceDialog } from '../../TextToVoicePlugin';
 import { InsertSelectAnswerDialog } from '../SelectAnswerPlugin/InsertSelectAnswerDialog';
 import { DoTaskDialog } from '../TaskPlugin/DoTaskDialog';
+import toast from 'react-hot-toast';
+import { SerializedDocument } from '@lexical/file';
+import { SaveResult } from '../ActionsPlugin';
+import { Button } from '@/components/ui/button';
 
 const blockTypeToBlockName = {
   bullet: 'Lista punktowana',
@@ -526,8 +532,10 @@ function ElementFormatDropdown({
 
 export default function ToolbarPlugin({
   setIsLinkEditMode,
+  onSave
 }: {
   setIsLinkEditMode: Dispatch<boolean>;
+  onSave: () => void;
 }): JSX.Element {
   const [editor] = useLexicalComposerContext();
   const [activeEditor, setActiveEditor] = useState(editor);
@@ -557,8 +565,31 @@ export default function ToolbarPlugin({
   const [isRTL, setIsRTL] = useState(false);
   const [codeLanguage, setCodeLanguage] = useState<string>('');
   const [isEditable, setIsEditable] = useState(() => editor.isEditable());
+  const [isEditorEmpty, setIsEditorEmpty] = useState(true);
   const [isImageCaption, setIsImageCaption] = useState(false);
+  useEffect(() => {
+    return editor.registerUpdateListener(
+      () => {
+        // If we are in read only mode, send the editor state
+        // to server and ask for validation if possible.
+        editor.getEditorState().read(() => {
+          const root = $getRoot();
+          const children = root.getChildren();
 
+          if (children.length > 1) {
+            setIsEditorEmpty(false);
+          } else {
+            if ($isParagraphNode(children[0])) {
+              const paragraphChildren = children[0].getChildren();
+              setIsEditorEmpty(paragraphChildren.length === 0);
+            } else {
+              setIsEditorEmpty(false);
+            }
+          }
+        });
+      },
+    );
+  }, [editor, isEditable]);
   const $updateToolbar = useCallback(() => {
     const selection = $getSelection();
     if ($isRangeSelection(selection)) {
@@ -872,6 +903,15 @@ export default function ToolbarPlugin({
   return (
     <div className="toolbar">
       <button
+        disabled={!isEditable}
+        onClick={() => onSave()}
+        title='Zapisz'
+        type="button"
+        className="toolbar-item spaced"
+        aria-label="Zapisz">
+        <i className="format save" />
+      </button>
+      <button
         disabled={!canUndo || !isEditable}
         onClick={() => {
           activeEditor.dispatchCommand(UNDO_COMMAND, undefined);
@@ -1172,7 +1212,7 @@ export default function ToolbarPlugin({
       <DropDown
         disabled={!isEditable}
         buttonClassName="toolbar-item spaced"
-        buttonLabel="Kurs"
+        buttonLabel="Narzędzia"
         buttonAriaLabel="Opcje kursu"
         buttonIconClassName="icon dropdown-course">
         <DropDownItem
@@ -1293,8 +1333,51 @@ export default function ToolbarPlugin({
           <span className="text">Tekst na mowę</span>
         </DropDownItem>
       </DropDown>
+      <button
+        className="toolbar-item spaced"
+        disabled={isEditorEmpty}
+        onClick={() => {
+          showModal('Wyczyść edytor', (onClose) => (
+            <ShowClearDialog editor={editor} onClose={onClose} />
+          ));
+        }}
+        title="Wyczyść"
+        aria-label="Wyczyść edytor">
+        <i className="format clear" />
+      </button>
       <Settings />
       {modal}
     </div>
+  );
+}
+
+function ShowClearDialog({
+  editor,
+  onClose,
+}: {
+  editor: LexicalEditor;
+  onClose: () => void;
+}): JSX.Element {
+  return (
+    <>
+      Czy na pewno chcesz wyczyścić obszar roboczy?
+      <div className="Modal__content">
+        <Button
+          onClick={() => {
+            editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
+            editor.focus();
+            onClose();
+          }}>
+          Wyczyść
+        </Button>{' '}
+        <Button
+          onClick={() => {
+            editor.focus();
+            onClose();
+          }}>
+          Anuluj
+        </Button>
+      </div>
+    </>
   );
 }

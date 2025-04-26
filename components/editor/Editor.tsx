@@ -52,7 +52,7 @@ import TableCellResizer from './plugins/TableCellResizer';
 import ToolbarPlugin from './plugins/ToolbarPlugin';
 import YouTubePlugin from './plugins/YouTubePlugin';
 import ContentEditable from './ui/ContentEditable';
-import { SerializedDocument } from '@lexical/file';
+import { SerializedDocument, serializedDocumentFromEditorState } from '@lexical/file';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { DictionaryPlugin } from './plugins/DictionaryPlugin';
 import { GenerateDictionaryPlugin } from './plugins/GenerateDictionaryPlugin';
@@ -66,18 +66,44 @@ import TranslationPlugin from './plugins/TranslationPlugin';
 import AudioPlugin from './plugins/AudioPlugin';
 import SelectAnswerPlugin from './plugins/SelectAnswerPlugin';
 import TaskPlugin from './plugins/TaskPlugin';
+import { $getRoot, $isElementNode, LexicalNode } from 'lexical';
+
+
+// Helper function to recursively find nodes with __isCompleted property
+function $findNodesWithIsCompleted(
+    node: LexicalNode,
+    result: LexicalNode[]
+): void {
+    // Check if the node has the __isCompleted property using 'in' operator
+    // This is safer than direct access if the property might not exist.
+    if ('__isCompleted' in node) {
+        result.push(node);
+    }
+
+    // If the node is an element node, recurse through its children
+    if ($isElementNode(node)) {
+        const children = node.getChildren();
+        for (const child of children) {
+            $findNodesWithIsCompleted(child, result);
+        }
+    }
+}
 
 
 export default function Editor( {
   onSave,
   onEditorChange,
   isEditable,
+  isCompleted,
+  onCompleted,
 }: {
   onSave: (serializedDocument: SerializedDocument) => SaveResult;
   onEditorChange: (editorState: string) => void;
   isEditable: boolean;
+  isCompleted?: boolean;
+  onCompleted: () => void;
 }): JSX.Element {
- 
+
   const {historyState} = useSharedHistoryContext();
   const {
     settings: {
@@ -96,19 +122,58 @@ export default function Editor( {
 
   useEffect(() => {
     const unregisterListener = editor.registerUpdateListener(({ editorState }) => {
-      // Serializuj stan edytora do stringa lub innego formatu
+
+      editorState.read(() => {
+        if(isCompleted){
+          console.debug("Editor is completed, skipping completion check.");
+          return; // Skip completion check if isCompleted is true
+        }
+        const root = $getRoot();
+        if(root.isEmpty()){
+          console.debug("Editor is empty");
+          return; 
+        }
+        const completableNodes: LexicalNode[] = [];
+        $findNodesWithIsCompleted(root, completableNodes);
+        console.debug('Nodes with __isCompleted:', completableNodes);
+
+        if (completableNodes.length > 0) {
+            const allCompleted = completableNodes.every((node) => (node as any).__isCompleted === true);
+            if (allCompleted) {
+                // Notify parent component that all completable nodes are completed
+                onCompleted();
+            }
+            console.debug(`All completable nodes completed: ${allCompleted}`);
+        } else {
+            onCompleted();
+            console.debug('No nodes with __isCompleted found.');
+        }
+      });
+
+      // Serialize and notify parent component of the change regardless of completion state
       const serializedState = JSON.stringify(editorState.toJSON());
       onEditorChange(serializedState);
     });
+
+    // Set initial editable state
     editor.setEditable(isEditable);
+
+    // Cleanup listener on component unmount
     return () => unregisterListener();
-  }, [editor, onEditorChange, isEditable]);
-  
+  }, [editor, onEditorChange, isEditable, isCompleted]); // Dependencies for the effect
+
+
+  function handleSave() {
+        const serializedDocument: SerializedDocument = serializedDocumentFromEditorState(editor.getEditorState(), {
+          source: 'Playground',
+        });
+        onSave(serializedDocument);
+  }
 
   return (
     <>
       {showTableOfContents && <TableOfContentsPlugin />}
-      {isEditable && <ToolbarPlugin setIsLinkEditMode={setIsLinkEditMode} />}
+      {isEditable && <ToolbarPlugin setIsLinkEditMode={setIsLinkEditMode} onSave={handleSave} />}
       <div
         className={`editor-container plain-text`}>
         {isMaxLength && <MaxLengthPlugin maxLength={30} />}
@@ -129,7 +194,7 @@ export default function Editor( {
         <AudioPlugin/>
         <DictionaryPlugin />
         <SelectAnswerPlugin />
-        <HistoryPlugin externalHistoryState={historyState} />        
+        <HistoryPlugin externalHistoryState={historyState} />
         <RichTextPlugin
           contentEditable={
             <div className="editor-scroller">
@@ -171,13 +236,13 @@ export default function Editor( {
         <CollapsiblePlugin />
         <PageBreakPlugin />
         <LayoutPlugin />
-        
+
         {/* {isAutocomplete && <AutocompletePlugin />}        */}
-        {isEditable && (<ActionsPlugin
+        {/* {isEditable && (<ActionsPlugin
           onSave={onSave}
           isRichText={true}
           shouldPreserveNewLinesInMarkdown={shouldPreserveNewLinesInMarkdown}
-        />)}
+        />)} */}
       </div>
     </>
   );

@@ -38,7 +38,9 @@ export default function TestPlugin(): JSX.Element | null {
         );
         $insertNodes([testNode]);
         if ($isRootOrShadowRoot(testNode.getParentOrThrow())) {
-          $wrapNodeInElement(testNode, $createParagraphNode).selectEnd();
+            const newParagraph = $createParagraphNode();
+            testNode.insertAfter(newParagraph);
+            newParagraph.selectEnd();
         }
 
         return true;

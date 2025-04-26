@@ -1,9 +1,7 @@
-import { db } from "@/lib/db";
 import { Categories } from "./_components/categories";
 import { SearchInput } from "@/components/ui/search-input";
 import { auth } from "@clerk/nextjs/server";
 import { CoursesList } from "@/components/ui/courses-list";
-import { env } from "process";
 
 interface SearchPageProps {
   searchParams: {

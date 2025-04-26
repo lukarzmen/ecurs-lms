@@ -72,7 +72,7 @@ export default function ActionsPlugin({
 }): JSX.Element {
   const [editor] = useLexicalComposerContext();
   const [isEditable, setIsEditable] = useState(() => editor.isEditable());
-  const [isEditorEmpty, setIsEditorEmpty] = useState(true);
+  // const [isEditorEmpty, setIsEditorEmpty] = useState(true);
   const [modal, showModal] = useModal();
   const [hash, setHash] = useState('');
   const [isSpeechToText, setIsSpeechToText] = useState(false);
@@ -96,29 +96,29 @@ export default function ActionsPlugin({
     });
   }, [editor]);
 
-  useEffect(() => {
-    return editor.registerUpdateListener(
-      () => {
-        // If we are in read only mode, send the editor state
-        // to server and ask for validation if possible.
-        editor.getEditorState().read(() => {
-          const root = $getRoot();
-          const children = root.getChildren();
+  // useEffect(() => {
+  //   return editor.registerUpdateListener(
+  //     () => {
+  //       // If we are in read only mode, send the editor state
+  //       // to server and ask for validation if possible.
+  //       editor.getEditorState().read(() => {
+  //         const root = $getRoot();
+  //         const children = root.getChildren();
 
-          if (children.length > 1) {
-            setIsEditorEmpty(false);
-          } else {
-            if ($isParagraphNode(children[0])) {
-              const paragraphChildren = children[0].getChildren();
-              setIsEditorEmpty(paragraphChildren.length === 0);
-            } else {
-              setIsEditorEmpty(false);
-            }
-          }
-        });
-      },
-    );
-  }, [editor, isEditable]);
+  //         if (children.length > 1) {
+  //           setIsEditorEmpty(false);
+  //         } else {
+  //           if ($isParagraphNode(children[0])) {
+  //             const paragraphChildren = children[0].getChildren();
+  //             setIsEditorEmpty(paragraphChildren.length === 0);
+  //           } else {
+  //             setIsEditorEmpty(false);
+  //           }
+  //         }
+  //       });
+  //     },
+  //   );
+  // }, [editor, isEditable]);
 
   const handleMarkdownToggle = useCallback(() => {
     editor.update(() => {
@@ -225,7 +225,7 @@ export default function ActionsPlugin({
         <i className="export" />
       </button> */}
 
-      <button
+      {/* <button
         className="action-button clear"
         disabled={isEditorEmpty}
         onClick={() => {
@@ -236,7 +236,7 @@ export default function ActionsPlugin({
         title="Wyczyść"
         aria-label="Wyczyść edytor">
         <i className="clear" />
-      </button>
+      </button> */}
       {/* <button
         className={`action-button ${!isEditable ? 'unlock' : 'lock'}`}
         onClick={() => {

@@ -1,8 +1,9 @@
-import React, {  } from "react";
+
+import React from "react";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { IconBadge } from "@/components/icon-badge";
-import { ArrowLeft, LayoutDashboard, ListCheck, Users2Icon } from "lucide-react";
+import { ArrowLeft, LayoutDashboard, ListCheck, PlusCircle, Users2Icon } from "lucide-react";
 import TitleForm from "./_components/title-form";
 import DescriptionForm from "./_components/description-form";
 import ImageForm from "./_components/image-form";
@@ -41,13 +42,12 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const completionText = `${completedFields}/${totalFields}`;
   const courseTitle = course.title;
 
-
   return (
     <>
       <div className="p-6">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-y-2">
-          <Link
+            <Link
               href={`/teacher/courses`}
               className="flex items-center text-sm hover:opacity-75 transition p-4">
               <ArrowLeft className="h-4 w-4 mr-2"></ArrowLeft>
@@ -67,7 +67,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
           <CategoryForm
             categoryId={course.categoryId ?? -1}
             options={categories.map((x: Category) => ({
-            label: x.name,
+              label: x.name,
               value: x.id,
               key: x.id,
             }))}
@@ -75,10 +75,10 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
           />
           <ImageForm imageId={course.imageId ?? ''} courseId={courseId} />
           <DescriptionForm description={course.description ?? ''} courseId={courseId} />
-   
+
         </div>
         <div className="space-y-6 ">
-            <div>
+          <div>
             <div className="flex items-center gap-x-2 gap-6 mt-6">
               <IconBadge icon={ListCheck} />
               <h2 className="text-xl">Lekcje</h2>
@@ -86,12 +86,12 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
             <div>
               <ChaptersForm chapters={course.modules} courseId={courseId} />
             </div>
-            </div>
-            <div className="flex items-center gap-x-2 gap-6 mt-6">
-              <IconBadge icon={Users2Icon} />
-              <h2 className="text-xl">Uczestnicy</h2>
-            </div>
-            <StudentsForm courseId={courseId} />
+          </div>
+          <div className="flex items-center gap-x-2 gap-6 mt-6">
+            <IconBadge icon={Users2Icon} />
+            <h2 className="text-xl">Uczestnicy</h2>
+          </div>
+          <StudentsForm courseId={courseId} />
         </div>
       </div>
     </>

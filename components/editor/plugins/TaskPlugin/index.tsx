@@ -9,7 +9,7 @@ import {
 } from 'lexical';
 import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { createDoTaskNode } from '../../nodes/DoTaskNode/DoTask';
+import { $createDoTaskNode } from '../../nodes/DoTaskNode/DoTask';
 
 export type DoTaskType = {
   task: string;
@@ -25,7 +25,7 @@ export default function QuestionAnswerPlugin(): JSX.Element | null {
     return editor.registerCommand<DoTaskType>(
       INSERT_TASK_COMMAND,
       (payload) => {
-        const doTaskNode = createDoTaskNode(payload);
+        const doTaskNode = $createDoTaskNode(payload);
         editor.update(() => {
           $insertNodes([doTaskNode]);
           if ($isRootOrShadowRoot(doTaskNode.getParentOrThrow())) {

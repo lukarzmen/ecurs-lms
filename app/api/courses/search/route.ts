@@ -1,8 +1,23 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { CourseDetails, CourseWithCategory } from "../../user/courses/route";
+import { CourseDetails } from "../../user/courses/route";
+import { Category, Course } from "@prisma/client";
 
-export async function GET(req: NextRequest): Promise<NextResponse<CourseDetails[] | { error: string }>> {
+export type CourseWithCategory = Course & {
+  modules: { id: number }[];
+  category: Category | null;
+  author: {
+      firstName: string | null;
+      lastName: string | null;
+  } | null;
+}
+
+type CourseSearchResponse = CourseWithCategory & {
+  modulesCount: number;
+  nonFinishedModuleId: number;
+};
+
+export async function GET(req: NextRequest): Promise<NextResponse<CourseSearchResponse[] | { error: string }>> {
   const { searchParams } = req.nextUrl;
   const title = searchParams.get('title') || undefined;
   const categoryId = searchParams.get('categoryId') ? parseInt(searchParams.get('categoryId')!) : undefined;
@@ -35,7 +50,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<CourseDetails[
       }
     });
 
-    const response: CourseDetails[] = courses.map((course: CourseWithCategory) => {
+    const response: CourseSearchResponse[] = courses.map((course: CourseWithCategory) => {
       const modules = course.modules;
       const lastModuleId = modules.length > 0 ? Math.max(...modules.map(module => module.id)) : 0;
 

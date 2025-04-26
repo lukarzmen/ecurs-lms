@@ -4,8 +4,8 @@ import { clerkClient } from '@clerk/nextjs/server';
 
 export async function POST(req: Request) {
 
-    const { userId, courseId, sessionId } = await req.json();
-    if (!userId || !courseId || !sessionId) {
+    const { userId, courseId } = await req.json();
+    if (!userId || !courseId) {
             return new NextResponse("Invalid courseId", {
               status: 400,
             });

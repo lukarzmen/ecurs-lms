@@ -12,18 +12,22 @@ import { FlashMessageContext } from './context/FlashMessageContext';
 
 import PlaygroundEditorTheme from './themes/PlaygroundEditorTheme';
 import { SaveResult } from './plugins/ActionsPlugin';
-
-export default function LexicalEditor({
-  onSave,
-  onEditorChange,
-  initialStateJSON,
-  isEditable
-}: {
+interface LexicalEditorProps {
   onSave: (serializedDocument: SerializedDocument) => SaveResult;
   onEditorChange: (editorState: string) => void;
   initialStateJSON: string | null;
   isEditable: boolean;
-}): JSX.Element {
+  isCompleted?: boolean;
+  onCompleted: () => void;
+}
+export default function LexicalEditor({
+  onSave,
+  onEditorChange,
+  initialStateJSON,
+  isEditable,
+  isCompleted,
+  onCompleted,
+}: LexicalEditorProps): JSX.Element {
 
   const [editorConfig, setEditorConfig] = useState({
     editorState: initialStateJSON,
@@ -51,7 +55,7 @@ export default function LexicalEditor({
           <SharedHistoryContext>
             <div className='flex flex-row'>
               <div className="editor-shell ">
-                <Editor onSave={onSave} onEditorChange={onEditorChange} isEditable={isEditable} />
+                <Editor onSave={onSave} onEditorChange={onEditorChange} isCompleted={isCompleted} isEditable={isEditable} onCompleted={onCompleted} />
               </div>
             </div>
           </SharedHistoryContext>

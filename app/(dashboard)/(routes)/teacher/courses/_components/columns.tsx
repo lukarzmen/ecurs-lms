@@ -4,9 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Course } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpDown, Trash2 } from "lucide-react"; // Removed Pencil
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation"; // Import useRouter
 
 const handleDelete = async (id: string) => {
   try {
@@ -36,6 +37,24 @@ export const columns: ColumnDef<Course>[] = [
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
+    // Make the title cell clickable for editing
+    cell: ({ row }) => {
+      const { id, title } = row.original;
+      const router = useRouter(); // Use router for navigation
+
+      const handleRowClick = () => {
+        router.push(`/teacher/courses/${id}`);
+      };
+
+      return (
+        <div
+          onClick={handleRowClick}
+          className="cursor-pointer hover:underline" // Add styling for clickability
+        >
+          {title}
+        </div>
+      );
+    },
   },
   {
     id: "actions",
@@ -43,24 +62,25 @@ export const columns: ColumnDef<Course>[] = [
     cell: ({ row }) => {
       const { id } = row.original;
       const [isModalOpen, setIsModalOpen] = useState(false);
+      const router = useRouter(); // Use router for refresh
 
       const handleConfirmDelete = async () => {
         await handleDelete(id.toString());
         setIsModalOpen(false);
-        window.location.reload();
+        // Use router.refresh() for better UX than full reload
+        router.refresh();
       };
 
       return (
         <>
-          <Link href={`/teacher/courses/${id}`}>
-            <Button variant="ghost" className="h-4 w-8 p-0">
-              <Pencil className="h-4 w-4" />
-            </Button>
-          </Link>
+          {/* Removed Edit Button */}
           <Button
             variant="ghost"
             className="h-4 w-8 p-0"
-            onClick={() => setIsModalOpen(true)}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent row click when clicking delete
+              setIsModalOpen(true);
+            }}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -72,13 +92,19 @@ export const columns: ColumnDef<Course>[] = [
                   <Button
                     variant="secondary"
                     className="mr-2"
-                    onClick={() => setIsModalOpen(false)}
+                    onClick={(e) => {
+                       e.stopPropagation(); // Prevent row click
+                       setIsModalOpen(false);
+                    }}
                   >
                     Anuluj
                   </Button>
                   <Button
                     variant="destructive"
-                    onClick={handleConfirmDelete}
+                    onClick={(e) => {
+                       e.stopPropagation(); // Prevent row click
+                       handleConfirmDelete();
+                    }}
                   >
                     Usuń
                   </Button>

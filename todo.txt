@@ -5,3 +5,11 @@ tabela edytowalna
 nawigacja po aplikacji
 poprawki związane z edycją np czy każdy element można usunąć lub zrobić coś za elementem
 
+1. minutowe filmiki samouczka
+2. formularz zgloszeniowy alerty
+3. dezaktywacja uczniów przez nauczycieli 
+4. kurs angielskiego dla 4-8 klas z czasow
+5. przetestowac na telefonie - testy
+
+załączniki i eksport
+udostępnianie treści
