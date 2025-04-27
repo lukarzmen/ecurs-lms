@@ -22,9 +22,9 @@ export type SerializedSelectAnswerNode = Spread<
 export class SelectAnswerNode extends DecoratorNode<JSX.Element> implements ToCompleteNode {
     private __answers: string[];
     private __correctAnswerIndex: number;
-    // Transient state (in-memory only)
+    // Transient state (in-memory only) - Node's view
     private __selectedAnswer: string | null = null;
-    public __isCompleted: boolean = false;
+    public __isCompleted: boolean = false; // Node's persistent completion state
 
     constructor(
         selectAnswerNodeProps: SelectableAnswerNodeProps,
@@ -80,47 +80,47 @@ export class SelectAnswerNode extends DecoratorNode<JSX.Element> implements ToCo
         return false;
     }
 
-    // Method to update the transient selected answer state within the node
+    // Method to update the node's selected answer state
     setSelectedAnswer(answer: string | null, editor: LexicalEditor): void {
          editor.update(() => {
             const currentNode = $getNodeByKey(this.getKey());
             if ($isSelectAnswerNode(currentNode)) {
                 const writable = currentNode.getWritable();
+                // Only update selected answer, don't touch isCompleted here
                 writable.__selectedAnswer = answer;
-                // Reset completion state when a new answer is selected
-                writable.__isCompleted = false;
             }
         });
     }
 
-    // Method to check the answer and update transient completion state
-    checkAnswer(editor: LexicalEditor): void {
-        if (this.__selectedAnswer === null) return;
-
-        const isCorrect = this.__answers[this.__correctAnswerIndex] === this.__selectedAnswer;
-
+    // Method called by the component to update the node's completion state
+    setCompletionStatus(isCorrect: boolean, editor: LexicalEditor): void {
         editor.update(() => {
             const currentNode = $getNodeByKey(this.getKey());
              if ($isSelectAnswerNode(currentNode)) {
                 const writable = currentNode.getWritable();
-                writable.__isCompleted = isCorrect; // Update completion state based on check
+                // Update the node's persistent completion state
+                writable.__isCompleted = isCorrect;
              }
         });
     }
 
+    // REMOVED checkAnswer method
+
 
     decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element {
-        // Pass transient state and bound methods down to the component
+        // Pass node state and bound methods down to the component
         return (
             <SelectAnswerComponent
                 answers={this.__answers}
                 correctAnswerIndex={this.__correctAnswerIndex}
-                selectedAnswer={this.__selectedAnswer} // Pass current selection state
-                isCompleted={this.__isCompleted}       // Pass current completion state
+                initialSelectedAnswer={this.__selectedAnswer} // Pass current selection state as initial
+                isNodeCompleted={this.__isCompleted} // Pass node's completion state for disabling
                 nodeKey={this.__key}
-                // Bind methods to this node instance and pass editor context
+                // Pass method to update node's selected answer
                 onSelect={(answer) => this.setSelectedAnswer(answer, editor)}
-                onCheck={() => this.checkAnswer(editor)}
+                // Pass method to update node's completion status
+                onComplete={(isCorrect) => this.setCompletionStatus(isCorrect, editor)}
+                // REMOVED onCheck prop
             />
         );
     }
