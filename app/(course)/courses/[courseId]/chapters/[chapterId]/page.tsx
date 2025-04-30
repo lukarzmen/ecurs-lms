@@ -172,7 +172,7 @@ const ChapterIdPage = () => {
                 href={`/courses/${courseId}`} // Link back to the course page
                 className="flex items-center text-sm hover:opacity-75 transition p-4 ">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Wróć do kursu
+                Wróć do panelu kursów
             </Link>
             <div className="flex flex-col mx-auto">
                 <h1 className="text-2xl font-semibold text-center p-2">{chapterData.module.title}</h1>
