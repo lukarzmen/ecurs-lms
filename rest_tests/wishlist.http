@@ -1,0 +1,8 @@
+### Add a new item to the wishlist
+POST http://localhost:3000/api/wishlist
+Content-Type: application/json
+
+{
+  "name": "Sample Wishlist Item",
+  "contact": "sample@example.com"
+}

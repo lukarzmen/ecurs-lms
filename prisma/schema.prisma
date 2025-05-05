@@ -130,3 +130,9 @@ model Attachment {
   fileData   Bytes  @db.ByteA 
   createdAt  DateTime @default(now())
 }
+
+model Wishlist {
+  id Int @id @default(autoincrement())
+  name String? 
+  contact String?
+}
