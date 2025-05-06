@@ -54,24 +54,25 @@ const ChapterIdPage = () => {
             setIsLoading(true);
             setError(null);
             try {
-                // 1. Check Permissions (optional but good practice)
+                // 1. Check Permissions
                 const permResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/permissions`, {
                     method: 'POST',
-                    body: JSON.stringify({ courseId, userId: userId }), // Assuming sessionId isn't strictly needed here
+                    body: JSON.stringify({ courseId, userId: userId }),
                     headers: { 'Content-Type': 'application/json' }
                 });
-                // Handle specific access denied error
-                if (permResponse.status === 403 || !permResponse.ok) { // Assuming 403 for forbidden, or check result
-                    const permResult = await permResponse.json().catch(() => ({})); // Try to parse JSON, default to empty object on failure
-                    if (!permResult.exists) {
-                         throw new Error("Brak dostępu. Skontaktuj się z nauczycielem, aby uzyskać dostęp do tego kursu.");
-                    }
-                    // Handle other non-ok statuses if needed
-                    if (!permResponse.ok) throw new Error("Sprawdzanie uprawnień nie powiodło się.");
+
+                if (!permResponse.ok) {
+                    // Handle general network or server errors for permissions check
+                    throw new Error("Sprawdzanie uprawnień nie powiodło się. Spróbuj ponownie później.");
                 }
-                // No need to parse again if already checked above
-                // const permResult = await permResponse.json();
-                // if (!permResult.exists) throw new Error("Brak dostępu. Skontaktuj się z nauczycielem, aby uzyskać dostęp do tego kursu.");
+
+                const permResult = await permResponse.json();
+
+                // Check the 'exists' field from the API response
+                if (!permResult.exists) {
+                    // Use the message from the API if available, otherwise a default one
+                    throw new Error(permResult.message || "Brak dostępu. Skontaktuj się z nauczycielem, aby uzyskać dostęp do tego kursu.");
+                }
 
 
                 // 2. Fetch Chapter Data (including user progress)

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { clerkClient } from '@clerk/nextjs/server';
 
 export async function POST(req: Request) {
 
@@ -33,9 +32,9 @@ export async function POST(req: Request) {
 
         if (userCourse) {
             if (userCourse.state === 1) {
-            return NextResponse.json({ message: 'User already has permission', exists: true });
+            return NextResponse.json({ message: 'Użytkownik już ma uprawnienia', exists: true });
             }
-            return NextResponse.json({ message: 'User has no permission to course. Ask teacher.', exists: false });
+            return NextResponse.json({ message: 'Użytkownik nie ma uprawnień do kursu. Skontaktuj się z nauczycielem.', exists: false });
         }
 
         await db.userCourse.create({
