@@ -17,7 +17,9 @@ export async function POST(req: Request) {
         });
 
         if (!user) {
-            return NextResponse.json({ message: 'User not exists', exists: false });
+            return new NextResponse("User not found", {
+              status: 404,
+            });
         }
 
         // Add user to UserCourse table with state 1
@@ -32,9 +34,9 @@ export async function POST(req: Request) {
 
         if (userCourse) {
             if (userCourse.state === 1) {
-            return NextResponse.json({ message: 'Użytkownik już ma uprawnienia', exists: true });
+            return NextResponse.json({hasAccess: true });
             }
-            return NextResponse.json({ message: 'Użytkownik nie ma uprawnień do kursu. Skontaktuj się z nauczycielem.', exists: false });
+            return NextResponse.json({hasAccess: false });
         }
 
         await db.userCourse.create({
@@ -46,7 +48,7 @@ export async function POST(req: Request) {
         });
 
         
-        return NextResponse.json({ message: 'Permission added successfully', exists: false });
+        return NextResponse.json({ hasAccess: false });
     } catch (error) {
         console.error(error);
         return new NextResponse("Internal error", {

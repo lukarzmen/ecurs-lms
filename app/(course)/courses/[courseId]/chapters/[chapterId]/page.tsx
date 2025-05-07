@@ -69,9 +69,9 @@ const ChapterIdPage = () => {
                 const permResult = await permResponse.json();
 
                 // Check the 'exists' field from the API response
-                if (!permResult.exists) {
+                if (!permResult.hasAccess) {
                     // Use the message from the API if available, otherwise a default one
-                    throw new Error(permResult.message || "Brak dostępu. Skontaktuj się z nauczycielem, aby uzyskać dostęp do tego kursu.");
+                    throw new Error("Brak dostępu. Skontaktuj się z nauczycielem, aby uzyskać dostęp do tego kursu.");
                 }
 
 
@@ -170,7 +170,7 @@ const ChapterIdPage = () => {
                 <Banner variant="success" label="Rozdział ukończony" />
             )}
             <Link
-                href={`/courses/${courseId}`} // Link back to the course page
+                href={"/"} // Link back to the course page
                 className="flex items-center text-sm hover:opacity-75 transition p-4 ">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Wróć do panelu kursów
