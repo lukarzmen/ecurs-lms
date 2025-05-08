@@ -21,7 +21,7 @@ export function InsertQuizDialog({
   const onAnswerChange = (index: number, value: string) => {
     setAnswers((prevAnswers) => {
       const updatedAnswers = [...prevAnswers];
-      updatedAnswers[index] = value.trim();
+      updatedAnswers[index] = value;
       return updatedAnswers;
     });
   };

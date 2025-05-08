@@ -80,6 +80,7 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
                             <TableHead>Imię i nazwisko</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Rola</TableHead>
+                            <TableHead>Czy opłacony?</TableHead>
                             <TableHead>Uprawnienia</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -89,6 +90,7 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
                                 <TableCell className="font-medium">{student.name}</TableCell>
                                 <TableCell>{student.email}</TableCell>
                                 <TableCell>{student.roleName}</TableCell>
+                                <TableCell>TAK</TableCell>
                                 <TableCell>
                                     {student.roleId === 0 && (
                                         student.state === 0 ? (

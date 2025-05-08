@@ -18,10 +18,12 @@ function DoTaskComponent({
   // Local state for immediate UI feedback (correctness based on last check)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(initialCompleted ? true : null);
   const [isLoading, setIsLoading] = useState(false);
+  const [llmExplanation, setLlmExplanation] = useState<string | null>(null); // State for LLM explanation
 
   // Effect to potentially reset local state if node state changes externally (optional)
   useEffect(() => {
       setIsCorrect(initialCompleted ? true : null);
+      setLlmExplanation(null); // Reset LLM explanation
       // Maybe clear userInput if initially completed? Depends on desired UX.
       // if (initialCompleted) setUserInput("");
   }, [initialCompleted]);
@@ -32,6 +34,7 @@ function DoTaskComponent({
     }
     setIsLoading(true);
     setIsCorrect(null); // Reset visual state before check
+    setLlmExplanation(null); // Reset LLM explanation before new check
 
     try {
       const response = await fetch('/api/tasks', {
@@ -40,30 +43,55 @@ function DoTaskComponent({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userPrompt: ``, // Consider if userPrompt is needed or should be based on userInput
-          systemPrompt: `verify correctness of task based on instruction. be concise.
-          ###
-          instruction: ${task}
-          ###
-          user_answer: ${userInput.trim()}
-          ###
-          answer by exactly one word (no more) true or false.`,
+          userPrompt: ``, 
+          systemPrompt: `Zweryfikuj poprawność odpowiedzi użytkownika na podstawie instrukcji. Bądź zwięzły.
+Odpowiedz "true", jeśli odpowiedź jest poprawna.
+Odpowiedz "false: [twoje wyjaśnienie]", jeśli odpowiedź jest niepoprawna, podając krótkie wyjaśnienie, dlaczego.
+Na przykład: "false: Stolicą Francji jest Paryż, a nie Berlin."
+###
+instrukcja: ${task}
+###
+odpowiedź_użytkownika: ${userInput.trim()}
+###`,
         }),
       });
 
       if (!response.ok) {
-          throw new Error(`API error: ${response.statusText}`);
+          throw new Error(`Błąd API: ${response.statusText}`);
       }
 
       const text = await response.text();
-      const isVerifiedCorrect = text.trim().toLowerCase() === 'true';
+      const textLower = text.trim().toLowerCase();
+      let isVerifiedCorrect = false;
+      let explanationFromLlm = null;
 
+      if (textLower.startsWith('true')) {
+        isVerifiedCorrect = true;
+      } else if (textLower.startsWith('false')) {
+        isVerifiedCorrect = false;
+        // Extract explanation after "false: "
+        const colonIndex = text.indexOf(':');
+        if (colonIndex > -1) {
+          explanationFromLlm = text.substring(colonIndex + 1).trim();
+        } else {
+          // Fallback if "false" but no colon
+           explanationFromLlm = "Odpowiedź jest niepoprawna, ale nie udało się uzyskać szczegółowego wyjaśnienia.";
+        }
+      } else {
+        // Fallback if the response format is unexpected
+        console.warn("Nieoczekiwany format odpowiedzi LLM:", text);
+        isVerifiedCorrect = false; // Assume incorrect if format is wrong
+        explanationFromLlm = "Nie udało się zweryfikować odpowiedzi. Spróbuj ponownie.";
+      }
+      
+      setLlmExplanation(explanationFromLlm);
       setIsCorrect(isVerifiedCorrect); // Update local UI state
       onComplete(isVerifiedCorrect); // Update node's transient state via callback
 
     } catch (error) {
-      console.error('Verification failed:', error);
+      console.error('Weryfikacja nie powiodła się:', error);
       setIsCorrect(false); // Assume incorrect on error
+      setLlmExplanation("Wystąpił błąd podczas weryfikacji odpowiedzi.");
       onComplete(false);   // Update node's transient state via callback
     } finally {
       setIsLoading(false);
@@ -86,6 +114,7 @@ function DoTaskComponent({
             if (isDisabled) return; // Prevent changes if already correct
             setUserInput(e.target.value);
             setIsCorrect(null); // Resetowanie poprawności podczas pisania
+            setLlmExplanation(null); // Resetuj wyjaśnienie LLM podczas pisania
             // Optionally reset node state while typing if desired: onComplete(false);
           }}
           className={`w-full border rounded-md p-2 pr-16 focus:outline-none ${ // Increased padding-right
@@ -124,8 +153,17 @@ function DoTaskComponent({
             isCorrect ? "text-green-600" : "text-red-600"
           }`}
         >
-          {isCorrect ? "Super!" : "Niestety musisz spróbować jeszcze raz!"}
+          {isCorrect ? "Super!" : "Niestety, spróbuj jeszcze raz!"}
         </p>
+      )}
+
+      {/* Wyświetlanie wyjaśnienia od LLM, jeśli odpowiedź jest niepoprawna */}
+      {isCorrect === false && llmExplanation && (
+        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-sm text-red-700">
+            <strong className="font-semibold">Wskazówka od AI:</strong> {llmExplanation}
+          </p>
+        </div>
       )}
 
       {/* Optionally show hint if available and needed */}

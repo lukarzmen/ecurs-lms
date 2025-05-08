@@ -107,7 +107,7 @@ const ChapterIdPage = () => {
     // Handler function to be called by ChapterContent
     const handleCompletion = async () => {
         if(isCompleted){
-            return; // Avoid double completion
+            return; 
         }
         if (!userId || !chapterId) {
             toast.error("Nie można ukończyć rozdziału: Brak ID użytkownika lub rozdziału.");
@@ -130,9 +130,7 @@ const ChapterIdPage = () => {
             setIsCompleted(true);
             toast.success("Rozdział ukończony!");
 
-            // Optionally refresh server-side props if needed elsewhere,
-            // but local state update handles the banner immediately.
-            // router.refresh();
+            router.refresh();
 
         } catch (error: any) {
             console.error("Completion Error:", error);

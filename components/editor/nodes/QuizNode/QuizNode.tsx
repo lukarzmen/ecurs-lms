@@ -114,7 +114,7 @@ export class QuizNode extends DecoratorNode<JSX.Element> implements ToCompleteNo
           nodeKey={this.__key}
           correctAnswerDescription={this.__correctAnswerDescription}
           // Pass the bound update method
-          onComplete={(isCorrect) => this.setCompleted(isCorrect, editor)}
+          onComplete={(_) => this.setCompleted(true, editor)}
         />
       </Suspense>
     );

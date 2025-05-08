@@ -7,7 +7,7 @@ import {
   Draggable,
   DropResult,
 } from "@hello-pangea/dnd";
-import { Grip, Pencil, Trash2 } from "lucide-react";
+import { Grip, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Module } from "@prisma/client";
 import { Button } from "@/components/ui/button";
@@ -100,7 +100,7 @@ export const ChaptersList = ({
                   {(provided) => (
                     <div
                       className={cn(
-                        "flex items-center gap-x-2 bg-orange-200 border text-orange-700 rounded-md mb-3 text-sm",
+                        "group flex items-center gap-x-2 bg-orange-200 border text-orange-700 rounded-md hover:bg-orange-300 mb-3 text-sm", // Added 'group' and kept 'hover:bg-orange-300'
                         "border-orange-100"
                       )}
                       ref={provided.innerRef}
@@ -108,19 +108,20 @@ export const ChaptersList = ({
                     >
                       <div
                         className={cn(
-                          "px-2 py-3 border-r border-r-orange-200 hover:bg-orange-300 rounded-l-md transition",
-                          "bg-orange-200 hover:bg-orange-200"
+                          "px-2 py-3 border-r border-r-orange-200 group-hover:bg-orange-300 rounded-l-md transition", // Changed hover: to group-hover:
+                          "bg-orange-200 " // Kept original background
                         )}
                         {...provided.dragHandleProps}
                       >
                         <Grip className="h-5 w-5" />
                       </div>
-                      <div>{chapter.title}</div>
+                      <div 
+                        className="flex-grow px-2 py-3 cursor-pointer hover:bg-orange-300 transition" // This hover is fine as it matches the parent's hover
+                        onClick={() => onEdit(chapter.id)}
+                      >
+                        {chapter.title}
+                      </div>
                       <div className="ml-auto pr-2 flex items-center gap-x-2">
-                        <Pencil
-                          onClick={() => onEdit(chapter.id)}
-                          className="cursor-pointer hover:opacity-75 h-4 w-4 transition"
-                        />
                         <Trash2
                           onClick={() => handleDeleteConfirm(chapter.id)}
                           className="cursor-pointer hover:opacity-75 h-4 w-4 transition"

@@ -9,128 +9,147 @@ export type QAType = {
 
 // Add props for initial state and callback
 interface QuestionAnswerComponentProps extends QAType {
-    initialCompleted: boolean;
-    onComplete: (isCorrect: boolean) => void;
+  initialCompleted: boolean;
+  onComplete: (isCorrect: boolean) => void;
 }
 
 function QuestionAnswerComponent({
-    question,
-    answer,
-    explanation,
-    initialCompleted, // Use initial state
-    onComplete // Use callback
+  question,
+  answer,
+  explanation,
+  initialCompleted, // Use initial state
+  onComplete, // Use callback
 }: QuestionAnswerComponentProps) {
   const [userInput, setUserInput] = useState("");
-  // Local state for immediate UI feedback (correctness based on last check)
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(initialCompleted ? true : null);
-  const [showAnswer, setShowAnswer] = useState(initialCompleted); // Show answer if initially completed
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(
+    initialCompleted ? true : null
+  );
+  const [showAnswer, setShowAnswer] = useState(initialCompleted);
   const [isLoading, setIsLoading] = useState(false);
+  const [llmExplanation, setLlmExplanation] = useState<string | null>(null);
 
-  // Effect to potentially reset local state if node state changes externally (optional)
   useEffect(() => {
-      setIsCorrect(initialCompleted ? true : null);
-      setShowAnswer(initialCompleted);
-      // Maybe clear userInput if initially completed? Depends on desired UX.
-      // if (initialCompleted) setUserInput("");
+    setIsCorrect(initialCompleted ? true : null);
+    setShowAnswer(initialCompleted);
+    setLlmExplanation(null); // Reset explanation if initial state changes
   }, [initialCompleted]);
 
-
-  const handleCheck = async () => { // Make async
+  const handleCheck = async () => {
     if (!userInput.trim()) {
       return;
     }
     setIsLoading(true);
     setIsCorrect(null); // Reset visual state before check
+    setLlmExplanation(null); // Reset LLM explanation
 
     try {
-      const response = await fetch('/api/tasks', {
-        method: 'POST',
+      const response = await fetch("/api/tasks", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           userPrompt: ``,
-          systemPrompt: `verify correctness of answer based on question and explaination as context. be concise.
-          ###
-          question: ${question}
-          ###
-          answer: ${userInput.trim()}
-          ###
-          explaination: ${explanation}
-          ###
-          answer by exactly one word (no more) true or false.`,
+          systemPrompt: `Zweryfikuj poprawność odpowiedzi użytkownika na podstawie pytania i wyjaśnienia (jeśli istnieje).
+Bądź zwięzły.
+Odpowiedz "true", jeśli odpowiedź jest poprawna.
+Odpowiedz "false: [twoje wyjaśnienie]", jeśli odpowiedź jest niepoprawna, podając krótkie wyjaśnienie dlaczego.
+Na przykład: "false: Stolicą Francji jest Paryż, a nie Berlin."
+###
+pytanie: ${question}
+###
+odpowiedź użytkownika: ${userInput.trim()}
+###
+wyjaśnienie: ${explanation || "Brak dodatkowego wyjaśnienia dla poprawnej odpowiedzi."}
+###`,
         }),
       });
 
       if (!response.ok) {
-          throw new Error(`API error: ${response.statusText}`);
+        throw new Error(`Błąd API: ${response.statusText}`);
       }
 
       const text = await response.text();
-      const isVerifiedCorrect = text.trim().toLowerCase() === 'true';
+      const textLower = text.trim().toLowerCase();
+      let isVerifiedCorrect = false;
+      let explanationFromLlm = null;
 
-      setIsCorrect(isVerifiedCorrect); // Update local UI state
-      onComplete(isVerifiedCorrect); // Update node's transient state via callback
-      if (isVerifiedCorrect) {
-          setShowAnswer(true); // Show answer if correct
+      if (textLower.startsWith("true")) {
+        isVerifiedCorrect = true;
+      } else if (textLower.startsWith("false")) {
+        isVerifiedCorrect = false;
+        const colonIndex = text.indexOf(":");
+        if (colonIndex > -1) {
+          explanationFromLlm = text.substring(colonIndex + 1).trim();
+        }
+      } else {
+        console.warn("Nieoczekiwany format odpowiedzi LLM:", text);
+        isVerifiedCorrect = false;
+        explanationFromLlm =
+          "Nie udało się zweryfikować odpowiedzi. Spróbuj ponownie.";
       }
 
+      setLlmExplanation(explanationFromLlm);
+      setIsCorrect(isVerifiedCorrect);
+      onComplete(isVerifiedCorrect);
+      if (isVerifiedCorrect) {
+        setShowAnswer(true);
+      }
     } catch (error) {
-      console.error('Verification failed:', error);
-      setIsCorrect(false); // Assume incorrect on error
-      onComplete(false);   // Update node's transient state via callback
+      console.error("Weryfikacja nie powiodła się:", error);
+      setIsCorrect(false);
+      setLlmExplanation("Wystąpił błąd podczas weryfikacji odpowiedzi.");
+      onComplete(false);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Disable input and check button if the node is marked as completed
-  const isDisabled = isCorrect === true; // Based on local state reflecting the last check result
+  const isDisabled = isCorrect === true;
 
   return (
     <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm shadow">
       {/* Pytanie */}
       <p className="text-gray-800 font-bold mb-2 text-xl">{question}</p>
 
-      {/* Pole tekstowe z ikonami wewnątrz */}
+      {/* Pole tekstowe */}
       <div className="relative">
         <input
           type="text"
           value={userInput}
           onChange={(e) => {
-            if (isDisabled) return; // Prevent changes if already correct
+            if (isDisabled) return;
             setUserInput(e.target.value);
-            setIsCorrect(null); // Resetowanie poprawności podczas pisania
-            setShowAnswer(false); // Ukrywanie odpowiedzi podczas pisania
+            setIsCorrect(null);
+            setShowAnswer(false);
+            setLlmExplanation(null);
           }}
           className={`w-full border rounded-md p-2 pr-16 focus:outline-none ${
-            isDisabled // Style based on disabled state
+            isDisabled
               ? "border-green-500 bg-gray-100 cursor-not-allowed"
               : isCorrect === null
-                ? "border-gray-300"
-                : "border-red-500" // Only red if attempted and incorrect
+              ? "border-gray-300"
+              : "border-red-500"
           }`}
           placeholder="Twoja odpowiedź"
-          disabled={isDisabled} // Disable input if correct
+          disabled={isDisabled}
         />
-        {!isDisabled && ( // Only show check button if not disabled
-            isLoading ? (
-                <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
-                    <ProgressSpinner />
-                </div>
-             ) : (
-                <button
-                    onClick={handleCheck}
-                    className="absolute right-8 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-orange-600"
-                    title="Sprawdź swoją odpowiedź"
-                    disabled={!userInput.trim()} // Disable if input is empty
-                >
-                    ❓
-                </button>
-            )
-        )}
+        {!isDisabled &&
+          (isLoading ? (
+            <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+              <ProgressSpinner />
+            </div>
+          ) : (
+            <button
+              onClick={handleCheck}
+              className="absolute right-8 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-orange-600"
+              title="Sprawdź swoją odpowiedź"
+              disabled={!userInput.trim()}
+            >
+              ❓
+            </button>
+          ))}
 
-        {/* Przycisk Pokaż/Ukryj odpowiedź */}
         <button
           onClick={() => setShowAnswer(!showAnswer)}
           className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-orange-600"
@@ -140,26 +159,37 @@ function QuestionAnswerComponent({
         </button>
       </div>
 
-      {/* Informacja zwrotna o poprawności (only show if attempted and not correct, or if correct) */}
+      {/* Informacja zwrotna */}
       {isCorrect !== null && (
         <p
           className={`mt-2 text-sm font-medium ${
             isCorrect ? "text-green-600" : "text-red-600"
           }`}
         >
-          {isCorrect ? "Super!" : "Niestety musisz spróbować jeszcze raz!"}
+          {isCorrect
+            ? "Super! Twoja odpowiedź jest poprawna."
+            : "Niestety, spróbuj jeszcze raz!"}
         </p>
       )}
 
-      {/* Wyświetlanie odpowiedzi i wyjaśnienia */}
-      {showAnswer && ( // Always show if showAnswer is true
+      {/* Wyjaśnienie od LLM */}
+      {isCorrect === false && llmExplanation && (
+        <div className="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200">
+          <p className="text-sm text-yellow-700">
+            <strong>Wskazówka od AI:</strong> {llmExplanation}
+          </p>
+        </div>
+      )}
+
+      {/* Poprawna odpowiedź */}
+      {showAnswer && (
         <div className="mt-2 p-2 bg-orange-50 rounded border border-orange-200">
           <p className="text-sm text-orange-700">
             <strong>Poprawna odpowiedź:</strong> {answer}
           </p>
           {explanation && (
             <p className="text-sm text-gray-700 mt-1">
-              <strong>Wyjaśnienie / Wskazówka:</strong> {explanation}
+              <strong>Wyjaśnienie:</strong> {explanation}
             </p>
           )}
         </div>
