@@ -9,6 +9,7 @@ export interface UserCourseResponse {
     state: number;
     roleName: string;
     roleId: number;
+    progress: number; // User's progress in the course (0.0 to 1.0)
     authorId: number; // Course Author ID
 }
 
@@ -36,14 +37,14 @@ export async function GET(req: Request, { params }: { params: { courseId: string
                 courseId: courseIdNumber,
             },
             include: {
-                user: { // Include related User data
+                user: {
                     select: {
                         id: true,
                         displayName: true,
                         email: true,
                     }
                 },
-                role: { // Include related Role data
+                role: {
                     select: {
                         id: true,
                         name: true,
@@ -52,20 +53,59 @@ export async function GET(req: Request, { params }: { params: { courseId: string
             },
         });
 
-        if (!userCourses) {
-            return new NextResponse("No users found for this course", { status: 404 });
+        // If no users are enrolled, return an empty array.
+        // The original `if (!userCourses)` check was removed as findMany returns [] if no records.
+        if (userCourses.length === 0) {
+            return NextResponse.json([]);
         }
 
-        const usersResponse: UserCourseResponse[] = userCourses.map(uc => ({
-            id: uc.user.id,
-            name: uc.user.displayName,
-            email: uc.user.email,
-            userCourseId: uc.id,
-            state: uc.state,
-            roleName: uc.role?.name || "No Role", // Use optional chaining and provide default
-            roleId: uc.role?.id || 0, // Use optional chaining and provide default
-            authorId: course.authorId, // Add authorId from the fetched course
-        }));
+        // Fetch all modules for the course to get the total count
+        const courseModules = await db.module.findMany({
+            where: { courseId: courseIdNumber },
+            select: { id: true }
+        });
+        const totalModulesCount = courseModules.length;
+        const courseModuleIds = courseModules.map(m => m.id);
+
+        const userIdsInCourse = userCourses.map(uc => uc.userId);
+        const finishedModulesCountMap = new Map<number, number>();
+
+        if (totalModulesCount > 0 && userIdsInCourse.length > 0 && courseModuleIds.length > 0) {
+            const finishedCountsPerUser = await db.userModule.groupBy({
+                by: ['userId'],
+                where: {
+                    userId: { in: userIdsInCourse },
+                    moduleId: { in: courseModuleIds },
+                    isFinished: true
+                },
+                _count: {
+                    id: true // Counting the number of finished UserModule records
+                }
+            });
+
+            finishedCountsPerUser.forEach(item => {
+                finishedModulesCountMap.set(item.userId, item._count.id);
+            });
+        }
+
+        const usersResponse: UserCourseResponse[] = userCourses.map(uc => {
+            const finishedUserModulesCount = finishedModulesCountMap.get(uc.userId) || 0;
+            const progress = totalModulesCount > 0 
+                ? parseFloat((finishedUserModulesCount / totalModulesCount).toFixed(2)) // Calculate progress, format to 2 decimal places
+                : 0;
+
+            return {
+                id: uc.user.id,
+                name: uc.user.displayName,
+                email: uc.user.email,
+                userCourseId: uc.id,
+                state: uc.state,
+                roleName: uc.role?.name || "No Role",
+                roleId: uc.role?.id || 0,
+                authorId: course.authorId,
+                progress: progress,
+            };
+        });
 
         return NextResponse.json(usersResponse);
     } catch (error) {

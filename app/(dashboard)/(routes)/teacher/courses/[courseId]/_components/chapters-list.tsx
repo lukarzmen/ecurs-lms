@@ -7,7 +7,7 @@ import {
   Draggable,
   DropResult,
 } from "@hello-pangea/dnd";
-import { Grip, Trash2 } from "lucide-react";
+import { Grip, Trash2, Loader2 } from "lucide-react"; // Added Loader2
 import { cn } from "@/lib/utils";
 import { Module } from "@prisma/client";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ export const ChaptersList = ({
   const [selectedChapterId, setSelectedChapterId] = useState<number | null>(
     null
   );
+  const [editingChapterId, setEditingChapterId] = useState<number | null>(null); // State to track the chapter being edited
 
   useEffect(() => {
     setIsMounted(true);
@@ -39,6 +40,9 @@ export const ChaptersList = ({
   useEffect(() => {
     if (isMounted) {
       setChapters(items);
+      // Reset editingChapterId if items change, to ensure loader isn't stuck
+      // if an edit was interrupted by a list refresh.
+      setEditingChapterId(null);
     }
   }, [items, isMounted]);
 
@@ -81,6 +85,14 @@ export const ChaptersList = ({
     setSelectedChapterId(null);
   };
 
+  const handleEditClick = (id: number) => {
+    setEditingChapterId(id);
+    onEdit(id);
+    // The loader will remain until navigation occurs or the component/item re-renders.
+    // If onEdit doesn't cause navigation, and you need to clear the loader,
+    // onEdit would need to signal completion back to this component.
+  };
+
   if (!isMounted) {
     return null;
   }
@@ -100,7 +112,7 @@ export const ChaptersList = ({
                   {(provided) => (
                     <div
                       className={cn(
-                        "group flex items-center gap-x-2 bg-orange-200 border text-orange-700 rounded-md hover:bg-orange-300 mb-3 text-sm", // Added 'group' and kept 'hover:bg-orange-300'
+                        "group flex items-center gap-x-2 bg-orange-200 border text-orange-700 rounded-md hover:bg-orange-300 mb-3 text-sm", 
                         "border-orange-100"
                       )}
                       ref={provided.innerRef}
@@ -108,18 +120,21 @@ export const ChaptersList = ({
                     >
                       <div
                         className={cn(
-                          "px-2 py-3 border-r border-r-orange-200 group-hover:bg-orange-300 rounded-l-md transition", // Changed hover: to group-hover:
-                          "bg-orange-200 " // Kept original background
+                          "px-2 py-3 border-r border-r-orange-200 group-hover:bg-orange-300 rounded-l-md transition", 
+                          "bg-orange-200 " 
                         )}
                         {...provided.dragHandleProps}
                       >
                         <Grip className="h-5 w-5" />
                       </div>
                       <div 
-                        className="flex-grow px-2 py-3 cursor-pointer hover:bg-orange-300 transition" // This hover is fine as it matches the parent's hover
-                        onClick={() => onEdit(chapter.id)}
+                        className="flex-grow px-2 py-3 cursor-pointer hover:bg-orange-300 transition flex items-center gap-x-2" // Added flex, items-center, gap-x-2
+                        onClick={() => editingChapterId !== chapter.id && handleEditClick(chapter.id)} // Prevent re-click if already "editing"
                       >
                         {chapter.title}
+                        {editingChapterId === chapter.id && (
+                          <Loader2 className="h-4 w-4 animate-spin text-orange-700" />
+                        )}
                       </div>
                       <div className="ml-auto pr-2 flex items-center gap-x-2">
                         <Trash2
