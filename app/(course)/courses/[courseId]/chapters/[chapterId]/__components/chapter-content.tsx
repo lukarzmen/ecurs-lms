@@ -5,6 +5,7 @@ import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 import { SerializedDocument } from "@lexical/file";
 import { set } from "lodash-es";
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 
 export default function ChapterContent ({
     moduleId: moduleId,
@@ -53,7 +54,7 @@ export default function ChapterContent ({
       <div>
         {isLoading ? (
           <div className="flex justify-center items-center">
-            Ładowanie...
+            <Loader2 className="animate-spin text-orange-700" size={32} />
           </div>
         ) : (
           <LexicalEditor

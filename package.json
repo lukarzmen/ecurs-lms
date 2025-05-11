@@ -61,6 +61,7 @@
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.3.1",
+    "react-facebook-pixel": "^1.0.4",
     "react-h5-audio-player": "^3.10.0-rc.1",
     "react-hook-form": "^7.52.2",
     "react-hot-toast": "^2.4.1",

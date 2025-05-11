@@ -14,7 +14,7 @@ import { toast } from "react-hot-toast";
 import { UserResponse } from "@/app/api/user/route";
 import { UserCourseResponse } from "@/app/api/courses/[courseId]/users/route";
 import { useAuth } from "@clerk/nextjs";
-import { PlusCircle } from "lucide-react";
+import { Loader2, PlusCircle } from "lucide-react";
 
 interface StudentsFormProps {
     courseId: string;
@@ -61,7 +61,11 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
     };
 
     if (isLoading) {
-        return <div>Ładowanie studentów...</div>;
+        return (
+            <div className="flex items-center justify-center h-full">
+                <Loader2 className="animate-spin text-orange-700" />
+            </div>
+        );
     }
 
     return (

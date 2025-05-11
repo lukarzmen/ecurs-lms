@@ -8,8 +8,7 @@ import {
 import { useEffect, useState } from "react";
 import { DescriptionNode } from "../../nodes/DictionaryNode/DescriptionNode";
 import toast from "react-hot-toast";
-import OpenAIService from "@/services/OpenAIService";
-import { set } from "zod";
+import { Loader2 } from "lucide-react";
 
 export const INSERT_DEFINITION_NODE_COMMAND = createCommand("INSERT_DEFINITION_NODE_COMMAND");
 
@@ -67,7 +66,7 @@ function DefinitionModal({
           </button>
             {isLoading ? (
             <div className="px-4 py-2 bg-blue-300 text-white rounded-md">
-              Ładowanie...
+              <Loader2 className="animate-spin text-orange-700" size={16} />
             </div>
             ) : (
             <button

@@ -100,7 +100,7 @@ const toogleCreating = () => {
           className="absolute h-full w-full bg-slate-500/200
                     top-0 right-0 flex items-center justify-center"
         >
-          <Loader2 className="animate-spin h-6 w-6 text-sky-700"></Loader2>
+          <Loader2 className="animate-spin h-6 w-6 text-orange-700"></Loader2>
         </div>
       )}
       <div className="font-medium flex items-center justify-between">

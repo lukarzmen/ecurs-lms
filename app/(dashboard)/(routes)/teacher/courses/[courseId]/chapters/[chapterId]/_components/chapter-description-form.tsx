@@ -1,9 +1,8 @@
 
 "use client"
 
-import axios from "axios";
+import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
@@ -11,8 +10,6 @@ import { Pencil } from "lucide-react";
 import { SerializedDocument } from "@lexical/file";
 import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 import LexicalEditor from "@/components/editor/LexicalEditor";
-import { set } from "zod";
-import { json } from "stream/consumers";
 
 interface ChapterDescriptionFormProps {
   courseId: string;
@@ -104,7 +101,7 @@ export const ChapterDescriptionForm = ({
       </div>
       {isLoading ? (
         <div className="flex justify-center items-center">
-          Ładowanie...
+          <Loader2 className="animate-spin text-orange-700" size={32} />
         </div>
       ) : (
         <div className="space-y-4 mt-4">

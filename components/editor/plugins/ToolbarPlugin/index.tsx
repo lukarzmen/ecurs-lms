@@ -1135,7 +1135,7 @@ export default function ToolbarPlugin({
                 </DropDownItem>
                 <DropDownItem
                   onClick={() => {
-                    showModal('Wstaw układ kolumn', (onClose) => (
+                    showModal('Wstaw układ kolumnowy', (onClose) => (
                       <InsertLayoutDialog
                         activeEditor={activeEditor}
                         onClose={onClose}
@@ -1144,7 +1144,7 @@ export default function ToolbarPlugin({
                   }}
                   className="item">
                   <i className="icon columns" />
-                  <span className="text">Układ kolumn</span>
+                  <span className="text">Układ kolumnowy</span>
                 </DropDownItem>
                 <DropDownItem
                   onClick={() => {

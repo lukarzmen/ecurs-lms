@@ -4,6 +4,7 @@ import { UserResponse } from '@/app/api/user/route';
 import { authorizeUser } from '@/hooks/use-auth';
 import { useAuth } from '@clerk/nextjs';
 import { User } from '@prisma/client';
+import { Loader2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -95,9 +96,8 @@ const StudentsPage: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="container mx-auto p-4 text-center">
-                <p>Ładowanie studentów...</p>
-                {/* You can replace this with a spinner component */}
+            <div className="container mx-auto p-4 text-center flex justify-center items-center h-screen">
+               <Loader2 className="animate-spin text-orange-700" size={32} />
             </div>
         );
     }

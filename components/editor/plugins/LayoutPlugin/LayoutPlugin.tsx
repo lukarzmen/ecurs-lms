@@ -6,7 +6,7 @@
  *
  */
 
-import type {ElementNode, LexicalCommand, LexicalNode, NodeKey} from 'lexical';
+import type {LexicalCommand, LexicalNode, NodeKey} from 'lexical';
 
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {
@@ -26,6 +26,11 @@ import {
   KEY_ARROW_LEFT_COMMAND,
   KEY_ARROW_RIGHT_COMMAND,
   KEY_ARROW_UP_COMMAND,
+  KEY_BACKSPACE_COMMAND,
+  $isElementNode,
+  $isTextNode,
+  ElementNode,
+  COMMAND_PRIORITY_HIGH,
 } from 'lexical';
 import {useEffect} from 'react';
 
@@ -125,6 +130,44 @@ export function LayoutPlugin(): null {
         KEY_ARROW_LEFT_COMMAND,
         () => $onEscape(true),
         COMMAND_PRIORITY_LOW,
+      ),
+      // Add KEY_BACKSPACE_COMMAND handler
+      editor.registerCommand<KeyboardEvent>(
+        KEY_BACKSPACE_COMMAND,
+        (event) => {
+          const selection = $getSelection();
+          if (
+            !$isRangeSelection(selection) ||
+            !selection.isCollapsed() ||
+            selection.anchor.offset !== 0
+          ) {
+            return false;
+          }
+
+          const anchorNode = selection.anchor.getNode();
+          const parentElement = $isTextNode(anchorNode)
+            ? anchorNode.getParentOrThrow()
+            : anchorNode;
+
+          if (
+            $isElementNode(parentElement) &&
+            parentElement.getIndexWithinParent() === 0
+          ) {
+            const layoutItem = parentElement.getParent();
+            if ($isLayoutItemNode(layoutItem)) {
+              const layoutContainer = layoutItem.getParent();
+              if ($isLayoutContainerNode(layoutContainer)) {
+                // If backspace is at the start of content within any LayoutItem,
+                // remove the entire LayoutContainer and all its children.
+                layoutContainer.remove();
+                event.preventDefault();
+                return true;
+              }
+            }
+          }
+          return false;
+        },
+        COMMAND_PRIORITY_HIGH, // Use COMMAND_PRIORITY_HIGH (value 1)
       ),
       editor.registerCommand(
         INSERT_LAYOUT_COMMAND,

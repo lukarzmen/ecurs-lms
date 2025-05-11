@@ -8,6 +8,11 @@ import {
   createCommand,
   LexicalCommand,
   LexicalEditor,
+  $getSelection,
+  $isRangeSelection,
+  $getNodeByKey,
+  $isParagraphNode,
+  ParagraphNode, 
 } from "lexical";
 import { AudioNode } from "../../nodes/AudioNode";
 import ProgressSpinner from "../TextGeneratorPlugin/ProgressComponent";
@@ -236,20 +241,65 @@ export default function AudioPlugin(): JSX.Element | null {
       CREATE_AUDIO_NODE_COMMAND,
       ({ audioSrc, transcription }) => {
         editor.update(() => {
-          const root = $getRoot();
-          if(!root.getChildren()){
-            root.append($createParagraphNode());
-          }
           const audioNode = new AudioNode(audioSrc);
-          const paragraphNode = $createParagraphNode();
+          const paragraphContainingAudio = $createParagraphNode();
+          paragraphContainingAudio.append(audioNode);
+          const paragraphContainingAudioKey = paragraphContainingAudio.getKey();
 
-          root.append(paragraphNode, audioNode);
+          const nodesToInsert: ParagraphNode[] = [paragraphContainingAudio];
+          let transcriptionParagraphKey: string | null = null;
 
           if (transcription) {
-            const transcriptionNode = $createParagraphNode();
-            transcriptionNode.append($createTextNode(transcription));
-            root.append(transcriptionNode);
-            root.append($createParagraphNode());
+            const transcriptionParagraph = $createParagraphNode();
+            transcriptionParagraph.append($createTextNode(transcription));
+            transcriptionParagraphKey = transcriptionParagraph.getKey();
+            nodesToInsert.push(transcriptionParagraph);
+          }
+
+          const selection = $getSelection();
+          if ($isRangeSelection(selection)) {
+            selection.insertNodes(nodesToInsert);
+          } else {
+            const root = $getRoot();
+            root.append(...nodesToInsert);
+          }
+
+          const actualParagraphContainingAudio = $getNodeByKey<ParagraphNode>(paragraphContainingAudioKey);
+          if (!actualParagraphContainingAudio) {
+            console.error("AudioPlugin: Failed to retrieve the inserted audio paragraph node.");
+            return true; // Exit early
+          }
+
+          let lastContentNode: ParagraphNode = actualParagraphContainingAudio;
+          if (transcription && transcriptionParagraphKey) {
+            const actualTranscriptionParagraph = $getNodeByKey<ParagraphNode>(transcriptionParagraphKey);
+            if (actualTranscriptionParagraph) {
+              lastContentNode = actualTranscriptionParagraph;
+            } else {
+              console.warn("AudioPlugin: Failed to retrieve the inserted transcription paragraph node, using audio paragraph as last content node.");
+            }
+          }
+
+          // Ensure paragraph BEFORE the first content node (actualParagraphContainingAudio)
+          const paragraphBefore = actualParagraphContainingAudio.getPreviousSibling();
+          if (!paragraphBefore || !$isParagraphNode(paragraphBefore)) {
+            const newParagraphBefore = $createParagraphNode();
+            actualParagraphContainingAudio.insertBefore(newParagraphBefore);
+          }
+
+          // Ensure paragraph AFTER the last content node (lastContentNode)
+          let paragraphForCursor = lastContentNode.getNextSibling();
+          if (!paragraphForCursor || !$isParagraphNode(paragraphForCursor)) {
+            const newParagraphAfter = $createParagraphNode();
+            lastContentNode.insertAfter(newParagraphAfter);
+            paragraphForCursor = newParagraphAfter;
+          }
+
+          // Set selection to the paragraph after for better UX
+          if (paragraphForCursor && $isParagraphNode(paragraphForCursor)) {
+            paragraphForCursor.selectEnd();
+          } else {
+            lastContentNode.selectEnd(); // Fallback
           }
         });
 

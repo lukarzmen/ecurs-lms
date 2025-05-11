@@ -48,9 +48,10 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-y-2">
             <Link
-              href={`/teacher/courses`}
-              className="flex items-center text-sm hover:opacity-75 transition p-4">
-              <ArrowLeft className="h-4 w-4 mr-2"></ArrowLeft>
+              href="/teacher/courses"
+              className="flex items-center text-sm hover:opacity-75 transition p-4"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
               Powrót do listy kursów
             </Link>
             <h1 className="text-2xl font-medium">Konfiguracja kursu</h1>

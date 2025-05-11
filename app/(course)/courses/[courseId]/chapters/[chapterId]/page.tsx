@@ -2,12 +2,13 @@
 
 import { Banner } from "@/components/banner";
 import { useAuth } from "@clerk/nextjs"; // <-- Use client-side auth hook
-import { redirect, useParams, useRouter } from "next/navigation"; // <-- Import client-side navigation hooks
 import ChapterContent from "./__components/chapter-content";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useEffect, useState } from "react"; // <-- Import client-side hooks
+import { redirect, useParams, useRouter } from "next/navigation"; // <-- Import client-side navigation hooks
+import { Loader2 } from "lucide-react";
 
 // Define a type for the fetched chapter data
 interface ChapterData {
@@ -141,7 +142,11 @@ const ChapterIdPage = () => {
 
     // Render loading state
     if (isLoading) {
-        return <div className="p-4">Ładowanie...</div>; // Add a proper loading indicator
+        return (
+            <div className="flex justify-center items-center h-full">
+                <Loader2 className="animate-spin text-orange-700" size={32} />
+            </div>
+        );
     }
 
     // Render error state

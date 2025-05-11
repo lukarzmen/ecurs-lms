@@ -127,10 +127,10 @@ export const ChaptersList = ({
                       >
                         <Grip className="h-5 w-5" />
                       </div>
-                      <div 
-                        className="flex-grow px-2 py-3 cursor-pointer hover:bg-orange-300 transition flex items-center gap-x-2" // Added flex, items-center, gap-x-2
+                        <div 
+                        className="flex-grow px-2 py-3 cursor-pointer hover:bg-orange-300 transition flex items-center gap-x-2 select-none" // Added select-none to make text not selectable
                         onClick={() => editingChapterId !== chapter.id && handleEditClick(chapter.id)} // Prevent re-click if already "editing"
-                      >
+                        >
                         {chapter.title}
                         {editingChapterId === chapter.id && (
                           <Loader2 className="h-4 w-4 animate-spin text-orange-700" />
@@ -154,7 +154,7 @@ export const ChaptersList = ({
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded shadow-lg">
-            <div>Are you sure you want to delete this chapter?</div>
+            <div>Na pewno chcesz usunąć ten moduł?</div>
             <div className="flex justify-end mt-4">
               <Button
                 variant="secondary"

@@ -6,10 +6,13 @@ import {
   COMMAND_PRIORITY_EDITOR,
   createCommand,
   LexicalCommand,
+  $getNodeByKey, 
+  $isParagraphNode, 
+  ParagraphNode // Added for type assertion
 } from 'lexical';
 import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $createDoTaskNode } from '../../nodes/DoTaskNode/DoTask';
+import { $createDoTaskNode, DoTaskNode } from '../../nodes/DoTaskNode/DoTask';
 
 export type DoTaskType = {
   task: string;
@@ -25,11 +28,47 @@ export default function QuestionAnswerPlugin(): JSX.Element | null {
     return editor.registerCommand<DoTaskType>(
       INSERT_TASK_COMMAND,
       (payload) => {
-        const doTaskNode = $createDoTaskNode(payload);
         editor.update(() => {
-          $insertNodes([doTaskNode]);
-          if ($isRootOrShadowRoot(doTaskNode.getParentOrThrow())) {
-            $wrapNodeInElement(doTaskNode, $createParagraphNode).selectEnd();
+          const doTaskNode = $createDoTaskNode(payload);
+          
+          // Create a paragraph to wrap the DoTaskNode
+          const paragraphWrapper = $createParagraphNode();
+          paragraphWrapper.append(doTaskNode); // Put DoTaskNode inside the paragraph
+
+          // Insert the WRAPPING PARAGRAPH
+          $insertNodes([paragraphWrapper]);
+
+          // Get the newly inserted WRAPPING PARAGRAPH from the editor state
+          const newlyInsertedParagraphKey = paragraphWrapper.getKey();
+          const newlyInsertedParagraph = $getNodeByKey<ParagraphNode>(newlyInsertedParagraphKey);
+
+          if (
+            newlyInsertedParagraph &&
+            $isParagraphNode(newlyInsertedParagraph) && // Ensure it's a ParagraphNode
+            $isRootOrShadowRoot(newlyInsertedParagraph.getParentOrThrow())
+          ) {
+            // Ensure paragraph AFTER the wrapping paragraph
+            let paragraphAfter = newlyInsertedParagraph.getNextSibling();
+            if (!paragraphAfter || !$isParagraphNode(paragraphAfter)) {
+              const newParagraphAfter = $createParagraphNode();
+              newlyInsertedParagraph.insertAfter(newParagraphAfter);
+              paragraphAfter = newParagraphAfter; 
+            }
+
+            // Ensure paragraph BEFORE the wrapping paragraph
+            let paragraphBefore = newlyInsertedParagraph.getPreviousSibling();
+            if (!paragraphBefore || !$isParagraphNode(paragraphBefore)) {
+              const newActualParagraphBefore = $createParagraphNode();
+              newlyInsertedParagraph.insertBefore(newActualParagraphBefore);
+              paragraphBefore = newActualParagraphBefore;
+            }
+
+            // Set selection to the paragraph after the wrapping paragraph for a better UX
+            if (paragraphAfter && $isParagraphNode(paragraphAfter)) {
+              paragraphAfter.selectEnd();
+            } else {
+              newlyInsertedParagraph.selectEnd(); // Fallback
+            }
           }
         });
         return true;
