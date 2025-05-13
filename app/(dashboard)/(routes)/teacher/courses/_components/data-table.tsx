@@ -107,7 +107,7 @@ export function DataTable<TData, TValue>({
                                     {row.getVisibleCells().map((cell, index) => (
                                         <TableCell
                                             key={cell.id}
-                                            className={index === 1 ? "w-1/12 text-right" : ""}
+                                            className={`${index === 1 ? "w-1/12 text-right" : ""} select-none`}
                                         >
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </TableCell>
@@ -116,7 +116,7 @@ export function DataTable<TData, TValue>({
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center">
+                                <TableCell colSpan={columns.length} className="h-24 text-center select-none">
                                     No results.
                                 </TableCell>
                             </TableRow>

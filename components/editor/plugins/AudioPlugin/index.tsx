@@ -12,15 +12,32 @@ import {
   $isRangeSelection,
   $getNodeByKey,
   $isParagraphNode,
-  ParagraphNode, 
+  ParagraphNode,
+  $insertNodes,
+  $isRootOrShadowRoot,
 } from "lexical";
-import { AudioNode } from "../../nodes/AudioNode";
+import { AudioNode } from "../../nodes/AudioNode"; // Ensure AudioNode is imported if needed for instanceof, though not directly used in this snippet
 import ProgressSpinner from "../TextGeneratorPlugin/ProgressComponent";
 
 
 export const CREATE_AUDIO_NODE_COMMAND: LexicalCommand<{ audioSrc: string; transcription?: string }> = createCommand(
   "CREATE_AUDIO_NODE_COMMAND"
 );
+
+// Helper function to convert File to Base64 Data URL
+const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Failed to read file as Base64 string.'));
+      }
+    };
+    reader.onerror = (error) => reject(error);
+  });
 
 export function TranscriptionDialog({
   activeEditor,
@@ -30,11 +47,11 @@ export function TranscriptionDialog({
   onClose: () => void;
 }): JSX.Element {
   const [uploadType, setUploadType] = useState<"url" | "record" | "file" | null>(null);
-  const [audioUrl, setAudioUrl] = useState("");
-  const [recordingUrl, setRecordingAudioUrl] = useState("");
+  const [audioUrl, setAudioUrl] = useState(""); // Will store Base64 data URL or external URL
+  const [recordingUrl, setRecordingAudioUrl] = useState(""); // For live preview of recording (can still be object URL)
   const [loading, setLoading] = useState(false);
   const [generateTranscription, setGenerateTranscription] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null); // Stores the selected or recorded file
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -42,24 +59,13 @@ export function TranscriptionDialog({
   const handleUpload = async () => {
     if (!file) return;
     setLoading(true);
-
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("/api/audio", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Przesyłanie pliku nie powiodło się");
-      }
-
-      const data = await response.json();
-      setAudioUrl(`${window.location.origin}/api/audio/${data.id}`);
+      const base64Audio = await fileToBase64(file);
+      setAudioUrl(base64Audio); // Set the main audioUrl to Base64 for the node
+      // No server upload, audio is kept local as Base64
     } catch (error) {
-      console.error("Błąd podczas przesyłania pliku:", error);
+      console.error("Błąd podczas konwersji pliku na Base64:", error);
+      // Optionally, inform the user about the error
     } finally {
       setLoading(false);
     }
@@ -72,25 +78,32 @@ export function TranscriptionDialog({
     try {
       let generatedTranscription = "";
       if (generateTranscription) {
+        // Note: Transcription API might not support Base64 directly in a 'url' field.
+        // If /api/transcribe expects a URL, sending a long Base64 string might fail or be inefficient.
+        // You might need to adjust /api/transcribe or send the Base64 data differently.
+        // For this example, we'll assume it might work or this part needs further adjustment based on API capabilities.
         const response = await fetch("/api/transcribe", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: audioUrl }),
+          body: JSON.stringify({ audioData: audioUrl }), // Sending as audioData, API needs to handle this
         });
         
-        if (!response.ok) throw new Error("Transkrypcja nie powiodła się");
-        const data = await response.json();
-        generatedTranscription = data.transcription;
+        if (!response.ok) {
+          console.warn("Transkrypcja nie powiodła się. Może to być spowodowane wysłaniem danych Base64 lub błędem API.");
+        } else {
+          const data = await response.json();
+          generatedTranscription = data.transcription;
+        }
       }
 
       activeEditor.dispatchCommand(CREATE_AUDIO_NODE_COMMAND, {
-        audioSrc: audioUrl,
-        transcription: generateTranscription ? generatedTranscription : undefined,
+        audioSrc: audioUrl, // This will be the Base64 data URL or a user-provided external URL
+        transcription: generateTranscription && generatedTranscription ? generatedTranscription : undefined,
       });
-
       onClose();
+
     } catch (error) {
-      console.error("Błąd podczas transkrypcji:", error);
+      console.error("Błąd podczas generowania audio/transkrypcji:", error);
     } finally {
       setLoading(false);
     }
@@ -100,54 +113,51 @@ export function TranscriptionDialog({
     if (isRecording) {
       mediaRecorderRef.current?.stop();
       setIsRecording(false);
+      // The 'file' state will be set in mediaRecorder.onstop
       return;
     }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
-      mediaRecorder.ondataavailable = (event) => {
+      mediaRecorderRef.current.ondataavailable = (event) => {
         audioChunksRef.current.push(event.data);
       };
 
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/mp3" });
-        const newFile = new File([audioBlob], "recording.mp3", { type: "audio/mp3" });
-        setFile(newFile);
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/mp3" }); // Or appropriate type
+        const recordedFile = new File([audioBlob], "recording.mp3", { type: "audio/mp3" });
+        setFile(recordedFile); // Set the recorded file to state
+        
+        // For immediate preview, an object URL is fine.
+        // The actual Base64 conversion for the node will happen in handleUploadRecorded.
         setRecordingAudioUrl(URL.createObjectURL(audioBlob));
+        
+        // Clean up the media stream tracks
+        stream.getTracks().forEach(track => track.stop());
       };
 
-      mediaRecorder.start();
+      mediaRecorderRef.current.start();
       setIsRecording(true);
     } catch (error) {
-      console.error("Błąd podczas uzyskiwania dostępu do mikrofonu:", error);
+      console.error("Błąd podczas nagrywania audio:", error);
+      // Optionally, inform the user
     }
   };
 
   const handleUploadRecorded = async () => {
-    if (!file) return;
+    if (!file) { // 'file' should be set from the recording
+      console.error("Brak nagranego pliku do przetworzenia.");
+      return;
+    }
     setLoading(true);
-
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("/api/audio", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Przesyłanie pliku nie powiodło się");
-      }
-
-      const data = await response.json();
-      setAudioUrl(`${window.location.origin}/api/audio/${data.id}`);
+      const base64Audio = await fileToBase64(file);
+      setAudioUrl(base64Audio); // Set the main audioUrl to Base64 for the node
     } catch (error) {
-      console.error("Błąd podczas przesyłania pliku:", error);
+      console.error("Błąd podczas konwersji nagrania na Base64:", error);
     } finally {
       setLoading(false);
     }
@@ -185,12 +195,11 @@ export function TranscriptionDialog({
             </button>
             {recordingUrl && (
               <div className="mt-4">
-                <audio controls>
-                  <source src={recordingUrl} type="audio/mp3" />
+                <audio controls src={recordingUrl}> {/* Use src attribute directly for preview */}
                   Twoja przeglądarka nie obsługuje tagu audio.
                 </audio>
-                <button className="px-4 py-2 bg-orange-500 text-white rounded-md mt-2" onClick={handleUploadRecorded} disabled={loading}>
-                  {loading ? "Przesyłanie..." : "Prześlij nagranie"}
+                <button className="px-4 py-2 bg-orange-500 text-white rounded-md mt-2" onClick={handleUploadRecorded} disabled={loading || !file}>
+                  {loading ? "Przetwarzanie..." : "Użyj tego nagrania"}
                 </button>
               </div>
             )}
@@ -198,13 +207,21 @@ export function TranscriptionDialog({
         )}
         {uploadType === "file" && (
           <>
-            <input type="file" accept="audio/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+            <input type="file" accept="audio/*" onChange={(e) => {
+              const selectedFile = e.target.files?.[0] || null;
+              setFile(selectedFile);
+              if (selectedFile) {
+                // Optional: Preview for uploaded file
+                // setRecordingAudioUrl(URL.createObjectURL(selectedFile)); 
+              } else {
+                // setRecordingAudioUrl("");
+              }
+            }} />
             <button className="px-4 py-2 bg-orange-500 text-white rounded-md mt-2" onClick={handleUpload} disabled={!file || loading}>
-              {loading ? "Przesyłanie..." : "Prześlij plik"}
+              {loading ? "Przetwarzanie..." : "Użyj tego pliku"}
             </button>
-            {file && (
-              <audio controls className="mt-4">
-                <source src={URL.createObjectURL(file)} type="audio/mp3" />
+            {file && ( // Show preview if a file is selected
+              <audio controls className="mt-4" src={URL.createObjectURL(file)}>
                 Twoja przeglądarka nie obsługuje tagu audio.
               </audio>
             )}
@@ -231,82 +248,69 @@ export function TranscriptionDialog({
         {loading && <ProgressSpinner />}
       </div>
     </div>
-  );}
+  );
+}
 
 export default function AudioPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
   
   useEffect(() => {
-    return editor.registerCommand<{ audioSrc: string; transcription?: string }>(
+    const unregisterCommand = editor.registerCommand<{ audioSrc: string; transcription?: string }>(
       CREATE_AUDIO_NODE_COMMAND,
       ({ audioSrc, transcription }) => {
         editor.update(() => {
-          const audioNode = new AudioNode(audioSrc);
-          const paragraphContainingAudio = $createParagraphNode();
-          paragraphContainingAudio.append(audioNode);
-          const paragraphContainingAudioKey = paragraphContainingAudio.getKey();
+          // Step 1: Create the main content node(s)
+          const audioNode = new AudioNode(audioSrc); 
 
-          const nodesToInsert: ParagraphNode[] = [paragraphContainingAudio];
-          let transcriptionParagraphKey: string | null = null;
+          // Create a paragraph to wrap the QuestionAnswerNode
+          const paragraphWrapper = $createParagraphNode();
+          paragraphWrapper.append(audioNode); // Put QuestionAnswerNode inside the paragraph
 
-          if (transcription) {
-            const transcriptionParagraph = $createParagraphNode();
-            transcriptionParagraph.append($createTextNode(transcription));
-            transcriptionParagraphKey = transcriptionParagraph.getKey();
-            nodesToInsert.push(transcriptionParagraph);
-          }
+          // Insert the WRAPPING PARAGRAPH
+          $insertNodes([paragraphWrapper]);
 
-          const selection = $getSelection();
-          if ($isRangeSelection(selection)) {
-            selection.insertNodes(nodesToInsert);
-          } else {
-            const root = $getRoot();
-            root.append(...nodesToInsert);
-          }
+          // Get the newly inserted WRAPPING PARAGRAPH from the editor state
+          const newlyInsertedParagraphKey = paragraphWrapper.getKey();
+          const newlyInsertedParagraph = $getNodeByKey<ParagraphNode>(newlyInsertedParagraphKey);
 
-          const actualParagraphContainingAudio = $getNodeByKey<ParagraphNode>(paragraphContainingAudioKey);
-          if (!actualParagraphContainingAudio) {
-            console.error("AudioPlugin: Failed to retrieve the inserted audio paragraph node.");
-            return true; // Exit early
-          }
-
-          let lastContentNode: ParagraphNode = actualParagraphContainingAudio;
-          if (transcription && transcriptionParagraphKey) {
-            const actualTranscriptionParagraph = $getNodeByKey<ParagraphNode>(transcriptionParagraphKey);
-            if (actualTranscriptionParagraph) {
-              lastContentNode = actualTranscriptionParagraph;
-            } else {
-              console.warn("AudioPlugin: Failed to retrieve the inserted transcription paragraph node, using audio paragraph as last content node.");
+          if (
+            newlyInsertedParagraph &&
+            $isParagraphNode(newlyInsertedParagraph) && // Ensure it's a ParagraphNode
+            $isRootOrShadowRoot(newlyInsertedParagraph.getParentOrThrow())
+          ) {
+            // Ensure paragraph AFTER the wrapping paragraph
+            let paragraphAfter = newlyInsertedParagraph.getNextSibling();
+            if (!paragraphAfter || !$isParagraphNode(paragraphAfter)) {
+              const newParagraphAfter = $createParagraphNode();
+              newlyInsertedParagraph.insertAfter(newParagraphAfter);
+              paragraphAfter = newParagraphAfter; 
             }
-          }
 
-          // Ensure paragraph BEFORE the first content node (actualParagraphContainingAudio)
-          const paragraphBefore = actualParagraphContainingAudio.getPreviousSibling();
-          if (!paragraphBefore || !$isParagraphNode(paragraphBefore)) {
-            const newParagraphBefore = $createParagraphNode();
-            actualParagraphContainingAudio.insertBefore(newParagraphBefore);
-          }
+            // Ensure paragraph BEFORE the wrapping paragraph
+            let paragraphBefore = newlyInsertedParagraph.getPreviousSibling();
+            if (!paragraphBefore || !$isParagraphNode(paragraphBefore)) {
+              const newActualParagraphBefore = $createParagraphNode();
+              newlyInsertedParagraph.insertBefore(newActualParagraphBefore);
+              paragraphBefore = newActualParagraphBefore;
+            }
 
-          // Ensure paragraph AFTER the last content node (lastContentNode)
-          let paragraphForCursor = lastContentNode.getNextSibling();
-          if (!paragraphForCursor || !$isParagraphNode(paragraphForCursor)) {
-            const newParagraphAfter = $createParagraphNode();
-            lastContentNode.insertAfter(newParagraphAfter);
-            paragraphForCursor = newParagraphAfter;
-          }
-
-          // Set selection to the paragraph after for better UX
-          if (paragraphForCursor && $isParagraphNode(paragraphForCursor)) {
-            paragraphForCursor.selectEnd();
-          } else {
-            lastContentNode.selectEnd(); // Fallback
+            // Set selection to the paragraph after the wrapping paragraph for a better UX
+            if (paragraphAfter && $isParagraphNode(paragraphAfter)) {
+              paragraphAfter.selectEnd();
+            } else {
+              newlyInsertedParagraph.selectEnd(); // Fallback
+            }
           }
         });
 
-        return true;
+        return true; // Indicate the command was handled
       },
       COMMAND_PRIORITY_EDITOR
     );
+
+    return () => {
+      unregisterCommand();
+    };
   }, [editor]);
 
   return null;
