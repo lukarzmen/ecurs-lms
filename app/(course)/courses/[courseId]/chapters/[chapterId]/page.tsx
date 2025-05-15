@@ -98,6 +98,7 @@ const ChapterIdPage = () => {
                 setError(err.message || "Wystąpił błąd podczas ładowania rozdziału.");
             } finally {
                 setIsLoading(false);
+                router.refresh(); // Refresh the router to ensure the latest data is shown
             }
         };
 

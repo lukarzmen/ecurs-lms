@@ -58,7 +58,6 @@ export async function GET(
 ) {
   try {
     const providerId = req.nextUrl.searchParams.get("providerId"); // Get the providerId from the request URL
-    console.log("[COURSE_ID_CHAPTERS_GET] Provider ID:", providerId); 
     if(!providerId) {
       return new NextResponse("Unauthorized - Missing providerId", { status: 401 });
     }
@@ -76,7 +75,6 @@ export async function GET(
     if (!user) {
       return new NextResponse("User not found", { status: 404 });
     }
-    console.log("[COURSE_ID_CHAPTERS_GET] User found:", user.id);
 
     const course = await db.course.findUnique({
       where: {
@@ -94,7 +92,6 @@ export async function GET(
     if (!course) {
       return new NextResponse("Course not found", { status: 404 });
     }
-    console.log("[COURSE_ID_CHAPTERS_GET] Course found:", course.id);
 
     // Fetch UserCourse to determine overall course access state
     const userCourse = await db.userCourse.findUnique({
@@ -106,7 +103,6 @@ export async function GET(
       },
     });
 
-    console.log("[COURSE_ID_CHAPTERS_GET] UserCourse state:", userCourse?.state);
 
     // If user is found and course is active (state 1), fetch their progress for the modules
     let userModulesMap: Map<number, UserModule> = new Map();
@@ -121,7 +117,6 @@ export async function GET(
         }
       });
       userModules.forEach(um => userModulesMap.set(um.moduleId, um));
-      console.log("[COURSE_ID_CHAPTERS_GET] Fetched UserModules for active course:", userModules.length);
     }
 
     // Add progressState to each module
