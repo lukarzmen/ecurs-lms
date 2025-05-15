@@ -41,8 +41,7 @@ export default async function Home() {
         console.error("API returned error:", fetchError);
       } else {
         // Destructure only if it's the success structure
-        ({ courses, finishedCount, unfinishedCount } = userCourses);
-        console.log("Fetched user courses:", userCourses);
+        ({ courses, finishedCount, unfinishedCount } = userCourses);     
       }
     }
   } catch (error) {

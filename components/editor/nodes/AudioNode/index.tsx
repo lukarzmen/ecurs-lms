@@ -43,7 +43,7 @@ export class AudioNode extends DecoratorNode<JSX.Element> {
 
   decorate(): JSX.Element {
     return   <AudioPlayer
-    autoPlay
+    autoPlay={false}
     src={this.__audioSrc}
     onPlay={e => console.log("onPlay")}
     // other props here

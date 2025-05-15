@@ -95,7 +95,7 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
                                 <TableCell className="font-medium">{student.name}</TableCell>
                                 <TableCell>{student.email}</TableCell>
                                 <TableCell>{student.roleName}</TableCell>
-                                <TableCell>{`${student.progress * 100.0}%`}</TableCell>
+                                <TableCell>{`${(student.progress * 100.0).toFixed(2)}%`}</TableCell>
                                 <TableCell>
                                     {student.roleId === 0 && (
                                         student.state === 0 ? (
