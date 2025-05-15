@@ -35,6 +35,9 @@ export async function GET(req: Request, { params }: { params: { courseId: string
         const userCourses = await db.userCourse.findMany({
             where: {
                 courseId: courseIdNumber,
+                NOT: {
+                    user: {},
+                },
             },
             include: {
                 user: {

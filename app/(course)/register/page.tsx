@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 export default function RegisterPage() {
     const { isSignedIn, userId, sessionId } = useAuth();
@@ -69,7 +70,9 @@ export default function RegisterPage() {
                             : "bg-orange-600 hover:bg-orange-700 transition-colors"
                         }`}
                 >
-                    {isLoading ? "Przetwarzanie..." : "Jestem uczniem"}
+                    {isLoading ? (
+                        <Loader2 className="mx-auto animate-spin" size={24} />
+                    ) : "Jestem uczniem"}
                 </button>
                 <button
                     onClick={() => handleSignUp(1)}
@@ -80,7 +83,9 @@ export default function RegisterPage() {
                             : "bg-blue-600 hover:bg-blue-700 transition-colors"
                         }`}
                 >
-                    {isLoading ? "Przetwarzanie..." : "Jestem nauczycielem"}
+                    {isLoading ? (
+                        <Loader2 className="mx-auto animate-spin" size={24} />
+                    ) : "Jestem nauczycielem"}
                 </button>
                 {!isSignedIn && (
                     <p className="text-sm text-amber-600">
