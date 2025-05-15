@@ -101,11 +101,11 @@ export async function GET(
       if (!course) {
         return new NextResponse("Course not found", { status: 404 });
       }
-      const lastNotFinishedModuleId = course.modules.reduce((max, module) => Math.max(max, module.id), 0);
+      const firstNotFinishedModuleId = course.modules.reduce((max, module) => Math.min(max, module.id), 0);
 
       return NextResponse.json({
         ...course,
-        lastNotFinishedModuleId: lastNotFinishedModuleId,
+        firstNotFinishedModuleId: firstNotFinishedModuleId,
       });
     } catch (error) {
       console.error(error);
