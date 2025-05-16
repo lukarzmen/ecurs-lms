@@ -47,9 +47,11 @@ export function GenerateDictionaryPlugin() {
     });
 
     editor.registerNodeTransform(DictionaryNode, dictionaryNode => {
-        const latestNode = editor.getElementByKey(dictionaryNode.getKey());
-        if (latestNode instanceof DictionaryNode) {
-          latestNode.isEditable = editor.isEditable();
+        if (dictionaryNode.__key) {  // First check if key exists
+            const latestNode = $getNodeByKey(dictionaryNode.__key);
+            if (latestNode instanceof DictionaryNode) {
+              latestNode.isEditable = editor.isEditable();
+            }
         }
     });
 

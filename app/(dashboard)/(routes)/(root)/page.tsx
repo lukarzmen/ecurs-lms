@@ -72,7 +72,7 @@ export default async function Home() {
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <InfoCard icon={Clock} label="W trakcie" numberOfItems={unfinishedCount} />
-        <InfoCard icon={CheckCircle} label="Ukończono" numberOfItems={finishedCount} variant="success" />
+        <InfoCard icon={CheckCircle} label="Ukończono" numberOfItems={finishedCount} />
         </div>
         <CoursesList items={courses} />
       </div>

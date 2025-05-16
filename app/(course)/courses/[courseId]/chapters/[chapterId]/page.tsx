@@ -175,8 +175,8 @@ const ChapterIdPage = () => {
             )}
             <Link
                 href={"/"} // Link back to the course page
-                className="flex items-center text-sm hover:opacity-75 transition p-4 ">
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                className="flex items-center text-sm hover:opacity-75 transition p-4 select-none">
+                <ArrowLeft className="h-4 w-4 mr-1" />
                 Wróć do panelu kursów
             </Link>
             <div className="flex flex-col mx-auto">

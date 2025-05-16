@@ -24,7 +24,7 @@ export class DictionaryNode extends DecoratorNode<JSX.Element> implements ToComp
   public __isCompleted: boolean = false; // Initialized to false
 
   // Store editor instance locally, obtained during decoration
-  private __editor: LexicalEditor | null = null;
+  protected __editor: LexicalEditor | null = null;
 
   public getDictionaryData(): Dictionary {
     const self = this.getLatest();

@@ -3,7 +3,7 @@ import React from "react";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { IconBadge } from "@/components/icon-badge";
-import { ArrowLeft, LayoutDashboard, ListCheck, PlusCircle, Users2Icon } from "lucide-react";
+import { ArrowLeft, LayoutDashboard, ListCheck, PlusCircle, Settings, Users2Icon } from "lucide-react";
 import TitleForm from "./_components/title-form";
 import DescriptionForm from "./_components/description-form";
 import ImageForm from "./_components/image-form";
@@ -49,9 +49,9 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
           <div className="flex flex-col gap-y-2">
             <Link
               href="/teacher/courses"
-              className="flex items-center text-sm hover:opacity-75 transition p-4"
+              className="flex items-center text-sm hover:opacity-75 transition pt-4 select-none"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="h-4 w-4 mr-1" />
               Powrót do listy kursów
             </Link>
             <h1 className="text-2xl font-medium">Konfiguracja kursu</h1>
@@ -60,8 +60,8 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
           </div>
         </div>
         <div className="flex items-center gap-x-2 mt-8">
-          <IconBadge icon={LayoutDashboard} />
-          <h2 className="text-xl">Dostosuj swój kurs</h2>
+              <IconBadge icon={Settings} />
+              <h2 className="text-xl">Dostosuj swój kurs</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TitleForm title={courseTitle} courseId={courseId} />

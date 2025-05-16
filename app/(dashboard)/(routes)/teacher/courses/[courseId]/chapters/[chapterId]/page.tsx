@@ -1,7 +1,7 @@
 import { IconBadge } from "@/components/icon-badge";
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
-import { ArrowLeft, LayoutDashboard } from "lucide-react";
+import { ArrowLeft, LayoutDashboard, Settings2, Text } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import ChapterTitleForm from "./_components/chapter-title-form";
@@ -35,9 +35,9 @@ const ChapterEditPage = async ({
           <div className="w-full">
             <Link
               href={`/teacher/courses/${courseId}`}
-              className="flex items-center text-sm hover:opacity-75 transition p-4"
+              className="flex items-center text-sm hover:opacity-75 transition pt-4 pb-4 select-none"
             >
-              <ArrowLeft className="h-4 w-4 mr-2"></ArrowLeft>
+              <ArrowLeft className="h-4 w-4 mr-1"></ArrowLeft>
               Wróć do konfiguracji kursu
             </Link>
           </div>
@@ -45,7 +45,7 @@ const ChapterEditPage = async ({
         <div className="space-y-4">
           <div className="w-full">
             <div className="flex items-center gap-x-2">
-              <IconBadge icon={LayoutDashboard} />
+              <IconBadge icon={Text} />
               <h2 className="text-xl">Stwórz treść swojej lekcji</h2>
             </div>
             <ChapterTitleForm
