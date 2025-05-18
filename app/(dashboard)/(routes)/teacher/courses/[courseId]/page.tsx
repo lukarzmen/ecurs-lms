@@ -1,4 +1,3 @@
-
 import React from "react";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
@@ -21,10 +20,37 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { courseId } = await params;
   const courseIdNumber = parseInt(courseId, 10);
 
-  const coursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}`);
-  const course = await coursesResponse.json();
-  const categoriesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, { next: { revalidate: 60 } });
-  const categories = await categoriesResponse.json();
+  let course, categories;
+  let fetchError: string | null = null;
+
+  try {
+    const coursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}`);
+    if (!coursesResponse.ok) throw new Error();
+    course = await coursesResponse.json();
+
+    const categoriesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, { next: { revalidate: 60 } });
+    if (!categoriesResponse.ok) throw new Error();
+    categories = await categoriesResponse.json();
+  } catch (error) {
+    fetchError = "Przepraszamy. Wystąpił błąd. Spróbuj ponownie później.";
+  }
+
+  if (fetchError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] text-center">
+        <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+          <span className="font-medium">Błąd!</span> {fetchError}
+        </div>
+        <Link
+          href="/teacher/courses"
+          className="mt-4 px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition"
+        >
+          Wróć do listy kursów
+        </Link>
+      </div>
+    );
+  }
+
   if (!course) {
     return <div>Kurs nie znaleziony</div>;
   }

@@ -1,11 +1,12 @@
 import { IconBadge } from "@/components/icon-badge";
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
-import { ArrowLeft, LayoutDashboard, Settings2, Text } from "lucide-react";
+import { ArrowLeft, Text } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import ChapterTitleForm from "./_components/chapter-title-form";
 import ChapterDescriptionForm from "./_components/chapter-description-form";
+import React from "react";
 
 const ChapterEditPage = async ({
   params,
@@ -19,10 +20,39 @@ const ChapterEditPage = async ({
   if (!userId) {
     return redirect("/sign-in");
   }
-  const { courseId, chapterId } = await params;
+  const { courseId, chapterId } = params;
 
-  const moduleResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/module/${chapterId}`);
-  const module = await moduleResponse.json(); 
+  let module = null;
+  let fetchError: string | null = null;
+
+  try {
+    const moduleResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/module/${chapterId}`
+    );
+    if (!moduleResponse.ok) throw new Error();
+    module = await moduleResponse.json();
+  } catch (error) {
+    fetchError = "Przepraszamy. Wystąpił błąd. Spróbuj ponownie później.";
+  }
+
+  if (fetchError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] text-center">
+        <div
+          className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+          role="alert"
+        >
+          <span className="font-medium">Błąd!</span> {fetchError}
+        </div>
+        <Link
+          href={`/teacher/courses/${courseId}`}
+          className="mt-4 px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition"
+        >
+          Wróć do konfiguracji kursu
+        </Link>
+      </div>
+    );
+  }
 
   if (!module) {
     redirect("/");
