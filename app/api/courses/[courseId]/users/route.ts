@@ -53,8 +53,6 @@ export async function GET(req: Request, { params }: { params: { courseId: string
             },
         });
 
-        // If no users are enrolled, return an empty array.
-        // The original `if (!userCourses)` check was removed as findMany returns [] if no records.
         if (userCourses.length === 0) {
             return NextResponse.json([]);
         }
@@ -110,6 +108,71 @@ export async function GET(req: Request, { params }: { params: { courseId: string
         return NextResponse.json(usersResponse);
     } catch (error) {
         console.log("[COURSE_ID_USERS_GET]", error);
+        return new NextResponse("Internal Error", { status: 500 });
+    }
+}
+
+// Add a new POST method to add a user to the course if not already present
+export async function POST(req: Request, { params }: { params: { courseId: string } }) {
+    try {
+        const { courseId } = params;
+        const courseIdNumber = Number(courseId);
+
+        if (isNaN(courseIdNumber)) {
+            return new NextResponse("Invalid Course ID", { status: 400 });
+        }
+
+        const body = await req.json();
+        // Accept either a single userId or an array of userIds
+        let userIds: number[] = [];
+
+        if (Array.isArray(body.userId)) {
+            userIds = body.userId.map(Number);
+        } else if (Array.isArray(body.userIds)) {
+            userIds = body.userIds.map(Number);
+        } else if (typeof body.userId === "number" || typeof body.userId === "string") {
+            userIds = [Number(body.userId)];
+        } else {
+            return new NextResponse("Missing userId(s)", { status: 400 });
+        }
+
+        const created: number[] = [];
+        const skipped: number[] = [];
+
+        for (const uid of userIds) {
+            // Check if userCourse already exists
+            const existing = await db.userCourse.findUnique({
+                where: {
+                    userId_courseId: {
+                        userId: uid,
+                        courseId: courseIdNumber,
+                    }
+                }
+            });
+
+            if (existing) {
+                skipped.push(uid);
+                continue;
+            }
+
+            await db.userCourse.create({
+                data: {
+                    userId: uid,
+                    courseId: courseIdNumber,
+                    roleId: 0,
+                    state: 1,
+                }
+            });
+            created.push(uid);
+        }
+
+        return NextResponse.json({
+            created,
+            skipped,
+            message: `Added ${created.length} user(s), skipped ${skipped.length} (already enrolled)`
+        });
+    } catch (error) {
+        console.log("[COURSE_ID_USERS_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

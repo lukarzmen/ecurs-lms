@@ -26,7 +26,7 @@ export const SidebarItem = ({ label, href }: SidebarItemProps) => {
         isActive && "text-orange-700 bg-orange-200 hover:bg-orange-200"
       )}
     >
-      <div className="flex items-center gap-x-2 py-4">
+      <div className="flex items-center gap-x-2 py-4 select-none">
         {label}
         <div
           className={cn(

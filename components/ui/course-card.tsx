@@ -12,7 +12,7 @@ interface CourseCardProps {
     author: string;
     chaptersLength: number;
     category: string;
-    moduleId: number | null;
+    nonFinishedModuleId: number | null;
 }
 
 export const CourseCard = ({
@@ -22,14 +22,14 @@ export const CourseCard = ({
     author,
     chaptersLength,
     category,
-    moduleId
+    nonFinishedModuleId
 }: CourseCardProps) => {
     const imageUrl = imageId ? `/api/image/${imageId}` : null;
     const placeholderImageUrl = "/logo.png"; // Replace with your placeholder image path
     const [isImageLoading, setIsImageLoading] = useState(true);
 
     return (
-        <Link href={`/courses/${id}/chapters/${moduleId}`}>
+        <Link href={`/courses/${id}/chapters/${nonFinishedModuleId}`}>
             <div className="group hover:shadow-sm transition overflow-hidden border rounded-lg p-3 h-full text-center">
                 <div className="relative w-full aspect-square rounded-md overflow-hidden bg-gray-200"> {/* Added bg-gray-200 for placeholder background */}
                     {isImageLoading && (
