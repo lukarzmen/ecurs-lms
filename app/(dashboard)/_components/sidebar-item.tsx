@@ -30,7 +30,7 @@ export const SidebarItem = ({ label, href }: SidebarItemProps) => {
         {label}
         <div
           className={cn(
-            "ml-auto opacity-0 border-2 border-orange-600 h-full select-none transition-all",
+            "ml-auto opacity-0 border-2 border-orange-600 h-full transition-all",
             isActive && "opacity-100"
           )}
         ></div>

@@ -50,26 +50,32 @@ export default async function Home() {
     console.error("Failed to fetch or parse user courses:", error);
   }
 
-  // Redirect to /error if fetchError is set
+  // Optional: Display an error message to the user if fetchError is set
   if (fetchError) {
-    redirect("/error");
+    // You might want to render a specific error component or message here
+    // For now, we'll proceed with empty/default data but log the error server-side
   }
 
   return (
     <div className="min-h-screen px-4 pt-4">
       <SignedOut>
-        <div className="flex items-center justify-center">
-          <SignIn  />
-        </div>
+      <div className="flex items-center justify-center">
+        <SignIn  />
+      </div>
       </SignedOut>
       <SignedIn>
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <InfoCard icon={Clock} label="W trakcie" numberOfItems={unfinishedCount} />
-            <InfoCard icon={CheckCircle} label="Ukończono" numberOfItems={finishedCount} />
+      <div className="p-6 space-y-4">
+        {fetchError && ( // Conditionally render an error message
+          <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+            <span className="font-medium">Błąd!</span> Nie udało się załadować kursów: {fetchError}
           </div>
-          <CoursesList items={courses} />
+        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <InfoCard icon={Clock} label="W trakcie" numberOfItems={unfinishedCount} />
+        <InfoCard icon={CheckCircle} label="Ukończono" numberOfItems={finishedCount} />
         </div>
+        <CoursesList items={courses} />
+      </div>
       </SignedIn>
     </div>
   );

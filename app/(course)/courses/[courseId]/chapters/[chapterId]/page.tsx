@@ -1,46 +1,53 @@
-'use client';
+'use client'; // <-- Make this a Client Component
 
 import { Banner } from "@/components/banner";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs"; // <-- Use client-side auth hook
 import ChapterContent from "./__components/chapter-content";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"; // <-- Import client-side hooks
+import { redirect, useParams, useRouter } from "next/navigation"; // <-- Import client-side navigation hooks
 import { Loader2 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
 
+// Define a type for the fetched chapter data
 interface ChapterData {
     module: {
         id: string;
         title: string;
-        content: string;
+        content: string; // Assuming content is here
+        // other module fields...
     };
     course: {
         id: string;
+        // other course fields...
     };
     userModule: {
         isFinished: boolean;
-    } | null;
+        // other userModule fields...
+    } | null; // UserModule might not exist initially
 }
 
 const ChapterIdPage = () => {
-    const { userId } = useAuth();
-    const params = useParams();
-    const router = useRouter();
+    const { userId } = useAuth(); // Get providerId from client hook
+    const params = useParams(); // Get route params
+    const router = useRouter(); // Get router for refresh
 
     const courseId = params.courseId as string;
-    const chapterId = params.chapterId as string;
+    const chapterId = params.chapterId as string; // This is the moduleId
 
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [chapterData, setChapterData] = useState<ChapterData | null>(null);
-    const [isCompleted, setIsCompleted] = useState(false);
-    const [hasUserCourse, setHasUserCourse] = useState(false);
+    const [isCompleted, setIsCompleted] = useState(false); // Local state for completion status
 
     useEffect(() => {
+        // Fetch data only if userProviderId and params are available
         if (!userId || !courseId || !chapterId) {
+            // If not authenticated yet, Clerk will handle redirect, or you might want a loading state
+            // If params are missing, it's an invalid route, maybe redirect or show error
             if (!courseId || !chapterId) setError("Nieprawidłowe parametry trasy.");
+            // Don't set loading to false here if waiting for auth
             return;
         }
 
@@ -48,6 +55,7 @@ const ChapterIdPage = () => {
             setIsLoading(true);
             setError(null);
             try {
+                // 1. Check Permissions
                 const permResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/permissions`, {
                     method: 'POST',
                     body: JSON.stringify({ courseId, userId: userId }),
@@ -55,18 +63,22 @@ const ChapterIdPage = () => {
                 });
 
                 if (!permResponse.ok) {
+                    // Handle general network or server errors for permissions check
                     throw new Error("Sprawdzanie uprawnień nie powiodło się. Spróbuj ponownie później.");
                 }
 
                 const permResult = await permResponse.json();
 
+                // Check the 'exists' field from the API response
                 if (!permResult.hasAccess) {
+                    // Use the message from the API if available, otherwise a default one
                     throw new Error("Brak dostępu. Skontaktuj się z nauczycielem, aby uzyskać dostęp do tego kursu.");
                 }
 
-                setHasUserCourse(permResult.exists);
 
-                const chapterResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}/chapters/${chapterId}?providerId=${userId}`);
+                // 2. Fetch Chapter Data (including user progress)
+                // Pass providerId to get specific user progress
+                const chapterResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}/chapters/${chapterId}?providerId=${userId}`); // Use userId directly
                 if (!chapterResponse.ok) {
                     throw new Error("Nie udało się pobrać danych rozdziału lub kurs jest niedostępny.");
                 }
@@ -77,47 +89,59 @@ const ChapterIdPage = () => {
                 }
 
                 setChapterData(data);
+                // Set initial completion state based on fetched data
                 setIsCompleted(!!data.userModule?.isFinished);
 
             } catch (err: any) {
                 console.error("Fetch Error:", err);
-                setError(err.message || "Przepraszamy. Wystąpił błąd. Spróbuj ponownie później.");
+                // Use the specific error message if thrown, otherwise use a generic one
+                setError(err.message || "Wystąpił błąd podczas ładowania rozdziału.");
             } finally {
                 setIsLoading(false);
+                router.refresh(); // Refresh the router to ensure the latest data is shown
             }
         };
 
         fetchData();
 
-    }, [userId, courseId, chapterId]);
+    }, [userId, courseId, chapterId]); // Dependencies for useEffect
 
+    // Handler function to be called by ChapterContent
     const handleCompletion = async () => {
-        if (isCompleted) return;
+        if(isCompleted){
+            return; 
+        }
         if (!userId || !chapterId) {
             toast.error("Nie można ukończyć rozdziału: Brak ID użytkownika lub rozdziału.");
             return;
         }
 
         try {
+            // Make the PATCH request
             const res = await fetch(`/api/module/${chapterId}/complete?providerId=${userId}`, {
                 method: 'PATCH',
             });
 
             if (!res.ok) {
                 const errorData = await res.text();
+                // Use a more specific error message if possible
                 throw new Error(`Nie udało się oznaczyć rozdziału jako ukończony: ${errorData || res.statusText}`);
             }
 
+            // Success: Update local state and show toast
             setIsCompleted(true);
             toast.success("Rozdział ukończony!");
+
             router.refresh();
 
         } catch (error: any) {
             console.error("Completion Error:", error);
             toast.error(error.message || "Nie udało się oznaczyć rozdziału jako ukończony.");
+            // Optionally revert local state if needed: setIsCompleted(false);
         }
     };
 
+    // Render loading state
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-full">
@@ -126,48 +150,11 @@ const ChapterIdPage = () => {
         );
     }
 
+    // Render error state
     if (error) {
-        if (error === "Brak dostępu. Skontaktuj się z nauczycielem, aby uzyskać dostęp do tego kursu.") {
-            return (
-                <div className="flex flex-col items-center justify-center h-full p-4">
-                    {!hasUserCourse ? (
-                        <button
-                            className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
-                            onClick={async () => {
-                                setIsLoading(true);
-                                try {
-                                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/permissions`, {
-                                        method: 'POST',
-                                        body: JSON.stringify({ courseId, userId }),
-                                        headers: { 'Content-Type': 'application/json' }
-                                    });
-                                    if (res.ok) {
-                                        toast.success("Poproszono o dostęp. Poczekaj na aktywację przez nauczyciela.");
-                                        setError("Poproszono o dostęp. Poczekaj na aktywację przez nauczyciela.");
-                                    } else {
-                                        toast.error("Nie udało się wysłać prośby o dostęp.");
-                                    }
-                                } finally {
-                                    setIsLoading(false);
-                                }
-                            }}
-                            disabled={isLoading}
-                        >
-                            {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Poproś o dostęp"}
-                        </button>
-                    ) : (
-                        <p className="text-lg text-orange-700">Skontaktuj się z nauczycielem.</p>
-                    )}
-                    <Link href={`/`} className="mt-4 text-blue-500 hover:underline">
-                        Wróć do panelu kursów
-                    </Link>
-                </div>
-            );
-        }
-        // Default error fallback
         return (
-            <div className="flex flex-col items-center justify-center h-full p-4">
-                <p className="text-lg text-red-600">Przepraszamy. Wystąpił błąd. Spróbuj ponownie później.</p>
+             <div className="flex flex-col items-center justify-center h-full p-4">
+                <p className="text-lg text-red-600">Błąd: {error}</p>
                 <Link href={`/`} className="mt-4 text-blue-500 hover:underline">
                     Wróć do panelu kursów
                 </Link>
@@ -175,17 +162,19 @@ const ChapterIdPage = () => {
         );
     }
 
+    // Render chapter content if data is loaded
     if (!chapterData) {
-        return <div className="p-4">Nie znaleziono danych rozdziału.</div>;
+         return <div className="p-4">Nie znaleziono danych rozdziału.</div>; // Should ideally be caught by error state
     }
 
     return (
         <div>
+            {/* Display banner based on the LOCAL isCompleted state */}
             {isCompleted && (
                 <Banner variant="success" label="Rozdział ukończony" />
             )}
             <Link
-                href={"/"}
+                href={"/"} // Link back to the course page
                 className="flex items-center text-sm hover:opacity-75 transition p-4 select-none">
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Wróć do panelu kursów
@@ -193,10 +182,11 @@ const ChapterIdPage = () => {
             <div className="flex flex-col mx-auto">
                 <h1 className="text-2xl font-semibold text-center p-2">{chapterData.module.title}</h1>
                 <div className="p-4">
+                    {/* Pass content and the completion handler */}
                     <ChapterContent
-                        isCompleted={isCompleted}
-                        moduleId={chapterData.module.id}
-                        onCompleted={handleCompletion}
+                        isCompleted={isCompleted} // Pass the local completion state
+                        moduleId={chapterData.module.id} // Pass the actual content
+                        onCompleted={handleCompletion} // Pass the handler function
                     />
                 </div>
             </div>

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Category } from "@prisma/client";
 import toast from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
-import { Loader2 } from "lucide-react";
+import next from "next";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
@@ -30,7 +30,7 @@ const CreatePage = () => {
       });
       router.push(`/teacher/courses/${response.data.id}`);
     } catch (error) {
-      toast.error("Przepraszamy. Wystąpił błąd. Spróbuj ponownie później.");
+      toast.error("Coś poszło nie tak");
     } finally {
       setIsSubmitting(false);
     }
@@ -99,7 +99,7 @@ const CreatePage = () => {
                   disabled={!title || isSubmitting}
                   onClick={nextStep}
                 >
-                  {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : "Kontynuuj"}
+                  Kontynuuj
                 </button>
               </div>
             </div>
@@ -142,7 +142,7 @@ const CreatePage = () => {
                   disabled={isSubmitting}
                   onClick={nextStep}
                 >
-                  {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : "Dalej"}
+                  Dalej
                 </button>
               </div>
             </div>
@@ -178,7 +178,7 @@ const CreatePage = () => {
                   className="bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : "Utwórz kurs"}
+                  Zakończ i przejdź dalej
                 </button>
               </div>
             </div>
