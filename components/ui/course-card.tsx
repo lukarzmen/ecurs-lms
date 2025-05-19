@@ -28,9 +28,6 @@ export const CourseCard = ({
     const placeholderImageUrl = "/logo.png"; // Replace with your placeholder image path
     const [isImageLoading, setIsImageLoading] = useState(true);
 
-    if(!moduleId) {
-        throw new Error("moduleId is required but was null or undefined.");
-    }
     return (
         <Link href={`/courses/${id}/chapters/${moduleId}`}>
             <div className="group hover:shadow-sm transition overflow-hidden border rounded-lg p-3 h-full text-center">

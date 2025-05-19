@@ -49,7 +49,6 @@ export default async function Home() {
     fetchError = error instanceof Error ? error.message : "An unknown error occurred during fetch.";
     console.error("Failed to fetch or parse user courses:", error);
   }
-
   // Optional: Display an error message to the user if fetchError is set
   if (fetchError) {
     // You might want to render a specific error component or message here
