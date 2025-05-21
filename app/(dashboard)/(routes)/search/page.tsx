@@ -12,7 +12,7 @@ interface SearchPageProps {
 const SearchPage = async ({
   searchParams
 }: SearchPageProps) => {
-  const { userId } = auth() || { userId: '' };
+  const { userId } = await auth() || { userId: '' };
   
   const resCategories = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, { next: { revalidate: 60 } });
   const categories = await resCategories.json();

@@ -10,7 +10,6 @@ const CourseIdPage = async ({
 }) => {
     const userAuth = await auth();
 
-    // Redirect to home if user is not authenticated
     if (!userAuth) {
         return redirect("/sign-in");
     }

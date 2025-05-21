@@ -8,7 +8,7 @@ import {authorizeUser} from "@/hooks/use-auth";
 import { DashboardCoursesResponse, CourseDetails } from "@/app/api/user/courses/route"; // Import CourseDetails
 
 export default async function Home() {
-  const {userId, sessionId} = auth();
+  const {userId, sessionId} = await auth();
   if(!userId) {
     return redirect("/sign-in");
   }

@@ -61,7 +61,7 @@ export async function GET(
 ) {
   try {
     const { searchParams } = new URL(req.url);
-    const { userId } = auth(); // Get userId from auth
+    const { userId } = await auth(); // Get userId from auth
     const courseIdInt = parseInt(params.courseId, 10);
     const chapterIdInt = parseInt(params.chapterId, 10);
 

@@ -13,7 +13,7 @@
   "dependencies": {
     "@11labs/client": "^0.0.6",
     "@azure/storage-blob": "^12.24.0",
-    "@clerk/nextjs": "^5.3.1",
+    "@clerk/nextjs": "^6.19.5",
     "@excalidraw/excalidraw": "^0.17.6",
     "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^3.9.0",
@@ -45,7 +45,6 @@
     "dotenv": "^16.4.5",
     "elevenlabs": "^1.50.4",
     "eslint": "8.57.0",
-    "eslint-config-next": "14.2.5",
     "framer-motion": "^12.5.0",
     "katex": "^0.16.19",
     "lexical": "^0.23.1",
@@ -86,6 +85,7 @@
   "devDependencies": {
     "@types/bun": "^1.2.9",
     "@types/lodash-es": "^4.17.12",
+    "eslint-config-next": "^15.3.2",
     "prettier": "^3.3.3",
     "prisma": "^5.18.0"
   }
