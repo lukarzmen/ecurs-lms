@@ -75,9 +75,12 @@ export async function POST(req: Request) {
     try {
         const clerk = await clerkClient();
         const clerkUser = await clerk.users.getUser(userId);
-        // Check if user exists, if not, create a new user
-        let user = await db.user.findUnique({
-            where: { providerId: userId },
+        const emails = clerkUser.emailAddresses.map((e: any) => e.emailAddress);
+
+        let user = await db.user.findFirst({
+            where: {
+                OR: emails.map((email: string) => ({ email })),
+            },
         });
 
         if (!user) {
@@ -94,9 +97,17 @@ export async function POST(req: Request) {
                 },
             });
             return NextResponse.json({ created: true, user });
+        } else {
+            // Update providerId if user exists
+            user = await db.user.update({
+                where: { id: user.id },
+                data: {
+                    providerId: userId,
+                    updatedAt: new Date(),
+                },
+            });
+            return NextResponse.json({ created: false, updated: true, user });
         }
-        
-        return NextResponse.json({ created: false, exists: true, user });
     } catch (error) {
         console.error(error);
         return new NextResponse("Internal error", {
