@@ -9,6 +9,7 @@ import {
 } from "@clerk/nextjs";
 import ToastProvider from "@/components/providers/toast-provider";
 import { ConfettiProvider } from "@/components/providers/confetti-provider";
+import { plPL } from '@clerk/localizations'
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,8 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
-      <html lang="en">
+    <ClerkProvider localization={plPL}>
+      <html lang="pl-PL">
         <body className={inter.className}>
         <SignedIn>
         </SignedIn>

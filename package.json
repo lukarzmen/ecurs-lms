@@ -13,6 +13,7 @@
   "dependencies": {
     "@11labs/client": "^0.0.6",
     "@azure/storage-blob": "^12.24.0",
+    "@clerk/localizations": "^3.16.1",
     "@clerk/nextjs": "^6.19.5",
     "@excalidraw/excalidraw": "^0.17.6",
     "@hello-pangea/dnd": "^18.0.1",
