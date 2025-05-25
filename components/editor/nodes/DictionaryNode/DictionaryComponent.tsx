@@ -256,7 +256,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
                 className="mt-4 px-4 py-2 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-700 select-none"
                 onClick={initializeMatchGame}
               >
-                Resetuj grę
+                Wylosuj ponownie
               </button>
             </>
           ) : (
