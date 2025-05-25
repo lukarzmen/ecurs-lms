@@ -347,17 +347,17 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
       {/* View Switch Buttons */}
       <div className="flex justify-center space-x-2 mt-4">
           {!isReadonly && view !== "dictionaryView" && (
-              <button onClick={() => setView("dictionaryView")} className="bg-blue-500 text-white rounded-full hover:bg-blue-600 px-4 py-2 select-none">
+              <button onClick={() => setView("dictionaryView")} className="min-w-[160px] bg-blue-500 text-white rounded-full hover:bg-blue-600 px-4 py-2 select-none">
                   Widok tabeli
               </button>
           )}
           {view !== "flashView" && (
-              <button onClick={() => setView("flashView")} className="bg-orange-500 text-white rounded-full hover:bg-orange-600 px-4 py-2 select-none">
+              <button onClick={() => setView("flashView")} className="min-w-[160px] bg-orange-500 text-white rounded-full hover:bg-orange-600 px-4 py-2 select-none">
                   Fiszki
               </button>
           )}
           {view !== "matchGameView" && (
-              <button onClick={() => setView("matchGameView")} className="bg-yellow-500 text-black rounded-full hover:bg-yellow-600 px-4 py-2 select-none">
+              <button onClick={() => setView("matchGameView")} className="min-w-[160px] bg-yellow-500 text-black rounded-full hover:bg-yellow-600 px-4 py-2 select-none">
                   Gra w dopasowywanie
               </button>
           )}
