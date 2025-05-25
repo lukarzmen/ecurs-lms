@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import QuizComponent, { Test } from "./QuizComponent";
 import { DecoratorNode, NodeKey, SerializedLexicalNode, Spread, LexicalEditor, $getNodeByKey, EditorConfig, $applyNodeReplacement } from "lexical";
 import { ToCompleteNode } from "../ToCompleteNode";
-
+import { withNodeErrorBoundary } from "../Error/BrokenNode";
 
 // Serialized format for the whole quiz (array of tests)
 export type SerializedQuizNode = Spread<
@@ -69,7 +69,7 @@ export class QuizNode extends DecoratorNode<JSX.Element> implements ToCompleteNo
   }
 
   decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element {
-    return (
+    return withNodeErrorBoundary(
       <Suspense fallback={null}>
         <QuizComponent
           tests={this.__tests}

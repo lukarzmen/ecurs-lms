@@ -13,8 +13,9 @@ const CoursesPage = async () => {
     return redirect("/sign-in");
   }
 
-  const coursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses?userId=${userId}`
-    , { next: { revalidate: 60 } });
+  const coursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses?userId=${userId}`, {
+    cache: 'no-store',  // This ensures fresh data on each request
+  });
   const courses = await coursesResponse.json();
 
   return (

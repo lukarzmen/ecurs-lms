@@ -10,11 +10,13 @@ export interface Test {
 interface QuizComponentProps {
   tests: Test[];
   onComplete: () => void;
+  successThreshold?: number; // Optional, default to 0.7 if not provided
 }
 
 export default function QuizComponent({
   tests,
   onComplete,
+  successThreshold = 0.7,
 }: QuizComponentProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -54,11 +56,28 @@ export default function QuizComponent({
 
   if (showSummary) {
     const correctCount = results.filter(Boolean).length;
+    const total = tests.length;
+    const rate = total > 0 ? correctCount / total : 0;
+
+    let summaryText = "";
+    let summaryColor = "";
+
+    if (rate >= successThreshold) {
+      summaryText = "Wow! Jesteś geniuszem! Może powinieneś uczyć innych? 🎓";
+      summaryColor = "bg-green-600";
+    } else if (rate >= 0.5) {
+      summaryText = "No prawie, prawie... Jak mawiają - prawie robi wielką różnicę! 😅";
+      summaryColor = "bg-yellow-500";
+    } else {
+      summaryText = "Warto jeszcze poćwiczyć! Następnym razem na pewno pójdzie lepiej! 💪";
+      summaryColor = "bg-red-600";
+    }
+
     return (
-      <div className="flex flex-col items-center justify-center min-h-[300px] bg-green-600 rounded-lg text-white p-8">
-        <h2 className="text-2xl font-bold mb-4">Gratulacje. Ukończyłeś quiz.</h2>
+      <div className={`flex flex-col items-center justify-center min-h-[300px] rounded-lg text-white p-8 ${summaryColor}`}>
+        <h2 className="text-2xl font-bold mb-4">{summaryText}</h2>
         <div className="text-lg font-semibold">
-          Poprawne odpowiedzi {correctCount}/{tests.length}
+          Poprawne odpowiedzi {correctCount}/{total}
         </div>
       </div>
     );
