@@ -217,12 +217,12 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
 
 
   return (
-    <div className="pt-12">
+    <div className="pt-4">
       {showConfetti && <Confetti />}
 
       {/* Match Game View */}
       {view === "matchGameView" && (
-        <div className="pt-12 flex flex-col items-center">
+        <div className="pt-4 flex flex-col items-center">
           {selectedEntries.length > 0 ? (
             <>
               <div className="grid grid-cols-2 gap-4 w-80">

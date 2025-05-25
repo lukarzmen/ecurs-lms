@@ -123,18 +123,18 @@ export class DictionaryNode extends DecoratorNode<JSX.Element> implements ToComp
       });
   }
 
-  handleDictionaryChanged = (dictionary: Dictionary) => {
-    this.setDictionaryData(dictionary);
+  handleDictionaryChanged = (dictionary: Dictionary, editor: LexicalEditor) => {
+    editor.update(() => {
+      const writableNode = this.getWritable();
+      writableNode.__dictionaryData = dictionary;
+    });
   }
 
   decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element { // Add editor, config
-    // Store the editor instance when decorating
-    this.__editor = editor;
-
     return (
         <DictionaryComponent
         isReadonly={!this.__isEditable}
-        onDictionaryChanged={this.handleDictionaryChanged}
+        onDictionaryChanged={(dict) => this.handleDictionaryChanged(dict, editor)}
         dictionary={this.__dictionaryData}
         // Pass bound update method
         onComplete={(isCorrect) => this.setCompleted(isCorrect, editor)} initialCompleted={false}        />
