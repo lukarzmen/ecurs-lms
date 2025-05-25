@@ -38,7 +38,7 @@ export const CourseMobileSidebar = ({
     return (
         <>
             {showConfetti && (
-                <Confetti/>
+                <Confetti recycle={false}/>
             )}
             <Sheet>
                 <SheetTrigger className="md:hidden pr-4 hover:opacity-75 transition">

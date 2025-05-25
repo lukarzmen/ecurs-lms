@@ -1,6 +1,8 @@
 import { LexicalEditor } from "lexical";
 import React, { useState } from "react";
+import { Test } from "../../nodes/QuizNode/QuizComponent";
 import { INSERT_TEST_COMMAND } from ".";
+
 
 export function InsertQuizDialog({
   activeEditor,
@@ -9,35 +11,49 @@ export function InsertQuizDialog({
   activeEditor: LexicalEditor;
   onClose: () => void;
 }): JSX.Element {
-  const [question, setQuestion] = useState("");
-  const [answers, setAnswers] = useState(["", "", "", ""]);
-  const [correctAnswerIndex, setCorrectAnswerIndex] = useState<number | null>(
-    null
-  );
-  const [correctAnswerDescription, setCorrectAnswerDescription] = useState<
-    string | null
-  >(null);
+  const [tests, setTests] = useState<Test[]>([]);
+  const [current, setCurrent] = useState<Test>({
+    question: "",
+    answers: ["", "", "", ""],
+    correctAnswerIndex: null,
+    correctAnswerDescription: null,
+  });
+  const [step, setStep] = useState(0);
 
   const onAnswerChange = (index: number, value: string) => {
-    setAnswers((prevAnswers) => {
-      const updatedAnswers = [...prevAnswers];
+    setCurrent((prev) => {
+      const updatedAnswers = [...prev.answers];
       updatedAnswers[index] = value;
-      return updatedAnswers;
+      return { ...prev, answers: updatedAnswers };
     });
   };
 
   const isFormValid =
-    question.trim() !== "" &&
-    answers.every((answer) => answer !== "") &&
-    correctAnswerIndex !== null;
+    current.question.trim() !== "" &&
+    current.answers.every((answer) => answer.trim() !== "") &&
+    current.correctAnswerIndex !== null;
 
-  const onClick = () => {
+  const handleAddQuestion = () => {
+    if (!isFormValid) return;
+    setTests((prev) => [...prev, { ...current, question: current.question.trim(), answers: current.answers.map(a => a.trim()), correctAnswerDescription: current.correctAnswerDescription?.trim() || null }]);
+    setCurrent({
+      question: "",
+      answers: ["", "", "", ""],
+      correctAnswerIndex: null,
+      correctAnswerDescription: null,
+    });
+    setStep(step + 1);
+  };
+
+  const handleFinish = () => {
     if (isFormValid) {
+      // Add last question if not yet added
+      handleAddQuestion();
+    }
+    if (tests.length > 0 || isFormValid) {
+      const allTests = isFormValid ? [...tests, { ...current, question: current.question.trim(), answers: current.answers.map(a => a.trim()), correctAnswerDescription: current.correctAnswerDescription?.trim() || null }] : tests;
       activeEditor.dispatchCommand(INSERT_TEST_COMMAND, {
-        question: question.trim(),
-        answers: answers.map((a) => a.trim()),
-        correctAnswerIndex,
-        correctAnswerDescription: correctAnswerDescription?.trim() || null,
+        tests: allTests,
       });
       onClose();
     }
@@ -45,17 +61,18 @@ export function InsertQuizDialog({
 
   return (
     <div className="p-4 space-y-4 max-w-lg mx-auto">
+      <div className="mb-2 text-lg font-bold text-orange-700">Pytanie {step + 1}</div>
       <div className="grid grid-cols-2 gap-4 items-center">
         <label className="text-sm font-medium text-gray-700">Zadaj pytanie</label>
         <textarea
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
+          value={current.question}
+          onChange={(e) => setCurrent((prev) => ({ ...prev, question: e.target.value }))}
           className="w-full border border-gray-300 rounded-md p-2"
           placeholder="Wpisz swoje pytanie"
-          rows={3} // Optional: Set the initial number of rows
+          rows={3}
         />
 
-        {answers.map((answer, index) => (
+        {current.answers.map((answer, index) => (
           <React.Fragment key={index}>
             <label className="text-sm font-medium text-gray-700">
               Odpowiedź {String.fromCharCode(65 + index)}
@@ -74,16 +91,19 @@ export function InsertQuizDialog({
           Poprawna odpowiedź
         </label>
         <select
-          value={correctAnswerIndex !== null ? correctAnswerIndex.toString() : ""}
+          value={current.correctAnswerIndex !== null ? current.correctAnswerIndex.toString() : ""}
           onChange={(e) =>
-            setCorrectAnswerIndex(e.target.value ? parseInt(e.target.value, 10) : null)
+            setCurrent((prev) => ({
+              ...prev,
+              correctAnswerIndex: e.target.value ? parseInt(e.target.value, 10) : null,
+            }))
           }
           className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-orange-500 focus:outline-none"
         >
           <option value="" disabled>
             Wybierz poprawną odpowiedź
           </option>
-          {answers.map((_, index) => (
+          {current.answers.map((_, index) => (
             <option key={index} value={index}>
               {String.fromCharCode(65 + index)}
             </option>
@@ -95,21 +115,35 @@ export function InsertQuizDialog({
         </label>
         <input
           type="text"
-          value={correctAnswerDescription || ""}
-          onChange={(e) => setCorrectAnswerDescription(e.target.value)}
+          value={current.correctAnswerDescription || ""}
+          onChange={(e) =>
+            setCurrent((prev) => ({
+              ...prev,
+              correctAnswerDescription: e.target.value,
+            }))
+          }
           className="w-full border border-gray-300 rounded-md p-2"
           placeholder="Dodatkowe szczegóły dotyczące poprawnej odpowiedzi (opcjonalnie)"
         />
       </div>
 
-      <div className="flex justify-end space-x-4 mt-4">
+      <div className="flex justify-between space-x-4 mt-4">
         <button
-          onClick={onClick}
+          onClick={handleAddQuestion}
           disabled={!isFormValid}
           className={`px-4 py-2 rounded-md text-white ${isFormValid ? "bg-orange-600 hover:bg-orange-700" : "bg-gray-400"
             }`}
         >
-          Potwierdź
+          Dodaj kolejne pytanie
+        </button>
+        <button
+          onClick={handleFinish}
+          // Utwórz quiz dostępny tylko gdy formularz aktualnego pytania jest wypełniony
+          disabled={!isFormValid}
+          className={`px-4 py-2 rounded-md text-white ${isFormValid ? "bg-green-600 hover:bg-green-700" : "bg-gray-400"
+            }`}
+        >
+          Utwórz quiz
         </button>
         <button
           onClick={onClose}
@@ -118,6 +152,16 @@ export function InsertQuizDialog({
           Anuluj
         </button>
       </div>
+      {tests.length > 0 && (
+        <div className="mt-4">
+          <div className="font-semibold mb-2">Dodane pytania:</div>
+          <ul className="list-decimal list-inside space-y-1">
+            {tests.map((t, idx) => (
+              <li key={idx} className="text-sm">{t.question}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

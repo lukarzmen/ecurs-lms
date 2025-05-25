@@ -53,20 +53,24 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const { courseId } = await req.json();
+
+    // Najpierw sprawdź, czy kurs istnieje
+    const course = await db.course.findUnique({
+      where: { id: courseId },
+    });
+
+    if (!course) {
+      return new NextResponse("Course not found", { status: 404 });
+    }
+
     await db.course.delete({
-      where: {
-        id: courseId
-      },
+      where: { id: courseId },
     });
-    return new NextResponse("Course deleted", {
-      status: 200,
-    });
+
+    return new NextResponse("Course deleted", { status: 200 });
   } catch (error) {
     console.error("Failed to delete course", error);
-    return new NextResponse("Internal error", {
-      status: 500
-    },
-    );
+    return new NextResponse("Internal error", { status: 500 });
   }
 }
 

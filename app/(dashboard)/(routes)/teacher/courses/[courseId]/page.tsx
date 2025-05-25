@@ -29,17 +29,6 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
     return <div>Kurs nie znaleziony</div>;
   }
 
-  const requiredFields = [
-    course.title,
-    course.description,
-    course.categoryId,
-    course.modules,
-  ];
-
-
-  const totalFields = requiredFields.length;
-  const completedFields = requiredFields.filter(Boolean).length;
-  const completionText = `${completedFields}/${totalFields}`;
   const courseTitle = course.title;
 
   return (
@@ -55,13 +44,11 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
               Powrót do listy kursów
             </Link>
             <h1 className="text-2xl font-medium">Konfiguracja kursu</h1>
-
-            <span className="text-sm text-slate-800">Wypełnij wszystkie pola {completionText}</span>
           </div>
         </div>
-        <div className="flex items-center gap-x-2 mt-8">
+        <div className="flex items-center gap-x-2 mt-4">
               <IconBadge icon={Settings} />
-              <h2 className="text-xl">Dostosuj swój kurs</h2>
+              <h2 className="text-xl">Informacje o kursie</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TitleForm title={courseTitle} courseId={courseId} />

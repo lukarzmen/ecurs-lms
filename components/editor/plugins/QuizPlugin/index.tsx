@@ -9,55 +9,40 @@ import {
   $getNodeByKey, 
   $isParagraphNode, 
   NodeKey, 
-  ParagraphNode // Added for type assertion
+  ParagraphNode
 } from 'lexical';
 import { useEffect } from 'react';
 
 import { QuizNode } from '../../nodes/QuizNode/QuizNode';
+import { Test } from '../../nodes/QuizNode/QuizComponent';
 
+// Update command to accept an array of tests
 export const INSERT_TEST_COMMAND: LexicalCommand<{
-  question: string;
-  answers: string[];
-  correctAnswerIndex: number;
-  correctAnswerDescription: string | null;
+  tests: Test[];
 }> = createCommand('INSERT_TEST_COMMAND');
 
-export default function TestPlugin(): JSX.Element | null {
+export default function QuizPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
     return editor.registerCommand<any>(
       INSERT_TEST_COMMAND,
-      ({
-        question,
-        answers,
-        correctAnswerIndex,
-        correctAnswerDescription,
-      }) => {
+      ({ tests }) => {
         editor.update(() => {
-          const testNode = new QuizNode( // This is the QuizNode itself
-            question,
-            answers,
-            correctAnswerIndex,
-            correctAnswerDescription,
-          );
+          const quizNode = new QuizNode(tests);
 
-          // Create a paragraph to wrap the QuizNode
           const paragraphWrapper = $createParagraphNode();
-          paragraphWrapper.append(testNode); // Put QuizNode inside the paragraph
+          paragraphWrapper.append(quizNode);
 
-          // Insert the WRAPPING PARAGRAPH
           $insertNodes([paragraphWrapper]);
 
-          // Get the newly inserted WRAPPING PARAGRAPH from the editor state
           const newlyInsertedParagraphKey = paragraphWrapper.getKey();
           const newlyInsertedParagraph = $getNodeByKey<ParagraphNode>(newlyInsertedParagraphKey);
 
           if (
             newlyInsertedParagraph &&
-            $isParagraphNode(newlyInsertedParagraph) && // Ensure it's a ParagraphNode
+            $isParagraphNode(newlyInsertedParagraph) &&
             $isRootOrShadowRoot(newlyInsertedParagraph.getParentOrThrow())
           ) {
-            // Ensure paragraph AFTER the wrapping paragraph
             let paragraphAfter = newlyInsertedParagraph.getNextSibling();
             if (!paragraphAfter || !$isParagraphNode(paragraphAfter)) {
               const newParagraphAfter = $createParagraphNode();
@@ -65,7 +50,6 @@ export default function TestPlugin(): JSX.Element | null {
               paragraphAfter = newParagraphAfter; 
             }
 
-            // Ensure paragraph BEFORE the wrapping paragraph
             let paragraphBefore = newlyInsertedParagraph.getPreviousSibling();
             if (!paragraphBefore || !$isParagraphNode(paragraphBefore)) {
               const newActualParagraphBefore = $createParagraphNode();
@@ -73,13 +57,9 @@ export default function TestPlugin(): JSX.Element | null {
               paragraphBefore = newActualParagraphBefore; 
             }
 
-            // Set selection to the paragraph after the wrapping paragraph for a better UX
             if (paragraphAfter && $isParagraphNode(paragraphAfter)) {
               paragraphAfter.selectEnd();
             } else {
-              // Fallback if paragraphAfter isn't suitable, select the end of the wrapper.
-              // This might mean typing inside the wrapper after the QuizNode,
-              // depending on QuizNode's rendering.
               newlyInsertedParagraph.selectEnd();
             }
           }
