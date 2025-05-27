@@ -178,7 +178,7 @@ const CreatePage = () => {
                   className="bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
                   disabled={isSubmitting}
                 >
-                  Zakończ i przejdź dalej
+                  Utwórz
                 </button>
               </div>
             </div>
