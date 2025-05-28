@@ -29,7 +29,8 @@ export async function GET(req: NextRequest): Promise<NextResponse<CourseSearchRe
           contains: title,
           mode: "insensitive",
         },
-        categoryId: categoryId
+        categoryId: categoryId,
+        mode: 1, // Only public courses
       },
       include: {
         category: true,

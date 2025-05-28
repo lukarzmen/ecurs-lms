@@ -12,6 +12,7 @@ import ChaptersForm from "./_components/chapters-form";
 import Link from "next/link";
 import { Category } from "@prisma/client";
 import { StudentsForm } from "./_components/students-form";
+import CourseModeForm from "./_components/mode_form";
 
 const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = await auth() ?? "";
@@ -52,6 +53,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TitleForm title={courseTitle} courseId={courseId} />
+          <DescriptionForm description={course.description ?? ''} courseId={courseId} />
           <CategoryForm
             categoryId={course.categoryId ?? -1}
             options={categories.map((x: Category) => ({
@@ -61,8 +63,8 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
             }))}
             courseId={courseIdNumber}
           />
+          <CourseModeForm courseId={courseId} mode={course.mode ?? 0} />
           <ImageForm imageId={course.imageId ?? ''} courseId={courseId} />
-          <DescriptionForm description={course.description ?? ''} courseId={courseId} />
 
         </div>
         <div className="space-y-6 ">

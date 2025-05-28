@@ -20,7 +20,7 @@ model Course {
   title String @db.Text
   description String? @db.Text
   imageId String?
-
+  mode Int @default(0) // private, public, open
   categoryId Int?
   category Category? @relation(fields: [categoryId], references: [id])
   modules Module[]
