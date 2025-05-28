@@ -3,10 +3,6 @@ import {
   $createParagraphNode,
   $createTextNode,
   $getRoot,
-  $getSelection,
-  $isParagraphNode,
-  $isRangeSelection,
-  $isTextNode,
   COMMAND_PRIORITY_EDITOR,
   createCommand,
   LexicalCommand,
@@ -14,8 +10,8 @@ import {
 } from 'lexical';
 import { useEffect, useState } from 'react';
 import * as React from 'react';
+import { $createHeadingNode } from '@lexical/rich-text';
 
-import OpenAIService from '@/services/OpenAIService';
 import ProgressSpinner from './ProgressComponent';
 import toast from 'react-hot-toast';
 
@@ -31,7 +27,7 @@ export function TextGeneratorDialog({
   onClose: () => void;
 }): JSX.Element {
   const [userPrompt, setUserPrompt] = useState("");
-  const [systemPrompt, setSystemPrompt] = useState("Nie dodawaj do tekstu znaczników jak ### ani znaków specjalnych ** i tym podobnych. Sam tekst bez formatowania znakami.");
+  const [systemPrompt, setSystemPrompt] = useState("Jesteś asystentem AI, który pomaga użytkownikowi w generowaniu treści edukacyjnych na podstawie podanych poleceń. Generuj ciekawe treści w zrozumiałej formie.");
   const [isSystemPromptEditable, setIsSystemPromptEditable] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -95,7 +91,7 @@ export function TextGeneratorDialog({
             disabled={!isSystemPromptEditable}
           />
           <button
-            className="absolute top-1 right-2 text-gray-500 hover:text-gray-700"
+            className="absolute top-1 right-5 text-gray-500 hover:text-gray-700"
             onClick={() => setIsSystemPromptEditable(!isSystemPromptEditable)}
           >
             ✎
@@ -136,22 +132,53 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
     return editor.registerCommand<LLMPrompt>(
       GENERATE_TEXT_COMMAND,
       (payload) => {
-          fetch('/api/tasks', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-          })
+        fetch('/api/tasks', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        })
           .then((response) => response.text())
           .then((response) => {
             editor.update(() => {
               const root = $getRoot();
+              // Split response into lines
               const lines = response.split('\n');
               lines.forEach((line) => {
+                // Heading 1: #
+                if (line.trim().startsWith("# ")) {
+                  const headingText = line.replace(/^#\s*/, "");
+                  const headingNode = $createHeadingNode('h1');
+                  headingNode.append($createTextNode(headingText));
+                  root.append(headingNode);
+                  return;
+                }
+                // Heading 3: ###
+                if (line.trim().startsWith("###")) {
+                  const headingText = line.replace(/^###\s*/, "");
+                  const headingNode = $createHeadingNode('h3');
+                  headingNode.append($createTextNode(headingText));
+                  root.append(headingNode);
+                  return;
+                }
+
                 const paragraphNode = $createParagraphNode();
-                const textNode = $createTextNode(line);
-                paragraphNode.append(textNode);
+                // Regex to match **bold** fragments
+                const parts = line.split(/(\*\*[^*]+\*\*)/g);
+                parts.forEach((part) => {
+                  if (part.startsWith('**') && part.endsWith('**')) {
+                    // Remove ** and create bold node
+                    const boldText = part.slice(2, -2);
+                    const textNode = $createTextNode(boldText);
+                    textNode.setFormat('bold');
+                    paragraphNode.append(textNode);
+                  } else {
+                    // Normal text
+                    const textNode = $createTextNode(part);
+                    paragraphNode.append(textNode);
+                  }
+                });
                 root.append(paragraphNode);
               });
             });
