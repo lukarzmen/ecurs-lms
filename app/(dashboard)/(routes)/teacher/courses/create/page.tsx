@@ -17,6 +17,8 @@ const CreatePage = () => {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const { userId } = useAuth(); // Assuming you have a way to get the current user's ID
+  const [price, setPrice] = useState(0);
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -25,7 +27,8 @@ const CreatePage = () => {
         title,
         categoryId: parseInt(category) || undefined,
         description: description || undefined,
-        userProviderId: userId, // Replace with actual user ID
+        price,
+        userProviderId: userId,
         next: { revalidate: 60 }
       });
       router.push(`/teacher/courses/${response.data.id}`);
@@ -63,7 +66,7 @@ const CreatePage = () => {
           {step === 1 && "Nazwij swój kurs"}
           {step === 2 && "Wybierz kategorię dla swojego kursu"}
           {step === 3 && "Opisz swój kurs"}
-          {step === 4 && "Dodaj obraz do swojego kursu"}
+          {step === 4 && "Ustal cenę kursu"}
         </h1>
         <form onSubmit={onSubmit} className="space-y-8 mt-8">
           {step === 1 && (
@@ -164,6 +167,54 @@ const CreatePage = () => {
                 placeholder="np. 'Ten kurs obejmuje...'"
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
               />
+              <div className="flex items-center gap-x-2 mt-4">
+                <button
+                  type="button"
+                  className="bg-gray-200 text-black py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  onClick={prevStep}
+                  disabled={isSubmitting}
+                >
+                  Wstecz
+                </button>
+                <button
+                  type="button"
+                  className="bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                  disabled={isSubmitting}
+                  onClick={nextStep}
+                >
+                  Dalej
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="mb-4">
+              <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+                Cena kursu
+              </label>
+              <p className="text-sm text-slate-600">
+                Ustal cenę kursu. Jeśli wpiszesz 0, kurs będzie{" "}
+                <span className="font-semibold text-orange-700">Darmowy</span>.
+              </p>
+              <input
+                type="number"
+                id="price"
+                min={0}
+                step={0.01}
+                value={price}
+                onChange={(e) => setPrice(Number(e.target.value))}
+                disabled={isSubmitting}
+                placeholder="np. 0 lub 199"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+              />
+              <div className="text-sm mt-2">
+                {price === 0 ? (
+                  <span className="font-semibold text-orange-700">Darmowy</span>
+                ) : (
+                  <span className="font-semibold text-orange-700">{price} PLN</span>
+                )}
+              </div>
               <div className="flex items-center gap-x-2 mt-4">
                 <button
                   type="button"

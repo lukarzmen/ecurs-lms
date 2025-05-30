@@ -13,6 +13,8 @@ interface CourseCardProps {
     chaptersLength: number;
     category: string;
     nonFinishedModuleId: number | null;
+    price?: number | null; // <-- Add price prop (optional)
+    showPrice?: boolean; // Optional prop to control price display
 }
 
 export const CourseCard = ({
@@ -22,7 +24,9 @@ export const CourseCard = ({
     author,
     chaptersLength,
     category,
-    nonFinishedModuleId
+    nonFinishedModuleId,
+    price, // <-- Add price prop
+    showPrice = false, // Default to false if not provided
 }: CourseCardProps) => {
     const imageUrl = imageId ? `/api/image/${imageId}` : null;
     const placeholderImageUrl = "/logo.png"; // Replace with your placeholder image path
@@ -63,6 +67,14 @@ export const CourseCard = ({
                             <span>{chaptersLength} {chaptersLength === 1 ? "lekcja" : "lekcje"}</span>
                         </div>
                     </div>
+                    {showPrice && (      <div className="mt-1 text-sm font-semibold">
+                        {typeof price === "number"
+                            ? price === 0
+                                ? <span className="text-orange-700">Darmowy</span>
+                                : <span className="text-orange-700">{price} PLN</span>
+                            : null}
+                    </div>)}
+              
                 </div>
             </div>
         </Link>

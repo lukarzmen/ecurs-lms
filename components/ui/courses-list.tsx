@@ -1,14 +1,14 @@
-import { Category, Course } from "@prisma/client";
 import { CourseCard } from "./course-card";
 import { CourseDetails } from "@/app/api/user/courses/route";
 
 
 interface CoursesListProps {
     items: CourseDetails[];
+    showPrice?: boolean; // Optional prop to control price display
 }
 
-export const CoursesList = ( {items} : CoursesListProps) => {
-
+export const CoursesList = ( {items, showPrice} : CoursesListProps) => {
+    console.log("CoursesList items:", items);
     if (items && items.length === 0) {
         return (
             <div className="flex justify-center items-center w-full h-full">
@@ -20,8 +20,18 @@ export const CoursesList = ( {items} : CoursesListProps) => {
     return (
         <div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 mt-12">
             {items.map((item) => (
-                <CourseCard key={item.id} author={`${item.author?.firstName} ${item.author?.lastName}`} id={item.id} nonFinishedModuleId={item.nonFinishedModuleId} title={item.title} imageId={item.imageId!} chaptersLength={item.modulesCount} 
-                category={item.category?.name!} />
+                <CourseCard
+                  key={item.id}
+                  author={`${item.author?.firstName} ${item.author?.lastName}`}
+                  id={item.id}
+                  nonFinishedModuleId={item.nonFinishedModuleId}
+                  title={item.title}
+                  imageId={item.imageId!}
+                  chaptersLength={item.modulesCount}
+                  category={item.category?.name!}
+                  price={item.price !== undefined && item.price !== null && showPrice ? Number(item.price) : 0}
+                  showPrice={showPrice}
+                />
             ))}
         </div>
     );

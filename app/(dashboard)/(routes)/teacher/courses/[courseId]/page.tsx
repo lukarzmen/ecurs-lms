@@ -1,4 +1,3 @@
-
 import React from "react";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
@@ -13,6 +12,7 @@ import Link from "next/link";
 import { Category } from "@prisma/client";
 import { StudentsForm } from "./_components/students-form";
 import CourseModeForm from "./_components/mode_form";
+import PriceForm from "./_components/price-form";
 
 const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = await auth() ?? "";
@@ -65,7 +65,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
           />
           <CourseModeForm courseId={courseId} mode={course.mode ?? 0} />
           <ImageForm imageId={course.imageId ?? ''} courseId={courseId} />
-
+          <PriceForm price={course.price ?? 0} courseId={courseId} />
         </div>
         <div className="space-y-6 ">
           <div>

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { title, description, categoryId, userProviderId } = await req.json();
+    const { title, description, categoryId, userProviderId, price } = await req.json();
 
     if (!userProviderId) {
       return new NextResponse("Unauthorized", {
@@ -25,7 +25,8 @@ export async function POST(req: Request) {
         authorId: user.id,
         title,
         categoryId: categoryId,
-        description
+        description,
+        price
       },
     });
 
@@ -78,7 +79,7 @@ export async function GET(req: NextRequest) {
   // Correct way to get search params in Next.js API routes
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get("userId"); // This is the providerId
-
+  
   if (!userId) {
     return new NextResponse("User parameter not passed", { status: 400 }); // Changed status to 400
   }

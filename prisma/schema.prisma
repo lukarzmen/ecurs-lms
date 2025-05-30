@@ -18,6 +18,7 @@ model Course {
   authorId Int 
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
   title String @db.Text
+  price     Decimal @default(0) @db.Decimal(10,2)
   description String? @db.Text
   imageId String?
   mode Int @default(0) // private, public, open
