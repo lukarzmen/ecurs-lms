@@ -97,7 +97,7 @@ const StudentsPage: React.FC = () => {
     if (isLoading) {
         return (
             <div className="container mx-auto p-4 text-center flex justify-center items-center h-screen">
-               <Loader2 className="animate-spin text-orange-700" size={32} />
+            <Loader2 className="animate-spin text-orange-700" size={32} />
             </div>
         );
     }

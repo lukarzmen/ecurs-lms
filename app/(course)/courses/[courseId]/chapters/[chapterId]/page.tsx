@@ -44,10 +44,7 @@ const ChapterIdPage = () => {
     useEffect(() => {
         // Fetch data only if userProviderId and params are available
         if (!userId || !courseId || !chapterId) {
-            // If not authenticated yet, Clerk will handle redirect, or you might want a loading state
-            // If params are missing, it's an invalid route, maybe redirect or show error
             if (!courseId || !chapterId) setError("Nieprawidłowe parametry trasy.");
-            // Don't set loading to false here if waiting for auth
             return;
         }
 
@@ -55,30 +52,24 @@ const ChapterIdPage = () => {
             setIsLoading(true);
             setError(null);
             try {
-                // 1. Check Permissions
-                const permResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/permissions`, {
-                    method: 'POST',
-                    body: JSON.stringify({ courseId, userId: userId }),
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                // 1. Check Permissions (use GET instead of POST)
+                const permResponse = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/permissions?courseId=${courseId}&userId=${userId}`,
+                    { method: 'GET' }
+                );
 
                 if (!permResponse.ok) {
-                    // Handle general network or server errors for permissions check
                     throw new Error("Sprawdzanie uprawnień nie powiodło się. Spróbuj ponownie później.");
                 }
 
                 const permResult = await permResponse.json();
 
-                // Check the 'exists' field from the API response
                 if (!permResult.hasAccess) {
-                    // Use the message from the API if available, otherwise a default one
                     throw new Error("Brak dostępu. Skontaktuj się z nauczycielem, aby uzyskać dostęp do tego kursu.");
                 }
 
-
                 // 2. Fetch Chapter Data (including user progress)
-                // Pass providerId to get specific user progress
-                const chapterResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}/chapters/${chapterId}?providerId=${userId}`); // Use userId directly
+                const chapterResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}/chapters/${chapterId}?providerId=${userId}`);
                 if (!chapterResponse.ok) {
                     throw new Error("Nie udało się pobrać danych rozdziału lub kurs jest niedostępny.");
                 }
@@ -89,16 +80,14 @@ const ChapterIdPage = () => {
                 }
 
                 setChapterData(data);
-                // Set initial completion state based on fetched data
                 setIsCompleted(!!data.userModule?.isFinished);
 
             } catch (err: any) {
                 console.error("Fetch Error:", err);
-                // Use the specific error message if thrown, otherwise use a generic one
                 setError(err.message || "Wystąpił błąd podczas ładowania rozdziału.");
             } finally {
                 setIsLoading(false);
-                router.refresh(); // Refresh the router to ensure the latest data is shown
+                router.refresh();
             }
         };
 

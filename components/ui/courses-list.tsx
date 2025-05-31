@@ -8,7 +8,6 @@ interface CoursesListProps {
 }
 
 export const CoursesList = ( {items, showPrice} : CoursesListProps) => {
-    console.log("CoursesList items:", items);
     if (items && items.length === 0) {
         return (
             <div className="flex justify-center items-center w-full h-full">

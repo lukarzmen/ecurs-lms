@@ -86,10 +86,14 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
             <img
               src={imageUrl}
               alt="Course Image"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Adjust sizes based on your layout breakpoints
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-contain rounded-md h-full w-full"
               style={{ objectFit: "contain", width: "100%", height: "100%" }}
             />
+          ) : image ? (
+            <div className="flex items-center justify-center h-full w-full text-orange-600 mt-4">
+              {image.name}
+            </div>
           ) : (
             <div className="flex items-center justify-center h-full w-full text-orange-600 mt-4">
               Nie wybrano obrazka
