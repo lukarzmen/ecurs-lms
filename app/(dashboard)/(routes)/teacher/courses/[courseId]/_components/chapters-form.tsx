@@ -56,6 +56,7 @@ const toogleCreating = () => {
       await axios.post(`/api/courses/${courseId}/chapters`, values);
       toast.success("Moduł utworzony");
       toogleCreating();
+      form.reset(); // Clear the form after submit
       router.refresh();
     } catch (error) {
       toast.error("Coś poszło nie tak");

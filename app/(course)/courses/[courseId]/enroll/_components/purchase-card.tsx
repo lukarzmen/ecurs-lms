@@ -21,8 +21,13 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps) => {
         const fetchData = async () => {
             try {
                 const permResponse = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/api/permissions?courseId=${courseId}&userId=${userId}`,
-                    { method: 'GET', cache: 'no-store' }
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/permissions`,
+                    {
+                        method: 'POST',
+                        headers: { "Content-Type": "application/json" },
+                        cache: 'no-store',
+                        body: JSON.stringify({ courseId, userId }),
+                    }
                 );
                 if (!permResponse.ok) {
                     setError("Sprawdzanie uprawnień nie powiodło się. Spróbuj ponownie później.");

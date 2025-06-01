@@ -23,7 +23,7 @@ export async function POST(req: Request) {
         // Get course to check price
         const course = await db.course.findUnique({
             where: { id: Number(courseId) },
-            select: { price: true }
+            select: { price: true, mode: true }
         });
 
         if (!course) {
@@ -41,19 +41,17 @@ export async function POST(req: Request) {
         });
 
         if (userCourse) {
-            if (userCourse.state === 1) {
+            if(userCourse.purchase){
                 return NextResponse.json({ hasAccess: true });
             }
-            if(userCourse.purchase || Number(course.price) === 0){
-                return NextResponse.json({ hasAccess: true });
-            }
+            return NextResponse.json({ hasAccess: userCourse.state === 1 });
         }
 
         await db.userCourse.create({
             data: {
                 userId: user.id,
                 courseId: Number(courseId),
-                state: 1,
+                state: ((course.mode == 1) || (Number(course.price) === 0) ? 1 : 0), // 1 for free courses, 0 for paid courses
             },
         });
 
@@ -94,16 +92,19 @@ export async function GET(req: Request) {
         });
 
         if (!course) {
+            console.error("Course not found for ID:", courseId);
             return new NextResponse("Course not found", { status: 404 });
         }
 
         // If user is the author, always allow access
         if (user.id === course.authorId) {
+            console.log("User is the author of the course, granting access.");
             return NextResponse.json({ hasAccess: true, hasPurchase: true });
         }
 
         // If course is free, always allow access
         if (Number(course.price) === 0) {
+            console.log("Course is free, granting access.");
             return NextResponse.json({ hasAccess: true, hasPurchase: true });
         }
 
@@ -121,6 +122,7 @@ export async function GET(req: Request) {
         const hasPurchase = !!userCourse?.purchase;
 
         if (userCourse && userCourse.state === 1) {
+            console.log("User has access to the course.");
             return NextResponse.json({ hasAccess: true, hasPurchase });
         }
 

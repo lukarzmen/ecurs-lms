@@ -27,6 +27,7 @@ export async function POST(
             include: { stripeCustomers: true }
         });
         if (!user) {
+            console.error("User not found for email:", email);
             return new NextResponse("User not found", { status: 404 });
         }
 
@@ -38,6 +39,7 @@ export async function POST(
         });
 
         if (!userCourse) {
+            console.error("UserCourse not found for userId:", user.id, "and courseId:", courseId);
             return new NextResponse("UserCourse not found", { status: 404 });
         }
 
@@ -50,6 +52,7 @@ export async function POST(
             }
         });
         if (!course) {
+            console.error("Course not found for courseId:", courseId);
             return new NextResponse("Course not found", { status: 404 });
         }
         const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
