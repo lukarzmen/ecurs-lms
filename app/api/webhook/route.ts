@@ -6,10 +6,6 @@ import { auth } from "@clerk/nextjs/server";
 
 
 export async function POST(req: Request) {
-    const { userId } = await auth();
-    if(!userId) {
-        return new NextResponse("Unauthorized", { status: 401 });
-    }
     const body = await req.text();
     const headersList = await headers();
     const signature = headersList.get("stripe-signature");
