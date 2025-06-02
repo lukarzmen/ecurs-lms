@@ -2,7 +2,6 @@ import Stripe from "stripe";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
 
 
 export async function POST(req: Request) {
@@ -22,25 +21,31 @@ export async function POST(req: Request) {
         console.error("Error constructing Stripe event:", err);
         return new NextResponse("Webhook Error", { status: 400 });
     }
-    const session = event.data.object as Stripe.Checkout.Session;
-    const appUserId = session.metadata?.userId;
-    const courseId = session.metadata?.courseId;
-    const userCourseId = session.metadata?.userCourseId;
-    if (event.type === "checkout.session.completed") {
+
+    // Handle payment_intent.succeeded event
+    if (event.type === "payment_intent.succeeded") {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        const metadata = paymentIntent.metadata || {};
+        const appUserId = metadata.userId;
+        const courseId = metadata.courseId;
+        const userCourseId = metadata.userCourseId;
+
         if (!appUserId || !courseId || !userCourseId) {
-            console.error("Missing userId or courseId in session metadata");
+            console.error("Missing userId, courseId, or userCourseId in payment intent metadata");
             return new NextResponse("Missing metadata", { status: 400 });
         }
+
         // Insert purchase record
         await db.userCoursePurchase.create({
             data: {
                 userCourseId: Number(userCourseId),
-                paymentId: session.payment_intent as string ?? session.id,
+                paymentId: paymentIntent.id,
                 purchaseDate: new Date(),
             }
         });
         return NextResponse.json({ success: true }, { status: 200 });
     }
+
     return NextResponse.json({
         success: false, message: `Webhook event type error ${event.type} not handled yet. Please contact support if you see this message.
     `}, { status: 200 });
