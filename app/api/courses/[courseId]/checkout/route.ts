@@ -97,11 +97,13 @@ export async function POST(
             ],
             success_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?success=1`,
             cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?canceled=1`,
-            metadata: {
-                userCourseId: userCourse.id.toString(),
-                courseId: courseId,
-                userId: user.id,
-                email: email,
+            payment_intent_data: {
+                metadata: {
+                    userCourseId: userCourse.id.toString(),
+                    courseId: courseId,
+                    userId: user.id,
+                    email: email,
+                }
             },
 
         });
