@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 interface PurchaseCardProps {
@@ -16,6 +16,7 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps) => {
     const [courseData, setCourseData] = useState<any>(null);
     const [permResult, setPermResult] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -52,7 +53,13 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps) => {
             }
         };
         fetchData();
-    }, [courseId, userId]);
+    }, [courseId, userId, router]);
+
+    useEffect(() => {
+        if (permResult?.hasPurchase) {
+            router.replace(`/courses/${courseId}`);
+        }
+    }, [permResult, courseId, router]);
 
     const handleBuy = async () => {
         setLoading(true);
@@ -86,10 +93,7 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps) => {
             </div>
         );
     }
-    if(permResult.hasPurchase)
-    {
-        redirect(`/courses/${courseId}`);
-    }
+
     if (!permResult.hasPurchase && courseData) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[300px] mt-8">
@@ -121,7 +125,7 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps) => {
         );
     }
 
-    return null; // Fallback if no course data is available
+    return null;
 };
 
 export default PurchaseCard;

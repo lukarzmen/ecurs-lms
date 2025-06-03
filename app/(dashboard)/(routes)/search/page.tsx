@@ -17,10 +17,10 @@ const SearchPage = async ({
   const resCategories = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, { next: { revalidate: 60 } });
   const categories = await resCategories.json();
   
-  const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/courses/search?title=${searchParams.title || ''}&categoryId=${searchParams.categoryId || ''}`;
+  const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/courses/search?title=${searchParams.title || ''}&categoryId=${searchParams.categoryId || ''}&userId=${userId}`;
   const res = await fetch(apiUrl);
   const courses = await res.json();
-
+  console.log("Courses fetched:", courses);
   return (
     <>
     <div className="px-6 mt-4 pt-6 mb-0 block w-full">

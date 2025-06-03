@@ -1,6 +1,5 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { CourseDetails } from "../../user/courses/route";
 import { Category, Course } from "@prisma/client";
 
 export type CourseWithCategory = Course & {
@@ -15,14 +14,31 @@ export type CourseWithCategory = Course & {
 type CourseSearchResponse = CourseWithCategory & {
   modulesCount: number;
   nonFinishedModuleId: number;
+  enrolled: boolean;
 };
 
 export async function GET(req: NextRequest): Promise<NextResponse<CourseSearchResponse[] | { error: string }>> {
   const { searchParams } = req.nextUrl;
   const title = searchParams.get('title') || undefined;
   const categoryId = searchParams.get('categoryId') ? parseInt(searchParams.get('categoryId')!) : undefined;
+  const userId = searchParams.get('userId') || undefined;
+  let enrolledCourseIds: number[] = [];
 
   try {
+    if (userId) {
+      const user = await db.user.findUnique({
+        where: { providerId: userId },
+        select: { id: true }
+      });
+      if (user) {
+        const userCourses = await db.userCourse.findMany({
+          where: { userId: user.id },
+          select: { courseId: true }
+        });
+        enrolledCourseIds = userCourses.map(uc => uc.courseId);
+      }
+    }
+
     const courses = await db.course.findMany({
       where: {
         title: {
@@ -54,11 +70,13 @@ export async function GET(req: NextRequest): Promise<NextResponse<CourseSearchRe
     const response: CourseSearchResponse[] = courses.map((course: CourseWithCategory) => {
       const modules = course.modules;
       const lastModuleId = modules.length > 0 ? Math.max(...modules.map(module => module.id)) : 0;
+      const enrolled = enrolledCourseIds.includes(course.id);
 
       return {
         ...course,
         modulesCount: modules.length,
         nonFinishedModuleId: lastModuleId,
+        enrolled,
       };
     });
 

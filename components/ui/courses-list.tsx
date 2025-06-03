@@ -5,6 +5,7 @@ import { CourseDetails } from "@/app/api/user/courses/route";
 interface CoursesListProps {
     items: CourseDetails[];
     showPrice?: boolean; // Optional prop to control price display
+
 }
 
 export const CoursesList = ( {items, showPrice} : CoursesListProps) => {
@@ -30,6 +31,7 @@ export const CoursesList = ( {items, showPrice} : CoursesListProps) => {
                   category={item.category?.name!}
                   price={item.price !== undefined && item.price !== null && showPrice ? Number(item.price) : 0}
                   showPrice={showPrice}
+                  enrolled={item.enrolled} // Pass enrolled status if needed
                 />
             ))}
         </div>

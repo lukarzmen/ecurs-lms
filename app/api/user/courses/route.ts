@@ -24,6 +24,7 @@ export type CourseDetails = Omit<Course, 'userModules'> & {
         firstName: string | null;
         lastName: string | null;
     } | null;
+    enrolled?: boolean; // Optional field to indicate if the user is enrolled in the course
 };
 
 // Type for the final API response structure, including counts
@@ -151,6 +152,7 @@ export async function GET(req: Request): Promise<NextResponse<DashboardCoursesRe
             modulesCount: totalModules,
             isCompleted: allModulesFinished,
             nonFinishedModuleId: nonFinishedModuleId, // Add the nonFinishedModuleId
+            enrolled: false, // <--- always true for this endpoint
         };
 
         // Add to the main list and update counts
