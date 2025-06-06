@@ -1,11 +1,10 @@
-import { IconBadge } from "@/components/icon-badge";
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
-import { ArrowLeft, LayoutDashboard, Settings2, Text } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import ChapterTitleForm from "./_components/chapter-title-form";
 import ChapterDescriptionForm from "./_components/chapter-description-form";
+import ChapterTitleForm from "./_components/chapter-title-form";
 
 const ChapterEditPage = async ({
   params,
@@ -22,9 +21,9 @@ const ChapterEditPage = async ({
   const { courseId, chapterId } = await params;
 
   const moduleResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/module/${chapterId}`);
-  const module = await moduleResponse.json(); 
+  const chapterModule = await moduleResponse.json(); 
 
-  if (!module) {
+  if (!chapterModule) {
     redirect("/");
   }
 
@@ -45,12 +44,13 @@ const ChapterEditPage = async ({
         <div className="space-y-4">
           <div className="w-full">
             <div className="flex items-center gap-x-2">
-              <IconBadge icon={Text} />
-              <h2 className="text-xl">Stwórz treść swojej lekcji</h2>
+                    <h1 className="text-2xl font-bold mb-2 mt-4 flex items-center gap-2">
+                  <span>✏️ Edytuj treść</span>
+                </h1>
             </div>
             <ChapterTitleForm
               chapterId={chapterId}
-              title={module.title}
+              title={chapterModule.title}
               courseId={courseId}
             />
           </div>

@@ -93,7 +93,7 @@ const ChapterIdPage = () => {
 
         fetchData();
 
-    }, [userId, courseId, chapterId]); // Dependencies for useEffect
+    }, [userId, courseId, chapterId, router]); // Dependencies for useEffect
 
     // Handler function to be called by ChapterContent
     const handleCompletion = async () => {

@@ -5,107 +5,153 @@ export async function GET(req: NextRequest) {
     const { searchParams } = req.nextUrl;
     const userId = searchParams.get("userId");
     try {
-
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
         const user = await db.user.findUnique({
             where: { providerId: userId },
-            select: { id: true, role: true },
+            select: { id: true },
         });
 
         if (!user) {
             return new NextResponse("User not found", { status: 404 });
         }
 
-        // Fetch user courses and calculate counts in a single query
-        const courseAnalytics = await db.userCourse.aggregate({
-            where: { userId: user.id },
-            _count: {
-                courseId: true,
-                userId: true,
-            },
+        // Kursy autora
+        const authorCourses = await db.course.findMany({
+            where: { authorId: user.id },
+            select: { id: true, title: true },
         });
+        const authorCourseIds = authorCourses.map(c => c.id);
 
-        const coursesCount = courseAnalytics._count.courseId;
-        const userCount = courseAnalytics._count.userId;
-
-        // Find the most popular course using a single database query
-        const mostPopularCourseGroup = await db.userCourse.groupBy({
-            by: ['courseId'],
-            where: { userId: user.id },
-            _count: {
-                courseId: true,
-            },
-            orderBy: {
-                _count: {
-                    courseId: 'desc',
-                },
-            },
-            take: 1,
+        // Unikalni użytkownicy zapisani na kursy autora
+        const userCoursesGroup = await db.userCourse.groupBy({
+            by: ['userId'],
+            where: { courseId: { in: authorCourseIds } },
         });
+        const userCount = userCoursesGroup.length;
 
-        let mostPopularCourseName = "No courses yet";
-        if (mostPopularCourseGroup.length > 0) {
-            const course = await db.course.findUnique({
-                where: { id: mostPopularCourseGroup[0].courseId },
-                select: { title: true },
+        // Liczba kursów autora
+        const coursesCount = authorCourseIds.length;
+
+        // Średnia liczba zapisanych użytkowników na kurs
+        const avgUsersPerCourse = coursesCount > 0 ? userCount / coursesCount : 0;
+
+        // Liczba aktywnych użytkowników (ukończyli przynajmniej jeden moduł w ostatnich 7 dni)
+        const activeSince = new Date();
+        activeSince.setDate(activeSince.getDate() - 7);
+        const activeUsers = await db.userModule.findMany({
+            where: {
+                module: { course: { authorId: user.id } },
+                isFinished: true,
+                updatedAt: { gte: activeSince },
+            },
+            select: { userId: true },
+        });
+        const activeUserCount = new Set(activeUsers.map(u => u.userId)).size;
+
+        // Kurs z najwyższym procentem ukończenia (spośród kursów autora)
+        let bestCompletionCourse = "Brak danych";
+        let bestCompletionRate = 0;
+        for (const course of authorCourses) {
+            const modules = await db.module.findMany({
+                where: { courseId: course.id },
+                select: { id: true },
             });
-            mostPopularCourseName = course ? course.title : "No courses yet";
+            const moduleIds = modules.map(m => m.id);
+            if (moduleIds.length === 0) continue;
+
+            // Użytkownicy, którzy ukończyli wszystkie moduły
+            const finishedModules = await db.userModule.findMany({
+                where: {
+                    moduleId: { in: moduleIds },
+                    isFinished: true,
+                },
+                select: { userId: true, moduleId: true },
+            });
+
+            // Map userId to set of finished moduleIds
+            const userModuleMap: Record<string, Set<string>> = {};
+            for (const fm of finishedModules) {
+                if (!userModuleMap[fm.userId]) {
+                    userModuleMap[fm.userId] = new Set();
+                }
+                userModuleMap[fm.userId].add(fm.moduleId.toString());
+            }
+            // Count users who finished all modules
+            const finishedUsersCount = Object.values(userModuleMap).filter(set => set.size === moduleIds.length).length;
+
+            const enrolledUsers = await db.userCourse.count({ where: { courseId: course.id } });
+            const completionRate = enrolledUsers > 0 ? finishedUsersCount / enrolledUsers : 0;
+            if (completionRate > bestCompletionRate) {
+                bestCompletionRate = completionRate;
+                bestCompletionCourse = course.title;
+            }
         }
 
-        // Calculate new users last month
+        // Liczba powracających użytkowników (zapisanych na więcej niż jeden kurs autora)
+        const multiCourseUsers = await db.userCourse.groupBy({
+            by: ['userId'],
+            where: { courseId: { in: authorCourseIds } },
+            _count: { courseId: true },
+            having: { courseId: { _count: { gt: 1 } } }
+        });
+        const returningUsersCount = multiCourseUsers.length;
+
+        // Najpopularniejszy kurs (najwięcej zapisów)
+        let mostPopularCourse = "Brak danych";
+        let mostPopularCount = 0;
+        for (const course of authorCourses) {
+            const count = await db.userCourse.count({ where: { courseId: course.id } });
+            if (count > mostPopularCount) {
+                mostPopularCount = count;
+                mostPopularCourse = course.title;
+            }
+        }
+
+        // Najmniej popularny kurs (najmniej zapisów)
+        let leastPopularCourse = "Brak danych";
+        let leastPopularCount = Number.MAX_SAFE_INTEGER;
+        for (const course of authorCourses) {
+            const count = await db.userCourse.count({ where: { courseId: course.id } });
+            if (count < leastPopularCount) {
+                leastPopularCount = count;
+                leastPopularCourse = course.title;
+            }
+        }
+
+        // Nowi kursanci w ostatnim miesiącu
         const lastMonth = new Date();
         lastMonth.setMonth(lastMonth.getMonth() - 1);
-        const newUsersLastMonth = await db.user.count({
+        const newUsersLastMonth = await db.userCourse.groupBy({
+            by: ['userId'],
             where: {
-                createdAt: {
-                    gte: lastMonth,
-                },
+                courseId: { in: authorCourseIds },
+                createdAt: { gte: lastMonth },
             },
         });
 
-        // Calculate new courses last month
+        // Nowe kursy w ostatnim miesiącu
         const newCoursesLastMonth = await db.course.count({
             where: {
-                createdAt: {
-                    gte: lastMonth,
-                },
+                authorId: user.id,
+                createdAt: { gte: lastMonth },
             },
         });
-
-        // Find the least popular course
-        const leastPopularCourseGroup = await db.userCourse.groupBy({
-            by: ['courseId'],
-            where: { userId: user.id },
-            _count: {
-                courseId: true,
-            },
-            orderBy: {
-                _count: {
-                    courseId: 'asc',
-                },
-            },
-            take: 1,
-        });
-
-        let leastPopularCourseName = "No courses yet";
-        if (leastPopularCourseGroup.length > 0) {
-            const course = await db.course.findUnique({
-                where: { id: leastPopularCourseGroup[0].courseId },
-                select: { title: true },
-            });
-            leastPopularCourseName = course ? course.title : "No courses yet";
-        }
 
         return NextResponse.json({
             userCount,
             coursesCount,
-            mostPopularCourse: mostPopularCourseName,
-            newUsersLastMonth,
+            avgUsersPerCourse,
+            activeUserCount,
+            bestCompletionCourse,
+            bestCompletionRate: (bestCompletionRate * 100).toFixed(2) + "%",
+            returningUsersCount,
+            mostPopularCourse,
+            leastPopularCourse,
+            newUsersLastMonth: newUsersLastMonth.length,
             newCoursesLastMonth,
-            leastPopularCourse: leastPopularCourseName,
         });
 
     } catch (error) {

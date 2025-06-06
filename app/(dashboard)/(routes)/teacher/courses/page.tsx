@@ -7,21 +7,29 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 
 const CoursesPage = async () => {
-
-  const {userId} = await auth();
-  if(!userId) {
+  const { userId } = await auth();
+  if (!userId) {
     return redirect("/sign-in");
   }
 
-  const coursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses?userId=${userId}`, {
-    cache: 'no-store',  // This ensures fresh data on each request
-  });
+  const coursesResponse = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/courses?userId=${userId}`,
+    {
+      cache: "no-store", // This ensures fresh data on each request
+    }
+  );
   const courses = await coursesResponse.json();
 
   return (
-      <div className="p-6">
-        <DataTable columns={columns} data={courses} />
-      </div>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6 mt-6 flex items-center gap-2">
+        <span>📚 Twoje kursy</span>
+        <span className="text-base font-normal text-gray-400 ml-2">
+          ({courses.length})
+        </span>
+      </h1>
+      <DataTable columns={columns} data={courses} />
+    </div>
   );
 };
 
