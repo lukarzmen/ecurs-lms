@@ -32,6 +32,7 @@ export const CoursesList = ( {items, showPrice} : CoursesListProps) => {
                   price={item.price !== undefined && item.price !== null && showPrice ? Number(item.price) : 0}
                   showPrice={showPrice}
                   enrolled={item.enrolled} // Pass enrolled status if needed
+                isCompleted={item.isCompleted} // Pass completion status
                 />
             ))}
         </div>

@@ -29,7 +29,8 @@ export const CourseCard = ({
     price,
     showPrice = false,
     enrolled = false,
-}: CourseCardProps) => {
+    isCompleted = false, // Optional prop to indicate if the course is completed
+}: CourseCardProps & { isCompleted?: boolean }) => {
     const imageUrl = imageId ? `/api/image/${imageId}` : null;
     const placeholderImageUrl = "/logo.png";
     const [isImageLoading, setIsImageLoading] = useState(true);
@@ -43,6 +44,7 @@ export const CourseCard = ({
         <div
             className={`group hover:shadow-sm transition overflow-hidden border rounded-lg p-3 h-full text-center
                 ${enrolled ? "bg-gray-100 opacity-60 pointer-events-none select-none" : ""}
+                ${isCompleted ? "border-2 border-orange-500 bg-orange-50" : ""}
             `}
         >
             <div className="relative w-full aspect-square rounded-md overflow-hidden bg-gray-200">
@@ -89,6 +91,11 @@ export const CourseCard = ({
                 {enrolled && (
                     <div className="mt-2 text-xs text-green-700 font-semibold">
                         Posiadasz dostęp do kursu
+                    </div>
+                )}
+                {isCompleted && (
+                    <div className="mt-2 text-xs text-orange-700 font-semibold">
+                        Ukończony
                     </div>
                 )}
             </div>

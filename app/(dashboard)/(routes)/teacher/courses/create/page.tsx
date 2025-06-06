@@ -7,6 +7,7 @@ import { Category } from "@prisma/client";
 import toast from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
 import next from "next";
+import { Loader2 } from "lucide-react";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
@@ -60,8 +61,8 @@ const CreatePage = () => {
   }, []);
 
   return (
-    <div className="max-w-5xl mx-auto flex md:items-center md:justify-center h-full p-6">
-      <div className="text-2xl">
+    <div className="max-w-2xl w-full mx-auto flex md:items-center md:justify-center h-full p-6">
+      <div className="text-2xl w-full">
         <h1>
           {step === 1 && "Nazwij swój kurs"}
           {step === 2 && "Wybierz kategorię dla swojego kursu"}
@@ -90,7 +91,7 @@ const CreatePage = () => {
               <div className="flex items-center gap-x-2 mt-4">
                 <button
                   type="button"
-                  className="bg-gray-200 text-black py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  className="w-40 sm:w-48 bg-gray-200 text-black py-2 px-4 rounded-md font-semibold shadow hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 flex items-center justify-center transition"
                   onClick={() => router.push("/teacher/courses")}
                   disabled={isSubmitting}
                 >
@@ -98,11 +99,11 @@ const CreatePage = () => {
                 </button>
                 <button
                   type="button"
-                  className="bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                  className="w-40 sm:w-48 bg-orange-600 text-white py-2 px-4 rounded-md font-semibold shadow hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 flex items-center justify-center transition"
                   disabled={!title || isSubmitting}
                   onClick={nextStep}
                 >
-                  Kontynuuj
+                  Dalej
                 </button>
               </div>
             </div>
@@ -133,7 +134,7 @@ const CreatePage = () => {
               <div className="flex items-center gap-x-2 mt-4">
                 <button
                   type="button"
-                  className="bg-gray-200 text-black py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  className="w-40 sm:w-48 bg-gray-200 text-black py-2 px-4 rounded-md font-semibold shadow hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 flex items-center justify-center transition"
                   onClick={prevStep}
                   disabled={isSubmitting}
                 >
@@ -141,7 +142,7 @@ const CreatePage = () => {
                 </button>
                 <button
                   type="button"
-                  className="bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                  className="w-40 sm:w-48 bg-orange-600 text-white py-2 px-4 rounded-md font-semibold shadow hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 flex items-center justify-center transition"
                   disabled={isSubmitting}
                   onClick={nextStep}
                 >
@@ -170,7 +171,7 @@ const CreatePage = () => {
               <div className="flex items-center gap-x-2 mt-4">
                 <button
                   type="button"
-                  className="bg-gray-200 text-black py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  className="w-40 sm:w-48 bg-gray-200 text-black py-2 px-4 rounded-md font-semibold shadow hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 flex items-center justify-center transition"
                   onClick={prevStep}
                   disabled={isSubmitting}
                 >
@@ -178,7 +179,7 @@ const CreatePage = () => {
                 </button>
                 <button
                   type="button"
-                  className="bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                  className="w-40 sm:w-48 bg-orange-600 text-white py-2 px-4 rounded-md font-semibold shadow hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 flex items-center justify-center transition"
                   disabled={isSubmitting}
                   onClick={nextStep}
                 >
@@ -218,7 +219,7 @@ const CreatePage = () => {
               <div className="flex items-center gap-x-2 mt-4">
                 <button
                   type="button"
-                  className="bg-gray-200 text-black py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  className="w-40 sm:w-48 bg-gray-200 text-black py-2 px-4 rounded-md font-semibold shadow hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 flex items-center justify-center transition"
                   onClick={prevStep}
                   disabled={isSubmitting}
                 >
@@ -226,9 +227,12 @@ const CreatePage = () => {
                 </button>
                 <button
                   type="submit"
-                  className="bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-                  disabled={isSubmitting}
+                  className="w-40 sm:w-48 bg-orange-600 text-white py-2 px-4 rounded-md font-semibold shadow hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 flex items-center justify-center transition"
+                  disabled={isSubmitting || !title}
                 >
+                  {isSubmitting ? (
+                    <Loader2 className="animate-spin mr-2" size={20} />
+                  ) : null}
                   Utwórz
                 </button>
               </div>
