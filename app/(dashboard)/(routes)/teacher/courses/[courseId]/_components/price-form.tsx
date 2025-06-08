@@ -16,6 +16,7 @@ export default function PriceForm({ price, courseId }: { price: number; courseId
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Submitting price:", currentPrice);
     try {
       const res = await fetch(`/api/courses/${courseId}/price`, {
         method: "PATCH",
@@ -66,8 +67,10 @@ export default function PriceForm({ price, courseId }: { price: number; courseId
           </div>
         </form>
       ) : (
-        <p className={`text-sm mt-2 ${currentPrice === 0 ? "text-orange-700 font-semibold" : ""}`}>
-          {currentPrice === 0 ? "Darmowy" : <span className="font-semibold text-orange-700">{currentPrice} PLN</span>}
+        <p className={`text-sm mt-2 ${Number(currentPrice) === 0 ? "text-orange-700 font-semibold" : ""}`}>
+          {Number(currentPrice) === 0
+            ? "Darmowy"
+            : <span className="font-semibold text-orange-700">{currentPrice} PLN</span>}
         </p>
       )}
     </div>
