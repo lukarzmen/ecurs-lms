@@ -15,33 +15,50 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
+interface CourseDetail {
+  id: string;
+  title: string;
+  usersCount: number;
+  modulesCount: number;
+  averageCompletionRate: string;
+  mostActiveUser: string;
+  lastActiveUser: string;
+  lastActiveDate?: string;
+}
+
 interface AnalyticsData {
   userCount: number;
   coursesCount: number;
-  avgUsersPerCourse: number;
+  modulesCount: number;
+  averageCompletionRate: string;
   activeUserCount: number;
-  bestCompletionCourse: string;
-  bestCompletionRate: string;
   returningUsersCount: number;
   mostPopularCourse?: string;
   newUsersLastMonth?: number;
   newCoursesLastMonth?: number;
   leastPopularCourse?: string;
+  leastActiveStudent?: string;
+  mostActiveStudent?: string;
+  mostCoursesStudent?: string;
+  coursesDetails?: CourseDetail[];
 }
 
 const AnalyticsPage = () => {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
     userCount: 0,
     coursesCount: 0,
-    avgUsersPerCourse: 0,
+    modulesCount: 0,
+    averageCompletionRate: "0%",
     activeUserCount: 0,
-    bestCompletionCourse: "???",
-    bestCompletionRate: "0%",
     returningUsersCount: 0,
     mostPopularCourse: "???",
     newUsersLastMonth: 0,
     newCoursesLastMonth: 0,
     leastPopularCourse: "???",
+    leastActiveStudent: "???",
+    mostActiveStudent: "???",
+    mostCoursesStudent: "???",
+    coursesDetails: [],
   });
   const { userId } = useAuth();
 
@@ -70,15 +87,18 @@ const AnalyticsPage = () => {
   const {
     userCount,
     coursesCount,
-    avgUsersPerCourse,
+    modulesCount,
+    averageCompletionRate,
     activeUserCount,
-    bestCompletionCourse,
-    bestCompletionRate,
     returningUsersCount,
     mostPopularCourse,
     newUsersLastMonth,
     newCoursesLastMonth,
     leastPopularCourse,
+    leastActiveStudent,
+    mostActiveStudent,
+    mostCoursesStudent,
+    coursesDetails = [],
   } = analyticsData;
 
   // Chart data
@@ -139,17 +159,66 @@ const AnalyticsPage = () => {
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <DataCard label="Średnia liczba kursantów na kurs" value={avgUsersPerCourse.toFixed(2)} />
-        <DataCard label="Kurs z najwyższym procentem ukończenia" value={bestCompletionCourse} />
-        <DataCard label="Procent ukończenia najlepszego kursu" value={bestCompletionRate} />
+        <DataCard label="Liczba kursów" value={coursesCount.toString()} />
+        <DataCard label="Liczba kursantów" value={userCount.toString()} />
+        <DataCard label="Liczba wszystkich modułów" value={modulesCount.toString()} />
+        <DataCard label="Średni procent ukończenia kursów" value={averageCompletionRate} />
         {typeof mostPopularCourse === "string" && (
           <DataCard label="Najpopularniejszy kurs" value={mostPopularCourse} />
         )}
         {typeof leastPopularCourse === "string" && (
           <DataCard label="Najmniej popularny kurs" value={leastPopularCourse} />
         )}
+        {leastActiveStudent && (
+          <DataCard label="Najmniej aktywny student" value={leastActiveStudent} />
+        )}
+        {mostActiveStudent && (
+          <DataCard label="Najbardziej aktywny student" value={mostActiveStudent} />
+        )}
+        {mostCoursesStudent && (
+          <DataCard label="Student zapisany na najwięcej kursów" value={mostCoursesStudent} />
+        )}
       </div>
-      <div className="text-sm text-gray-500">
+      <div className="overflow-x-auto mt-10">
+        <h2 className="text-xl font-semibold mb-4">Szczegółowe statystyki kursów</h2>
+        <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow">
+          <thead>
+            <tr className="bg-gray-50">
+              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Nazwa kursu</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Kursanci</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Moduły</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Śr. ukończenia</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Najbardziej aktywny</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Ostatnio aktywny</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Data aktywności</th>
+            </tr>
+          </thead>
+          <tbody>
+            {coursesDetails.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-6 text-center text-gray-400">Brak danych o kursach</td>
+              </tr>
+            ) : (
+              coursesDetails.map((course) => (
+                <tr key={course.id} className="border-t hover:bg-orange-50 transition">
+                  <td className="px-4 py-2 font-medium">{course.title}</td>
+                  <td className="px-4 py-2">{course.usersCount}</td>
+                  <td className="px-4 py-2">{course.modulesCount}</td>
+                  <td className="px-4 py-2">{course.averageCompletionRate}</td>
+                  <td className="px-4 py-2">{course.mostActiveUser}</td>
+                  <td className="px-4 py-2">{course.lastActiveUser}</td>
+                  <td className="px-4 py-2">
+                    {course.lastActiveDate
+                      ? new Date(course.lastActiveDate).toLocaleString("pl-PL")
+                      : "Brak"}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+      <div className="text-sm text-gray-500 mt-2">
         <p>
           <span className="font-semibold">Wskazówka:</span> Kliknij na kurs, aby zobaczyć szczegółowe statystyki.
         </p>
