@@ -6,13 +6,19 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
+const TERMS_EFFECTIVE_DATE = "11.06.2025";
+const TERMS_LAST_UPDATE = "11.06.2025";
+
 const STUDENT_TERMS = (
   <div className="text-left max-h-64 overflow-y-auto px-2 py-2 bg-orange-50 rounded-lg border border-orange-200 shadow-inner text-sm leading-relaxed space-y-2">
     <h2 className="text-lg font-bold text-orange-700 mb-2">📜 Warunki uczestnictwa użytkownika w platformie Ecurs</h2>
+    <p className="text-xs text-gray-500 mb-2">
+      Obowiązuje od: {TERMS_EFFECTIVE_DATE} &nbsp;|&nbsp; Ostatnia aktualizacja: {TERMS_LAST_UPDATE}
+    </p>
     <p className="font-semibold text-gray-700">§1. Postanowienia ogólne</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li>Niniejszy regulamin określa zasady korzystania z platformy Ecurs, w tym prawa i obowiązki użytkowników.</li>
-      <li>Korzystanie z platformy oznacza akceptację niniejszego regulaminu.</li>
+      <li>Korzystanie z platformy oznacza akceptację niniejszego regulaminu (browsewrap). Jednak do rejestracji i zakupu kursu wymagane jest wyraźne kliknięcie „Akceptuję” (clickwrap).</li>
       <li>
         Platforma działa zgodnie z przepisami prawa Unii Europejskiej oraz Rzeczypospolitej Polskiej, w szczególności:
         <ul className="list-disc ml-6">
@@ -40,23 +46,35 @@ const STUDENT_TERMS = (
       <li>Zabronione jest publikowanie treści niezgodnych z prawem, naruszających prawa autorskie lub dobre obyczaje.</li>
       <li>Administrator ma prawo do moderowania treści oraz usuwania materiałów naruszających regulamin.</li>
     </ul>
-    <p className="font-semibold text-gray-700 mt-2">§5. Postanowienia końcowe</p>
+    <p className="font-semibold text-gray-700 mt-2">§5. Warunki płatności</p>
+    <ul className="list-disc ml-6 text-gray-700">
+      <li>Uczestnictwo w płatnych kursach wymaga zakupu dostępu do wybranego kursu według ceny podanej w marketplace.</li>
+      <li>Płatność za kurs jest jednorazowa i umożliwia dostęp do materiałów przez czas określony przez nauczyciela.</li>
+      <li>Zwroty i reklamacje są rozpatrywane indywidualnie zgodnie z polityką platformy.</li>
+    </ul>
+    <p className="font-semibold text-gray-700 mt-2">§6. Postanowienia końcowe</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li>Administrator zastrzega sobie prawo do zmiany regulaminu, informując o tym użytkowników.</li>
       <li>Wszelkie spory wynikające z korzystania z platformy będą rozstrzygane zgodnie z prawem polskim.</li>
       <li>Administrator zastrzega sobie prawo do usunięcia danych użytkownika po 360 dniach nieaktywności.</li>
     </ul>
-    <p className="mt-4 text-xs text-gray-500">Akceptacja regulaminu jest wymagana do rejestracji.</p>
+    <p className="mt-4 text-xs text-gray-500">
+      Akceptacja regulaminu poprzez kliknięcie „Akceptuję” jest wymagana do rejestracji i zakupu kursów.<br />
+      O wszelkich zmianach w regulaminie użytkownicy zostaną poinformowani mailowo lub poprzez komunikat w serwisie. Dalsze korzystanie z platformy po zmianie regulaminu oznacza jego akceptację.
+    </p>
   </div>
 );
 
 const TEACHER_TERMS = (
   <div className="text-left max-h-64 overflow-y-auto px-2 py-2 bg-blue-50 rounded-lg border border-blue-200 shadow-inner text-sm leading-relaxed space-y-2">
     <h2 className="text-lg font-bold text-blue-700 mb-2">📜 Warunki uczestnictwa nauczyciela w platformie Ecurs</h2>
+    <p className="text-xs text-gray-500 mb-2">
+      Obowiązuje od: {TERMS_EFFECTIVE_DATE} &nbsp;|&nbsp; Ostatnia aktualizacja: {TERMS_LAST_UPDATE}
+    </p>
     <p className="font-semibold text-gray-700">§1. Postanowienia ogólne</p>
     <ul className="list-disc ml-6 text-gray-700">
-      <li>Niniejszy regulamin określa zasady korzystania z platformy LMS przez nauczycieli, w tym prawa i obowiązki nauczycieli.</li>
-      <li>Korzystanie z platformy jako nauczyciel oznacza akceptację niniejszego regulaminu.</li>
+      <li>Niniejszy regulamin określa zasady korzystania z platformy Ecurs przez nauczycieli, w tym prawa i obowiązki nauczycieli.</li>
+      <li>Korzystanie z platformy jako nauczyciel oznacza akceptację niniejszego regulaminu (browsewrap). Jednak do rejestracji i korzystania z funkcji nauczycielskich wymagane jest wyraźne kliknięcie „Akceptuję” (clickwrap).</li>
       <li>
         Platforma działa zgodnie z przepisami prawa Unii Europejskiej oraz Rzeczypospolitej Polskiej, w szczególności:
         <ul className="list-disc ml-6">
@@ -85,9 +103,27 @@ const TEACHER_TERMS = (
       <li>Nauczyciel ponosi odpowiedzialność za treści publikowane w ramach prowadzonych kursów.</li>
       <li>Administrator ma prawo do moderowania treści oraz usuwania materiałów naruszających regulamin.</li>
     </ul>
-    <p className="font-semibold text-gray-700 mt-2">§5. Warunki płatności i licencja</p>
+    <p className="font-semibold text-gray-700 mt-2">§5. Warunki płatności, okresy rozliczeniowe i zmiana licencji</p>
     <ul className="list-disc ml-6 text-gray-700">
-      <li>Po zakończeniu okresu próbnego nauczyciel zobowiązany jest do uiszczenia opłaty zgodnej z obowiązującym cennikiem, w wyznaczonym terminie.</li>
+      <li>Po zakończeniu okresu próbnego (3 miesiące) nauczyciel zobowiązany jest do wyboru jednego z planów płatności:</li>
+      <li>
+        <b>Do 5 uczniów:</b> 39 zł za miesiąc – pełny dostęp do funkcji, zarządzanie kursami i uczniami, podstawowe wsparcie techniczne.
+      </li>
+      <li>
+        <b>Powyżej 10 uczniów:</b> 1699 zł za rok – pełny dostęp do wszystkich funkcjonalności, nielimitowani członkowie zespołu, pełne wsparcie techniczne.
+      </li>
+      <li>
+        <b>Mechanizm przejścia:</b> Jeśli liczba aktywnych uczniów przekroczy limit wybranej licencji, nauczyciel zostanie automatycznie poinformowany o konieczności przejścia na wyższy plan. Informacja zostanie przekazana mailowo na adres podany przy rejestracji oraz poprzez komunikat w panelu platformy. Użytkownik ma 30 dni na przejście na wyższy plan.
+      </li>
+      <li>
+        <b>Zasady naliczania opłat:</b> W przypadku zmiany planu w trakcie trwania okresu rozliczeniowego, opłata za nową licencję zostanie naliczona proporcjonalnie do pozostałego okresu rozliczeniowego.
+      </li>
+      <li>
+        <b>Powiadomienie użytkownika:</b> Wszystkie informacje dotyczące konieczności zmiany licencji, promocji lub zmian cen będą przekazywane mailowo na adres podany przy rejestracji oraz poprzez komunikat w panelu platformy.
+      </li>
+      <li>
+        <b>Cena promocyjna:</b> Cena podana w regulaminie może się różnić w przypadku trwających promocji. Szczegóły promocji oraz okres ich obowiązywania są widoczne w panelu użytkownika i w wiadomości e-mail.
+      </li>
       <li>Brak opłaty po okresie próbnym skutkuje zablokowaniem dostępu do funkcji nauczycielskich, a po upływie 180 dni od braku aktywnego konta nauczyciela (przy braku płatności za licencję) – usunięciem danych użytkownika.</li>
       <li>Wszelkie materiały udostępniane przez nauczyciela w ramach kursów pozostają jego własnością intelektualną, jednak nauczyciel udziela platformie Ecurs niewyłącznej, nieodpłatnej licencji na ich prezentację w ramach platformy na czas trwania kursu.</li>
       <li>W przypadku pytań dotyczących płatności lub faktur, prosimy o kontakt z administratorem platformy.</li>
@@ -97,7 +133,10 @@ const TEACHER_TERMS = (
       <li>Administrator zastrzega sobie prawo do zmiany regulaminu, informując o tym nauczycieli.</li>
       <li>Wszelkie spory wynikające z korzystania z platformy będą rozstrzygane zgodnie z prawem polskim.</li>
     </ul>
-    <p className="mt-4 text-xs text-gray-500">Akceptacja regulaminu i warunków płatności jest wymagana do rejestracji jako nauczyciel.</p>
+    <p className="mt-4 text-xs text-gray-500">
+      Akceptacja regulaminu i warunków płatności poprzez kliknięcie „Akceptuję” jest wymagana do rejestracji jako nauczyciel.<br />
+      O wszelkich zmianach w regulaminie nauczyciele zostaną poinformowani mailowo lub poprzez komunikat w serwisie. Dalsze korzystanie z platformy po zmianie regulaminu oznacza jego akceptację.
+    </p>
   </div>
 );
 
