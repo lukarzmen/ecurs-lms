@@ -105,15 +105,25 @@ const TEACHER_TERMS = (
     </ul>
     <p className="font-semibold text-gray-700 mt-2">§5. Warunki płatności, okresy rozliczeniowe i zmiana licencji</p>
     <ul className="list-disc ml-6 text-gray-700">
-      <li>Po zakończeniu okresu próbnego (3 miesiące) nauczyciel zobowiązany jest do wyboru jednego z planów płatności:</li>
       <li>
-        <b>Do 5 uczniów:</b> 39 zł za miesiąc – pełny dostęp do funkcji, zarządzanie kursami i uczniami, podstawowe wsparcie techniczne.
+        <b>Indywidualny twórca</b> – osoba fizyczna prowadząca kursy na platformie Ecurs, posiadająca nie więcej niż 10 aktywnych uczniów oraz jedno konto nauczyciela.
       </li>
       <li>
-        <b>Powyżej 10 uczniów:</b> 1699 zł za rok – pełny dostęp do wszystkich funkcjonalności, nielimitowani członkowie zespołu, pełne wsparcie techniczne.
+        <b>Szkoła lub placówka edukacyjna</b> – instytucja lub organizacja, która posiada więcej niż jednego nauczyciela (współtworzących kursy) lub więcej niż 10 aktywnych uczniów. Szkoła może tworzyć zespoły nauczycieli i zarządzać kursami wspólnie.
       </li>
       <li>
-        <b>Mechanizm przejścia:</b> Jeśli liczba aktywnych uczniów przekroczy limit wybranej licencji, nauczyciel zostanie automatycznie poinformowany o konieczności przejścia na wyższy plan. Informacja zostanie przekazana mailowo na adres podany przy rejestracji oraz poprzez komunikat w panelu platformy. Użytkownik ma 30 dni na przejście na wyższy plan.
+        Po zakończeniu okresu próbnego (3 miesiące) nauczyciel lub szkoła zobowiązani są do wyboru jednego z planów płatności:
+        <ul className="list-disc ml-6 mt-2">
+          <li>
+            <b>Plan dla indywidualnych twórców prowadzących do 10 uczniów:</b> 39 zł za miesiąc – pełny dostęp do funkcji, tworzenie interaktywnych kursów, zarządzanie treściami i uczniami, podstawowe wsparcie techniczne.
+          </li>
+          <li>
+            <b>Dla szkół i placówek edukacyjnych lub twórców posiadających więcej niż 10 uczniów:</b> 1699 zł za rok – pełny dostęp do wszystkich funkcjonalności, nielimitowani członkowie zespołu, pełne wsparcie techniczne.
+          </li>
+        </ul>
+      </li>
+      <li>
+        <b>Mechanizm przejścia:</b> Jeśli liczba aktywnych uczniów przekroczy 10 lub do kursów zostanie przypisany drugi nauczyciel, użytkownik zostanie automatycznie poinformowany o konieczności przejścia na plan dla szkół. Informacja zostanie przekazana mailowo na adres podany przy rejestracji oraz poprzez komunikat w panelu platformy. Użytkownik ma 30 dni na przejście na wyższy plan.
       </li>
       <li>
         <b>Zasady naliczania opłat:</b> W przypadku zmiany planu w trakcie trwania okresu rozliczeniowego, opłata za nową licencję zostanie naliczona proporcjonalnie do pozostałego okresu rozliczeniowego.
