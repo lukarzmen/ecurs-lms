@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-const allowedOrigins = ["http://localhost:3000", "https://ecurs.pl"];
+const allowedOrigins = ["http://localhost:3000", "https://ecurs.pl", "https://uczzecurs.pl"];
 
 export async function POST(req: NextRequest) {
   try {
