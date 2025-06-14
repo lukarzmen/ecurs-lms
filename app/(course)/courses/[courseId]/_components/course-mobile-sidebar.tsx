@@ -25,7 +25,7 @@ export const CourseMobileSidebar = ({
     const [showConfetti, setShowConfetti] = useState(false);
 
     useEffect(() => {
-        if (course && course.modules && course.modules.length > 0) {
+        if (course && course.modules && course.modules.length > 0 && course.state === 1) {
             const allModulesFinished = course.modules.every(
                 (module) => module.progressState === "FINISHED"
             );

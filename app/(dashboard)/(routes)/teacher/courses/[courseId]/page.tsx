@@ -12,6 +12,9 @@ import { Category } from "@prisma/client";
 import { StudentsForm } from "./_components/students-form";
 import CourseModeForm from "./_components/mode_form";
 import PriceForm from "./_components/price-form";
+import CoursStateBar from "./_components/state-bar";
+import CourseModeBar from "./_components/mode_form";
+import CourseStateBar from "./_components/state-bar";
 
 const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = await auth() ?? "";
@@ -30,6 +33,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   }
 
   const courseTitle = course.title;
+  const { mode, state } = course;
 
   return (
     <>
@@ -48,6 +52,11 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
             </h1>
           </div>
         </div>
+        <>
+          <div className="w-full">
+            <CourseStateBar courseId={courseId} mode={mode} state={state} />
+          </div>
+        </>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TitleForm title={courseTitle} courseId={courseId} />
           <DescriptionForm description={course.description ?? ''} courseId={courseId} />
@@ -60,7 +69,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
             }))}
             courseId={courseIdNumber}
           />
-          <CourseModeForm courseId={courseId} mode={course.mode ?? 0} />
+          <CourseModeForm courseId={courseId} mode={course.mode ?? 0} state={course.state ?? 0} />
           <ImageForm imageId={course.imageId ?? ''} courseId={courseId} />
           <PriceForm price={course.price ?? 0} courseId={courseId} />
         </div>

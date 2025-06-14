@@ -47,6 +47,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<CourseSearchRe
         },
         categoryId: categoryId,
         mode: 1, // Only public courses
+        state: 1, // Only published courses
       },
       include: {
         category: true,

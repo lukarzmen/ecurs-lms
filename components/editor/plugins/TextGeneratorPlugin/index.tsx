@@ -141,11 +141,21 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
         })
           .then((response) => response.text())
           .then((response) => {
+            console.log('Received response:', response);
             editor.update(() => {
               const root = $getRoot();
               // Split response into lines
-              const lines = response.split('\n');
+              const cleanedResponse = response.replace(/^#####\s*/gm, "");
+              const lines = cleanedResponse.split('\n');
               lines.forEach((line) => {
+                // Heading 3: ### or ####
+                if (line.trim().startsWith("#### ")) {
+                  const headingText = line.replace(/^####\s*/, "");
+                  const headingNode = $createHeadingNode('h3');
+                  headingNode.append($createTextNode(headingText));
+                  root.append(headingNode);
+                  return;
+                }
                 // Heading 1: #
                 if (line.trim().startsWith("# ")) {
                   const headingText = line.replace(/^#\s*/, "");
@@ -155,14 +165,13 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
                   return;
                 }
                 // Heading 3: ###
-                if (line.trim().startsWith("###")) {
+                if (line.trim().startsWith("### ")) {
                   const headingText = line.replace(/^###\s*/, "");
                   const headingNode = $createHeadingNode('h3');
                   headingNode.append($createTextNode(headingText));
                   root.append(headingNode);
                   return;
                 }
-
                 const paragraphNode = $createParagraphNode();
                 // Regex to match **bold** fragments
                 const parts = line.split(/(\*\*[^*]+\*\*)/g);
