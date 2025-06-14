@@ -9,7 +9,7 @@ const CourseLayout = async ({ children, params }: {
 }) => {
     const { userId } = await auth() || { userId: '' };
     if(!userId) {
-        return redirect("/sign-in");
+        return redirect(`/sign-in?redirectUrl=${encodeURIComponent(`/courses/${params.courseId}`)}`);
       }
 
     const courseResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${params.courseId}/chapters?providerId=${userId}`);

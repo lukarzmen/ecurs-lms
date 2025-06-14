@@ -11,7 +11,7 @@ const CourseIdPage = async ({
     const userAuth = await auth();
 
     if (!userAuth) {
-        return redirect("/sign-in");
+       return redirect(`/sign-in?redirectUrl=${encodeURIComponent(`/courses/${params.courseId}`)}`);
     }
 
     const courseIdNumber = parseInt(params.courseId, 10);
