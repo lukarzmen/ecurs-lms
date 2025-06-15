@@ -69,7 +69,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
             }))}
             courseId={courseIdNumber}
           />
-          <CourseModeForm courseId={courseId} mode={course.mode ?? 0} state={course.state ?? 0} />
+          <CourseModeForm courseId={courseId} mode={course.mode ?? 0}/>
           <ImageForm imageId={course.imageId ?? ''} courseId={courseId} />
           <PriceForm price={course.price ?? 0} courseId={courseId} />
         </div>
