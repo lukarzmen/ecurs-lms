@@ -164,6 +164,13 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
                   root.append(headingNode);
                   return;
                 }
+                  if (line.trim().startsWith("## ")) {
+                  const headingText = line.replace(/^##\s*/, "");
+                  const headingNode = $createHeadingNode('h2');
+                  headingNode.append($createTextNode(headingText));
+                  root.append(headingNode);
+                  return;
+                }
                 // Heading 3: ###
                 if (line.trim().startsWith("### ")) {
                   const headingText = line.replace(/^###\s*/, "");
