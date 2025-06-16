@@ -58,6 +58,12 @@ const STUDENT_TERMS = (
       <li>Wszelkie spory wynikające z korzystania z platformy będą rozstrzygane zgodnie z prawem polskim.</li>
       <li>Administrator zastrzega sobie prawo do usunięcia danych użytkownika po 360 dniach nieaktywności.</li>
     </ul>
+    <p className="font-semibold text-gray-700 mt-2">§7. Pliki cookies</p>
+    <ul className="list-disc ml-6 text-gray-700">
+      <li>
+        Serwis wykorzystuje pliki cookies w celu zapewnienia prawidłowego działania, personalizacji treści oraz analizy ruchu. Korzystając z serwisu, użytkownik wyraża zgodę na używanie plików cookies zgodnie z Polityką Prywatności. Użytkownik może zmienić ustawienia dotyczące cookies w swojej przeglądarce internetowej.
+      </li>
+    </ul>
     <p className="mt-4 text-xs text-gray-500">
       Akceptacja regulaminu poprzez kliknięcie „Akceptuję” jest wymagana do rejestracji i zakupu kursów.<br />
       O wszelkich zmianach w regulaminie użytkownicy zostaną poinformowani mailowo lub poprzez komunikat w serwisie. Dalsze korzystanie z platformy po zmianie regulaminu oznacza jego akceptację.
@@ -138,7 +144,13 @@ const TEACHER_TERMS = (
       <li>Wszelkie materiały udostępniane przez nauczyciela w ramach kursów pozostają jego własnością intelektualną, jednak nauczyciel udziela platformie Ecurs niewyłącznej, nieodpłatnej licencji na ich prezentację w ramach platformy na czas trwania kursu.</li>
       <li>W przypadku pytań dotyczących płatności lub faktur, prosimy o kontakt z administratorem platformy.</li>
     </ul>
-    <p className="font-semibold text-gray-700 mt-2">§6. Postanowienia końcowe</p>
+    <p className="font-semibold text-gray-700 mt-2">§6. Pliki cookies</p>
+    <ul className="list-disc ml-6 text-gray-700">
+      <li>
+        Serwis wykorzystuje pliki cookies w celu zapewnienia prawidłowego działania, personalizacji treści oraz analizy ruchu. Korzystając z serwisu, użytkownik wyraża zgodę na używanie plików cookies zgodnie z Polityką Prywatności. Użytkownik może zmienić ustawienia dotyczące cookies w swojej przeglądarce internetowej.
+      </li>
+    </ul>
+    <p className="font-semibold text-gray-700 mt-2">§7. Postanowienia końcowe</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li>Administrator zastrzega sobie prawo do zmiany regulaminu, informując o tym nauczycieli.</li>
       <li>Wszelkie spory wynikające z korzystania z platformy będą rozstrzygane zgodnie z prawem polskim.</li>
