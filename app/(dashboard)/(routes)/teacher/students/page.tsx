@@ -75,6 +75,7 @@ const columns = [
         id: "action",
         cell: (row: any) => (
             <Button
+            disabled={true}
                 className="w-full bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white px-4 py-1 rounded shadow font-semibold transition"
                 onClick={() => row.table.options.meta?.handleContact(row.row.original.email)}
             >
@@ -94,6 +95,7 @@ import {
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table";
+import { tree } from 'next/dist/build/templates/app-page';
 
 const StudentsPage: React.FC = () => {
     const [students, setStudents] = useState<User[]>([]);
