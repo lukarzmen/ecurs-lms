@@ -108,13 +108,22 @@ wyjaśnienie: ${explanation || "Brak dodatkowego wyjaśnienia dla poprawnej odpo
   const isDisabled = isCorrect === true;
 
   return (
-    <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm shadow">
-      {/* Pytanie */}
-      <p className="text-gray-800 font-bold mb-2 text-xl">{question}</p>
+    <div className="mb-6 p-6 border border-gray-200 rounded-2xl bg-white/90 backdrop-blur shadow-lg transition-shadow hover:shadow-xl">
+      {/* Label: Pytanie */}
+      <label className="block text-gray-700 font-semibold mb-1 text-base" htmlFor="qa-question">
+        Pytanie:
+      </label>
+      <p id="qa-question" className="text-gray-900 font-bold mb-4 text-xl leading-tight">
+        {question}
+      </p>
 
-      {/* Pole tekstowe */}
+      {/* Label: Twoja odpowiedź */}
+      <label className="block text-gray-700 font-semibold mb-1 text-base" htmlFor="qa-answer">
+        Twoja odpowiedź:
+      </label>
       <div className="relative">
         <input
+          id="qa-answer"
           type="text"
           value={userInput}
           onChange={(e) => {
@@ -124,27 +133,30 @@ wyjaśnienie: ${explanation || "Brak dodatkowego wyjaśnienia dla poprawnej odpo
             setShowAnswer(false);
             setLlmExplanation(null);
           }}
-          className={`w-full border rounded-md p-2 pr-16 focus:outline-none ${
-            isDisabled
-              ? "border-green-500 bg-gray-100 cursor-not-allowed"
+          className={`w-full border rounded-lg p-3 pr-24 text-lg focus:outline-none focus:ring-2 transition-all duration-150
+            ${isDisabled
+              ? "border-green-400 bg-gray-100 cursor-not-allowed text-gray-500"
               : isCorrect === null
-              ? "border-gray-300"
-              : "border-red-500"
-          }`}
+              ? "border-gray-300 focus:border-orange-400 focus:ring-orange-200"
+              : "border-red-400 focus:border-red-400 focus:ring-red-100"
+            }`}
           placeholder="Twoja odpowiedź"
           disabled={isDisabled}
+          autoComplete="off"
         />
         {!isDisabled &&
           (isLoading ? (
-            <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+            <div className="absolute right-16 bottom-2">
               <ProgressSpinner />
             </div>
           ) : (
             <button
               onClick={handleCheck}
-              className="absolute right-8 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-orange-600"
+              className="absolute right-16 bottom-2 text-white bg-orange-200 hover:bg-orange-600 rounded-full px-3 py-1.5 shadow transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-orange-300"
               title="Sprawdź swoją odpowiedź"
               disabled={!userInput.trim()}
+              aria-label="Sprawdź odpowiedź"
+              tabIndex={0}
             >
               ❓
             </button>
@@ -152,8 +164,14 @@ wyjaśnienie: ${explanation || "Brak dodatkowego wyjaśnienia dla poprawnej odpo
 
         <button
           onClick={() => setShowAnswer(!showAnswer)}
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-orange-600"
+          className={`absolute right-3 top-1/2 -translate-y-1/2 text-xl rounded-full px-2 py-1 transition-colors duration-150
+            ${showAnswer
+              ? "bg-gray-200 text-orange-600 hover:bg-orange-100"
+              : "bg-gray-100 text-gray-600 hover:bg-orange-100"
+            }`}
           title={showAnswer ? "Ukryj odpowiedź" : "Pokaż odpowiedź"}
+          aria-label={showAnswer ? "Ukryj odpowiedź" : "Pokaż odpowiedź"}
+          tabIndex={0}
         >
           {showAnswer ? "🙈" : "👁️"}
         </button>
@@ -162,9 +180,9 @@ wyjaśnienie: ${explanation || "Brak dodatkowego wyjaśnienia dla poprawnej odpo
       {/* Informacja zwrotna */}
       {isCorrect !== null && (
         <p
-          className={`mt-2 text-sm font-medium ${
-            isCorrect ? "text-green-600" : "text-red-600"
-          }`}
+          className={`mt-3 text-base font-semibold transition-colors duration-150
+            ${isCorrect ? "text-green-600" : "text-red-600"}
+          `}
         >
           {isCorrect
             ? "Super! Twoja odpowiedź jest poprawna."
@@ -174,8 +192,8 @@ wyjaśnienie: ${explanation || "Brak dodatkowego wyjaśnienia dla poprawnej odpo
 
       {/* Wyjaśnienie od LLM */}
       {isCorrect === false && llmExplanation && (
-        <div className="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200">
-          <p className="text-sm text-yellow-700">
+        <div className="mt-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+          <p className="text-base text-yellow-800">
             <strong>Wskazówka od AI:</strong> {llmExplanation}
           </p>
         </div>
@@ -183,12 +201,12 @@ wyjaśnienie: ${explanation || "Brak dodatkowego wyjaśnienia dla poprawnej odpo
 
       {/* Poprawna odpowiedź */}
       {showAnswer && (
-        <div className="mt-2 p-2 bg-orange-50 rounded border border-orange-200">
-          <p className="text-sm text-orange-700">
+        <div className="mt-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+          <p className="text-base text-orange-700">
             <strong>Poprawna odpowiedź:</strong> {answer}
           </p>
           {explanation && (
-            <p className="text-sm text-gray-700 mt-1">
+            <p className="text-base text-gray-700 mt-1">
               <strong>Wyjaśnienie:</strong> {explanation}
             </p>
           )}
