@@ -95,7 +95,6 @@ import {
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table";
-import { tree } from 'next/dist/build/templates/app-page';
 
 const StudentsPage: React.FC = () => {
     const [students, setStudents] = useState<User[]>([]);

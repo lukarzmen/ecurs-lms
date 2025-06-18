@@ -64,19 +64,19 @@ export default function QuizComponent({
 
     if (rate >= successThreshold) {
       summaryText = "Wow! Jesteś geniuszem! Może powinieneś uczyć innych? 🎓";
-      summaryColor = "bg-green-600";
+      summaryColor = "bg-orange-700";
     } else if (rate >= 0.5) {
       summaryText = "No prawie, prawie... Jak mawiają - prawie robi wielką różnicę! 😅";
-      summaryColor = "bg-yellow-500";
+      summaryColor = "bg-orange-400";
     } else {
       summaryText = "Warto jeszcze poćwiczyć! Następnym razem na pewno pójdzie lepiej! 💪";
-      summaryColor = "bg-red-600";
+      summaryColor = "bg-orange-200 text-orange-900";
     }
 
     return (
-      <div className={`flex flex-col items-center justify-center min-h-[300px] rounded-lg text-white p-8 ${summaryColor}`}>
-        <h2 className="text-2xl font-bold mb-4">{summaryText}</h2>
-        <div className="text-lg font-semibold">
+      <div className={`flex flex-col items-center justify-center min-h-[300px] rounded-2xl shadow-xl text-white p-8 ${summaryColor}`}>
+        <h2 className="text-2xl font-bold mb-4 drop-shadow">{summaryText}</h2>
+        <div className="text-lg font-semibold drop-shadow">
           Poprawne odpowiedzi {correctCount}/{total}
         </div>
       </div>
@@ -84,60 +84,69 @@ export default function QuizComponent({
   }
 
   return (
-    <div className="quiz-component p-4 max-w-md mx-auto border border-gray-300 rounded-lg shadow-md bg-white/80 backdrop-blur-sm relative">
-      <h3 className="text-lg font-bold mb-4 text-center">
-        {currentTest.question}
-      </h3>
-      <div className="grid grid-cols-2 gap-4">
+    <div className="quiz-component p-6 max-w-xl mx-auto border border-orange-200 rounded-2xl shadow-xl bg-orange-50/80 backdrop-blur-sm relative">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs text-orange-700 font-semibold">
+          Pytanie {currentIndex + 1} z {tests.length}
+        </span>
+        {isSubmitted && (
+          <span className={`text-xs font-bold ${isSelectionCorrect ? "text-green-600" : "text-red-500"}`}>
+            {isSelectionCorrect ? "Poprawna odpowiedź" : "Niepoprawna odpowiedź"}
+          </span>
+        )}
+      </div>
+      <h3 className="text-xl font-bold mb-6 text-center text-orange-900">{currentTest.question}</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
         {currentTest.answers.map((answer, index) => (
           <button
             key={index}
             onClick={() => handleAnswerSelect(index)}
             disabled={isSubmitted}
-            className={`p-2 border rounded-lg text-center transition-all duration-200 hover:shadow-md ${
-              isSubmitted
-                ? index === currentTest.correctAnswerIndex
-                  ? 'bg-green-500 text-white'
+            className={`p-3 border-2 rounded-xl text-center font-medium transition-all duration-200 shadow-sm focus:outline-none
+              ${
+                isSubmitted
+                  ? index === currentTest.correctAnswerIndex
+                    ? 'bg-orange-500 border-orange-700 text-white animate-pulse'
+                    : selectedAnswer === index
+                    ? 'bg-red-400 border-red-600 text-white'
+                    : 'bg-orange-100 border-orange-200 text-orange-400'
                   : selectedAnswer === index
-                  ? 'bg-red-500 text-white'
-                  : 'bg-gray-200'
-                : selectedAnswer === index
-                ? 'bg-purple-500 text-white hover:bg-purple-600'
-                : 'bg-orange-300 text-white hover:bg-orange-600'
-            }`}
+                  ? 'bg-orange-400 border-orange-600 text-white ring-2 ring-orange-300'
+                  : 'bg-white border-orange-200 text-orange-900 hover:bg-orange-100 hover:border-orange-400'
+              }`}
           >
             {answer}
           </button>
         ))}
       </div>
-      {isSubmitted ? (
-        <div>
-          <p className="mt-4 text-center font-medium text-lg">
-            {isSelectionCorrect ? 'Poprawna odpowiedź!' : 'Niepoprawna odpowiedź.'}
-          </p>
-          {isSelectionCorrect && currentTest.correctAnswerDescription ? (
-            <p className="mt-4 text-center font-medium italic">
-              {currentTest.correctAnswerDescription}
-            </p>
-          ) : null}
+      {isSubmitted && (
+        <div className="mt-4 text-center">
+          {!isSelectionCorrect && (
+            <p className="font-semibold text-red-600 mb-2">Spróbuj jeszcze raz!</p>
+          )}
+          {currentTest.correctAnswerDescription && (
+            <p className="mt-2 text-orange-800 italic">{currentTest.correctAnswerDescription}</p>
+          )}
           {currentIndex < tests.length - 1 && (
             <button
               onClick={handleNext}
-              className="mt-4 w-full py-2 px-4 rounded-lg text-white font-bold bg-blue-500 hover:bg-blue-600"
+              className="mt-6 w-full py-2 px-4 rounded-xl text-white font-bold bg-orange-600 hover:bg-orange-700 shadow transition-all duration-200"
             >
               Następne pytanie
             </button>
           )}
         </div>
-      ) : (
+      )}
+      {!isSubmitted && (
         <button
           onClick={handleSubmit}
           disabled={selectedAnswer === null}
-          className={`mt-4 w-full py-2 px-4 rounded-lg text-white font-bold transition-all duration-200 ${
-            selectedAnswer === null
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-green-500 hover:bg-green-600'
-          }`}
+          className={`mt-6 w-full py-2 px-4 rounded-xl font-bold transition-all duration-200 shadow
+            ${
+              selectedAnswer === null
+                ? 'bg-orange-200 text-orange-400 cursor-not-allowed'
+                : 'bg-orange-600 text-white hover:bg-orange-700'
+            }`}
         >
           Sprawdź
         </button>

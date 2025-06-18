@@ -1,8 +1,7 @@
-
 "use client"
 
 import { Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
@@ -23,41 +22,47 @@ export const ChapterDescriptionForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = () => {
-      setIsLoading(true);
-      fetch(`/api/content/${moduleId}`, {
-        method: 'GET'
+  // Extract fetch logic to a function
+  const fetchData = useCallback(() => {
+    setIsLoading(true);
+    fetch(`/api/content/${moduleId}`, {
+      method: 'GET'
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Błąd pobierania dokumentu edytora');
+        }
+        return response.json();
       })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Błąd pobierania dokumentu edytora');
-          }
-          return response.json();
-        })
-        .then((serializedEditorState: string) => {
-          const data: SerializedDocument = JSON.parse(serializedEditorState);
-          if (data.editorState.root.children.length === 0) {
-            setSerializedEditorStateString(null);
-            setIsLoading(false);
-            return;
-          }
-          setSerializedEditorStateString(JSON.stringify(data.editorState));
+      .then((serializedEditorState: string) => {
+        const data: SerializedDocument = JSON.parse(serializedEditorState);
+        if (data.editorState.root.children.length === 0) {
+          setSerializedEditorStateString(null);
           setIsLoading(false);
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          setIsLoading(false);
-        });
-    };
-
-    fetchData();
+          return;
+        }
+        setSerializedEditorStateString(JSON.stringify(data.editorState));
+        setIsLoading(false);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        setIsLoading(false);
+      });
   }, [moduleId]);
 
-  const toggleEdit = () => {
-    setIsEditing((current) => !current);
-  };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
+  const toggleEdit = () => {
+    if (isEditing) {
+      // If cancelling, reload the initial state
+      fetchData();
+      setIsEditing(false);
+    } else {
+      setIsEditing(true);
+    }
+  };
 
   const handleOnSave = (serializedDocument: SerializedDocument): SaveResult => {
     setIsLoading(true);
@@ -69,14 +74,11 @@ export const ChapterDescriptionForm = ({
         },
         body: JSON.stringify(serializedDocument),
       }).then((res) => {
-
         if (!res.ok) {
           toast.error("Błąd zapisu dokumentu");
         }
         toast.success("Zapisano dokument");
-      
       });
-      
 
       return { success: true };
     } catch (error) {
@@ -88,6 +90,7 @@ export const ChapterDescriptionForm = ({
       setIsEditing(false);
     }
   };
+
   return (
     <div className="mt-6 border bg-orange-100 rounded-md p-4 overflow-hidden">
       <div className="font-medium flex items-center justify-between">

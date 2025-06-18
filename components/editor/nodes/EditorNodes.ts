@@ -89,7 +89,7 @@ const EditorNodes: Array<Klass<LexicalNode>> = [
   DescriptionNode,
   DictionaryKeywordNode,
   QuestionAnswerNode,
-  DoTaskNode
+  DoTaskNode,
 ];
 
 export default EditorNodes;

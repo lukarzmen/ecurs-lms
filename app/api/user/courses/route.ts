@@ -127,21 +127,20 @@ export async function GET(req: Request): Promise<NextResponse<DashboardCoursesRe
                 // If all finished, get the ID of the last module (highest position)
                 nonFinishedModuleId = course.modules[course.modules.length - 1].id;
             } else {
-                // If not all finished, find the *last* module that is *not* finished
-                // Iterate backwards through the ordered modules
-                let lastUnfinished: Module | null = null;
-                for (let i = course.modules.length - 1; i >= 0; i--) {
-                    const module = course.modules[i];
-                    if (!(module.userModules.length > 0 && module.userModules[0].isFinished)) {
-                        lastUnfinished = module;
-                        break; // Found the last unfinished one
+                // If not all finished, find the *first* module that is *not* finished
+                let firstUnfinished: Module | null = null;
+                for (let i = 0; i < course.modules.length; i++) {
+                    const courseModule = course.modules[i];
+                    if (!(courseModule.userModules.length > 0 && courseModule.userModules[0].isFinished)) {
+                        firstUnfinished = courseModule;
+                        break; // Found the first unfinished one
                     }
                 }
-                nonFinishedModuleId = lastUnfinished ? lastUnfinished.id : null; // Assign its ID
+                nonFinishedModuleId = firstUnfinished ? firstUnfinished.id : null; // Assign its ID
             }
         }
 
-        console.log(`[GET /user/courses] Course ID ${course.id}: Total Modules: ${totalModules}, All Finished: ${allModulesFinished}, Non-Finished/Last Module ID: ${nonFinishedModuleId}`);
+        console.log(`[GET /user/courses] Course ID ${course.id}: Total Modules: ${totalModules}, All Finished: ${allModulesFinished}, Non-Finished/First Module ID: ${nonFinishedModuleId}`);
 
         // Prepare the detailed course object for the response
         const { modules, ...courseBaseData } = course;
