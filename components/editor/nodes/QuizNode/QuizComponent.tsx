@@ -64,13 +64,13 @@ export default function QuizComponent({
 
     if (rate >= successThreshold) {
       summaryText = "Wow! Jesteś geniuszem! Może powinieneś uczyć innych? 🎓";
-      summaryColor = "bg-orange-700";
+      summaryColor = "bg-green-600"; // green for success
     } else if (rate >= 0.5) {
       summaryText = "No prawie, prawie... Jak mawiają - prawie robi wielką różnicę! 😅";
-      summaryColor = "bg-orange-400";
+      summaryColor = "bg-orange-400"; // orange when medium
     } else {
       summaryText = "Warto jeszcze poćwiczyć! Następnym razem na pewno pójdzie lepiej! 💪";
-      summaryColor = "bg-orange-200 text-orange-900";
+      summaryColor = "bg-red-500"; // red when bad
     }
 
     return (
