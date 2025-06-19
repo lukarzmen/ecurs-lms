@@ -350,12 +350,12 @@ function BlockFormatDropDown({
         <i className="icon numbered-list" />
         <span className="text">Lista numerowana</span>
       </DropDownItem>
-      <DropDownItem
+      {/* <DropDownItem
         className={'item ' + dropDownActiveClass(blockType === 'check')}
         onClick={formatCheckList}>
         <i className="icon check-list" />
         <span className="text">Lista kontrolna</span>
-      </DropDownItem>
+      </DropDownItem> */}
       <DropDownItem
         className={'item ' + dropDownActiveClass(blockType === 'quote')}
         onClick={formatQuote}>

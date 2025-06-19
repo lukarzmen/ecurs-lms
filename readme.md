@@ -1,8 +1,64 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Ecurs – Interactive Educational Platform
+
+Ecurs is a modern, interactive educational platform designed by teachers for teachers and students. Replace boring worksheets with engaging, interactive educational materials. Create, manage, and sell online courses with ease. Ecurs is a full-stack application built with [Next.js](https://nextjs.org/) (frontend & backend).
+
+---
+
+## Features
+
+- **Interactive Content Creation:** Build engaging lessons with quizzes, flashcards, matching tasks, and more.
+- **AI-Powered Tools:** Use artificial intelligence to generate educational content and support students.
+- **Course & Student Management:** Manage your courses, materials, and student groups in one place.
+- **Marketplace:** Publish your courses to reach a wider audience.
+- **Advanced Analytics:** Track student progress and course effectiveness.
+- **Flexible Access:** Use Ecurs on desktop, tablet, or mobile devices.
+- **Monetization:** Sell your courses or share them for free.
+
+---
+
+## Technology Stack
+
+- **Next.js** – Full-stack React framework (frontend & backend in one codebase)
+- **Clerk** – Authentication and user management
+- **PostgreSQL** – Relational database for persistent storage
+- **OpenAI** – AI-powered content generation
+- **ElevenLabs** – Text-to-speech and voice features
+- **Stripe** – Secure online payments and subscriptions
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/lukarzmen/ecurs-lms
+cd ecurs-lms
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+```
+
+
+### 3. Configure environment variables
+Copy the example environment file and fill in your own API keys and secrets:
+
+```bash
+cp .env.dev .env.local
+```
+
+Edit `.env` and provide your credentials for Clerk, PostgreSQL, OpenAI, ElevenLabs, Stripe, etc.
+
+See [.env.dev](./.env.dev) for all required variables.
+
+### 4. Run the development server
 
 ```bash
 npm run dev
@@ -12,49 +68,50 @@ yarn dev
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser to see the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+---
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Clerk Documentation](https://clerk.com/docs)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [OpenAI API Docs](https://platform.openai.com/docs/)
+- [ElevenLabs API Docs](https://docs.elevenlabs.io/)
+- [Stripe Docs](https://stripe.com/docs)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
+You can deploy Ecurs to any platform that supports Node.js and PostgreSQL.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Deploy on Vercel
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+The recommended way to deploy a Next.js app is with [Vercel](https://vercel.com/):
+
+1. Push your repository to GitHub, GitLab, or Bitbucket.
+2. Go to [Vercel](https://vercel.com/) and import your project.
+3. Set up environment variables in the Vercel dashboard (copy from your `.env.local`).
+4. Click **Deploy**.
+
+Vercel will automatically build and deploy your app, including both frontend and backend (API routes).  
+For more details, see the [Next.js deployment documentation](https://nextjs.org/docs/deployment).
+
+---
+
+### License
+
+This project is licensed under the GNU Lesser General Public License (LGPL).  
+See the [LICENSE](./LICENSE) file for details.
+
+### Incoming features:
+- Checked lists as a feature
+- Checkbox support in the editor
+- Integrated chat functionality
+- Additional payment methods
+- Invoicing support
+- Marketing tools
 
 
-## Tools used
-https://ui.shadcn.com/
-https://clerk.com/
-
-# Translations
-We'll add translations soon https://github.com/i18next/next-i18next#client-side-loading-of-translations-via-http
-
-# other platforms
-https://github.com/moodle/moodle
-https://www.learnworlds.com/
-https://www.thinkific.com/
-
-# Pomysly na zagadki
-Matching cards https://www.youtube.com/watch?v=F_zdlcydF3Q
-Karaoke z breakujacym tekstem z uzyciem whisper
-Taboo Uczestnik musi wyjaśnić dane słowo, nie używając określonych "zakazanych" wyrazów
-prompt do gpt jakie interaktywne zadania mogę przygotować dla ludzi uczących się języka
-kalambury
-luki
-tlumaczenia slow
-tytul do teksu
-
-# dobre pomysly
-jakies zadania po tekscie typu porozmawiaj z kims, napisz post, zrob jakies karteczki, sledzika pod pierzynka itd 
