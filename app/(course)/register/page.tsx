@@ -191,7 +191,11 @@ export default function RegisterPage() {
       });
       if (response.ok) {
         toast.success("Rejestracja zakończona sukcesem!");
-        router.push("/");
+        if (selectedRole === "teacher") {
+          router.push("/teacher/courses");
+        }else{
+          router.push("/");
+        }
         router.refresh();
       } else {
         const errorData = await response.json();

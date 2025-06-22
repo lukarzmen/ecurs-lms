@@ -15,7 +15,22 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Ecurs - nowoczesna edukacja",
-  description: "Ecurs to nowoczesna i innowacyjna platforma edukacyjna, która oferuje tworzenie i uczestnictwo w intekarkywnych kursach wykorzystujących sztuczna inteligencję.",
+  description: "Ecurs to innowacyjna platforma edukacyjna, która oferuje tworzenie i uczestnictwo w interaktywnych wspieranych przez sztuczna inteligencję.",
+  openGraph: {
+    title: 'Ecurs - nowoczesna edukacja',
+    description: 'Zacznij tworzyć interaktywne kursy online z Ecurs.',
+    url: 'http://platforma.ecurs.pl/',
+    type: 'website',
+    images: [
+      {
+        url: 'http://platforma.ecurs.pl/demo3.png',
+        width: 1200,
+        height: 630,
+        alt: 'Ecurs - nowoczesna edukacja',
+      },
+    ]
+  },
+
 };
 
 export default function RootLayout({
