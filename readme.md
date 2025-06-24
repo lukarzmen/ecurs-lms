@@ -113,5 +113,8 @@ See the [LICENSE](./LICENSE) file for details.
 - Additional payment methods
 - Invoicing support
 - Marketing tools
+- Attachments
+- Certificates
+- Share
 
 
