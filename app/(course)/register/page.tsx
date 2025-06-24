@@ -124,7 +124,7 @@ const TEACHER_TERMS = (
             <b>Plan dla indywidualnych twórców prowadzących do 20 uczniów w zamkniętych kursach:</b> 39 zł za miesiąc – pełny dostęp do funkcji, tworzenie interaktywnych kursów, zarządzanie treściami i uczniami, podstawowe wsparcie techniczne.
           </li>
           <li>
-            <b>Dla szkół i placówek edukacyjnych lub twórców posiadających więcej niż 20 uczniów w zamkniętych kursach:</b> 1699 zł za rok – pełny dostęp do wszystkich funkcjonalności, nielimitowani członkowie zespołu, pełne wsparcie techniczne.
+            <b>Dla szkół i placówek edukacyjnych lub twórców posiadających więcej niż 20 uczniów w zamkniętych kursach:</b> 1499 zł za rok – pełny dostęp do wszystkich funkcjonalności, nielimitowani członkowie zespołu, pełne wsparcie techniczne.
           </li>
         </ul>
       </li>
