@@ -133,7 +133,7 @@ const ChapterIdPage = () => {
     // Render loading state
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center h-full">
+            <div className="flex justify-center items-center h-full mt-16">
                 <Loader2 className="animate-spin text-orange-700" size={32} />
             </div>
         );

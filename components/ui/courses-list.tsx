@@ -22,7 +22,7 @@ export const CoursesList = ( {items, showPrice} : CoursesListProps) => {
             {items.map((item) => (
                 <CourseCard
                   key={item.id}
-                  author={`${item.author?.firstName} ${item.author?.lastName}`}
+                  author={item.author?.displayName || `${item.author?.firstName || ''} ${item.author?.lastName || ''}`.trim() || 'Nieznany autor'}
                   id={item.id}
                   nonFinishedModuleId={item.nonFinishedModuleId}
                   title={item.title}

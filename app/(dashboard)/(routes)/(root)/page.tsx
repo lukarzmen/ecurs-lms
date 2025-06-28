@@ -26,7 +26,6 @@ export default async function Home() {
 
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/courses?userId=${userId}`, { cache: 'no-store' }); // Added no-store cache option for dynamic data
-
     if (!response.ok) {
       // Handle HTTP errors (e.g., 400, 500)
       const errorData = await response.json().catch(() => ({ error: `HTTP error! status: ${response.status}` })); // Attempt to parse error JSON, fallback to status
@@ -34,7 +33,7 @@ export default async function Home() {
       console.error("Error fetching user courses:", fetchError);
     } else {
       const userCourses: DashboardCoursesResponse = await response.json();
-
+      console.log("Fetched user courses:", userCourses);
       // Check if the API returned an error structure
       if ('error' in userCourses) {
         fetchError = userCourses.error;

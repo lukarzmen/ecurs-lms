@@ -4,20 +4,22 @@ import { PDFDocument, rgb } from "pdf-lib";
 import fs from "fs";
 import path from "path";
 import fontkit from "@pdf-lib/fontkit";
+import { auth } from "@clerk/nextjs/server";
 
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest, { params }: { params: { courseId: string } }) {
   const courseId = Number(params.courseId);
-  const email = req.nextUrl.searchParams.get("email");
+  const session = await auth();
+  const userId = session.sessionClaims?.sub as string | undefined;
 
-  if (!courseId || !email) {
-    return new Response("Missing courseId or email", { status: 400 });
+  if (!courseId || !userId) {
+    return new Response("Missing courseId or userId", { status: 400 });
   }
 
-  // Find user by email
+  // Find user by userId
   const user = await prisma.user.findUnique({
-    where: { email },
+    where: { providerId: userId },
     select: { firstName: true, lastName: true, id: true }
   });
 
@@ -25,10 +27,19 @@ export async function GET(req: NextRequest, { params }: { params: { courseId: st
     return new Response("User not found", { status: 404 });
   }
 
-  // Find course by id
+  // Find course by id, include author
   const course = await prisma.course.findUnique({
     where: { id: courseId },
-    select: { title: true }
+    select: {
+      title: true,
+      author: {
+        select: {
+          firstName: true,
+          lastName: true,
+          displayName: true,
+        }
+      }
+    }
   });
 
   if (!course) {
@@ -82,10 +93,12 @@ export async function GET(req: NextRequest, { params }: { params: { courseId: st
     opacity: 0.98,
   });
 
-  // Draw logo in bottom right
+  // Draw logo in bottom right with increased margin from the bottom
+  const logoMarginRight = 40;
+  const logoMarginBottom = 30; // Increased margin from the bottom
   page.drawImage(pngImage, {
-    x: 600 - pngDims.width - 40,
-    y: 40,
+    x: 600 - pngDims.width - logoMarginRight,
+    y: logoMarginBottom,
     width: pngDims.width,
     height: pngDims.height,
   });
@@ -138,13 +151,31 @@ export async function GET(req: NextRequest, { params }: { params: { courseId: st
     color: rgb(0.1, 0.4, 0.1),
   });
 
-  // Gratulatory message below
+  // Add padding above and below author info
+  const authorPaddingTop = 10;
+  const authorPaddingBottom = 16;
+
+  // Author info below course title
+  const authorName = course.author
+    ? `Autor kursu: ${course.author.displayName ? course.author.displayName : `${course.author.firstName ?? ""} ${course.author.lastName ?? ""}`}`.trim()
+    : "Autor kursu: ";
+  const authorFontSize = 12;
+  const authorWidth = customFont.widthOfTextAtSize(authorName, authorFontSize);
+  page.drawText(authorName, {
+    x: (600 - authorWidth) / 2,
+    y: 200 - authorPaddingTop - authorFontSize, // 200 - 10 - 12 = 178
+    size: authorFontSize,
+    font: customFont,
+    color: rgb(0.2, 0.2, 0.2),
+  });
+
+  // Gratulatory message below with extra padding
   const message = "Serdecznie gratulujemy ukończenia kursu i życzymy dalszych sukcesów!";
   const messageFontSize = 13;
   const messageWidth = customFont.widthOfTextAtSize(message, messageFontSize);
   page.drawText(message, {
     x: (600 - messageWidth) / 2,
-    y: 170,
+    y: 200 - authorPaddingTop - authorFontSize - authorPaddingBottom - messageFontSize, // 178 - 16 - 13 = 149
     size: messageFontSize,
     font: customFont,
     color: rgb(0.1, 0.3, 0.1),

@@ -8,6 +8,7 @@ export type CourseWithCategory = Course & {
   author: {
       firstName: string | null;
       lastName: string | null;
+      displayName?: string | null; // Add displayName as optional
   } | null;
 }
 
@@ -59,7 +60,8 @@ export async function GET(req: NextRequest): Promise<NextResponse<CourseSearchRe
         author: {
           select: {
             firstName: true,
-            lastName: true
+            lastName: true,
+            displayName: true, // Select displayName
           }
         }
       },
@@ -73,11 +75,23 @@ export async function GET(req: NextRequest): Promise<NextResponse<CourseSearchRe
       const lastModuleId = modules.length > 0 ? Math.max(...modules.map(module => module.id)) : 0;
       const enrolled = enrolledCourseIds.includes(course.id);
 
+      // Prefer displayName if exists, else fallback to first+last name
+      const authorDisplay =
+          course.author?.displayName?.trim()
+              ? course.author.displayName
+              : `${course.author?.firstName ?? ""} ${course.author?.lastName ?? ""}`.trim();
+
       return {
         ...course,
         modulesCount: modules.length,
         nonFinishedModuleId: lastModuleId,
         enrolled,
+        author: course.author
+            ? {
+                ...course.author,
+                displayName: authorDisplay,
+            }
+            : null,
       };
     });
 

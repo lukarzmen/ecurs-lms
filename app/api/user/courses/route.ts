@@ -5,12 +5,13 @@ import { NextResponse } from 'next/server';
 // Type for data fetched from DB, including user progress
 export type CourseWithProgress = Course & {
     modules: (Module & {
-        userModules: UserModule[]; // Should contain at most one UserModule due to the where clause
+        userModules: UserModule[];
     })[];
     category: Category | null;
     author: {
         firstName: string | null;
         lastName: string | null;
+        displayName?: string | null; // Add displayName as optional
     } | null;
 }
 
@@ -20,11 +21,12 @@ export type CourseDetails = Omit<Course, 'userModules'> & {
     modulesCount: number;
     isCompleted: boolean;
     nonFinishedModuleId: number | null; // ID of the last unfinished module, or last module if completed
-    author: {
-        firstName: string | null;
-        lastName: string | null;
-    } | null;
-    enrolled?: boolean; // Optional field to indicate if the user is enrolled in the course
+        author: {
+            firstName: string | null;
+            lastName: string | null;
+            displayName?: string | null; // Added displayName as optional
+        } | null;
+        enrolled?: boolean; // Optional field to indicate if the user is enrolled in the course
 };
 
 // Type for the final API response structure, including counts
@@ -59,12 +61,11 @@ const getDashboardCourses = async (userId: string): Promise<CourseWithProgress[]
             },
             include: {
                 category: true,
-                modules: { // Fetch all modules for the course
+                modules: {
                     orderBy: {
-                        position: 'asc' // Order modules by position
+                        position: 'asc'
                     },
                     include: {
-                        // Include the UserModule specific to this user for each module
                         userModules: {
                             where: {
                                 userId: user.id
@@ -76,6 +77,7 @@ const getDashboardCourses = async (userId: string): Promise<CourseWithProgress[]
                     select: {
                         firstName: true,
                         lastName: true,
+                        displayName: true, // Select displayName
                     }
                 }
             },
@@ -85,7 +87,6 @@ const getDashboardCourses = async (userId: string): Promise<CourseWithProgress[]
         });
         console.log(`[getDashboardCourses] Found ${coursesWithProgress.length} courses for user ${user.id}`);
 
-        // Cast the result to the correct type
         return coursesWithProgress as CourseWithProgress[];
     } catch (error) {
         console.error("[getDashboardCourses] Error:", error);
@@ -146,12 +147,18 @@ export async function GET(req: Request): Promise<NextResponse<DashboardCoursesRe
         const { modules, ...courseBaseData } = course;
         const courseDetail: CourseDetails = {
             ...courseBaseData,
-            author: course.author,
+            author: course.author
+                ? {
+                    displayName: course.author.displayName,
+                    firstName: course.author.firstName,
+                    lastName: course.author.lastName,
+                }
+                : null,
             category: course.category,
             modulesCount: totalModules,
             isCompleted: allModulesFinished,
-            nonFinishedModuleId: nonFinishedModuleId, // Add the nonFinishedModuleId
-            enrolled: false, // <--- always true for this endpoint
+            nonFinishedModuleId: nonFinishedModuleId,
+            enrolled: false,
         };
 
         // Add to the main list and update counts

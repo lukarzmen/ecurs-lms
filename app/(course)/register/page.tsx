@@ -135,6 +135,9 @@ const TEACHER_TERMS = (
         <b>Zasady naliczania opłat:</b> W przypadku zmiany planu w trakcie trwania okresu rozliczeniowego, opłata za nową licencję zostanie naliczona proporcjonalnie do pozostałego okresu rozliczeniowego.
       </li>
       <li>
+        <b>Prawo do anulowania subskrypcji:</b> Użytkownik ma prawo do anulowania subskrypcji w dowolnym momencie bez ponoszenia dodatkowych kosztów, z wyjątkiem należności za już rozpoczęty okres rozliczeniowy.
+      </li>
+      <li>
         <b>Powiadomienie użytkownika:</b> Wszystkie informacje dotyczące konieczności zmiany licencji, promocji lub zmian cen będą przekazywane mailowo na adres podany przy rejestracji oraz poprzez komunikat w panelu platformy.
       </li>
       <li>

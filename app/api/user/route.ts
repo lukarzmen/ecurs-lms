@@ -93,7 +93,7 @@ export async function POST(req: Request) {
                     createdAt: new Date(),
                     updatedAt: new Date(),
                     roleId: roleId,
-                    displayName: `${clerkUser.firstName} ${clerkUser.lastName}`,
+                    displayName: `${clerkUser.username}` || `${clerkUser.firstName} ${clerkUser.lastName}`,
                 },
             });
             return NextResponse.json({ created: true, user });
