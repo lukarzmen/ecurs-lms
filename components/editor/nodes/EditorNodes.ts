@@ -46,6 +46,7 @@ import { DefinitionNode } from './DefinitionNode';
 import { DescriptionNode } from './DictionaryNode/DescriptionNode';
 import { SelectAnswerNode } from './SelectAnserNode';
 import { DoTaskNode } from './DoTaskNode/DoTask';
+import { TodoNode } from './TodoNode/TodoNode';
 
 const EditorNodes: Array<Klass<LexicalNode>> = [
   HeadingNode,
@@ -84,6 +85,7 @@ const EditorNodes: Array<Klass<LexicalNode>> = [
   SelectAnswerNode,
   AudioNode,
   QuizNode,
+  TodoNode,
   DictionaryNode,
   DefinitionNode,
   DescriptionNode,

@@ -109,6 +109,7 @@ import toast from 'react-hot-toast';
 import { SerializedDocument } from '@lexical/file';
 import { SaveResult } from '../ActionsPlugin';
 import { Button } from '@/components/ui/button';
+import { InsertTodoDialog } from '../TodoPlugin/InsertTodoDialog';
 
 const blockTypeToBlockName = {
   bullet: 'Lista punktowana',
@@ -1258,6 +1259,16 @@ export default function ToolbarPlugin({
           className="item">
           <i className="icon multi-select-checkbox" />
           <span className="text">Lista wybierana</span>
+        </DropDownItem>
+          <DropDownItem
+          onClick={() => {
+            showModal('Lista wybierana', (onClose) => (
+              <InsertTodoDialog activeEditor={activeEditor} onClose={onClose} />
+            ));
+          }}
+          className="item">
+          <i className="icon select-checkbox" />
+          <span className="text">Zadania domowe</span>
         </DropDownItem>
       </DropDown>
       <Divider />

@@ -61,6 +61,7 @@ import AudioPlugin from './plugins/AudioPlugin';
 import SelectAnswerPlugin from './plugins/SelectAnswerPlugin';
 import TaskPlugin from './plugins/TaskPlugin';
 import { $getRoot, $isElementNode, LexicalNode } from 'lexical';
+import { TodoPlugin } from './plugins/TodoPlugin';
 
 
 // Helper function to recursively find nodes with __isCompleted property
@@ -154,7 +155,7 @@ export default function Editor( {
 
     // Cleanup listener on component unmount
     return () => unregisterListener();
-  }, [editor, onEditorChange, isEditable, isCompleted]); // Dependencies for the effect
+  }, [editor, onEditorChange, isEditable, isCompleted, onCompleted]); // Dependencies for the effect
 
 
   function handleSave() {
@@ -216,6 +217,7 @@ export default function Editor( {
         {/* <PollPlugin /> */}
         <TextGeneratorPlugin />
         <QuizPlugin />
+        <TodoPlugin />
         <GenerateDictionaryPlugin />
         <TaskPlugin/>
         <QuestionAnswerPlugin />
