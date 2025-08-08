@@ -19,7 +19,7 @@ export async function PATCH(
     });
     return NextResponse.json(course);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return new NextResponse("Internal error", {
       status: 500,
     });
@@ -43,7 +43,7 @@ export async function POST(
     });
     return NextResponse.json(course);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return new NextResponse("Internal error", {
       status: 500,
     });

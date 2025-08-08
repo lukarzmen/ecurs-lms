@@ -11,12 +11,90 @@ interface PurchaseCardProps {
     courseId: string;
 }
 
-const PurchaseCard = ({ userId, courseId }: PurchaseCardProps) => {
+const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: string }) => {
     const [loading, setLoading] = useState(false);
     const [courseData, setCourseData] = useState<any>(null);
     const [permResult, setPermResult] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
+    const [promoCode, setPromoCode] = useState<string>("");
+    const [discount, setDiscount] = useState<number>(0);
+    const [finalPrice, setFinalPrice] = useState<string>("");
     const router = useRouter();
+    const [promoError, setPromoError] = useState<string>("");
+
+    // Initialize promoCode from prop or URL parameter
+    useEffect(() => {
+        let initialCode = "";
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            const urlCode = params.get("promoCode");
+            if (promoCode) {
+                initialCode = promoCode;
+            } else if (urlCode) {
+                initialCode = urlCode;
+            }
+        }
+        if (initialCode) {
+            setPromoCode(initialCode);
+        }
+    }, [promoCode]);
+
+    // Validate promo code on mount if present and courseData is loaded
+    useEffect(() => {
+        async function validateOnMount() {
+            if (promoCode && courseData && courseData.price > 0) {
+                try {
+                    const res = await fetch(`/api/courses/${courseId}/promocode/${promoCode}`);
+                    const data = await res.json();
+                    if (res.ok && typeof data.discount === "number" && data.discount > 0) {
+                        setDiscount(data.discount);
+                        const discounted = courseData.price * (1 - data.discount / 100);
+                        setFinalPrice(discounted.toFixed(2));
+                        setPromoError("");
+                    } else {
+                        setDiscount(0);
+                        setFinalPrice("");
+                        setPromoError("Nieprawidłowy kod promocyjny");
+                    }
+                } catch {
+                    setDiscount(0);
+                    setFinalPrice("");
+                    setPromoError("Błąd podczas sprawdzania kodu");
+                }
+            }
+        }
+        validateOnMount();
+    }, [courseData, courseId]);
+
+    // Only check promo code when user clicks button
+    const checkPromoCode = async () => {
+        setPromoError("");
+        if (!promoCode) {
+            setPromoError("Wpisz kod promocyjny");
+            setDiscount(0);
+            setFinalPrice("");
+            return;
+        }
+        if (courseData && courseData.price > 0) {
+            try {
+                const res = await fetch(`/api/courses/${courseId}/promocode/${promoCode}`);
+                const data = await res.json();
+                if (res.ok && typeof data.discount === "number" && data.discount > 0) {
+                    setDiscount(data.discount);
+                    const discounted = courseData.price * (1 - data.discount / 100);
+                    setFinalPrice(discounted.toFixed(2));
+                } else {
+                    setDiscount(0);
+                    setFinalPrice("");
+                    setPromoError("Nieprawidłowy kod promocyjny");
+                }
+            } catch {
+                setDiscount(0);
+                setFinalPrice("");
+                setPromoError("Błąd podczas sprawdzania kodu");
+            }
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -66,6 +144,8 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps) => {
         try {
             const res = await fetch(`/api/courses/${courseId}/checkout`, {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ promoCode }),
             });
             if (!res.ok) throw new Error("Checkout failed");
             const data = await res.json();
@@ -106,11 +186,44 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps) => {
                         className="rounded mb-4 object-cover"
                     />
                     <h2 className="text-xl font-bold mb-2">{courseData.title}</h2>
-                    <div className="text-lg font-semibold text-orange-700 mb-4">
+                    <div className="text-lg font-semibold text-orange-700 mb-2">
                         {courseData.price === 0
                             ? "Darmowy"
-                            : `${courseData.price} PLN`}
+                            : discount > 0 && finalPrice
+                                ? <><span className="line-through mr-2 text-gray-500">{courseData.price} PLN</span><span className="text-green-700">{finalPrice} PLN</span></>
+                                : `${courseData.price} PLN`}
                     </div>
+                    {finalPrice && discount > 0 && (
+                        <div className="text-md font-semibold text-green-700 mb-2">
+                            {discount}% taniej
+                        </div>
+                    )}
+                    <div className="w-full flex gap-2 mb-2">
+                        <input
+                            type="text"
+                            placeholder="Kod promocyjny"
+                            value={promoCode}
+                            onChange={e => {
+                                setPromoCode(e.target.value);
+                                setPromoError("");
+                                setDiscount(0);
+                                setFinalPrice("");
+                            }}
+                            className={`w-full px-3 py-2 border rounded ${promoError ? 'border-red-500' : (discount > 0 ? 'border-green-500' : '')}`}
+                            disabled={loading}
+                        />
+                        <button
+                            type="button"
+                            className="bg-gray-200 text-orange-700 px-4 py-2 rounded hover:bg-gray-300 transition flex items-center justify-center"
+                            onClick={checkPromoCode}
+                            disabled={loading}
+                        >
+                            Sprawdź kod
+                        </button>
+                    </div>
+                    {promoError && (
+                        <div className="text-sm text-red-600 mb-2 w-full text-left">{promoError}</div>
+                    )}
                     <button
                         type="button"
                         className="w-full bg-orange-600 text-white px-6 py-2 rounded hover:bg-orange-700 transition flex items-center justify-center"

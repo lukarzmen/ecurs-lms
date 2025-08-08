@@ -1,3 +1,16 @@
+model PromoCode {
+  id            Int      @id @default(autoincrement())
+  code          String   
+  discount      Int
+  description   String?
+  expirationDate DateTime?
+  courseId      Int
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([courseId])
+}
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -27,6 +40,7 @@ model Course {
   category Category? @relation(fields: [categoryId], references: [id])
   modules Module[]
   userCourses UserCourse[]
+  promoCodes PromoCode[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

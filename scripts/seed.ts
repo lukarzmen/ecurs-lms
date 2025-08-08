@@ -22,7 +22,7 @@ async function main() {
     });
     console.log("Categories seeded successfully");
   } catch (error) {
-    console.log("error seeding categories", error);
+    console.error("error seeding categories", error);
   } finally {
     await db.$disconnect();
   }

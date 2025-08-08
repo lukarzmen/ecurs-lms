@@ -116,7 +116,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(courses);
   } catch (error) {
-    console.log("[COURSES_GET_TEACHER]", error); // Updated log identifier
+    console.error("[COURSES_GET_TEACHER]", error); // Updated log identifier
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

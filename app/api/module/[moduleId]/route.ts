@@ -17,7 +17,7 @@ export async function GET(
 
         return NextResponse.json(chapter);
     } catch (error) {
-        console.log("[CHAPTER_GET]", error);
+        console.error("[CHAPTER_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

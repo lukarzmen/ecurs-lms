@@ -1,4 +1,5 @@
 import React from "react";
+import { ShareDialog } from "./_components/share-dialog";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -15,6 +16,7 @@ import PriceForm from "./_components/price-form";
 import CoursStateBar from "./_components/state-bar";
 import CourseModeBar from "./_components/mode_form";
 import CourseStateBar from "./_components/state-bar";
+import { PromoCodesForm } from "./_components/promo-codes-form";
 
 const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = await auth() ?? "";
@@ -47,11 +49,22 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
               <ArrowLeft className="h-4 w-4 mr-1" />
               Powrót do listy kursów
             </Link>
-            <h1 className="text-2xl font-bold mb-2 mt-4 flex items-center gap-2">
-              <span>📝 Informacje o kursie</span>
-            </h1>
+
           </div>
         </div>
+        <>
+                    <div className="flex items-center mb-2 mt-4 gap-2 w-full">
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                <span>📝 Informacje o kursie</span>
+              </h1>
+              <div className="flex-1" />
+              <div className="flex justify-end">
+                <ShareDialog
+                  courseIdNumber={courseIdNumber}
+                  apiUrl={process.env.NEXT_PUBLIC_API_URL || ''}
+                />
+              </div>
+            </div></>
         <>
           <div className="w-full">
             <CourseStateBar courseId={courseId} mode={mode} state={state} />
@@ -81,6 +94,15 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
             </div>
             <div>
               <ChaptersForm chapters={course.modules} courseId={courseId} />
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center gap-x-2 gap-6 mt-6">
+                <span className="text-xl">🏷️</span>
+                <h2 className="text-xl">Kody promocyjne</h2>
+            </div>
+            <div>
+              <PromoCodesForm courseId={courseId} />
             </div>
           </div>
           <div className="flex items-center gap-x-2 gap-6 mt-6">

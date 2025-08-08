@@ -26,7 +26,7 @@ export async function DELETE(
 
     return new NextResponse("Chapter deleted successfully", { status: 200 });
   } catch (error) {
-    console.log("[COURSES_CHAPTER_ID]", error);
+    console.error("[COURSES_CHAPTER_ID]", error);
     return new NextResponse("Internal server error", { status: 500 });
   }
 }
@@ -49,7 +49,7 @@ export async function PATCH(
     });
     return NextResponse.json(chapter);
   } catch (error) {
-    console.log("[COURSES_CHAPTER_ID]", error);
+    console.error("[COURSES_CHAPTER_ID]", error);
     return new Response("Internal server error", { status: 500 });
   }
 }
@@ -76,14 +76,14 @@ export async function GET(
       },
     });
 
-    const module = await db.module.findUnique({
+    const chapter = await db.module.findUnique({
       where: {
         id: chapterIdInt,
         courseId: courseIdInt, // Ensure chapter belongs to the course
       },
     });
 
-    if (!module || !course) {
+    if (!chapter || !course) {
       return new NextResponse("Chapter or course not found", {
         status: 404,
       });
@@ -127,8 +127,8 @@ export async function GET(
         }
     }
 
-    // Return module, course, and userModule (which will be null if no providerId or user found)
-    return NextResponse.json({ module, course, userModule });
+    // Return chapter, course, and userModule (which will be null if no providerId or user found)
+    return NextResponse.json({ chapter, course, userModule });
 
   } catch (error) {
     console.error("[GET_CHAPTER]", error);

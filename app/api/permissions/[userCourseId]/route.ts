@@ -19,7 +19,7 @@ export async function PATCH(
 
         return NextResponse.json(userCourse);
     } catch (error) {
-        console.log("[USER_COURSE_ID_STATE]", error);
+        console.error("[USER_COURSE_ID_STATE]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

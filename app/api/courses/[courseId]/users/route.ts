@@ -107,7 +107,7 @@ export async function GET(req: Request, { params }: { params: { courseId: string
 
         return NextResponse.json(usersResponse);
     } catch (error) {
-        console.log("[COURSE_ID_USERS_GET]", error);
+        console.error("[COURSE_ID_USERS_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -172,7 +172,7 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
             message: `Added ${created.length} user(s), skipped ${skipped.length} (already enrolled)`
         });
     } catch (error) {
-        console.log("[COURSE_ID_USERS_POST]", error);
+        console.error("[COURSE_ID_USERS_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

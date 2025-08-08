@@ -1,11 +1,11 @@
 import { SignedIn, SignedOut, SignIn } from "@clerk/nextjs";
-import { CoursesList } from "@/components/ui/courses-list";
 import { auth } from "@clerk/nextjs/server";
 import { CheckCircle, Clock } from "lucide-react";
 import { InfoCard } from "./_components/info-card";
 import { redirect } from "next/navigation";
 import {authorizeUser} from "@/hooks/use-auth";
 import { DashboardCoursesResponse, CourseDetails } from "@/app/api/user/courses/route"; // Import CourseDetails
+import { EnrolledCoursesList } from "@/components/ui/enrolled-list";
 
 export default async function Home() {
   const {userId, sessionId} = await auth();
@@ -72,7 +72,7 @@ export default async function Home() {
         <InfoCard icon={Clock} label="W trakcie" numberOfItems={unfinishedCount} />
         <InfoCard icon={CheckCircle} label="Ukończono" numberOfItems={finishedCount} />
         </div>
-        <CoursesList items={courses} showPrice={false} />
+        <EnrolledCoursesList  items={courses} />
       </div>
       </SignedIn>
     </div>
