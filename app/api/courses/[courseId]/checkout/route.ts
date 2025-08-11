@@ -32,16 +32,13 @@ export async function POST(
             return new NextResponse("User not found", { status: 404 });
         }
 
-        const userCourse = await db.userCourse.findFirst({
-            where: {
+        const userCourse = await db.userCourse.create({
+            data: {
+                userId: user.id,
                 courseId: Number(courseId),
-                userId: user.id
+                state: 0,
             }
         });
-        if (!userCourse) {
-            console.error("UserCourse not found for userId:", user.id, "and courseId:", courseId);
-            return new NextResponse("UserCourse not found", { status: 404 });
-        }
 
         const course = await db.course.findUnique({
             where: { id: Number(courseId) },

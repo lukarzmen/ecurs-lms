@@ -35,6 +35,20 @@ export async function POST(req: Request) {
             return new NextResponse("Missing metadata", { status: 400 });
         }
 
+        // upsert user course
+        await db.userCourse.upsert({
+            where: {
+                id: Number(userCourseId),
+            },
+            update: {
+                state: 1,
+            },
+            create: {
+                userId: Number(appUserId),
+                courseId: Number(courseId),
+                state: 1,
+            },
+        });
         // Insert purchase record
         await db.userCoursePurchase.create({
             data: {

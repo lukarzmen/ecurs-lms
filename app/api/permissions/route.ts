@@ -39,8 +39,9 @@ export async function POST(req: Request) {
             },
             include: { purchase: true }
         });
-         const isFreeCourse = Number(course.price) === 0;
+        const isFreeCourse = Number(course.price) === 0;
         const hasPurchase = !!userCourse?.purchase;
+        console.log(userCourse, "User course data:", userCourse);
         if (userCourse) {
             if(userCourse.purchase){
                 return NextResponse.json({ hasAccess: true, hasPurchase });
@@ -48,18 +49,20 @@ export async function POST(req: Request) {
             return NextResponse.json({ hasAccess: userCourse.state === 1, hasPurchase: hasPurchase || isFreeCourse });
         }
        
-        console.log(userCourse, "User course data:", userCourse);
-        console.log("Course price:", course.price, "Is free course:", isFreeCourse);
-        console.log("User ID:", user.id, "Course ID:", courseId);
-        await db.userCourse.create({
-            data: {
-                userId: user.id,
-                courseId: Number(courseId),
-                state: ((course.mode == 1) || isFreeCourse ? 1 : 0), // 1 for free courses, 0 for paid courses
-            },
-        });
+        const isPublic = course.mode === 1;
+        const isPublicAndFree = (isPublic && isFreeCourse) ? 1 : 0;
+        console.log("User ID:", user.id, "Course ID:", courseId, "Is public:", isPublic, "Is free course:", isFreeCourse, "User has access:", isPublicAndFree);
+        if(isPublicAndFree){
+            await db.userCourse.create({
+                    data: {
+                        userId: user.id,
+                        courseId: Number(courseId),
+                        state: 1,
+                    },
+                });
+        }
 
-        return NextResponse.json({ hasAccess: isFreeCourse, hasPurchase: isFreeCourse });
+        return NextResponse.json({ hasAccess: isPublicAndFree, hasPurchase: isPublicAndFree });
     } catch (error) {
         console.error(error);
         return new NextResponse("Internal error", {
