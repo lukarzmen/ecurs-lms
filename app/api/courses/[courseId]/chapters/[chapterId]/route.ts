@@ -128,7 +128,7 @@ export async function GET(
     }
 
     // Return chapter, course, and userModule (which will be null if no providerId or user found)
-    return NextResponse.json({ chapter, course, userModule });
+    return NextResponse.json({ module: chapter, course, userModule });
 
   } catch (error) {
     console.error("[GET_CHAPTER]", error);

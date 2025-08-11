@@ -33,6 +33,11 @@ const teacherRoutes = [
     label: "Kursanci",
     href: "/teacher/students",
   },
+    {
+      icon: Layout,
+      label: "Powiadomienia",
+      href: "/teacher/notifications",
+    },
 ];
 export const SidebarRoutes = () => {
   const pathName = usePathname();
