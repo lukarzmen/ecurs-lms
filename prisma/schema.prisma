@@ -35,7 +35,7 @@ model Course {
   description String? @db.Text
   imageId String?
   mode Int @default(0) // private, public, open
-  state Int @default(0) // draft, published, archived
+  state Int @default(0) // draft - 0, published (close) - 1, published open (in build) - 2, archived - 3
   categoryId Int?
   category Category? @relation(fields: [categoryId], references: [id])
   modules Module[]
@@ -113,7 +113,7 @@ model UserCourse {
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  state Int @default(0)
+  state Int @default(0) // 0 - not active for user. 1 - active for user
   roleId Int? @default(0)
   role Role? @relation(fields: [roleId], references: [id], onDelete: Cascade)
 

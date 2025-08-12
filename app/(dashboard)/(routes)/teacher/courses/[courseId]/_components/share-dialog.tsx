@@ -77,6 +77,14 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ courseIdNumber, apiUrl
   return (
     <>
       <Button onClick={() => setOpen(true)}>
+        <span className="mr-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M18 8.5a3.5 3.5 0 1 0-3.47-4.01L7.91 7.87a3.5 3.5 0 1 0 0 8.26l6.62 3.38A3.5 3.5 0 1 0 18 15.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <circle cx="18" cy="5.5" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+            <circle cx="6" cy="12" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+            <circle cx="18" cy="18.5" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+          </svg>
+        </span>
         Udostępnij kurs
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>

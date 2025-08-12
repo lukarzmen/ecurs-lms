@@ -3,17 +3,17 @@ import { useEffect, useState } from "react";
 
 export default function CourseStateBar({ courseId, mode, state }: { courseId: string, mode: number, state: number }) {
   const [courseState, setCourseState] = useState(state);
-  const [publishing, setPublishing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handlePublish = async () => {
-    setPublishing(true);
+  const changeState = async (newState: number) => {
+    setLoading(true);
     await fetch(`/api/courses/${courseId}/state`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ state: 1 }), // 1 = PUBLISHED
+      body: JSON.stringify({ state: newState }),
     });
-    setCourseState(1);
-    setPublishing(false);
+    setCourseState(newState);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -24,21 +24,100 @@ export default function CourseStateBar({ courseId, mode, state }: { courseId: st
     <div className="mb-6">
       {courseState === 0 && (
         <div className="w-full p-3 bg-yellow-100 border border-yellow-300 rounded flex flex-col sm:flex-row items-center gap-2">
-          <span className="text-yellow-800 font-medium">
-            Kurs jest w przygotowaniu
-          </span>
-          <button
-            className="ml-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded"
-            onClick={handlePublish}
-            disabled={publishing}
-          >
-            {publishing ? "Publikowanie..." : "Opublikuj kurs"}
-          </button>
+          <span className="text-yellow-800 font-medium">Kurs jest w przygotowaniu (szkic)</span>
+          <div className="ml-auto flex gap-2">
+            <button
+              className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded"
+              onClick={() => changeState(1)}
+              disabled={loading}
+            >
+              {loading ? "Zapisywanie..." : "Opublikuj"}
+            </button>
+            <button
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
+              onClick={() => changeState(2)}
+              disabled={loading}
+            >
+              {loading ? "Zapisywanie..." : "Opublikuj (w budowie)"}
+            </button>
+            <button
+              className="bg-gray-500 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded"
+              onClick={() => changeState(3)}
+              disabled={loading}
+            >
+              {loading ? "Zapisywanie..." : "Archiwizuj"}
+            </button>
+          </div>
         </div>
       )}
       {courseState === 1 && (
-        <div className="w-full p-3 bg-green-100 border border-green-300 rounded text-green-800 font-medium">
-          Kurs jest opublikowany.
+        <div className="w-full p-3 bg-green-100 border border-green-300 rounded flex flex-col sm:flex-row items-center gap-2">
+          <span className="text-green-800 font-medium">Kurs jest opublikowany (tworzenie treści zamknięte).</span>
+          <div className="ml-auto flex gap-2">
+            <button
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
+              onClick={() => changeState(2)}
+              disabled={loading}
+            >
+              {loading ? "Zapisywanie..." : "W budowie"}
+            </button>
+            <button
+              className="bg-gray-500 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded"
+              onClick={() => changeState(3)}
+              disabled={loading}
+            >
+              {loading ? "Zapisywanie..." : "Archiwizuj"}
+            </button>
+            <button
+              className="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-4 rounded"
+              onClick={() => changeState(0)}
+              disabled={loading}
+            >
+              {loading ? "Zapisywanie..." : "Wróć do szkicu"}
+            </button>
+          </div>
+        </div>
+      )}
+      {courseState === 2 && (
+        <div className="w-full p-3 bg-blue-100 border border-blue-300 rounded flex flex-col sm:flex-row items-center gap-2">
+          <span className="text-blue-800 font-medium">Kurs jest opublikowany (treść w trakcie budowy).</span>
+          <div className="ml-auto flex gap-2">
+            <button
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded"
+              onClick={() => changeState(1)}
+              disabled={loading}
+            >
+              {loading ? "Zapisywanie..." : "Zamknij treść"}
+            </button>
+            <button
+              className="bg-gray-500 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded"
+              onClick={() => changeState(3)}
+              disabled={loading}
+            >
+              {loading ? "Zapisywanie..." : "Archiwizuj"}
+            </button>
+            <button
+              className="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-4 rounded"
+              onClick={() => changeState(0)}
+              disabled={loading}
+            >
+              {loading ? "Zapisywanie..." : "Wróć do szkicu"}
+            </button>
+          </div>
+        </div>
+      )}
+      {courseState === 3 && (
+        <div className="w-full p-3 bg-gray-100 border border-gray-300 rounded flex flex-col sm:flex-row items-center gap-2">
+          <span className="text-gray-800 font-medium">Kurs jest zarchiwizowany.</span>
+          <div className="ml-auto flex gap-2">
+            <button
+              className="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-4 rounded"
+              onClick={() => changeState(0)}
+              disabled={loading}
+            >
+              {loading ? "Zapisywanie..." : "Przywróć do szkicu"}
+            </button>
+          </div>
         </div>
       )}
     </div>

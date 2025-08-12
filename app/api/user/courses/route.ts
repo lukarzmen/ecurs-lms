@@ -113,7 +113,7 @@ export async function GET(req: Request): Promise<NextResponse<DashboardCoursesRe
         const totalModules = course.modules.length;
         let allModulesFinished = false;
         let nonFinishedModuleId: number | null = null; // Initialize nonFinishedModuleId
-
+        const state = course.state;
         if (totalModules === 0) {
             // If there are no modules, consider the course completed
             allModulesFinished = true;
@@ -145,6 +145,7 @@ export async function GET(req: Request): Promise<NextResponse<DashboardCoursesRe
 
         // Prepare the detailed course object for the response
         const { modules, ...courseBaseData } = course;
+        const closeCourseCompleted = allModulesFinished && state === 1;
         const courseDetail: CourseDetails = {
             ...courseBaseData,
             author: course.author
@@ -156,14 +157,14 @@ export async function GET(req: Request): Promise<NextResponse<DashboardCoursesRe
                 : null,
             category: course.category,
             modulesCount: totalModules,
-            isCompleted: allModulesFinished,
+            isCompleted: closeCourseCompleted,
             nonFinishedModuleId: nonFinishedModuleId,
             enrolled: false,
         };
 
         // Add to the main list and update counts
         allCoursesDetails.push(courseDetail);
-        if (allModulesFinished) {
+        if (closeCourseCompleted) {
             finishedCount++;
         } else {
             unfinishedCount++;
