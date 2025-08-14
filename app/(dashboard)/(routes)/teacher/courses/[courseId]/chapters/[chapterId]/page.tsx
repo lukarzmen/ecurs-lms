@@ -5,6 +5,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import ChapterDescriptionForm from "./_components/chapter-description-form";
 import ChapterTitleForm from "./_components/chapter-title-form";
+import ChapterStateBar from "./_components/state-bar";
 
 const ChapterEditPage = async ({
   params,
@@ -42,12 +43,13 @@ const ChapterEditPage = async ({
           </div>
         </div>
         <div className="space-y-4">
-          <div className="w-full">
+          <div className="w-full">                    
             <div className="flex items-center gap-x-2">
                     <h1 className="text-2xl font-bold mb-2 mt-4 flex items-center gap-2">
                   <span>✏️ Edytuj treść</span>
                 </h1>
             </div>
+            <ChapterStateBar chapterId={chapterId} state={chapterModule.state} />
             <ChapterTitleForm
               chapterId={chapterId}
               title={chapterModule.title}

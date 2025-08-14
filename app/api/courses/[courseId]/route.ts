@@ -74,41 +74,63 @@ export async function DELETE(
 }
 
 export async function GET(
-    req: Request,
-    { params }: { params: { courseId: string } },
-  ) {
-    try {
-      const courseIdNumber = parseInt(params.courseId, 10);
+  req: Request,
+  { params }: { params: { courseId: string } },
+) {
+  try {
+    const courseIdNumber = parseInt(params.courseId, 10);
 
-      if (isNaN(courseIdNumber)) {
-        return new NextResponse("Invalid courseId", { status: 400 });
-      }
+    if (isNaN(courseIdNumber)) {
+      return new NextResponse("Invalid courseId", { status: 400 });
+    }
 
-      const course = await db.course.findUnique({
-        where: {
-          id: courseIdNumber,
-        },
-        include: {
-          modules: {
-            orderBy: {
-              position: "asc",
-            },
+    const url = new URL(req.url);
+    const userId = url.searchParams.get("userId");
+
+    if (!userId) {
+      return new NextResponse("Missing userId query parameter", { status: 400 });
+    }
+
+    const course = await db.course.findUnique({
+      where: {
+        id: courseIdNumber,
+      },
+      include: {
+        modules: {
+          where: {
+            state: 1,
+          },
+          orderBy: {
+            position: "asc",
           },
         },
-      });
+      },
+    });
 
-      if (!course) {
-        return new NextResponse("Course not found", { status: 404 });
-      }
-      const firstNotFinishedModuleId = course.modules.reduce((max, module) => Math.max(max, module.id), 0);
-
-      return NextResponse.json({
-        ...course,
-        firstNotFinishedModuleId: firstNotFinishedModuleId,
-      });
-    } catch (error) {
-      console.error(error);
-      return new NextResponse("Internal server error", { status: 500 });
+    if (!course) {
+      return new NextResponse("Course not found", { status: 404 });
     }
+
+    const userModules = await db.userModule.findMany({
+      where: {
+        userId: parseInt(userId, 10),
+        moduleId: {
+          in: course.modules.map((module) => module.id),
+        },
+      },
+    });
+
+    const firstNotFinishedModuleId = course.modules.find(
+      (module) => !userModules.some((userModule) => userModule.moduleId === module.id && userModule.isFinished)
+    )?.id;
+
+    return NextResponse.json({
+      ...course,
+      firstNotFinishedModuleId: firstNotFinishedModuleId || null,
+    });
+  } catch (error) {
+    console.error(error);
+    return new NextResponse("Internal server error", { status: 500 });
   }
+}
 

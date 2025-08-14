@@ -91,6 +91,8 @@ model Module {
   userModules UserModule[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  state Int @default(0) // 0 - draft, 1 - published
+
   @@index([courseId])
   ModuleContent ModuleContent[]
 }

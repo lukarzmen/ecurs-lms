@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Module" ADD COLUMN "state" INTEGER NOT NULL DEFAULT 0;
