@@ -84,13 +84,6 @@ export async function GET(
       return new NextResponse("Invalid courseId", { status: 400 });
     }
 
-    const url = new URL(req.url);
-    const userId = url.searchParams.get("userId");
-
-    if (!userId) {
-      return new NextResponse("Missing userId query parameter", { status: 400 });
-    }
-
     const course = await db.course.findUnique({
       where: {
         id: courseIdNumber,
@@ -111,23 +104,7 @@ export async function GET(
       return new NextResponse("Course not found", { status: 404 });
     }
 
-    const userModules = await db.userModule.findMany({
-      where: {
-        userId: parseInt(userId, 10),
-        moduleId: {
-          in: course.modules.map((module) => module.id),
-        },
-      },
-    });
-
-    const firstNotFinishedModuleId = course.modules.find(
-      (module) => !userModules.some((userModule) => userModule.moduleId === module.id && userModule.isFinished)
-    )?.id;
-
-    return NextResponse.json({
-      ...course,
-      firstNotFinishedModuleId: firstNotFinishedModuleId || null,
-    });
+    return NextResponse.json(course);
   } catch (error) {
     console.error(error);
     return new NextResponse("Internal server error", { status: 500 });
