@@ -112,16 +112,20 @@ export const ChaptersList = ({
                   {(provided) => (
                     <div
                       className={cn(
-                        "group flex items-center gap-x-2 bg-orange-200 border text-orange-700 rounded-md hover:bg-orange-300 mb-3 text-sm", 
-                        "border-orange-100"
+                        "group flex items-center gap-x-2 rounded-md mb-3 text-sm border transition-colors",
+                        chapter.state === 0
+                          ? "bg-gray-200 border-gray-300 text-gray-600 hover:bg-gray-300"
+                          : "bg-orange-200 border-orange-100 text-orange-700 hover:bg-orange-300"
                       )}
                       ref={provided.innerRef}
                       {...provided.draggableProps}
                     >
                       <div
                         className={cn(
-                          "px-2 py-3 border-r border-r-orange-200 group-hover:bg-orange-300 rounded-l-md transition", 
-                          "bg-orange-200 " 
+                          "px-2 py-3 border-r rounded-l-md transition",
+                          chapter.state === 0
+                            ? "bg-gray-200 border-r-gray-300 group-hover:bg-gray-300"
+                            : "bg-orange-200 border-r-orange-200 group-hover:bg-orange-300"
                         )}
                         {...provided.dragHandleProps}
                       >
@@ -131,7 +135,12 @@ export const ChaptersList = ({
                         className="flex-grow px-2 py-3 cursor-pointer hover:bg-orange-300 transition flex items-center gap-x-2 select-none" // Added select-none to make text not selectable
                         onClick={() => editingChapterId !== chapter.id && handleEditClick(chapter.id)} // Prevent re-click if already "editing"
                         >
-                        {chapter.title}
+                        <span className="truncate max-w-[60%]">{chapter.title}</span>
+                        {chapter.state === 0 && (
+                          <span className="text-xs italic text-gray-500 border border-gray-400/50 rounded px-1 py-0.5 bg-gray-100 whitespace-nowrap">
+                            wersja robocza
+                          </span>
+                        )}
                         {editingChapterId === chapter.id && (
                           <Loader2 className="h-4 w-4 animate-spin text-orange-700" />
                         )}

@@ -2,17 +2,29 @@
 import { useEffect, useState } from "react";
 
 export default function CourseStateBar({ courseId, mode, state }: { courseId: string, mode: number, state: number }) {
+
   const [courseState, setCourseState] = useState(state);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const changeState = async (newState: number) => {
     setLoading(true);
-    await fetch(`/api/courses/${courseId}/state`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ state: newState }),
-    });
-    setCourseState(newState);
+    setError(null);
+    try {
+      const res = await fetch(`/api/courses/${courseId}/state`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ state: newState }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        setError(text || "Nie można opublikować kursu. Brak aktywnych modułów.");
+      } else {
+        setCourseState(newState);
+      }
+    } catch (e) {
+      setError("Wystąpił błąd sieci. Spróbuj ponownie.");
+    }
     setLoading(false);
   };
 
@@ -22,6 +34,11 @@ export default function CourseStateBar({ courseId, mode, state }: { courseId: st
 
   return (
     <div className="mb-6">
+      {error && (
+        <div className="w-full p-2 mb-2 bg-red-100 border border-red-300 rounded text-red-800 font-medium">
+          {error}
+        </div>
+      )}
       {courseState === 0 && (
         <div className="w-full p-3 bg-yellow-100 border border-yellow-300 rounded flex flex-col sm:flex-row items-center gap-2">
           <span className="text-yellow-800 font-medium">Kurs jest w przygotowaniu (szkic)</span>

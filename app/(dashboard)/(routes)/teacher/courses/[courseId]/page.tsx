@@ -13,8 +13,6 @@ import { Category } from "@prisma/client";
 import { StudentsForm } from "./_components/students-form";
 import CourseModeForm from "./_components/mode_form";
 import PriceForm from "./_components/price-form";
-import CoursStateBar from "./_components/state-bar";
-import CourseModeBar from "./_components/mode_form";
 import CourseStateBar from "./_components/state-bar";
 import { PromoCodesForm } from "./_components/promo-codes-form";
 
@@ -26,7 +24,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { courseId } = await params;
   const courseIdNumber = parseInt(courseId, 10);
 
-  const coursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}`);
+  const coursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}?showDrafts=true`);
   const course = await coursesResponse.json();
   const categoriesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, { next: { revalidate: 60 } });
   const categories = await categoriesResponse.json();

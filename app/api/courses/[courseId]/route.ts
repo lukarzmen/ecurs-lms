@@ -78,6 +78,9 @@ export async function GET(
   { params }: { params: { courseId: string } },
 ) {
   try {
+  const url = new URL(req.url);
+  const showDraftsParam = url.searchParams.get("showDrafts") || url.searchParams.get("showdrafts");
+  const showDrafts = showDraftsParam === "true" || showDraftsParam === "1";
     const courseIdNumber = parseInt(params.courseId, 10);
 
     if (isNaN(courseIdNumber)) {
@@ -90,9 +93,7 @@ export async function GET(
       },
       include: {
         modules: {
-          where: {
-            state: 1,
-          },
+          ...(showDrafts ? {} : { where: { state: 1 } }),
           orderBy: {
             position: "asc",
           },
