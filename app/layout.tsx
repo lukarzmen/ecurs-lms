@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: 'http://platforma.ecurs.pl/demo3.png',
+        url: 'http://platforma.ecurs.pl/demo4.png',
         width: 1200,
         height: 630,
         alt: 'Ecurs - nowoczesna edukacja',
