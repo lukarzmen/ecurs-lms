@@ -6,12 +6,10 @@ import { redirect } from "next/navigation";
 import { authorizeUser } from '@/hooks/use-auth';
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 
-interface SearchPageProps {
-  searchParams?: { title?: string; categoryId?: string } | Promise<{ title?: string; categoryId?: string }>;
-}
 
-const SearchPage = async (props: SearchPageProps) => {
-  const searchParams = (props.searchParams && await props.searchParams) || { title: '', categoryId: '' };
+const SearchPage = async ({ searchParams }: { searchParams: Promise<{ title?: string; categoryId?: string }> }) => {
+  const resolvedSearchParams = await searchParams;
+  const { title = '', categoryId = '' } = resolvedSearchParams || {};
 
   const { userId, sessionId } = await auth();
   if (!userId) return redirect('/sign-in');
@@ -19,7 +17,7 @@ const SearchPage = async (props: SearchPageProps) => {
   const resCategories = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, { next: { revalidate: 60 } });
   const categories = await resCategories.json();
   
-  const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/courses/search?title=${encodeURIComponent(searchParams.title || '')}&categoryId=${encodeURIComponent(searchParams.categoryId || '')}&userId=${userId}`;
+  const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/courses/search?title=${encodeURIComponent(title)}&categoryId=${encodeURIComponent(categoryId)}&userId=${userId}`;
   const res = await fetch(apiUrl);
   const courses = await res.json();
 

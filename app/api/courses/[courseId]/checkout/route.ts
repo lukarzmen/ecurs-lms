@@ -6,7 +6,7 @@ import Stripe from "stripe";
 
 export async function POST(
     req: NextRequest,
-    { params }: { params: { courseId: string } | Promise<{ courseId: string }> }
+    { params }: { params: Promise<{ courseId: string }> }
 ) {
     try {
         const awaitedParams = await params;

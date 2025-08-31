@@ -47,7 +47,9 @@ export const ChaptersForm = ({ chapters, courseId }: ModulesFormProps) => {
     },
   });
 
-  const { fields, append, remove } = useFieldArray<{ titles: string[] }>({
+  // Note: useFieldArray types prefer arrays of objects; we're using an array of primitives (string[]),
+  // so relax generics to avoid "string is not assignable to never" TS error.
+  const { fields, append, remove } = useFieldArray<any, "titles">({
     control: form.control,
     name: "titles",
   });

@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } | Promise<{ id: string }> }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     const { id } = await params;
 

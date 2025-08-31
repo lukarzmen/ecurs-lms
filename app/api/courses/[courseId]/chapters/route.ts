@@ -12,7 +12,7 @@ interface ModuleWithProgress extends Module {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { courseId: string } | Promise<{ courseId: string }> },
+  { params }: { params: Promise<{ courseId: string }> },
 ) { 
   const { courseId } = await params;
   const courseIdInt = parseInt(courseId, 10);
@@ -64,7 +64,7 @@ export async function POST(
 
 export async function GET(
   req: NextRequest,
-  context: { params: { courseId: string } | Promise<{ courseId: string }> },
+  context: { params: Promise<{ courseId: string }> },
 ) {
   const params = await context.params;
   try {

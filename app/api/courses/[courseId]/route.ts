@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { courseId: string } },
+  { params }: { params: Promise<{ courseId: string }> },
 ) {
   const paramsResolved = await params;
   const { courseId } = paramsResolved;
@@ -29,7 +29,7 @@ export async function PATCH(
 
 export async function POST(
   req: Request,
-  { params }: { params: { courseId: string } },
+  { params }: { params: Promise<{ courseId: string }> },
 ) {
   const paramsResolved = await params;
   const { courseId } = paramsResolved;
@@ -54,7 +54,7 @@ export async function POST(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { courseId: string } },
+  { params }: { params: Promise<{ courseId: string }> },
 ) {
   try {
     const paramsResolved = await params;

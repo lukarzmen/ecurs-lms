@@ -22,7 +22,7 @@ interface MarketplaceCourseCardProps extends BaseCourseCardProps {
     interval?: string | null;
 }
 
-interface CourseInfoCardProps extends BaseCourseCardProps {
+export interface CourseInfoCardProps extends BaseCourseCardProps {
     enrolled?: boolean;
     isCompleted?: boolean;
 }
@@ -72,21 +72,23 @@ export function MarketplaceCourseCard({
                     <p className="text-xs text-blue-400 min-h-[1rem]">
                         {author}
                     </p>
-                    <div className="flex items-center justify-between gap-x-2 text-sm mt-1">
-                        <div className="flex items-center gap-x-2 text-orange-500">
+                    <div className="flex flex-col items-center gap-y-2 mt-2">
+                        {/* <div className="flex items-center gap-x-2 text-orange-500">
                             <IconBadge size="sm" icon={BookOpen} />
                             <span>{chaptersLength} {chaptersLength === 1 ? "lekcja" : "lekcje"}</span>
-                        </div>
-                        <div className="text-sm font-semibold">
-                            {typeof price === "number"
-                                ? price === 0
-                                    ? <span className="text-orange-700">Darmowy</span>
-                                    : <span className="text-orange-700">
+                        </div> */}
+                        <div className="text-lg font-bold text-orange-700">
+                            {typeof price === "number" ? (
+                                price === 0 ? (
+                                    <span>Darmowy</span>
+                                ) : (
+                                    <span>
                                         {price}
                                         {currency ? ` ${currency}` : " PLN"}
                                         {isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}
                                     </span>
-                                : null}
+                                )
+                            ) : null}
                         </div>
                     </div>
                 </div>

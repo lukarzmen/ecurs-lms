@@ -13,7 +13,7 @@ export interface UserCourseResponse {
     authorId: number; // Course Author ID
 }
 
-export async function GET(req: Request, context: { params: { courseId: string } }): Promise<NextResponse<UserCourseResponse[] | string>> {
+export async function GET(req: Request, context: { params: Promise<{ courseId: string }> }): Promise<NextResponse<UserCourseResponse[] | string>> {
     try {
         const params = await context.params;
         const courseId = params.courseId;
@@ -113,7 +113,7 @@ export async function GET(req: Request, context: { params: { courseId: string } 
     }
 }
 
-export async function POST(req: Request, context: { params: { courseId: string } }) {
+export async function POST(req: Request, context: { params: Promise<{ courseId: string }> }) {
     try {
         const params = await context.params;
         const { courseId } = params;

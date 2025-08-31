@@ -2,7 +2,7 @@ import { SerializedDocument } from "@lexical/file";
 import { NextResponse } from "next/server";
 import { db } from '@/lib/db';
 
-export async function GET(req: Request, { params }: { params: { moduleId: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ moduleId: string }> }) {
     try {
         const { moduleId } = await params;
 
@@ -40,9 +40,9 @@ export async function GET(req: Request, { params }: { params: { moduleId: string
     }
 }
 
-export async function POST(req: Request, context: { params: { moduleId: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ moduleId: string }> }) {
     try {
-        const { moduleId } = context.params;
+        const { moduleId } = await params;
         const serializedEditorDocument: SerializedDocument = await req.json();
 
         if (!moduleId || !serializedEditorDocument) {

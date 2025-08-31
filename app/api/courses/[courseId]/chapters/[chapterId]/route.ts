@@ -5,11 +5,11 @@ import { NextResponse } from "next/server";
 
 export async function DELETE(
   req: Request,
-  context: { params: { courseId: string; chapterId: string } }
+  context: { params: Promise<{ courseId: string; chapterId: string }> }
 ) {
-  const params = await context.params;
+  const awaitedParams = await context.params;
   try {
-    const courseIdInt = parseInt(params.courseId, 10);
+  const courseIdInt = parseInt(awaitedParams.courseId, 10);
     const ownCourse = await db.course.findFirst({
       where: {
         id: courseIdInt
@@ -18,7 +18,7 @@ export async function DELETE(
     if (!ownCourse) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
-    const chapterIdInt = parseInt(params.chapterId, 10);
+  const chapterIdInt = parseInt(awaitedParams.chapterId, 10);
     await db.module.delete({
       where: {
         id: chapterIdInt,
@@ -33,11 +33,11 @@ export async function DELETE(
 }
 export async function PATCH(
   req: Request,
-  context: { params: { courseId: string; chapterId: string } }
+  context: { params: Promise<{ courseId: string; chapterId: string }> }
 ) {
-  const params = await context.params;
+  const awaitedParams = await context.params;
   try {
-    const chapterIdInt = parseInt(params.chapterId, 10);
+  const chapterIdInt = parseInt(awaitedParams.chapterId, 10);
     const { isPublished, ...values } = await req.json();
     const chapter = await db.module.update({
       where: {
@@ -55,13 +55,13 @@ export async function PATCH(
 }
 export async function GET(
   req: Request,
-  context: { params: { courseId: string; chapterId: string } }
+  context: { params: Promise<{ courseId: string; chapterId: string }> }
 ) {
-  const params = await context.params;
+  const awaitedParams = await context.params;
   try {
     const { userId } = await auth();
-    const courseIdInt = parseInt(params.courseId, 10);
-    const chapterIdInt = parseInt(params.chapterId, 10);
+  const courseIdInt = parseInt(awaitedParams.courseId, 10);
+  const chapterIdInt = parseInt(awaitedParams.chapterId, 10);
 
     // Validate IDs
     if (isNaN(courseIdInt) || isNaN(chapterIdInt)) {

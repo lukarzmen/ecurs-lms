@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from '@/lib/db'; // Import your Prisma client
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
-    const { id } = params;
+
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
 
     if (!id) {
         return NextResponse.json({ error: "Id not provided." }, { status: 400 });

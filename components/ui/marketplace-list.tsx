@@ -19,11 +19,11 @@ export interface MarketplaceCourse {
     interval?: string | null;
 }
 
-export interface CoursesListBaseProps {
+export interface MarketplaceCoursesListBaseProps {
     items: MarketplaceCourse[];
 }
 
-export const MarketplaceCoursesList = ({ items }: CoursesListBaseProps) => {
+export const MarketplaceCoursesList = ({ items }: MarketplaceCoursesListBaseProps) => {
     if (!items || items.length === 0) {
         return (
             <div className="flex justify-center items-center w-full h-full">
@@ -35,11 +35,10 @@ export const MarketplaceCoursesList = ({ items }: CoursesListBaseProps) => {
         <div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 mt-12">
             {items.map(item => {
                 const commonProps = {
-                    key: item.id,
                     author: item.author?.displayName || `${item.author?.firstName || ''} ${item.author?.lastName || ''}`.trim() || 'Nieznany autor',
                     id: item.id,
                     title: item.title,
-                    imageId: item.imageId!,
+                    imageId: item.imageId ?? "",
                     chaptersLength: item.modulesCount,
                     category: item.category?.name!,
                     nonFinishedModuleId: item.nonFinishedModuleId,
@@ -53,6 +52,7 @@ export const MarketplaceCoursesList = ({ items }: CoursesListBaseProps) => {
                         <div key={item.id} className="opacity-60 pointer-events-none select-none">
                             <MarketplaceCourseCard
                                 {...commonProps}
+                                key={item.id}
                             />
                         </div>
                     );

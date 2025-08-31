@@ -7,14 +7,8 @@ import ChapterDescriptionForm from "./_components/chapter-description-form";
 import ChapterTitleForm from "./_components/chapter-title-form";
 import ChapterStateBar from "./_components/state-bar";
 
-const ChapterEditPage = async ({
-  params,
-}: {
-  params: {
-    courseId: string;
-    chapterId: string;
-  };
-}) => {
+
+const ChapterEditPage = async ({ params }: { params: Promise<{ courseId: string; chapterId: string }> }) => {
   const { userId } = await auth() ?? "";
   if (!userId) {
     return redirect("/sign-in");

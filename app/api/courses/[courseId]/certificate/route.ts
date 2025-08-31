@@ -5,12 +5,12 @@ import fs from "fs";
 import path from "path";
 import fontkit from "@pdf-lib/fontkit";
 import { auth } from "@clerk/nextjs/server";
+import { db } from "@/lib/db";
 
-const prisma = new PrismaClient();
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { courseId: string } | Promise<{ courseId: string }> }
+  { params }: { params: Promise<{ courseId: string }> }
 ) {
   const awaitedParams = await params;
   const courseId = Number(awaitedParams.courseId);
@@ -22,7 +22,7 @@ export async function GET(
   }
 
   // Find user by userId
-  const user = await prisma.user.findUnique({
+  const user = await db.user.findUnique({
     where: { providerId: userId },
     select: { firstName: true, lastName: true, id: true },
   });
@@ -32,7 +32,7 @@ export async function GET(
   }
 
   // Find course by id, include author
-  const course = await prisma.course.findUnique({
+  const course = await db.course.findUnique({
     where: { id: courseId },
     select: {
       title: true,
@@ -51,7 +51,7 @@ export async function GET(
   }
 
   // Check if user is enrolled in course
-  const userCourse = await prisma.userCourse.findUnique({
+  const userCourse = await db.userCourse.findUnique({
     where: {
       userId_courseId: {
         userId: user.id,

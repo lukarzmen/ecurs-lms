@@ -71,7 +71,7 @@ export default async function Home() {
         <InfoCard icon={Clock} label="W trakcie" numberOfItems={unfinishedCount} />
         <InfoCard icon={CheckCircle} label="Ukończono" numberOfItems={finishedCount} />
         </div>
-        <EnrolledCoursesList  items={courses} />
+        <EnrolledCoursesList items={courses} />
       </div>
       </SignedIn>
     </div>

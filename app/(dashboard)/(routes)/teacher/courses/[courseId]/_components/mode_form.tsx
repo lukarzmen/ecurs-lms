@@ -2,22 +2,42 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
+import toast from "react-hot-toast";
+
 
 export default function CourseModeForm({ courseId, mode }: { courseId: string, mode: number }) {
   const [isEditing, setIsEditing] = useState(false);
   const [currentMode, setCurrentMode] = useState(mode);
+  const [formMode, setFormMode] = useState(mode);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const toggleEdit = () => setIsEditing((v) => !v);
+  const toggleEdit = () => {
+    setIsEditing((v) => !v);
+    setFormMode(currentMode); // Reset form value on cancel
+  };
 
-  const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newMode = parseInt(e.target.value, 10);
-    setCurrentMode(newMode);
-    await fetch(`/api/courses/${courseId}/mode`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: newMode }),
-    });
-    setIsEditing(false);
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormMode(parseInt(e.target.value, 10));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/courses/${courseId}/mode`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: formMode }),
+      });
+      if (!res.ok) throw new Error();
+      setCurrentMode(formMode);
+      toast.success("Zaktualizowano tryb kursu");
+      setIsEditing(false);
+    } catch {
+      toast.error("Coś poszło nie tak");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -36,17 +56,22 @@ export default function CourseModeForm({ courseId, mode }: { courseId: string, m
         </Button>
       </div>
       {isEditing ? (
-        <form className="space-y-4 mt-4">
+        <form className="space-y-4 mt-4" onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="block text-sm font-medium text-gray-700">Tryb kursu</label>
             <select
-              value={currentMode}
-              onChange={handleChange}
+              value={formMode}
+              onChange={handleSelectChange}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md"
             >
               <option value={0}>Prywatny (tylko zaproszeni)</option>
               <option value={1}>Publiczny (widoczny w marketplace)</option>
             </select>
+          </div>
+          <div className="flex items-center gap-x-2">
+            <button type="submit" className="bg-orange-600 text-white font-semibold py-2 px-4 rounded-md" disabled={isSubmitting}>
+              Zapisz
+            </button>
           </div>
         </form>
       ) : (

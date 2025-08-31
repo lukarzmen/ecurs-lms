@@ -1,10 +1,7 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
-export async function GET(
-  req: Request,
-    res: Response,
-) {
+export async function GET(req: Request) {
   try {
     const categories = await db.category.findMany({
       orderBy: {

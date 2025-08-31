@@ -3,7 +3,7 @@ import { NextResponse, NextRequest } from "next/server";
 
 export async function PUT(
   req: NextRequest,
-  context: { params: { courseId: string } | Promise<{ courseId: string }> }
+  context: { params: Promise<{ courseId: string }> }
 ) {
   const params = await context.params;
   const ownCourse = await db.course.findFirst({
