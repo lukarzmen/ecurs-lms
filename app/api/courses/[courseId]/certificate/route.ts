@@ -10,9 +10,10 @@ const prisma = new PrismaClient();
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { courseId: string } }
+  { params }: { params: { courseId: string } | Promise<{ courseId: string }> }
 ) {
-  const courseId = Number(params.courseId);
+  const awaitedParams = await params;
+  const courseId = Number(awaitedParams.courseId);
   const session = await auth();
   const userId = session.sessionClaims?.sub as string | undefined;
 

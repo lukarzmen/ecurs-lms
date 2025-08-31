@@ -5,8 +5,9 @@ import { NextResponse } from "next/server";
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { courseId: string; chapterId: string } },
+  context: { params: { courseId: string; chapterId: string } }
 ) {
+  const params = await context.params;
   try {
     const courseIdInt = parseInt(params.courseId, 10);
     const ownCourse = await db.course.findFirst({
@@ -20,7 +21,7 @@ export async function DELETE(
     const chapterIdInt = parseInt(params.chapterId, 10);
     await db.module.delete({
       where: {
-      id: chapterIdInt,
+        id: chapterIdInt,
       },
     });
 
@@ -30,13 +31,12 @@ export async function DELETE(
     return new NextResponse("Internal server error", { status: 500 });
   }
 }
-
 export async function PATCH(
   req: Request,
-  { params }: { params: { courseId: string; chapterId: string } },
+  context: { params: { courseId: string; chapterId: string } }
 ) {
+  const params = await context.params;
   try {
-    const courseIdInt = parseInt(params.courseId, 10);
     const chapterIdInt = parseInt(params.chapterId, 10);
     const { isPublished, ...values } = await req.json();
     const chapter = await db.module.update({
@@ -53,21 +53,19 @@ export async function PATCH(
     return new Response("Internal server error", { status: 500 });
   }
 }
-
-
 export async function GET(
-  req: Request, // Add req parameter
-  { params }: { params: { courseId: string; chapterId: string } },
+  req: Request,
+  context: { params: { courseId: string; chapterId: string } }
 ) {
+  const params = await context.params;
   try {
-    const { searchParams } = new URL(req.url);
-    const { userId } = await auth(); // Get userId from auth
+    const { userId } = await auth();
     const courseIdInt = parseInt(params.courseId, 10);
     const chapterIdInt = parseInt(params.chapterId, 10);
 
     // Validate IDs
     if (isNaN(courseIdInt) || isNaN(chapterIdInt)) {
-        return new NextResponse("Invalid course or chapter ID", { status: 400 });
+      return new NextResponse("Invalid course or chapter ID", { status: 400 });
     }
 
     const course = await db.course.findUnique({
@@ -93,38 +91,38 @@ export async function GET(
 
     // If providerId is provided, find or create UserModule
     if (userId) {
-        const user = await db.user.findUnique({
-            where: { providerId: userId }
-        });
+      const user = await db.user.findUnique({
+        where: { providerId: userId }
+      });
 
-        if (user) {
-            // Use upsert to find existing or create a new UserModule entry
-            userModule = await db.userModule.upsert({
-                where: {
-                    userId_moduleId: { // Use the compound unique key
-                        userId: user.id,
-                        moduleId: chapterIdInt,
-                    }
-                },
-                create: {
-                    userId: user.id,
-                    moduleId: chapterIdInt,
-                    isOpen: true, // Default to opened on creation
-                    createdAt: new Date(), // Set created timestamp
-                    updatedAt: new Date(), // Set updated timestamp
-                    isFinished: false, // Default to not finished on creation
-                    // Add other default fields if necessary
-                },
-                update: {
-                    isOpen: true, // Update the isOpen field if it exists
-                    updatedAt: new Date(), // Update the timestamp
-                }
-            });
-        } else {
-            // Handle case where user is not found (optional, depends on requirements)
-            // Could return 404 or proceed without userModule data
-            console.warn(`User with providerId ${userId} not found while fetching chapter.`);
-        }
+      if (user) {
+        // Use upsert to find existing or create a new UserModule entry
+        userModule = await db.userModule.upsert({
+          where: {
+            userId_moduleId: { // Use the compound unique key
+              userId: user.id,
+              moduleId: chapterIdInt,
+            }
+          },
+          create: {
+            userId: user.id,
+            moduleId: chapterIdInt,
+            isOpen: true, // Default to opened on creation
+            createdAt: new Date(), // Set created timestamp
+            updatedAt: new Date(), // Set updated timestamp
+            isFinished: false, // Default to not finished on creation
+            // Add other default fields if necessary
+          },
+          update: {
+            isOpen: true, // Update the isOpen field if it exists
+            updatedAt: new Date(), // Update the timestamp
+          }
+        });
+      } else {
+        // Handle case where user is not found (optional, depends on requirements)
+        // Could return 404 or proceed without userModule data
+        console.warn(`User with providerId ${userId} not found while fetching chapter.`);
+      }
     }
 
     // Return chapter, course, and userModule (which will be null if no providerId or user found)

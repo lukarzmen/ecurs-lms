@@ -19,16 +19,26 @@ const CreatePage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const { userId } = useAuth(); // Assuming you have a way to get the current user's ID
   const [price, setPrice] = useState(0);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [currency, setCurrency] = useState("PLN");
+  const [interval, setInterval] = useState<"MONTH" | "YEAR" | "ONE_TIME">("ONE_TIME");
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      const pricePayload = isNaN(Number(price)) ? undefined : {
+        amount: Number(price),
+        currency,
+        isRecurring,
+        interval: isRecurring ? interval : "ONE_TIME",
+      };
+
       const response = await axios.post("/api/courses", {
         title,
         categoryId: parseInt(category) || undefined,
         description: description || undefined,
-        price,
+        price: pricePayload,
         userProviderId: userId,
         next: { revalidate: 60 }
       });
@@ -198,22 +208,67 @@ const CreatePage = () => {
                 Ustal cenę kursu. Jeśli wpiszesz 0, kurs będzie{" "}
                 <span className="font-semibold text-orange-700">Darmowy</span>.
               </p>
-              <input
-                type="number"
-                id="price"
-                min={0}
-                step={0.01}
-                value={price}
-                onChange={(e) => setPrice(Number(e.target.value))}
-                disabled={isSubmitting}
-                placeholder="np. 0 lub 199"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-              />
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                <input
+                  type="number"
+                  id="price"
+                  min={0}
+                  step={0.01}
+                  value={price}
+                  onChange={(e) => setPrice(Number(e.target.value))}
+                  disabled={isSubmitting}
+                  placeholder="np. 0 lub 199"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                />
+                <input
+                  type="text"
+                  id="currency"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                  disabled={isSubmitting}
+                  placeholder="Waluta (np. PLN)"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 mt-3">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={isRecurring}
+                    onChange={e => {
+                      setIsRecurring(e.target.checked);
+                      if (!e.target.checked) setInterval("ONE_TIME");
+                    }}
+                    disabled={isSubmitting}
+                    className="form-checkbox"
+                  />
+                  <span className="text-sm">Opłata cykliczna (subskrypcja)</span>
+                </label>
+                {isRecurring && (
+                  <div className="flex flex-col mt-1">
+                    <label htmlFor="interval" className="text-sm">Okres rozliczenia</label>
+                    <select
+                      id="interval"
+                      value={interval}
+                      onChange={e => setInterval(e.target.value as any)}
+                      disabled={isSubmitting}
+                      className="mt-0 block px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                    >
+                      <option value="MONTH">Miesięcznie</option>
+                      <option value="YEAR">Rocznie</option>
+                    </select>
+                  </div>
+                )}
+              </div>
               <div className="text-sm mt-2">
                 {price === 0 ? (
                   <span className="font-semibold text-orange-700">Darmowy</span>
                 ) : (
-                  <span className="font-semibold text-orange-700">{price} PLN</span>
+                  <span className="font-semibold text-orange-700">{price} {currency}</span>
+                )}
+                {isRecurring && price > 0 && (
+                  <div className="text-sm text-muted-foreground">{interval === 'MONTH' ? 'płatność co miesiąc' : 'płatność co rok'}</div>
                 )}
               </div>
               <div className="flex items-center gap-x-2 mt-4">

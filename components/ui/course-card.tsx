@@ -17,6 +17,9 @@ interface BaseCourseCardProps {
 
 interface MarketplaceCourseCardProps extends BaseCourseCardProps {
     price?: number | null;
+    currency?: string | null;
+    isRecurring?: boolean;
+    interval?: string | null;
 }
 
 interface CourseInfoCardProps extends BaseCourseCardProps {
@@ -24,7 +27,7 @@ interface CourseInfoCardProps extends BaseCourseCardProps {
     isCompleted?: boolean;
 }
 
-export const MarketplaceCourseCard = ({
+export function MarketplaceCourseCard({
     id,
     title,
     imageId,
@@ -32,7 +35,10 @@ export const MarketplaceCourseCard = ({
     chaptersLength,
     category,
     price,
-}: MarketplaceCourseCardProps) => {
+    currency,
+    isRecurring,
+    interval,
+}: MarketplaceCourseCardProps) {
     const imageUrl = imageId ? `/api/image/${imageId}` : null;
     const placeholderImageUrl = "/logo.png";
     const [isImageLoading, setIsImageLoading] = useState(true);
@@ -56,28 +62,32 @@ export const MarketplaceCourseCard = ({
                         onError={() => setIsImageLoading(false)}
                     />
                 </div>
-                <div className="flex flex-col pt-2">
+                <div className="flex flex-col pt-2 gap-y-1">
                     <div className="text-lg md:text-base font-medium group-hover:text-orange-700 transition line-clamp-2">
                         {title}
                     </div>
-                    <p className="text-xs pt-1 text-muted-foreground min-h-[1rem]">
+                    <p className="text-xs text-muted-foreground min-h-[1rem]">
                         {category || "Brak kategorii"}
                     </p>
-                    <p className="text-xs pt-1 text-blue-400 min-h-[1rem]">
+                    <p className="text-xs text-blue-400 min-h-[1rem]">
                         {author}
                     </p>
-                    <div className="my-3 flex items-center justify-center gap-x-2 text-sm">
+                    <div className="flex items-center justify-between gap-x-2 text-sm mt-1">
                         <div className="flex items-center gap-x-2 text-orange-500">
                             <IconBadge size="sm" icon={BookOpen} />
                             <span>{chaptersLength} {chaptersLength === 1 ? "lekcja" : "lekcje"}</span>
                         </div>
-                    </div>
-                    <div className="mt-1 text-sm font-semibold">
-                        {typeof price === "number"
-                            ? price === 0
-                                ? <span className="text-orange-700">Darmowy</span>
-                                : <span className="text-orange-700">{price} PLN</span>
-                            : null}
+                        <div className="text-sm font-semibold">
+                            {typeof price === "number"
+                                ? price === 0
+                                    ? <span className="text-orange-700">Darmowy</span>
+                                    : <span className="text-orange-700">
+                                        {price}
+                                        {currency ? ` ${currency}` : " PLN"}
+                                        {isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}
+                                    </span>
+                                : null}
+                        </div>
                     </div>
                 </div>
             </div>

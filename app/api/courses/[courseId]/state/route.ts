@@ -3,15 +3,12 @@ import { db } from "@/lib/db";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { courseId: string } }
+  { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
     const { state } = await req.json();
-    const courseIdNumber = parseInt(params.courseId, 10);
-    // course can change state to 1 only if at least one module has state 1
-    if (isNaN(courseIdNumber) || (state !== 0 && state !== 1)) {
-      return new NextResponse("Invalid data", { status: 400 });
-    }
+    const {courseId} = await params;
+    const courseIdNumber = parseInt(courseId, 10);
 
     if (state === 1) {
       // Check if at least one module for this course has state 1
@@ -33,6 +30,7 @@ export async function PATCH(
 
     return new NextResponse("OK");
   } catch (error) {
+    console.error("[COURSE_STATE_PATCH]", error);
     return new NextResponse("Internal server error", { status: 500 });
   }
 }

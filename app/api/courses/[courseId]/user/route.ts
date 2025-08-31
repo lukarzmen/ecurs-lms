@@ -1,12 +1,13 @@
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
 export async function GET(
-  req: Request,
-  { params }: { params: { courseId: string } },
+  req: NextRequest,
+  { params }: { params: { courseId: string } | Promise<{ courseId: string }> },
 ) {
   try {
-    const courseIdNumber = parseInt(params.courseId, 10);
+    const awaitedParams = await params;
+    const courseIdNumber = parseInt(awaitedParams.courseId, 10);
 
     if (isNaN(courseIdNumber)) {
       return new NextResponse("Invalid courseId", { status: 400 });

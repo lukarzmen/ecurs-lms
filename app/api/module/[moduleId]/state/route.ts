@@ -3,8 +3,8 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function PATCH(req: NextRequest, { params }: { params: { moduleId: string } }) {
-  const { moduleId } = params;
+export async function PATCH(req: NextRequest, context: { params: Promise<{ moduleId: string }> }) {
+  const { moduleId } = await context.params;
 
   if (!moduleId) {
     return NextResponse.json({ error: "Module ID is required" }, { status: 400 });

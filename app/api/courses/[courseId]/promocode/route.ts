@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-export async function GET(req: NextRequest, { params }: { params: { courseId: string } }) {
+export async function GET(req: NextRequest, context: { params: Promise<{ courseId: string }> }) {
   try {
-    const courseId = parseInt(params.courseId, 10);
-    if (isNaN(courseId)) {
+    const { courseId } = await context.params;
+    const courseIdNum = parseInt(courseId, 10);
+    if (isNaN(courseIdNum)) {
       return NextResponse.json({ error: "Invalid courseId" }, { status: 400 });
     }
     const promos = await prisma.promoCode.findMany({
-      where: { courseId },
+      where: { courseId: courseIdNum },
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(promos, { status: 200 });
@@ -19,12 +20,13 @@ export async function GET(req: NextRequest, { params }: { params: { courseId: st
 
 const prisma = new PrismaClient();
 
-export async function POST(req: NextRequest, { params }: { params: { courseId: string } }) {
+export async function POST(req: NextRequest, context: { params: Promise<{ courseId: string }> }) {
   try {
+    const { courseId } = await context.params;
+    const courseIdNum = parseInt(courseId, 10);
     const body = await req.json();
     const { code, discount, description, expirationDate } = body;
-    const courseId = parseInt(params.courseId, 10);
-    if (!code || !discount || isNaN(courseId)) {
+    if (!code || !discount || isNaN(courseIdNum)) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
     // Check for existing active promo code with same code for this course
@@ -32,7 +34,7 @@ export async function POST(req: NextRequest, { params }: { params: { courseId: s
     const existing = await prisma.promoCode.findFirst({
       where: {
         code,
-        courseId,
+        courseId: courseIdNum,
         OR: [
           { expirationDate: null },
           { expirationDate: { gt: now } },
@@ -48,7 +50,7 @@ export async function POST(req: NextRequest, { params }: { params: { courseId: s
         discount: Number(discount),
         description,
         expirationDate: expirationDate ? new Date(expirationDate) : undefined,
-        courseId,
+        courseId: courseIdNum,
       },
     });
     return NextResponse.json(promo, { status: 201 });

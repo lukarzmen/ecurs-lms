@@ -5,7 +5,8 @@ export async function PATCH(
   req: Request,
   { params }: { params: { courseId: string } },
 ) {
-  const { courseId } = params;
+  const paramsResolved = await params;
+  const { courseId } = paramsResolved;
   const values = await req.json();
 
   try {
@@ -30,15 +31,16 @@ export async function POST(
   req: Request,
   { params }: { params: { courseId: string } },
 ) {
-  const { courseId } = params;
+  const paramsResolved = await params;
+  const { courseId } = paramsResolved;
   const { imageId } = await req.json();
   try {
     const course = await db.course.update({
       where: {
-      id: parseInt(courseId, 10),
+        id: parseInt(courseId, 10),
       },
       data: {
-      imageId: imageId,
+        imageId: imageId,
       },
     });
     return NextResponse.json(course);
@@ -55,9 +57,11 @@ export async function DELETE(
   { params }: { params: { courseId: string } },
 ) {
   try {
+    const paramsResolved = await params;
+    const { courseId } = paramsResolved;
     const deletedCourse = await db.course.delete({
       where: {
-        id: parseInt(params.courseId, 10)
+        id: parseInt(courseId, 10)
       },
       include: {
         modules: true,
@@ -75,13 +79,14 @@ export async function DELETE(
 
 export async function GET(
   req: Request,
-  { params }: { params: { courseId: string } },
+  { params }: { params: Promise<{ courseId: string }> }
 ) {
+  const { courseId } = await params;
   try {
   const url = new URL(req.url);
   const showDraftsParam = url.searchParams.get("showDrafts") || url.searchParams.get("showdrafts");
   const showDrafts = showDraftsParam === "true" || showDraftsParam === "1";
-    const courseIdNumber = parseInt(params.courseId, 10);
+    const courseIdNumber = parseInt(courseId, 10);
 
     if (isNaN(courseIdNumber)) {
       return new NextResponse("Invalid courseId", { status: 400 });
@@ -98,6 +103,7 @@ export async function GET(
             position: "asc",
           },
         },
+        price: true,
       },
     });
 

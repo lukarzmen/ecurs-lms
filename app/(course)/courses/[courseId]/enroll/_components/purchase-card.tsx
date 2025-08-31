@@ -42,13 +42,14 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: st
     // Validate promo code on mount if present and courseData is loaded
     useEffect(() => {
         async function validateOnMount() {
-            if (promoCode && courseData && courseData.price > 0) {
+            const priceAmount = courseData?.price?.amount ?? 0;
+            if (promoCode && courseData && priceAmount > 0) {
                 try {
                     const res = await fetch(`/api/courses/${courseId}/promocode/${promoCode}`);
                     const data = await res.json();
                     if (res.ok && typeof data.discount === "number" && data.discount > 0) {
                         setDiscount(data.discount);
-                        const discounted = courseData.price * (1 - data.discount / 100);
+                        const discounted = priceAmount * (1 - data.discount / 100);
                         setFinalPrice(discounted.toFixed(2));
                         setPromoError("");
                     } else {
@@ -64,7 +65,7 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: st
             }
         }
         validateOnMount();
-    }, [courseData, courseId]);
+    }, [courseData, courseId, promoCode]);
 
     // Only check promo code when user clicks button
     const checkPromoCode = async () => {
@@ -75,13 +76,14 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: st
             setFinalPrice("");
             return;
         }
-        if (courseData && courseData.price > 0) {
+        const priceAmount = courseData?.price?.amount ?? 0;
+        if (courseData && priceAmount > 0) {
             try {
                 const res = await fetch(`/api/courses/${courseId}/promocode/${promoCode}`);
                 const data = await res.json();
                 if (res.ok && typeof data.discount === "number" && data.discount > 0) {
                     setDiscount(data.discount);
-                    const discounted = courseData.price * (1 - data.discount / 100);
+                    const discounted = priceAmount * (1 - data.discount / 100);
                     setFinalPrice(discounted.toFixed(2));
                 } else {
                     setDiscount(0);
@@ -175,6 +177,10 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: st
     }
 
     if (!permResult.hasPurchase && courseData) {
+        const priceAmount = courseData?.price?.amount ?? 0;
+        const priceCurrency = courseData?.price?.currency || "PLN";
+        const isRecurring = courseData?.price?.isRecurring;
+        const interval = courseData?.price?.interval;
         return (
             <div className="flex flex-col items-center justify-center min-h-[300px] mt-8">
                 <div className="bg-white rounded-lg shadow-md p-6 max-w-sm w-full flex flex-col items-center">
@@ -187,11 +193,11 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: st
                     />
                     <h2 className="text-xl font-bold mb-2">{courseData.title}</h2>
                     <div className="text-lg font-semibold text-orange-700 mb-2">
-                        {courseData.price === 0
+                        {priceAmount === 0
                             ? "Darmowy"
                             : discount > 0 && finalPrice
-                                ? <><span className="line-through mr-2 text-gray-500">{courseData.price} PLN</span><span className="text-green-700">{finalPrice} PLN</span></>
-                                : `${courseData.price} PLN`}
+                                ? <><span className="line-through mr-2 text-gray-500">{priceAmount} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</span><span className="text-green-700">{finalPrice} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</span></>
+                                : <>{priceAmount} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</>}
                     </div>
                     {finalPrice && discount > 0 && (
                         <div className="text-md font-semibold text-green-700 mb-2">

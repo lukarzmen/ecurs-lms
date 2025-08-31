@@ -3,14 +3,15 @@ import { db } from "@/lib/db";
 
 export async function PATCH(
     req: Request,
-    { params }: { params: { userCourseId: string } }
+    { params }: { params: Promise<{ userCourseId: string }> }
 ) {
     try {
+        const { userCourseId } = await params;
         const { state } = await req.json();
 
         const userCourse = await db.userCourse.update({
             where: {
-                id: parseInt(params.userCourseId)
+                id: parseInt(userCourseId)
             },
             data: {
                 state: state,

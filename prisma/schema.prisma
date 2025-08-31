@@ -31,7 +31,8 @@ model Course {
   authorId Int 
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
   title String @db.Text
-  price     Decimal @default(0) @db.Decimal(10,2)
+  // price moved to a separate 1:1 model to support one-time or recurring billing and currency
+  price CoursePrice?
   description String? @db.Text
   imageId String?
   mode Int @default(0) // private, public, open
@@ -174,4 +175,26 @@ model UserCoursePurchase {
   userCourse    UserCourse @relation("UserCoursePurchaseToUserCourse", fields: [userCourseId], references: [id])
   paymentId     String?    // e.g. Stripe payment intent/session id
   purchaseDate DateTime @default(now())
+}
+
+// Price interval for recurring billing or one-time
+enum PriceInterval {
+  ONE_TIME
+  MONTH
+  YEAR
+}
+
+model CoursePrice {
+  id        Int           @id @default(autoincrement())
+  amount    Decimal       @db.Decimal(10,2)
+  currency  String
+  isRecurring Boolean     @default(false)
+  interval  PriceInterval? @default(ONE_TIME)
+
+  // 1:1 relation to Course
+  courseId  Int           @unique
+  course    Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 }

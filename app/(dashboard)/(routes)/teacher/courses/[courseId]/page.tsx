@@ -16,7 +16,7 @@ import PriceForm from "./_components/price-form";
 import CourseStateBar from "./_components/state-bar";
 import { PromoCodesForm } from "./_components/promo-codes-form";
 
-const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
+const CourseIdPage = async ({ params }: { params: { courseId: string } | Promise<{ courseId: string }> }) => {
   const { userId } = await auth() ?? "";
   if (!userId) {
     return redirect("/sign-in");

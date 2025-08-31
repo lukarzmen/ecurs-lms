@@ -22,7 +22,12 @@ const ChapterEditPage = async ({
   const { courseId, chapterId } = await params;
 
   const moduleResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/module/${chapterId}`);
-  const chapterModule = await moduleResponse.json(); 
+  let chapterModule = null;
+  try {
+    chapterModule = await moduleResponse.json();
+  } catch (e) {
+    chapterModule = null;
+  }
 
   if (!chapterModule) {
     redirect("/");

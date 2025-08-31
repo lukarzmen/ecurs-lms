@@ -1,10 +1,11 @@
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
 export async function PUT(
-  req: Request,
-  { params }: { params: { courseId: string } }
+  req: NextRequest,
+  context: { params: { courseId: string } | Promise<{ courseId: string }> }
 ) {
+  const params = await context.params;
   const ownCourse = await db.course.findFirst({
     where: {
       id: Number(params.courseId)

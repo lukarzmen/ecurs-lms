@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { z } from "zod";
 import { Loader2, Pencil, PlusCircle, X } from "lucide-react";
 import { useState } from "react";
+import { useFieldArray } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -26,8 +27,8 @@ import { ChaptersList } from "./chapters-list";
 import { Module } from "@prisma/client";
 
 const formSchema = z.object({
-  title: z.string().min(1, {
-    message: "Tytuł jest wymagany",
+  titles: z.array(z.string().min(1, "Tytuł nie może być pusty")).min(1, {
+    message: "Podaj przynajmniej jeden tytuł",
   }),
 });
 
@@ -42,21 +43,31 @@ export const ChaptersForm = ({ chapters, courseId }: ModulesFormProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
+      titles: [""],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray<{ titles: string[] }>({
+    control: form.control,
+    name: "titles",
   });
   const router = useRouter();
   const { isSubmitting, isValid } = form.formState;
 
-const toogleCreating = () => {
+  const toogleCreating = () => {
     setIsCreating((current) => !current);
   };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.post(`/api/courses/${courseId}/chapters`, values);
-      toast.success("Moduł utworzony");
+      const titles = values.titles.map((t) => t.trim()).filter((t) => t.length > 0);
+      if (titles.length === 0) {
+        toast.error("Podaj przynajmniej jeden tytuł");
+        return;
+      }
+      await axios.post(`/api/courses/${courseId}/chapters`, { titles });
+      toast.success("Moduły utworzone");
       toogleCreating();
-      form.reset(); // Clear the form after submit
+      form.reset({ titles: [""] });
       router.refresh();
     } catch (error) {
       toast.error("Coś poszło nie tak");
@@ -83,8 +94,9 @@ const toogleCreating = () => {
   };
 
   function onDelete(chapterId: number): void {
+    console.log("Deleting chapter:", `/api/courses/${courseId}/chapters/${chapterId}`);
     axios
-    .delete(`/api/courses/${courseId}/chapters/${chapterId}`)
+      .delete(`/api/courses/${courseId}/chapters/${chapterId}`)
       .then(() => {
         toast.success("Moduł usunięty");
         router.refresh();
@@ -105,7 +117,7 @@ const toogleCreating = () => {
         </div>
       )}
       <div className="font-medium flex items-center justify-between">
-      Lekcje
+        Lekcje
         <Button onClick={toogleCreating} variant="ghost">
           {isCreating ? (
             <>Anuluj</>
@@ -123,25 +135,48 @@ const toogleCreating = () => {
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4 mt-4"
           >
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      disabled={isSubmitting}
-                      placeholder="np. Wprowadzenie do kursu"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            ></FormField>
-            <div className="flex items-center gap-x-2">
+            {fields.map((field, idx) => (
+              <FormField
+                key={field.id}
+                control={form.control}
+                name={`titles.${idx}`}
+                render={({ field }) => (
+                  <FormItem className="flex items-center gap-2 w-full">
+                    <FormControl>
+                      <Input
+                        type="text"
+                        className="flex-1"
+                        placeholder={`Tytuł modułu #${idx + 1}`}
+                        disabled={isSubmitting}
+                        {...field}
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => remove(idx)}
+                      disabled={fields.length === 1 || isSubmitting}
+                      className="ml-2"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ))}
+            <div className="flex items-center gap-x-2 mt-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => append("")}
+                disabled={isSubmitting}
+              >
+                Dodaj kolejny moduł
+              </Button>
               <Button disabled={!isValid || isSubmitting} type="submit">
-                Dodaj
+                Dodaj wszystkie
               </Button>
             </div>
           </form>
@@ -149,7 +184,10 @@ const toogleCreating = () => {
       ) : (
         <div>
           <div
-            className={cn("text-sm mt-2", !chapters.length && "text-slate-500 italic")}
+            className={cn(
+              "text-sm mt-2",
+              !chapters.length && "text-slate-500 italic"
+            )}
           >
             {chapters.length > 0 ? (
               <ChaptersList

@@ -19,7 +19,8 @@ type CourseSearchResponse = CourseWithCategory & {
 };
 
 export async function GET(req: NextRequest): Promise<NextResponse<CourseSearchResponse[] | { error: string }>> {
-  const { searchParams } = req.nextUrl;
+  const nextUrl = await req.nextUrl;
+  const { searchParams } = nextUrl;
   const title = searchParams.get('title') || undefined;
   const categoryId = searchParams.get('categoryId') ? parseInt(searchParams.get('categoryId')!) : undefined;
   const userId = searchParams.get('userId') || undefined;
@@ -63,6 +64,14 @@ export async function GET(req: NextRequest): Promise<NextResponse<CourseSearchRe
             lastName: true,
             displayName: true, // Select displayName
           }
+        },
+        price: {
+          select: {
+            amount: true,
+            currency: true,
+            isRecurring: true,
+            interval: true,
+          }
         }
       },
       orderBy: {
@@ -70,28 +79,32 @@ export async function GET(req: NextRequest): Promise<NextResponse<CourseSearchRe
       }
     });
 
-    const response: CourseSearchResponse[] = courses.map((course: CourseWithCategory) => {
+    const response: CourseSearchResponse[] = courses.map((course: any) => {
       const modules = course.modules;
-      const lastModuleId = modules.length > 0 ? Math.max(...modules.map(module => module.id)) : 0;
+      const lastModuleId = modules.length > 0 ? Math.max(...modules.map((module: any) => module.id)) : 0;
       const enrolled = enrolledCourseIds.includes(course.id);
 
       // Prefer displayName if exists, else fallback to first+last name
       const authorDisplay =
-          course.author?.displayName?.trim()
-              ? course.author.displayName
-              : `${course.author?.firstName ?? ""} ${course.author?.lastName ?? ""}`.trim();
+        course.author?.displayName?.trim()
+          ? course.author.displayName
+          : `${course.author?.firstName ?? ""} ${course.author?.lastName ?? ""}`.trim();
 
       return {
         ...course,
         modulesCount: modules.length,
         nonFinishedModuleId: lastModuleId,
         enrolled,
+        price: course.price?.amount ?? null,
+        currency: course.price?.currency ?? null,
+        isRecurring: course.price?.isRecurring ?? false,
+        interval: course.price?.interval ?? null,
         author: course.author
-            ? {
-                ...course.author,
-                displayName: authorDisplay,
+          ? {
+              ...course.author,
+              displayName: authorDisplay,
             }
-            : null,
+          : null,
       };
     });
 

@@ -7,7 +7,7 @@ export const CourseSidebar = ({ course }: CourseSidebarProps) => {
     return (
         <div className="h-full border-r flex flex-col overflow-y-auto shadow-sm rounded-md">
             <div className="p-7 flex flex-col border-b">
-                <h1 className="font-semibold">
+                <h1 className="font-semibold truncate whitespace-nowrap overflow-hidden text-ellipsis">
                     {course.title}
                 </h1>
             </div>

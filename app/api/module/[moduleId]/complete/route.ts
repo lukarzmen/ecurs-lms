@@ -3,12 +3,13 @@ import { db } from '@/lib/db'; // Assuming your Prisma client is exported from h
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { moduleId: string } }
+  { params }: { params: Promise<{ moduleId: string }> }
 ) {
   try {
     const { searchParams } = new URL(req.url);
     const providerId = searchParams.get('providerId');
-    const moduleId = parseInt(params.moduleId, 10);
+    const awaitedParams = await params;
+    const moduleId = parseInt(awaitedParams.moduleId, 10);
 
     if (!providerId) {
       return new NextResponse('Provider ID is required', { status: 400 });

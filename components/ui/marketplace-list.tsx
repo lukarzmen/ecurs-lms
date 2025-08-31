@@ -1,8 +1,26 @@
 import { MarketplaceCourseCard } from "./course-card";
-import { CourseDetails } from "@/app/api/user/courses/route";
+
+export interface MarketplaceCourse {
+    id: number;
+    title: string;
+    imageId?: string;
+    modulesCount: number;
+    nonFinishedModuleId: number;
+    enrolled: boolean;
+    author?: {
+        displayName?: string | null;
+        firstName?: string | null;
+        lastName?: string | null;
+    } | null;
+    category?: { name: string } | null;
+    price?: number | null;
+    currency?: string | null;
+    isRecurring?: boolean;
+    interval?: string | null;
+}
 
 export interface CoursesListBaseProps {
-    items: CourseDetails[];
+    items: MarketplaceCourse[];
 }
 
 export const MarketplaceCoursesList = ({ items }: CoursesListBaseProps) => {
@@ -25,14 +43,16 @@ export const MarketplaceCoursesList = ({ items }: CoursesListBaseProps) => {
                     chaptersLength: item.modulesCount,
                     category: item.category?.name!,
                     nonFinishedModuleId: item.nonFinishedModuleId,
+                    price: item.price !== undefined && item.price !== null ? Number(item.price) : 0,
+                    currency: item.currency,
+                    isRecurring: item.isRecurring,
+                    interval: item.interval,
                 };
                 if (item.enrolled) {
                     return (
                         <div key={item.id} className="opacity-60 pointer-events-none select-none">
                             <MarketplaceCourseCard
                                 {...commonProps}
-                                price={item.price !== undefined && item.price !== null ? Number(item.price) : 0}
-                                key={item.id}
                             />
                         </div>
                     );
@@ -40,7 +60,6 @@ export const MarketplaceCoursesList = ({ items }: CoursesListBaseProps) => {
                     return (
                         <MarketplaceCourseCard
                             {...commonProps}
-                            price={item.price !== undefined && item.price !== null ? Number(item.price) : 0}
                             key={item.id}
                         />
                     );

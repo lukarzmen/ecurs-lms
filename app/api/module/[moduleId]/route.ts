@@ -1,12 +1,13 @@
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
 export async function GET(
-    req: Request,
-    { params }: { params: { moduleId: string } }
+    req: NextRequest,
+    { params }: { params: { moduleId: string } | Promise<{ moduleId: string }> }
 ) {
     try {
-        const chapterId = params.moduleId;
+        const paramsAwaited = await params;
+        const chapterId = paramsAwaited.moduleId;
         const chapterIdInt = parseInt(chapterId, 10);
 
         const chapter = await db.module.findFirst({

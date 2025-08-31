@@ -33,7 +33,6 @@ export default async function Home() {
       console.error("Error fetching user courses:", fetchError);
     } else {
       const userCourses: DashboardCoursesResponse = await response.json();
-      console.log("Fetched user courses:", userCourses);
       // Check if the API returned an error structure
       if ('error' in userCourses) {
         fetchError = userCourses.error;
@@ -41,7 +40,7 @@ export default async function Home() {
       } else {
         // Destructure only if it's the success structure
         ({ courses, finishedCount, unfinishedCount } = userCourses);     
-      }
+    }
     }
   } catch (error) {
     // Handle fetch/network errors or JSON parsing errors

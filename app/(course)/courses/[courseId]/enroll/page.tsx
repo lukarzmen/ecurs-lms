@@ -7,14 +7,17 @@ import { cookies } from "next/headers";
 
 type EnrollPageParams = Promise<{ courseId: string }>;
 
-const EnrollPage = async ({ params, searchParams }: { params: EnrollPageParams, searchParams?: { promoCode?: string } }) => {
+
+const EnrollPage = async ({ params, searchParams }: { params: EnrollPageParams, searchParams?: Promise<{ promoCode?: string }> }) => {
   const { userId } = await auth();
   if (!userId) {
     return redirect("/sign-in");
   }
-  const { courseId } = await params;
-  const promoCode = searchParams?.promoCode || "";
-  
+  const awaitedParams = await params;
+  const awaitedSearchParams = searchParams ? await searchParams : {};
+  const { courseId } = awaitedParams;
+  const promoCode = awaitedSearchParams?.promoCode || "";
+
   return (
     <>
     <div className="flex items-center justify-between">

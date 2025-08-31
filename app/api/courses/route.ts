@@ -20,15 +20,29 @@ export async function POST(req: Request) {
       return new NextResponse("User not found", { status: 404 });
     }
 
+    // Create the course first (without price)
     const course = await db.course.create({
       data: {
         authorId: user.id,
         title,
         categoryId: categoryId,
         description,
-        price
       },
     });
+
+    // Create the course price if provided
+    let coursePrice = null;
+    if (price && typeof price === "object" && price.amount !== undefined) {
+      coursePrice = await db.coursePrice.create({
+        data: {
+          amount: price.amount,
+          currency: price.currency || "PLN",
+          interval: price.interval || "ONE_TIME",
+          isRecurring: price.isRecurring || false,
+          course: { connect: { id: course.id } },
+        },
+      });
+    }
 
     await db.userCourse.create({
       data: {
@@ -39,7 +53,7 @@ export async function POST(req: Request) {
       },
     });
 
-    const response = new NextResponse(JSON.stringify(course), {
+    const response = new NextResponse(JSON.stringify({ ...course, price: coursePrice }), {
       status: 201,
     });
     return response;

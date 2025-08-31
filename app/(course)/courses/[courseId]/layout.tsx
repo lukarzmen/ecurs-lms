@@ -7,14 +7,14 @@ import Footer from "@/app/(dashboard)/_components/footer";
 
 const CourseLayout = async ({ children, params }: {
     children: React.ReactNode;
-    params: { courseId: string; };
+    params: Promise<{ courseId: string; }>;
 }) => {
+    const resolvedParams = await params;
     const { userId } = await auth() || { userId: '' };
     if(!userId) {
-        return redirect(`/sign-in?redirectUrl=${encodeURIComponent(`/courses/${params.courseId}`)}`);
+        return redirect(`/sign-in?redirectUrl=${encodeURIComponent(`/courses/${resolvedParams.courseId}`)}`);
       }
-
-    const courseResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${params.courseId}/chapters?providerId=${userId}`);
+    const courseResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${resolvedParams.courseId}/chapters?providerId=${userId}`);
     const course = await courseResponse.json();
 
     if(!course) {

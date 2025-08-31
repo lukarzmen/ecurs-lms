@@ -4,8 +4,7 @@ import { db } from '@/lib/db';
 
 export async function GET(req: Request, { params }: { params: { moduleId: string } }) {
     try {
-        console.log("GET /api/content", params);
-        const { moduleId } = params;
+        const { moduleId } = await params;
 
         if (!moduleId) {
             return new NextResponse("Bad Request: Missing moduleId", {
@@ -41,10 +40,9 @@ export async function GET(req: Request, { params }: { params: { moduleId: string
     }
 }
 
-export async function POST(req: Request, { params }: { params: { moduleId: string } }) {
+export async function POST(req: Request, context: { params: { moduleId: string } }) {
     try {
-        console.log("POST /api/content", params);
-        const { moduleId } = params;
+        const { moduleId } = context.params;
         const serializedEditorDocument: SerializedDocument = await req.json();
 
         if (!moduleId || !serializedEditorDocument) {

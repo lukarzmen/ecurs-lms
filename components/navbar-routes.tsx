@@ -61,7 +61,7 @@ export const NavbarRoutes = () => {
           </Link>
         ) : null}
         <div className="flex flex-col items-center mr-5 text-right ">
-          <UserButton />
+          <UserButton  />
           {userResponse && (
             <span className="text-sm pt-2">{`${userResponse.firstName} ${userResponse.lastName}`}</span>
           )}

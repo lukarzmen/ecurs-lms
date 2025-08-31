@@ -63,10 +63,10 @@ export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ courseId }) => {
     setLoading(false);
   };
 
-  const handleDeletePromo = async (id: number) => {
+  const handleDeletePromo = async (code: string) => {
     setLoading(true);
     try {
-      await axios.delete(`/api/courses/${courseId}/promocode/${id}`);
+      await axios.delete(`/api/courses/${courseId}/promocode/${code}`);
       toast.success("Kod promocyjny usunięty");
       fetchPromoCodes();
     } catch (error) {
@@ -98,7 +98,7 @@ export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ courseId }) => {
                     {promo.expirationDate ? `Ważny do: ${new Date(promo.expirationDate).toISOString().slice(0, 10)}` : 'Bez terminu'}
                   </span>
                 </div>
-                <Button variant="destructive" size="sm" onClick={() => handleDeletePromo(promo.id)} disabled={loading}>
+                <Button variant="destructive" size="sm" onClick={() => handleDeletePromo(promo.code)} disabled={loading}>
                   Usuń
                 </Button>
               </li>

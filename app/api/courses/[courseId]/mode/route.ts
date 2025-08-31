@@ -3,10 +3,11 @@ import { db } from "@/lib/db";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { courseId: string } }
+  context: { params: Promise<{ courseId: string }> }
 ) {
   try {
     const { mode } = await req.json();
+    const params = await context.params;
     const courseIdNumber = parseInt(params.courseId, 10);
 
     if (isNaN(courseIdNumber) || (mode !== 0 && mode !== 1)) {

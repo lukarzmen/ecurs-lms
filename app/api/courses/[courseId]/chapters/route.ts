@@ -11,10 +11,10 @@ interface ModuleWithProgress extends Module {
 }
 
 export async function POST(
-  req: Request,
-  { params }: { params: { courseId: string } },
+  req: NextRequest,
+  { params }: { params: { courseId: string } | Promise<{ courseId: string }> },
 ) { 
-  const { courseId } = params;
+  const { courseId } = await params;
   const courseIdInt = parseInt(courseId, 10);
   if (isNaN(courseIdInt)) {
     return new NextResponse("Invalid courseId", {
@@ -22,30 +22,40 @@ export async function POST(
     });
   }
   try {
-    const { title } = await req.json();
+    const body = await req.json();
+    const titles: string[] = Array.isArray(body.titles)
+      ? body.titles
+      : typeof body.titles === "string"
+        ? [body.titles]
+        : [];
 
+    if (!titles.length) {
+      return new NextResponse("No titles provided", { status: 400 });
+    }
 
-    const lastChapters = await db.module.findFirst({
-      where: {
-        courseId: courseIdInt
-      },
-      orderBy: {
-        position: "desc",
-      },
+    // Get the current max position
+    const lastChapter = await db.module.findFirst({
+      where: { courseId: courseIdInt },
+      orderBy: { position: "desc" },
     });
+    let position = lastChapter ? lastChapter.position + 1 : 1;
 
-    const newPosition = lastChapters ? lastChapters.position + 1 : 1;
+    // Create all chapters
+    const createdChapters = [];
+    for (const title of titles) {
+      const chapter = await db.module.create({
+        data: {
+          courseId: courseIdInt,
+          position: position++,
+          title,
+        },
+      });
+      createdChapters.push(chapter);
+    }
 
-    const chapter = await db.module.create({
-      data: {
-        courseId: courseIdInt,
-        position: newPosition,
-        title: title,
-      },
-    });
-    return NextResponse.json(chapter);
+    return NextResponse.json(createdChapters);
   } catch (error) {
-    console.error("[CHAPTERS_POST]", error); // Log specific context
+    console.error("[CHAPTERS_POST]", error);
     return new NextResponse("Internal error", {
       status: 500,
     });
@@ -54,8 +64,9 @@ export async function POST(
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { courseId: string } },
+  context: { params: { courseId: string } | Promise<{ courseId: string }> },
 ) {
+  const params = await context.params;
   try {
     const providerId = req.nextUrl.searchParams.get("providerId"); // Get the providerId from the request URL
     if(!providerId) {

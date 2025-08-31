@@ -13,9 +13,10 @@ export interface UserCourseResponse {
     authorId: number; // Course Author ID
 }
 
-export async function GET(req: Request, { params }: { params: { courseId: string } }): Promise<NextResponse<UserCourseResponse[] | string>> {
+export async function GET(req: Request, context: { params: { courseId: string } }): Promise<NextResponse<UserCourseResponse[] | string>> {
     try {
-        const { courseId } = params;
+        const params = await context.params;
+        const courseId = params.courseId;
         const courseIdNumber = Number(courseId);
 
         if (isNaN(courseIdNumber)) {
@@ -112,9 +113,9 @@ export async function GET(req: Request, { params }: { params: { courseId: string
     }
 }
 
-// Add a new POST method to add a user to the course if not already present
-export async function POST(req: Request, { params }: { params: { courseId: string } }) {
+export async function POST(req: Request, context: { params: { courseId: string } }) {
     try {
+        const params = await context.params;
         const { courseId } = params;
         const courseIdNumber = Number(courseId);
 

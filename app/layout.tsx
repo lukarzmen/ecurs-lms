@@ -39,12 +39,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider localization={plPL}>
+    <ClerkProvider  localization={plPL}>
       <html lang="pl-PL">
         <body className={inter.className}>
         <SignedIn>
         </SignedIn>
         <SignedOut>
+          Odśwież stronę, aby zalogować się ponownie.
           <RedirectToSignIn />
         </SignedOut>
         <ConfettiProvider/>

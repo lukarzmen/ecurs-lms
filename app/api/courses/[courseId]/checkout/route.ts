@@ -1,15 +1,16 @@
 import { db } from "@/lib/db";
 import { currentUser } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { use } from "react";
 import Stripe from "stripe";
 
 export async function POST(
-    req: Request,
-    { params }: { params: { courseId: string } }
+    req: NextRequest,
+    { params }: { params: { courseId: string } | Promise<{ courseId: string }> }
 ) {
     try {
-        const courseId = params.courseId;
+        const awaitedParams = await params;
+        const courseId = awaitedParams.courseId;
         if (!courseId) {
             return new NextResponse("Course Id is required", { status: 400 });
         }
@@ -32,20 +33,38 @@ export async function POST(
             return new NextResponse("User not found", { status: 404 });
         }
 
-        const userCourse = await db.userCourse.create({
-            data: {
-                userId: user.id,
-                courseId: Number(courseId),
-                state: 0,
+        let userCourse = await db.userCourse.findUnique({
+            where: {
+                userId_courseId: {
+                    userId: user.id,
+                    courseId: Number(courseId),
+                }
             }
         });
+
+        if (!userCourse) {
+            userCourse = await db.userCourse.create({
+                data: {
+                    userId: user.id,
+                    courseId: Number(courseId),
+                    state: 0,
+                }
+            });
+        }
 
         const course = await db.course.findUnique({
             where: { id: Number(courseId) },
             select: {
                 title: true,
                 imageId: true,
-                price: true,
+                price: {
+                    select: {
+                        amount: true,
+                        currency: true,
+                        isRecurring: true,
+                        interval: true,
+                    }
+                },
             }
         });
         if (!course) {
@@ -73,9 +92,12 @@ export async function POST(
             });
         }
 
-        // Calculate price with promo code
-        let finalPrice = Number(course.price);
+        // Calculate price with promo code using new pricing structure
+        let finalPrice = Number(course.price?.amount ?? 0);
         let discount = 0;
+        const currency = course.price?.currency || "pln";
+        const isRecurring = course.price?.isRecurring;
+        const interval = course.price?.interval;
         if (promoCode) {
             // Find promo code for this course
             const promo = await db.promoCode.findFirst({
@@ -91,36 +113,84 @@ export async function POST(
             }
         }
 
-        const session = await stripeClient.checkout.sessions.create({
-            mode: "payment",
-            customer: stripeCustomerId!,
-            line_items: [
-                {
-                    price_data: {
-                        currency: "pln",
-                        product_data: {
-                            name: course.title,
-                            description: "Kurs online",
-                            images: course.imageId ? [`${process.env.NEXT_PUBLIC_APP_URL}/api/images/${course.imageId}`] : [],
+        let session;
+        // Only allow 'month' or 'year' for Stripe recurring interval
+        let stripeRecurringInterval: "month" | "year" | undefined = undefined;
+        if (isRecurring && interval && interval !== "ONE_TIME") {
+            if (interval === "MONTH") {
+                stripeRecurringInterval = "month";
+            } else if (interval === "YEAR") {
+                stripeRecurringInterval = "year";
+            }
+        }
+        if (isRecurring && stripeRecurringInterval) {
+            // Create a recurring price for Stripe (add subscription_data with metadata)
+            session = await stripeClient.checkout.sessions.create({
+                mode: "subscription",
+                customer: stripeCustomerId!,
+                line_items: [
+                    {
+                        price_data: {
+                            currency: currency.toLowerCase(),
+                            product_data: {
+                                name: course.title,
+                                description: "Kurs online",
+                                images: course.imageId ? [`${process.env.NEXT_PUBLIC_APP_URL}/api/images/${course.imageId}`] : [],
+                            },
+                            unit_amount: Math.round(finalPrice * 100),
+                            recurring: {
+                                interval: stripeRecurringInterval,
+                            },
                         },
-                        unit_amount: Math.round(finalPrice * 100),
+                        quantity: 1,
                     },
-                    quantity: 1,
+                ],
+                success_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?success=1`,
+                cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?canceled=1`,
+                subscription_data: {
+                    metadata: {
+                        userCourseId: userCourse.id.toString(),
+                        courseId: courseId,
+                        userId: user.id,
+                        email: email,
+                        promoCode: promoCode,
+                        discount: discount.toString(),
+                    }
                 },
-            ],
-            success_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?success=1`,
-            cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?canceled=1`,
-            payment_intent_data: {
-                metadata: {
-                    userCourseId: userCourse.id.toString(),
-                    courseId: courseId,
-                    userId: user.id,
-                    email: email,
-                    promoCode: promoCode,
-                    discount: discount.toString(),
-                }
-            },
-        });
+            });
+        } else {
+            // One-time payment
+            session = await stripeClient.checkout.sessions.create({
+                mode: "payment",
+                customer: stripeCustomerId!,
+                line_items: [
+                    {
+                        price_data: {
+                            currency: currency.toLowerCase(),
+                            product_data: {
+                                name: course.title,
+                                description: "Kurs online",
+                                images: course.imageId ? [`${process.env.NEXT_PUBLIC_APP_URL}/api/images/${course.imageId}`] : [],
+                            },
+                            unit_amount: Math.round(finalPrice * 100),
+                        },
+                        quantity: 1,
+                    },
+                ],
+                success_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?success=1`,
+                cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?canceled=1`,
+                payment_intent_data: {
+                    metadata: {
+                        userCourseId: userCourse.id.toString(),
+                        courseId: courseId,
+                        userId: user.id,
+                        email: email,
+                        promoCode: promoCode,
+                        discount: discount.toString(),
+                    }
+                },
+            });
+        }
         return NextResponse.json({ message: "Checkout session created successfully", sessionUrl: session.url });
     } catch (error) {
         console.error(error);
