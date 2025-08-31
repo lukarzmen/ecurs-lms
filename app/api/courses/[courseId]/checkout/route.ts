@@ -147,6 +147,16 @@ export async function POST(
                 ],
                 success_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?success=1`,
                 cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?canceled=1`,
+                client_reference_id: String(userCourse.id),
+                metadata: {
+                    userCourseId: userCourse.id.toString(),
+                    courseId: courseId,
+                    userId: String(user.id),
+                    email: email,
+                    promoCode: promoCode,
+                    discount: discount.toString(),
+                    mode: "subscription",
+                },
                 subscription_data: {
                     metadata: {
                         userCourseId: userCourse.id.toString(),
@@ -155,6 +165,7 @@ export async function POST(
                         email: email,
                         promoCode: promoCode,
                         discount: discount.toString(),
+                        mode: "subscription",
                     }
                 },
             });
@@ -179,6 +190,16 @@ export async function POST(
                 ],
                 success_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?success=1`,
                 cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?canceled=1`,
+                client_reference_id: String(userCourse.id),
+                metadata: {
+                    userCourseId: userCourse.id.toString(),
+                    courseId: courseId,
+                    userId: String(user.id),
+                    email: email,
+                    promoCode: promoCode,
+                    discount: discount.toString(),
+                    mode: "payment",
+                },
                 payment_intent_data: {
                     metadata: {
                         userCourseId: userCourse.id.toString(),
