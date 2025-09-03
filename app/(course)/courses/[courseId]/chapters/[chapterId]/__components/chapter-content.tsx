@@ -5,7 +5,7 @@ import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 import { SerializedDocument } from "@lexical/file";
 import { set } from "lodash-es";
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Hourglass } from "lucide-react";
 
 export default function ChapterContent ({
     moduleId: moduleId,
@@ -16,33 +16,39 @@ export default function ChapterContent ({
     isCompleted: boolean;
     onCompleted: () => void;
 }) {
-    const [isLoading, setIsLoading] = useState(false);
-    const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
     useEffect(() => {
       const fetchData = () => {
         setIsLoading(true);
+        setLoadError(false);
         fetch(`/api/content/${moduleId}`, {
           method: 'GET'
         })
           .then(response => {
             if (!response.ok) {
-              throw new Error('Error fetching initial state');
+              setLoadError(true);
+              setIsLoading(false);
+              return null;
             }
             return response.json();
           })
-          .then((serializedEditorState: string) => {
+          .then((serializedEditorState: string | null) => {
+            if (!serializedEditorState) return;
             const data: SerializedDocument = JSON.parse(serializedEditorState);
             if(data.editorState.root.children.length === 0){
               setSerializedEditorStateString(null);
               setIsLoading(false);
               return;
-            }              
+            }
             setSerializedEditorStateString(JSON.stringify(data.editorState));
             setIsLoading(false);
           })
           .catch(error => {
             console.error('Error:', error);
+            setLoadError(true);
             setIsLoading(false);
           });
       };
@@ -55,6 +61,11 @@ export default function ChapterContent ({
         {isLoading ? (
           <div className="flex justify-center items-center">
             <Loader2 className="animate-spin text-orange-700" size={32} />
+          </div>
+        ) : loadError ? (
+          <div className="flex flex-col items-center justify-center h-full p-8 text-gray-500">
+            <Hourglass className="w-12 h-12 mb-4 text-gray-400" />
+            <div className="text-lg font-medium">Kurs w przygotowaniu</div>
           </div>
         ) : (
           <LexicalEditor

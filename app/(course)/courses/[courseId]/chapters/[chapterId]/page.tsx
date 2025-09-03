@@ -3,7 +3,7 @@
 import { Banner } from "@/components/banner";
 import { useAuth } from "@clerk/nextjs"; // <-- Use client-side auth hook
 import ChapterContent from "./__components/chapter-content";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Hourglass } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useEffect, useState } from "react"; // <-- Import client-side hooks
