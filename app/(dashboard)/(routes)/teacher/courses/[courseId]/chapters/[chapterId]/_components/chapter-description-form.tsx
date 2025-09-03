@@ -23,18 +23,27 @@ export const ChapterDescriptionForm = ({
   const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
 
   // Extract fetch logic to a function
+  const [notFound, setNotFound] = useState(false);
   const fetchData = useCallback(() => {
     setIsLoading(true);
+    setNotFound(false);
     fetch(`/api/content/${moduleId}`, {
       method: 'GET'
     })
       .then(response => {
+        if (response.status === 404) {
+          setNotFound(true);
+          setSerializedEditorStateString(null);
+          setIsLoading(false);
+          return null;
+        }
         if (!response.ok) {
           throw new Error('Błąd pobierania dokumentu edytora');
         }
         return response.json();
       })
-      .then((serializedEditorState: string) => {
+      .then((serializedEditorState: string | null) => {
+        if (!serializedEditorState) return;
         const data: SerializedDocument = JSON.parse(serializedEditorState);
         if (data.editorState.root.children.length === 0) {
           setSerializedEditorStateString(null);
@@ -76,18 +85,21 @@ export const ChapterDescriptionForm = ({
       }).then((res) => {
         if (!res.ok) {
           toast.error("Błąd zapisu dokumentu");
+          setIsLoading(false);
+          return;
         }
         toast.success("Zapisano dokument");
+        // Fetch new content after save
+        fetchData();
+        setIsEditing(false);
       });
 
       return { success: true };
     } catch (error) {
       console.error('Error:', error);
       toast.error("Coś poszło nie tak podczas zapisywania dokumentu");
-      return { success: false };
-    } finally {
       setIsLoading(false);
-      setIsEditing(false);
+      return { success: false };
     }
   };
 
@@ -106,12 +118,15 @@ export const ChapterDescriptionForm = ({
         <div className="flex justify-center items-center">
           <Loader2 className="animate-spin text-orange-700" size={32} />
         </div>
+      ) : notFound && !isEditing ? (
+        <div className="space-y-4 mt-4 text-center text-orange-700 font-semibold">
+          Treść nie istnieje. Edytuj aby utworzyć treść lekcji.
+        </div>
       ) : (
         <div className="space-y-4 mt-4">
           <div>
-
             <LexicalEditor
-              initialStateJSON={serializedEditorStateString}
+              initialStateJSON={notFound ? null : serializedEditorStateString}
               onSave={handleOnSave}
               isEditable={isEditing}
               onEditorChange={() => {

@@ -27,7 +27,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ moduleId
         });
 
         if (!moduleContent) {
-            return new NextResponse("ModuleContent not found", {
+            return new NextResponse("Module content not exists", {
             status: 404,
             });
         }

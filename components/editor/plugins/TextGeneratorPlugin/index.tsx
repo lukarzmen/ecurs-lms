@@ -27,7 +27,7 @@ export function TextGeneratorDialog({
   onClose: () => void;
 }): JSX.Element {
   const [userPrompt, setUserPrompt] = useState("");
-  const [systemPrompt, setSystemPrompt] = useState("Jesteś asystentem AI, który pomaga użytkownikowi w generowaniu treści edukacyjnych na podstawie podanych poleceń. Generuj ciekawe treści w zrozumiałej formie.");
+  const [systemPrompt, setSystemPrompt] = useState("Jesteś asystentem AI, który generuje angażujące, ciekawe treści edukacyjne przeznaczone bezpośrednio dla ucznia. Unikaj konspektów dla nauczycieli. Twórz teksty, które wciągają ucznia, zachęcają do myślenia i działania. Odpowiedzi formatuj w czystym Markdown (md), z nagłówkami, wypunktowaniami, pogrubieniami itp. Nie dodawaj żadnych instrukcji ani meta-komentarzy.");
   const [isSystemPromptEditable, setIsSystemPromptEditable] = useState(false);
   const [loading, setLoading] = useState(false);
 
