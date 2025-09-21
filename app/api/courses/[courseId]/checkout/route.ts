@@ -63,6 +63,7 @@ export async function POST(
                         currency: true,
                         isRecurring: true,
                         interval: true,
+                        trialPeriodDays: true,
                     }
                 },
             }
@@ -124,7 +125,8 @@ export async function POST(
             }
         }
         if (isRecurring && stripeRecurringInterval) {
-            // Create a recurring price for Stripe (add subscription_data with metadata)
+            // Use trialPeriodDays from course.price if set, else default to 0
+            const trialPeriodDays = typeof course.price?.trialPeriodDays === "number" && course.price.trialPeriodDays > 0 ? course.price.trialPeriodDays : 0;
             session = await stripeClient.checkout.sessions.create({
                 mode: "subscription",
                 customer: stripeCustomerId!,
@@ -158,6 +160,7 @@ export async function POST(
                     mode: "subscription",
                 },
                 subscription_data: {
+                    trial_period_days: trialPeriodDays,
                     metadata: {
                         userCourseId: userCourse.id.toString(),
                         courseId: courseId,

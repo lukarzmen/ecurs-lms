@@ -1,6 +1,7 @@
 import { MarketplaceCourseCard } from "./course-card";
 
 export interface MarketplaceCourse {
+    trialPeriodDays?: number | null;
     id: number;
     title: string;
     imageId?: string;
@@ -46,6 +47,7 @@ export const MarketplaceCoursesList = ({ items }: MarketplaceCoursesListBaseProp
                     currency: item.currency,
                     isRecurring: item.isRecurring,
                     interval: item.interval,
+                    trialPeriodDays: item.trialPeriodDays ?? null,
                 };
                 if (item.enrolled) {
                     return (

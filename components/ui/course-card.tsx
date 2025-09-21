@@ -20,6 +20,7 @@ interface MarketplaceCourseCardProps extends BaseCourseCardProps {
     currency?: string | null;
     isRecurring?: boolean;
     interval?: string | null;
+    trialPeriodDays?: number | null;
 }
 
 export interface CourseInfoCardProps extends BaseCourseCardProps {
@@ -38,6 +39,7 @@ export function MarketplaceCourseCard({
     currency,
     isRecurring,
     interval,
+    trialPeriodDays,
 }: MarketplaceCourseCardProps) {
     const imageUrl = imageId ? `/api/image/${imageId}` : null;
     const placeholderImageUrl = "/logo.png";
@@ -86,6 +88,9 @@ export function MarketplaceCourseCard({
                                         {price}
                                         {currency ? ` ${currency}` : " PLN"}
                                         {isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}
+                                        {isRecurring && trialPeriodDays && trialPeriodDays > 0 ? (
+                                            <span className="block text-xs text-orange-500 font-normal">{trialPeriodDays} dni za darmo!</span>
+                                        ) : null}
                                     </span>
                                 )
                             ) : null}

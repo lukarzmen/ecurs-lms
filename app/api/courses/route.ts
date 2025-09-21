@@ -33,14 +33,18 @@ export async function POST(req: Request) {
     // Create the course price if provided
     let coursePrice = null;
     if (price && typeof price === "object" && price.amount !== undefined) {
+      const priceData: any = {
+        amount: price.amount,
+        currency: price.currency || "PLN",
+        interval: price.interval || "ONE_TIME",
+        isRecurring: price.isRecurring || false,
+        course: { connect: { id: course.id } },
+      };
+      if (price.trialPeriodDays !== undefined) {
+        priceData.trialPeriodDays = price.trialPeriodDays;
+      }
       coursePrice = await db.coursePrice.create({
-        data: {
-          amount: price.amount,
-          currency: price.currency || "PLN",
-          interval: price.interval || "ONE_TIME",
-          isRecurring: price.isRecurring || false,
-          course: { connect: { id: course.id } },
-        },
+        data: priceData,
       });
     }
 

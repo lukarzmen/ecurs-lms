@@ -1,200 +1,191 @@
-model PromoCode {
-  id            Int      @id @default(autoincrement())
-  code          String   
-  discount      Int
-  description   String?
-  expirationDate DateTime?
-  courseId      Int
-  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([courseId])
-}
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  relationMode = "prisma"
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
-model Course {
-  id Int @id @default(autoincrement())
-  authorId Int 
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  title String @db.Text
-  // price moved to a separate 1:1 model to support one-time or recurring billing and currency
-  price CoursePrice?
-  description String? @db.Text
-  imageId String?
-  mode Int @default(0) // private, public, open
-  state Int @default(0) // draft - 0, published (close) - 1, published open (in build) - 2, archived - 3
-  categoryId Int?
-  category Category? @relation(fields: [categoryId], references: [id])
-  modules Module[]
-  userCourses UserCourse[]
-  promoCodes PromoCode[]
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  relationMode      = "prisma"
+}
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model PromoCode {
+  id             Int       @id @default(autoincrement())
+  code           String
+  discount       Int
+  description    String?
+  expirationDate DateTime?
+  courseId       Int
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  course         Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+}
+
+model Course {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String?
+  imageId     String?
+  categoryId  Int?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  authorId    Int
+  mode        Int          @default(0)
+  state       Int          @default(0)
+  author      User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  price       CoursePrice?
+  category    Category?    @relation(fields: [categoryId], references: [id])
+  modules     Module[]
+  userCourses UserCourse[]
+  promoCodes  PromoCode[]
 
   @@index([categoryId])
   @@index([authorId])
 }
 
 model Category {
-  id Int @id @default(autoincrement())
-  name String @unique
-  courses Course[]
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  courses   Course[]
 }
 
 model User {
-  id Int @id @default(autoincrement())
-  providerId String @unique
-  email String @unique
-  firstName String?
-  lastName String?
-  displayName String?
-  userCourses UserCourse[]
-  userModules UserModule[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  roleId Int @default(0)
-  role Role? @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  id              Int              @id @default(autoincrement())
+  providerId      String           @unique
+  email           String           @unique
+  firstName       String?
+  lastName        String?
+  displayName     String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  roleId          Int              @default(0)
+  userCourses     UserCourse[]
+  userModules     UserModule[]
+  role            Role?            @relation(fields: [roleId], references: [id], onDelete: Cascade)
   stripeCustomers StripeCustomer[]
+  Course          Course[]
+
   @@index([roleId])
-  Course Course[]
 }
 
 model Role {
-  id Int @id @default(autoincrement())
-  name String @unique
-  users User[]
-
+  id         Int          @id @default(autoincrement())
+  name       String       @unique
+  users      User[]
   UserCourse UserCourse[]
 }
+
 model Module {
-  id Int @id @default(autoincrement())
-  title String @db.Text
-  position Int
-  courseId Int?
-  course Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  userModules UserModule[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  state Int @default(0) // 0 - draft, 1 - published
+  id            Int             @id @default(autoincrement())
+  position      Int
+  courseId      Int?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  title         String
+  state         Int             @default(0)
+  course        Course?         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userModules   UserModule[]
+  ModuleContent ModuleContent[]
 
   @@index([courseId])
-  ModuleContent ModuleContent[]
 }
 
 model ModuleContent {
-  id         Int      @id @default(autoincrement())
-  guid String @default(uuid()) @unique
-  data       Json     @db.JsonB
-  createdAt  DateTime @default(now())
-  moduleId   Int? @unique
-  module     Module?  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  id        Int      @id @default(autoincrement())
+  guid      String   @unique @default(uuid())
+  data      Json
+  createdAt DateTime @default(now())
+  moduleId  Int?     @unique
+  module    Module?  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
   @@index([moduleId])
 }
 
 model UserCourse {
-  id Int @id @default(autoincrement())
-  userId Int
-  courseId Int
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  state Int @default(0) // 0 - not active for user. 1 - active for user
-  roleId Int? @default(0)
-  role Role? @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
-  purchase UserCoursePurchase? @relation("UserCoursePurchaseToUserCourse")
-
-  @@index([userId])
-  @@index([courseId])
+  id        Int                 @id @default(autoincrement())
+  userId    Int
+  courseId  Int
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  state     Int                 @default(0)
+  roleId    Int?                @default(0) // 0 - student, 1 - teacher
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  role      Role?               @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  purchase  UserCoursePurchase? @relation("UserCoursePurchaseToUserCourse")
 
   @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
   @@index([roleId])
 }
 
 model UserModule {
-id Int @id @default(autoincrement())
-  userId Int
-  moduleId Int
-  isOpen Boolean @default(false)
-  isFinished Boolean @default(false)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  module Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([moduleId])
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  moduleId   Int
+  isOpen     Boolean  @default(false)
+  isFinished Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module     Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
   @@unique([userId, moduleId])
+  @@index([userId])
+  @@index([moduleId])
 }
 
 model Attachment {
-  id         Int      @id @default(autoincrement())
-  guid String @default(uuid()) @unique
-  filename   String
-  fileData   Bytes  @db.ByteA 
-  createdAt  DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  guid      String   @unique @default(uuid())
+  filename  String
+  fileData  Bytes
+  createdAt DateTime @default(now())
 }
 
 model Wishlist {
-  id Int @id @default(autoincrement())
-  name String? 
+  id      Int     @id @default(autoincrement())
+  name    String?
   contact String?
 }
 
 model StripeCustomer {
-  id                Int    @id @default(autoincrement())
-  stripeCustomerId  String @unique
-  userId            Int    @unique
-  user              User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id               Int      @id @default(autoincrement())
+  stripeCustomerId String   @unique
+  userId           Int      @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserCoursePurchase {
-  id            Int        @id @default(autoincrement())
-  userCourseId  Int        @unique
-  userCourse    UserCourse @relation("UserCoursePurchaseToUserCourse", fields: [userCourseId], references: [id])
-  paymentId     String?    // e.g. Stripe payment intent/session id
-  purchaseDate DateTime @default(now())
+  id           Int        @id @default(autoincrement())
+  userCourseId Int        @unique
+  paymentId    String?
+  purchaseDate DateTime   @default(now())
+  userCourse   UserCourse @relation("UserCoursePurchaseToUserCourse", fields: [userCourseId], references: [id])
 }
 
-// Price interval for recurring billing or one-time
+model CoursePrice {
+  id              Int            @id @default(autoincrement())
+  amount          Decimal        @default(0) @db.Decimal(10, 2)
+  currency        String         @default("PLN")
+  isRecurring     Boolean        @default(false)
+  interval        PriceInterval?
+  courseId        Int            @unique
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @default(now()) @updatedAt
+  trialPeriodDays Int?
+  course          Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
 enum PriceInterval {
   ONE_TIME
   MONTH
   YEAR
-}
-
-model CoursePrice {
-  id        Int           @id @default(autoincrement())
-  amount    Decimal       @db.Decimal(10,2)
-  currency  String
-  isRecurring Boolean     @default(false)
-  interval  PriceInterval? @default(ONE_TIME)
-
-  // 1:1 relation to Course
-  courseId  Int           @unique
-  course    Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
 }

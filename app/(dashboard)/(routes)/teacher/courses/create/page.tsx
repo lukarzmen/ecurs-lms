@@ -22,6 +22,7 @@ const CreatePage = () => {
   const [isRecurring, setIsRecurring] = useState(false);
   const [currency, setCurrency] = useState("PLN");
   const [interval, setInterval] = useState<"MONTH" | "YEAR" | "ONE_TIME">("ONE_TIME");
+  const [trialPeriodDays, setTrialPeriodDays] = useState(0);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +33,7 @@ const CreatePage = () => {
         currency,
         isRecurring,
         interval: isRecurring ? interval : "ONE_TIME",
+        trialPeriodDays: isRecurring ? Number(trialPeriodDays) : undefined,
       };
 
       const response = await axios.post("/api/courses", {
@@ -246,19 +248,35 @@ const CreatePage = () => {
                   <span className="text-sm">Opłata cykliczna (subskrypcja)</span>
                 </label>
                 {isRecurring && (
-                  <div className="flex flex-col mt-1">
-                    <label htmlFor="interval" className="text-sm">Okres rozliczenia</label>
-                    <select
-                      id="interval"
-                      value={interval}
-                      onChange={e => setInterval(e.target.value as any)}
-                      disabled={isSubmitting}
-                      className="mt-0 block px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                    >
-                      <option value="MONTH">Miesięcznie</option>
-                      <option value="YEAR">Rocznie</option>
-                    </select>
-                  </div>
+                  <>
+                    <div className="flex flex-col mt-1">
+                      <label htmlFor="interval" className="text-sm">Okres rozliczenia</label>
+                      <select
+                        id="interval"
+                        value={interval}
+                        onChange={e => setInterval(e.target.value as any)}
+                        disabled={isSubmitting}
+                        className="mt-0 block px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                      >
+                        <option value="MONTH">Miesięcznie</option>
+                        <option value="YEAR">Rocznie</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-col mt-1">
+                      <label htmlFor="trialPeriodDays" className="text-sm">Okres próbny (dni)</label>
+                      <input
+                        type="number"
+                        id="trialPeriodDays"
+                        min={0}
+                        step={1}
+                        value={trialPeriodDays}
+                        onChange={e => setTrialPeriodDays(Number(e.target.value))}
+                        disabled={isSubmitting}
+                        placeholder="np. 7"
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                      />
+                    </div>
+                  </>
                 )}
               </div>
               <div className="text-sm mt-2">

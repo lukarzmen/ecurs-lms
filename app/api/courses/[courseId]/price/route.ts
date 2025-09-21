@@ -35,14 +35,18 @@ export async function PATCH(
     }
 
     // Build create and update payloads conditionally so we don't set undefined fields
+    const trialPeriodDays = body.trialPeriodDays !== undefined ? Number(body.trialPeriodDays) : undefined;
+    if (trialPeriodDays !== undefined && (isNaN(trialPeriodDays) || trialPeriodDays < 0)) {
+      return new NextResponse("Invalid trial period", { status: 400 });
+    }
     const createData: any = {
       amount: new Prisma.Decimal(priceNumber),
       currency,
       isRecurring,
       course: { connect: { id: courseIdNumber } },
     };
-
     if (interval) createData.interval = interval;
+    if (trialPeriodDays !== undefined) createData.trialPeriodDays = trialPeriodDays;
 
     const updateData: any = {
       amount: new Prisma.Decimal(priceNumber),
@@ -50,6 +54,7 @@ export async function PATCH(
       isRecurring,
     };
     if (interval) updateData.interval = interval;
+    if (trialPeriodDays !== undefined) updateData.trialPeriodDays = trialPeriodDays;
 
     const upserted = await prisma.coursePrice.upsert({
       where: { courseId: courseIdNumber },
@@ -62,6 +67,7 @@ export async function PATCH(
       currency: upserted.currency,
       isRecurring: upserted.isRecurring,
       interval: upserted.interval,
+      trialPeriodDays: upserted.trialPeriodDays ?? null,
     });
   } catch (error) {
     console.error(error);

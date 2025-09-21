@@ -10,6 +10,7 @@ type Price = {
   currency: string;
   interval?: "ONE_TIME" | "MONTH" | "YEAR";
   isRecurring?: boolean;
+  trialPeriodDays?: number;
 };
 
 const intervalOptions = [
@@ -25,6 +26,7 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
     currency: price?.currency ?? "PLN",
     interval: price?.interval ?? "ONE_TIME",
     isRecurring: price?.isRecurring ?? false,
+    trialPeriodDays: price?.trialPeriodDays ?? 0,
   });
 
   const toggleEdit = () => setIsEditing((v) => !v);
@@ -58,6 +60,7 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
           currency: form.currency,
           interval: form.interval,
           isRecurring: form.isRecurring,
+          trialPeriodDays: form.trialPeriodDays,
         }),
       });
       if (!res.ok) throw new Error();
@@ -119,20 +122,35 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
             <label htmlFor="isRecurring" className="text-sm font-medium text-gray-700">Płatność cykliczna</label>
           </div>
           {form.isRecurring && (
-            <div className="form-group">
-              <label htmlFor="interval" className="block text-sm font-medium text-gray-700">Okres rozliczenia</label>
-              <select
-                name="interval"
-                id="interval"
-                value={form.interval}
-                onChange={handleChange}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md"
-              >
-                {intervalOptions.filter(opt => opt.value !== "ONE_TIME").map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
+            <>
+              <div className="form-group">
+                <label htmlFor="interval" className="block text-sm font-medium text-gray-700">Okres rozliczenia</label>
+                <select
+                  name="interval"
+                  id="interval"
+                  value={form.interval}
+                  onChange={handleChange}
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md"
+                >
+                  {intervalOptions.filter(opt => opt.value !== "ONE_TIME").map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="trialPeriodDays" className="block text-sm font-medium text-gray-700">Okres próbny (dni)</label>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  name="trialPeriodDays"
+                  value={form.trialPeriodDays}
+                  onChange={handleChange}
+                  placeholder="np. 7"
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md"
+                />
+              </div>
+            </>
           )}
           <div className="flex items-center gap-x-2">
             <button type="submit" className="bg-orange-600 text-white font-semibold py-2 px-4 rounded-md">

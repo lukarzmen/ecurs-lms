@@ -71,6 +71,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<CourseSearchRe
             currency: true,
             isRecurring: true,
             interval: true,
+            trialPeriodDays: true,
           }
         }
       },
@@ -99,6 +100,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<CourseSearchRe
         currency: course.price?.currency ?? null,
         isRecurring: course.price?.isRecurring ?? false,
         interval: course.price?.interval ?? null,
+        trialPeriodDays: course.price?.trialPeriodDays ?? null,
         author: course.author
           ? {
               ...course.author,

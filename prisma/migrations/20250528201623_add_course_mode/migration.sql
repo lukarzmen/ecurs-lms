@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "Course" ADD COLUMN     "mode" INTEGER NOT NULL DEFAULT 0;
