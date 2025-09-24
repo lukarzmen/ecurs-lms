@@ -189,7 +189,7 @@ export async function GET(req: NextRequest) {
                 module: { course: { authorId: user.id } },
                 isFinished: true,
             },
-            _count: { id: true },
+            _count: true,
         });
 
         let leastActiveStudent = "Brak danych";
@@ -200,12 +200,12 @@ export async function GET(req: NextRequest) {
         for (const s of studentModuleCounts) {
             const student = await db.user.findUnique({ where: { id: s.userId }, select: { email: true, firstName: true, lastName: true } });
             const label = student?.email || `${student?.firstName || ""} ${student?.lastName || ""}`.trim() || s.userId.toString();
-            if (s._count.id < leastActiveCount) {
-                leastActiveCount = s._count.id;
+            if (s._count < leastActiveCount) {
+                leastActiveCount = s._count;
                 leastActiveStudent = label;
             }
-            if (s._count.id > mostActiveCount) {
-                mostActiveCount = s._count.id;
+            if (s._count > mostActiveCount) {
+                mostActiveCount = s._count;
                 mostActiveStudent = label;
             }
         }

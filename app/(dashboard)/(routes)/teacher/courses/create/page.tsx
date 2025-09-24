@@ -286,7 +286,7 @@ const CreatePage = () => {
                   <span className="font-semibold text-orange-700">{price} {currency}</span>
                 )}
                 {isRecurring && price > 0 && (
-                  <div className="text-sm text-muted-foreground">{interval === 'MONTH' ? 'płatność co miesiąc' : 'płatność co rok'}</div>
+                  <div className="text-sm text-muted-foreground">{interval === 'YEAR' ? 'płatność co rok' : 'płatność co miesiąc'}</div>
                 )}
               </div>
               <div className="flex items-center gap-x-2 mt-4">
