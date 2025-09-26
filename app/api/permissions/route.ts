@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
 export async function POST(req: Request) {
+    console.log("Incoming POST request:", req);
     const { userId, courseId } = await req.json();
     if (!userId || !courseId) {
         return new NextResponse("Invalid courseId", {
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
             },
             include: { purchase: true }
         });
-        const isFreeCourse = Number(course.price) === 0;
+        const isFreeCourse = Number(course.price?.amount) === 0;
         const hasPurchase = !!userCourse?.purchase;
         console.log(userCourse, "User course data:", userCourse);
         if (userCourse) {
@@ -53,13 +54,22 @@ export async function POST(req: Request) {
         const isPublicAndFree = (isPublic && isFreeCourse) ? 1 : 0;
         console.log("User ID:", user.id, "Course ID:", courseId, "Is public:", isPublic, "Is free course:", isFreeCourse, "User has access:", isPublicAndFree);
         if(isPublicAndFree){
-            await db.userCourse.create({
-                    data: {
+            await db.userCourse.upsert({
+                where: {
+                    userId_courseId: {
                         userId: user.id,
                         courseId: Number(courseId),
-                        state: 1,
                     },
-                });
+                },
+                update: {
+                    state: 1,
+                },
+                create: {
+                    userId: user.id,
+                    courseId: Number(courseId),
+                    state: 1,
+                },
+            });
         }
 
         return NextResponse.json({ hasAccess: isPublicAndFree, hasPurchase: isPublicAndFree });

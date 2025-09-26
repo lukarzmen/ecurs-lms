@@ -85,11 +85,11 @@ const getDashboardCourses = async (userId: string): Promise<CourseWithProgress[]
                 createdAt: "desc",
             },
         });
-        console.log(`[getDashboardCourses] Found ${coursesWithProgress.length} courses for user ${user.id}`);
+        console.log(`Found ${coursesWithProgress.length} courses for user ${user.id}`);
 
         return coursesWithProgress as CourseWithProgress[];
     } catch (error) {
-        console.error("[getDashboardCourses] Error:", error);
+        console.error("Error:", error);
         return [];
     }
 }

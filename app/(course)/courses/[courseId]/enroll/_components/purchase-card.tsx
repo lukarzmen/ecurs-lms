@@ -42,7 +42,7 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: st
     // Validate promo code on mount if present and courseData is loaded
     useEffect(() => {
         async function validateOnMount() {
-            const priceAmount = courseData?.price?.amount ?? 0;
+            const priceAmount = courseData?.price?.amount !== undefined ? parseFloat(courseData.price.amount) : 0;
             if (promoCode && courseData && priceAmount > 0) {
                 try {
                     const res = await fetch(`/api/courses/${courseId}/promocode/${promoCode}`);
@@ -182,6 +182,8 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: st
     const isRecurring = courseData?.price?.isRecurring;
     const interval = courseData?.price?.interval;
     const trialPeriodDays = courseData?.price?.trialPeriodDays;
+    if (priceAmount == 0) {
+        // Free course appearance
         return (
             <div className="flex flex-col items-center justify-center min-h-[300px] mt-8">
                 <div className="bg-white rounded-lg shadow-md p-6 max-w-sm w-full flex flex-col items-center">
@@ -193,56 +195,78 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: st
                         className="rounded mb-4 object-cover"
                     />
                     <h2 className="text-xl font-bold mb-2">{courseData.title}</h2>
-                    <div className="text-lg font-semibold text-orange-700 mb-2">
-                        {priceAmount === 0
-                            ? "Darmowy"
-                            : discount > 0 && finalPrice
-                                ? <><span className="line-through mr-2 text-gray-500">{priceAmount} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</span><span className="text-green-700">{finalPrice} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</span>{isRecurring && trialPeriodDays && trialPeriodDays > 0 ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny: {trialPeriodDays} dni</span>) : null}</>
-                                : <><>{priceAmount} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</>{isRecurring && trialPeriodDays && trialPeriodDays > 0 ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny: {trialPeriodDays} dni</span>) : null}</>}
-                    </div>
-                    {finalPrice && discount > 0 && (
-                        <div className="text-md font-semibold text-green-700 mb-2">
-                            {discount}% taniej
-                        </div>
-                    )}
-                    <div className="w-full flex gap-2 mb-2">
-                        <input
-                            type="text"
-                            placeholder="Kod promocyjny"
-                            value={promoCode}
-                            onChange={e => {
-                                setPromoCode(e.target.value);
-                                setPromoError("");
-                                setDiscount(0);
-                                setFinalPrice("");
-                            }}
-                            className={`w-full px-3 py-2 border rounded ${promoError ? 'border-red-500' : (discount > 0 ? 'border-green-500' : '')}`}
-                            disabled={loading}
-                        />
-                        <button
-                            type="button"
-                            className="bg-gray-200 text-orange-700 px-4 py-2 rounded hover:bg-gray-300 transition flex items-center justify-center"
-                            onClick={checkPromoCode}
-                            disabled={loading}
-                        >
-                            Sprawdź kod
-                        </button>
-                    </div>
-                    {promoError && (
-                        <div className="text-sm text-red-600 mb-2 w-full text-left">{promoError}</div>
-                    )}
+                    <div className="text-lg font-semibold text-green-700 mb-4">Darmowy kurs</div>
                     <button
                         type="button"
-                        className="w-full bg-orange-600 text-white px-6 py-2 rounded hover:bg-orange-700 transition flex items-center justify-center"
-                        onClick={handleBuy}
-                        disabled={loading}
+                        className="w-full bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition flex items-center justify-center"
+                        onClick={() => router.push(`/courses/${courseId}`)}
                     >
-                        {loading ? <Loader2 className="animate-spin mr-2" /> : null}
-                        Kup dostęp przez Stripe
+                        Dołącz do kursu
                     </button>
                 </div>
             </div>
         );
+    }
+    // Paid course appearance (unchanged)
+    return (
+        <div className="flex flex-col items-center justify-center min-h-[300px] mt-8">
+            <div className="bg-white rounded-lg shadow-md p-6 max-w-sm w-full flex flex-col items-center">
+                <Image
+                    src={courseData.imageId ? `/api/image/${courseData.imageId}` : "/logo.png"}
+                    alt={courseData.title}
+                    width={200}
+                    height={200}
+                    className="rounded mb-4 object-cover"
+                />
+                <h2 className="text-xl font-bold mb-2">{courseData.title}</h2>
+                <div className="text-lg font-semibold text-orange-700 mb-2">
+                    {discount > 0 && finalPrice
+                        ? <><span className="line-through mr-2 text-gray-500">{priceAmount} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</span><span className="text-green-700">{finalPrice} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</span>{isRecurring && trialPeriodDays && trialPeriodDays > 0 ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny: {trialPeriodDays} dni</span>) : null}</>
+                        : <><>{priceAmount} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</>{isRecurring && trialPeriodDays && trialPeriodDays > 0 ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny: {trialPeriodDays} dni</span>) : null}</>}
+                </div>
+                {finalPrice && discount > 0 && (
+                    <div className="text-md font-semibold text-green-700 mb-2">
+                        {discount}% taniej
+                    </div>
+                )}
+                <div className="w-full flex gap-2 mb-2">
+                    <input
+                        type="text"
+                        placeholder="Kod promocyjny"
+                        value={promoCode}
+                        onChange={e => {
+                            setPromoCode(e.target.value);
+                            setPromoError("");
+                            setDiscount(0);
+                            setFinalPrice("");
+                        }}
+                        className={`w-full px-3 py-2 border rounded ${promoError ? 'border-red-500' : (discount > 0 ? 'border-green-500' : '')}`}
+                        disabled={loading}
+                    />
+                    <button
+                        type="button"
+                        className="bg-gray-200 text-orange-700 px-4 py-2 rounded hover:bg-gray-300 transition flex items-center justify-center"
+                        onClick={checkPromoCode}
+                        disabled={loading}
+                    >
+                        Sprawdź kod
+                    </button>
+                </div>
+                {promoError && (
+                    <div className="text-sm text-red-600 mb-2 w-full text-left">{promoError}</div>
+                )}
+                <button
+                    type="button"
+                    className="w-full bg-orange-600 text-white px-6 py-2 rounded hover:bg-orange-700 transition flex items-center justify-center"
+                    onClick={handleBuy}
+                    disabled={loading}
+                >
+                    {loading ? <Loader2 className="animate-spin mr-2" /> : null}
+                    Kup dostęp przez Stripe
+                </button>
+            </div>
+        </div>
+    );
     }
 
     return null;

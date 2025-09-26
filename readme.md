@@ -117,4 +117,14 @@ See the [LICENSE](./LICENSE) file for details.
 - Certificates
 - Share
 
+### Clear purchase data 
+
+```sql
+-- Delete all records from the UserCoursePurchase table
+DELETE FROM public."UserCoursePurchase";
+
+-- Delete records from UserCourse where roleId is 0
+DELETE FROM public."UserCourse"
+WHERE "roleId" = 0;
+```
 
