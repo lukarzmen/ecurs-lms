@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
 export async function POST(req: Request) {
-    console.log("Incoming POST request:", req);
     const { userId, courseId } = await req.json();
     if (!userId || !courseId) {
         return new NextResponse("Invalid courseId", {
@@ -72,7 +71,7 @@ export async function POST(req: Request) {
             });
         }
 
-        return NextResponse.json({ hasAccess: isPublicAndFree, hasPurchase: isPublicAndFree });
+        return NextResponse.json({ hasAccess: false, hasPurchase: true });
     } catch (error) {
         console.error(error);
         return new NextResponse("Internal error", {

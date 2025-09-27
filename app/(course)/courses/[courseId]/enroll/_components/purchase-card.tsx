@@ -14,13 +14,13 @@ interface PurchaseCardProps {
 const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: string }) => {
     const [loading, setLoading] = useState(false);
     const [courseData, setCourseData] = useState<any>(null);
-    const [permResult, setPermResult] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
     const [promoCode, setPromoCode] = useState<string>("");
     const [discount, setDiscount] = useState<number>(0);
     const [finalPrice, setFinalPrice] = useState<string>("");
     const router = useRouter();
     const [promoError, setPromoError] = useState<string>("");
+    const [joinLoading, setJoinLoading] = useState(false);
 
     // Initialize promoCode from prop or URL parameter
     useEffect(() => {
@@ -101,45 +101,23 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: st
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const permResponse = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/api/permissions`,
-                    {
-                        method: 'POST',
-                        headers: { "Content-Type": "application/json" },
-                        cache: 'no-store',
-                        body: JSON.stringify({ courseId, userId }),
-                    }
+                const courseResponse = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}`,
+                    { method: 'GET', cache: 'no-store' }
                 );
-                if (!permResponse.ok) {
-                    setError("Sprawdzanie uprawnień nie powiodło się. Spróbuj ponownie później.");
+                if (!courseResponse.ok) {
+                    setError("Nie można pobrać danych kursu. Spróbuj ponownie później.");
                     return;
                 }
-                const perm = await permResponse.json();
-                setPermResult(perm);
-
-                if (!perm.hasPurchase) {
-                    const courseResponse = await fetch(
-                        `${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}`,
-                        { method: 'GET', cache: 'no-store' }
-                    );
-                    if (!courseResponse.ok) {
-                        setError("Nie można pobrać danych kursu. Spróbuj ponownie później.");
-                        return;
-                    }
-                    setCourseData(await courseResponse.json());
-                }
+                setCourseData(await courseResponse.json());
             } catch (err) {
                 setError("Wystąpił błąd podczas ładowania strony.");
             }
         };
         fetchData();
-    }, [courseId, userId, router]);
+    }, [courseId]);
 
-    useEffect(() => {
-        if (permResult?.hasPurchase) {
-            router.replace(`/courses/${courseId}`);
-        }
-    }, [permResult, courseId, router]);
+    // Removed permission redirect effect
 
     const handleBuy = async () => {
         setLoading(true);
@@ -164,26 +142,43 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: st
         }
     };
 
-    if (error) {
-        return <div className="text-red-600 text-center mt-10">{error}</div>;
-    }
-
-    if (!permResult) {
-        return (
-            <div className="flex justify-center items-center min-h-[300px]">
-                <Loader2 className="animate-spin w-8 h-8 text-orange-700" />
-            </div>
-        );
-    }
-
-    if (!permResult.hasPurchase && courseData) {
+    if (courseData) {
     const priceAmount = courseData?.price?.amount ?? 0;
     const priceCurrency = courseData?.price?.currency || "PLN";
     const isRecurring = courseData?.price?.isRecurring;
     const interval = courseData?.price?.interval;
     const trialPeriodDays = courseData?.price?.trialPeriodDays;
     if (priceAmount == 0) {
-        // Free course appearance
+        // Free course appearance with permission check and loading
+        const handleJoinFreeCourse = async () => {
+            setJoinLoading(true);
+            try {
+                const permResponse = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/permissions`,
+                    {
+                        method: 'POST',
+                        headers: { "Content-Type": "application/json" },
+                        cache: 'no-store',
+                        body: JSON.stringify({ courseId, userId }),
+                    }
+                );
+                if (!permResponse.ok) {
+                    setError("Sprawdzanie uprawnień nie powiodło się. Spróbuj ponownie później.");
+                    setJoinLoading(false);
+                    return;
+                }
+                const perm = await permResponse.json();
+                if (perm.hasPurchase) {
+                    router.push(`/courses/${courseId}`);
+                } else {
+                    setError("Brak uprawnień do dołączenia do kursu.");
+                }
+            } catch (err) {
+                setError("Wystąpił błąd podczas sprawdzania uprawnień.");
+            } finally {
+                setJoinLoading(false);
+            }
+        };
         return (
             <div className="flex flex-col items-center justify-center min-h-[300px] mt-8">
                 <div className="bg-white rounded-lg shadow-md p-6 max-w-sm w-full flex flex-col items-center">
@@ -199,8 +194,10 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: st
                     <button
                         type="button"
                         className="w-full bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition flex items-center justify-center"
-                        onClick={() => router.push(`/courses/${courseId}`)}
+                        onClick={handleJoinFreeCourse}
+                        disabled={joinLoading}
                     >
+                        {joinLoading ? <Loader2 className="animate-spin mr-2" /> : null}
                         Dołącz do kursu
                     </button>
                 </div>

@@ -62,7 +62,12 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(async () => {
             try {
-                const res = await axios.get(`/api/student/search?q=${encodeURIComponent(search)}`);
+                const res = await axios.get(`/api/student/search?q=${encodeURIComponent(search)}`, {
+                    headers: {
+                        "Cache-Control": "no-cache",
+                        Pragma: "no-cache",
+                    },
+                });
                 setSearchResults(res.data);
             } catch {
                 setSearchResults([]);
