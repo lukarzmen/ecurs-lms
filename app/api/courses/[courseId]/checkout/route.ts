@@ -64,10 +64,13 @@ export async function POST(
                         isRecurring: true,
                         interval: true,
                         trialPeriodDays: true,
+                        trialPeriodEnd: true,
+                        trialPeriodType: true
                     }
                 },
             }
         });
+        const price = course?.price;
         if (!course) {
             console.error("Course not found for courseId:", courseId);
             return new NextResponse("Course not found", { status: 404 });
@@ -94,11 +97,11 @@ export async function POST(
         }
 
         // Calculate price with promo code using new pricing structure
-        let finalPrice = Number(course.price?.amount ?? 0);
+        let finalPrice = Number(price?.amount ?? 0);
         let discount = 0;
-        const currency = course.price?.currency || "pln";
-        const isRecurring = course.price?.isRecurring;
-        const interval = course.price?.interval;
+        const currency = price?.currency || "pln";
+        const isRecurring = price?.isRecurring;
+        const interval = price?.interval;
         if (promoCode) {
             // Find promo code for this course
             const promo = await db.promoCode.findFirst({
@@ -125,8 +128,17 @@ export async function POST(
             }
         }
         if (isRecurring && stripeRecurringInterval) {
-            // Use trialPeriodDays from course.price if set, else default to 0
-            const trialPeriodDays = typeof course.price?.trialPeriodDays === "number" && course.price.trialPeriodDays > 0 ? course.price.trialPeriodDays : 0;
+            // Use trialPeriodType to determine which trial field to use
+            let trialPeriodDays = 0;
+            if (price?.trialPeriodType === "DATE" && price?.trialPeriodEnd) {
+                const endDate = new Date(price.trialPeriodEnd);
+                const now = new Date();
+                const diffMs = endDate.getTime() - now.getTime();
+                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                trialPeriodDays = diffDays > 0 ? diffDays : 0;
+            } else if (price?.trialPeriodType === "DAYS" && typeof price?.trialPeriodDays === "number" && price.trialPeriodDays > 0) {
+                trialPeriodDays = price.trialPeriodDays;
+            }
             session = await stripeClient.checkout.sessions.create({
                 mode: "subscription",
                 customer: stripeCustomerId!,

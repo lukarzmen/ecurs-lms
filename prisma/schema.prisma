@@ -112,7 +112,7 @@ model UserCourse {
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
   state     Int                 @default(0)
-  roleId    Int?                @default(0) // 0 - student, 1 - teacher
+  roleId    Int?                @default(0)
   user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   course    Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
   role      Role?               @relation(fields: [roleId], references: [id], onDelete: Cascade)
@@ -181,6 +181,8 @@ model CoursePrice {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @default(now()) @updatedAt
   trialPeriodDays Int?
+  trialPeriodEnd  DateTime?      @db.Timestamp(6)
+  trialPeriodType String?        //DAYS or DATE
   course          Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 

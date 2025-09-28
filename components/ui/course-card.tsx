@@ -21,6 +21,8 @@ interface MarketplaceCourseCardProps extends BaseCourseCardProps {
     isRecurring?: boolean;
     interval?: string | null;
     trialPeriodDays?: number | null;
+    trialPeriodEnd?: string | null;
+    trialPeriodType?: string | null; // "DAYS" or "DATE"
 }
 
 export interface CourseInfoCardProps extends BaseCourseCardProps {
@@ -40,6 +42,8 @@ export function MarketplaceCourseCard({
     isRecurring,
     interval,
     trialPeriodDays,
+    trialPeriodEnd,
+    trialPeriodType
 }: MarketplaceCourseCardProps) {
     const imageUrl = imageId ? `/api/image/${imageId}` : null;
     const placeholderImageUrl = "/logo.png";
@@ -75,10 +79,6 @@ export function MarketplaceCourseCard({
                         {author}
                     </p>
                     <div className="flex flex-col items-center gap-y-2 mt-2">
-                        {/* <div className="flex items-center gap-x-2 text-orange-500">
-                            <IconBadge size="sm" icon={BookOpen} />
-                            <span>{chaptersLength} {chaptersLength === 1 ? "lekcja" : "lekcje"}</span>
-                        </div> */}
                         <div className="text-lg font-bold text-orange-700">
                             {typeof price === "number" ? (
                                 price === 0 ? (
@@ -88,8 +88,13 @@ export function MarketplaceCourseCard({
                                         {price}
                                         {currency ? ` ${currency}` : " PLN"}
                                         {isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}
-                                        {isRecurring && trialPeriodDays && trialPeriodDays > 0 ? (
+                                        {isRecurring && trialPeriodType === 'DAYS' && trialPeriodDays && trialPeriodDays > 0 ? (
                                             <span className="block text-xs text-orange-500 font-normal">{trialPeriodDays} dni za darmo!</span>
+                                        ) : null}
+                                        {isRecurring && trialPeriodType === 'DATE' && trialPeriodEnd ? (
+                                            <span className="block text-xs text-orange-500 font-normal">
+                                                Do {new Date(trialPeriodEnd).toLocaleDateString()} za darmo!
+                                            </span>
                                         ) : null}
                                     </span>
                                 )

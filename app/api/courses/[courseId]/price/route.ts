@@ -34,27 +34,46 @@ export async function PATCH(
       return new NextResponse("Invalid interval", { status: 400 });
     }
 
-    // Build create and update payloads conditionally so we don't set undefined fields
-    const trialPeriodDays = body.trialPeriodDays !== undefined ? Number(body.trialPeriodDays) : undefined;
-    if (trialPeriodDays !== undefined && (isNaN(trialPeriodDays) || trialPeriodDays < 0)) {
-      return new NextResponse("Invalid trial period", { status: 400 });
+    // Use trialPeriodType to determine which field to set and nullify the other
+    const trialPeriodType = body.trialPeriodType;
+    let trialPeriodDays: number | undefined = undefined;
+    let trialPeriodEnd: Date | undefined = undefined;
+    if (trialPeriodType === "DAYS") {
+      trialPeriodDays = body.trialPeriodDays !== undefined ? Number(body.trialPeriodDays) : undefined;
+      if (trialPeriodDays !== undefined && (isNaN(trialPeriodDays) || trialPeriodDays < 0)) {
+        return new NextResponse("Invalid trial period", { status: 400 });
+      }
+    }
+    if (trialPeriodType === "DATE") {
+      if (body.trialPeriodEnd) {
+        const parsedDate = new Date(body.trialPeriodEnd);
+        if (!isNaN(parsedDate.getTime())) {
+          trialPeriodEnd = parsedDate;
+        } else {
+          return new NextResponse("Invalid trial period end date", { status: 400 });
+        }
+      }
     }
     const createData: any = {
       amount: new Prisma.Decimal(priceNumber),
       currency,
       isRecurring,
       course: { connect: { id: courseIdNumber } },
+      trialPeriodType,
+      trialPeriodDays: trialPeriodType === "DAYS" ? trialPeriodDays ?? null : null,
+      trialPeriodEnd: trialPeriodType === "DATE" ? trialPeriodEnd ?? null : null,
     };
     if (interval) createData.interval = interval;
-    if (trialPeriodDays !== undefined) createData.trialPeriodDays = trialPeriodDays;
 
     const updateData: any = {
       amount: new Prisma.Decimal(priceNumber),
       currency,
       isRecurring,
+      trialPeriodType,
+      trialPeriodDays: trialPeriodType === "DAYS" ? trialPeriodDays ?? null : null,
+      trialPeriodEnd: trialPeriodType === "DATE" ? trialPeriodEnd ?? null : null,
     };
     if (interval) updateData.interval = interval;
-    if (trialPeriodDays !== undefined) updateData.trialPeriodDays = trialPeriodDays;
 
     const upserted = await prisma.coursePrice.upsert({
       where: { courseId: courseIdNumber },
@@ -67,7 +86,9 @@ export async function PATCH(
       currency: upserted.currency,
       isRecurring: upserted.isRecurring,
       interval: upserted.interval,
+      trialPeriodType: upserted.trialPeriodType ?? null,
       trialPeriodDays: upserted.trialPeriodDays ?? null,
+      trialPeriodEnd: upserted.trialPeriodEnd ?? null,
     });
   } catch (error) {
     console.error(error);

@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { Category, Course } from "@prisma/client";
+import { t } from "@excalidraw/excalidraw/types/i18n";
 
 export type CourseWithCategory = Course & {
   modules: { id: number }[];
@@ -72,6 +73,8 @@ export async function GET(req: NextRequest): Promise<NextResponse<CourseSearchRe
             isRecurring: true,
             interval: true,
             trialPeriodDays: true,
+            trialPeriodEnd: true,
+            trialPeriodType: true
           }
         }
       },
@@ -101,6 +104,8 @@ export async function GET(req: NextRequest): Promise<NextResponse<CourseSearchRe
         isRecurring: course.price?.isRecurring ?? false,
         interval: course.price?.interval ?? null,
         trialPeriodDays: course.price?.trialPeriodDays ?? null,
+        trialPeriodEnd: course.price?.trialPeriodEnd ?? null,
+        trialPeriodType: course.price?.trialPeriodType ?? null,
         author: course.author
           ? {
               ...course.author,

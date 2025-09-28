@@ -39,9 +39,17 @@ export async function POST(req: Request) {
         interval: price.interval || "ONE_TIME",
         isRecurring: price.isRecurring || false,
         course: { connect: { id: course.id } },
+        trialPeriodType: price.trialPeriodType,
       };
-      if (price.trialPeriodDays !== undefined) {
+      if (price.trialPeriodType === "DAYS" && price.trialPeriodDays !== undefined) {
         priceData.trialPeriodDays = price.trialPeriodDays;
+      }
+      if (price.trialPeriodType === "DATE" && price.trialPeriodEnd && typeof price.trialPeriodEnd === "string" && /^\d{4}-\d{2}-\d{2}$/.test(price.trialPeriodEnd)) {
+        // Convert yyyy-mm-dd to Date object for Prisma
+        const parsedDate = new Date(price.trialPeriodEnd);
+        if (!isNaN(parsedDate.getTime())) {
+          priceData.trialPeriodEnd = parsedDate;
+        }
       }
       coursePrice = await db.coursePrice.create({
         data: priceData,

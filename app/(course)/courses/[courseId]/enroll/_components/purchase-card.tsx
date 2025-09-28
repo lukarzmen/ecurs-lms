@@ -148,6 +148,8 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: st
     const isRecurring = courseData?.price?.isRecurring;
     const interval = courseData?.price?.interval;
     const trialPeriodDays = courseData?.price?.trialPeriodDays;
+    const trialPeriodEnd = courseData?.price?.trialPeriodEnd;
+    const trialPeriodType = courseData?.price?.trialPeriodType;
     if (priceAmount == 0) {
         // Free course appearance with permission check and loading
         const handleJoinFreeCourse = async () => {
@@ -218,8 +220,8 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: st
                 <h2 className="text-xl font-bold mb-2">{courseData.title}</h2>
                 <div className="text-lg font-semibold text-orange-700 mb-2">
                     {discount > 0 && finalPrice
-                        ? <><span className="line-through mr-2 text-gray-500">{priceAmount} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</span><span className="text-green-700">{finalPrice} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</span>{isRecurring && trialPeriodDays && trialPeriodDays > 0 ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny: {trialPeriodDays} dni</span>) : null}</>
-                        : <><>{priceAmount} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</>{isRecurring && trialPeriodDays && trialPeriodDays > 0 ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny: {trialPeriodDays} dni</span>) : null}</>}
+                        ? <><span className="line-through mr-2 text-gray-500">{priceAmount} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</span><span className="text-green-700">{finalPrice} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</span>{isRecurring && trialPeriodType === 'DAYS' && trialPeriodDays && trialPeriodDays > 0 ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny: {trialPeriodDays} dni</span>) : null}{isRecurring && trialPeriodType === 'DATE' && trialPeriodEnd ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny do {new Date(trialPeriodEnd).toLocaleDateString()}</span>) : null}</>
+                        : <><>{priceAmount} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</>{isRecurring && trialPeriodType === 'DAYS' && trialPeriodDays && trialPeriodDays > 0 ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny: {trialPeriodDays} dni</span>) : null}{isRecurring && trialPeriodType === 'DATE' && trialPeriodEnd ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny do {new Date(trialPeriodEnd).toLocaleDateString()}</span>) : null}</>}
                 </div>
                 {finalPrice && discount > 0 && (
                     <div className="text-md font-semibold text-green-700 mb-2">

@@ -22,20 +22,30 @@ const CreatePage = () => {
   const [isRecurring, setIsRecurring] = useState(false);
   const [currency, setCurrency] = useState("PLN");
   const [interval, setInterval] = useState<"MONTH" | "YEAR" | "ONE_TIME">("ONE_TIME");
+  const [trialPeriodType, setTrialPeriodType] = useState<string>("DAYS");
   const [trialPeriodDays, setTrialPeriodDays] = useState(0);
+  const [trialPeriodEnd, setTrialPeriodEnd] = useState<string>("");
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const pricePayload = isNaN(Number(price)) ? undefined : {
-        amount: Number(price),
-        currency,
-        isRecurring,
-        interval: isRecurring ? interval : "ONE_TIME",
-        trialPeriodDays: isRecurring ? Number(trialPeriodDays) : undefined,
-      };
-
+      let pricePayload: any = undefined;
+      if (!isNaN(Number(price))) {
+        pricePayload = {
+          amount: Number(price),
+          currency,
+          isRecurring,
+          interval: isRecurring ? interval : "ONE_TIME",
+          trialPeriodType: isRecurring ? trialPeriodType : undefined,
+        };
+        if (isRecurring && trialPeriodType === "DAYS" && trialPeriodDays > 0) {
+          pricePayload.trialPeriodDays = trialPeriodDays;
+        }
+        if (isRecurring && trialPeriodType === "DATE" && trialPeriodEnd && /^\d{4}-\d{2}-\d{2}$/.test(trialPeriodEnd)) {
+          pricePayload.trialPeriodEnd = trialPeriodEnd;
+        }
+      }
       const response = await axios.post("/api/courses", {
         title,
         categoryId: parseInt(category) || undefined,
@@ -263,19 +273,48 @@ const CreatePage = () => {
                       </select>
                     </div>
                     <div className="flex flex-col mt-1">
-                      <label htmlFor="trialPeriodDays" className="text-sm">Okres próbny (dni)</label>
-                      <input
-                        type="number"
-                        id="trialPeriodDays"
-                        min={0}
-                        step={1}
-                        value={trialPeriodDays}
-                        onChange={e => setTrialPeriodDays(Number(e.target.value))}
-                        disabled={isSubmitting}
-                        placeholder="np. 7"
-                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                      />
+                      <label className="text-xs">Tryb okresu próbnego</label>
+                      <div className="flex gap-4 mt-1">
+                        <label className="flex items-center gap-1 text-xs">
+                          <input type="radio" name="trialPeriodType" value="DAYS" checked={trialPeriodType === "DAYS"} onChange={() => setTrialPeriodType("DAYS")} disabled={isSubmitting} />
+                          Dni
+                        </label>
+                        <label className="flex items-center gap-1 text-xs">
+                          <input type="radio" name="trialPeriodType" value="DATE" checked={trialPeriodType === "DATE"} onChange={() => setTrialPeriodType("DATE")} disabled={isSubmitting} />
+                          Data zakończenia
+                        </label>
+                      </div>
                     </div>
+                    {trialPeriodType === "DAYS" && (
+                      <div className="flex flex-col mt-1">
+                        <label htmlFor="trialPeriodDays" className="text-xs">Okres próbny (dni)</label>
+                        <input
+                          type="number"
+                          id="trialPeriodDays"
+                          min={0}
+                          step={1}
+                          value={trialPeriodDays}
+                          onChange={e => setTrialPeriodDays(Number(e.target.value))}
+                          disabled={isSubmitting}
+                          placeholder="np. 7"
+                          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                        />
+                      </div>
+                    )}
+                    {trialPeriodType === "DATE" && (
+                      <div className="flex flex-col mt-1">
+                        <label htmlFor="trialPeriodEnd" className="text-xs">Data zakończenia okresu próbnego</label>
+                        <input
+                          type="date"
+                          id="trialPeriodEnd"
+                          value={trialPeriodEnd}
+                          onChange={e => setTrialPeriodEnd(e.target.value)}
+                          disabled={isSubmitting}
+                          min={new Date().toISOString().split('T')[0]}
+                          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                        />
+                      </div>
+                    )}
                   </>
                 )}
               </div>
