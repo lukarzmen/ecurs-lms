@@ -40,6 +40,7 @@ const ChapterIdPage = () => {
     const [error, setError] = useState<string | null>(null);
     const [chapterData, setChapterData] = useState<ChapterData | null>(null);
     const [isCompleted, setIsCompleted] = useState(false); // Local state for completion status
+    const [isCompleting, setIsCompleting] = useState(false); // Prevent double completion
 
     useEffect(() => {
         // Fetch data only if userProviderId and params are available
@@ -97,14 +98,14 @@ const ChapterIdPage = () => {
 
     // Handler function to be called by ChapterContent
     const handleCompletion = async () => {
-        if(isCompleted){
-            return; 
+        if (isCompleted || isCompleting) {
+            return;
         }
         if (!userId || !chapterId) {
             toast.error("Nie można ukończyć rozdziału: Brak ID użytkownika lub rozdziału.");
             return;
         }
-
+        setIsCompleting(true);
         try {
             // Make the PATCH request
             const res = await fetch(`/api/module/${chapterId}/complete?providerId=${userId}`, {
@@ -121,12 +122,16 @@ const ChapterIdPage = () => {
             setIsCompleted(true);
             toast.success("Rozdział ukończony!");
 
-            router.refresh();
+            // Delay router.refresh to avoid immediate re-render
+            setTimeout(() => {
+                router.refresh();
+            }, 300);
 
         } catch (error: any) {
             console.error("Completion Error:", error);
             toast.error(error.message || "Nie udało się oznaczyć rozdziału jako ukończony.");
-            // Optionally revert local state if needed: setIsCompleted(false);
+        } finally {
+            setIsCompleting(false);
         }
     };
 
@@ -173,9 +178,10 @@ const ChapterIdPage = () => {
                 <div className="p-4">
                     {/* Pass content and the completion handler */}
                     <ChapterContent
-                        isCompleted={isCompleted} // Pass the local completion state
-                        moduleId={chapterData.module.id} // Pass the actual content
-                        onCompleted={handleCompletion} // Pass the handler function
+                        isCompleted={isCompleted}
+                        moduleId={chapterData.module.id}
+                        onCompleted={handleCompletion}
+                        isCompleting={isCompleting}
                     />
                 </div>
             </div>

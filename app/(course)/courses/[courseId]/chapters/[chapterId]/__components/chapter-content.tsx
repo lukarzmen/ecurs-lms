@@ -8,13 +8,15 @@ import { useEffect, useState } from "react";
 import { Loader2, Hourglass } from "lucide-react";
 
 export default function ChapterContent ({
-    moduleId: moduleId,
-    isCompleted,
-    onCompleted
+  moduleId: moduleId,
+  isCompleted,
+  onCompleted,
+  isCompleting = false
 }: {
-    moduleId: string | null;
-    isCompleted: boolean;
-    onCompleted: () => void;
+  moduleId: string | null;
+  isCompleted: boolean;
+  onCompleted: () => void;
+  isCompleting?: boolean;
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
@@ -80,7 +82,9 @@ export default function ChapterContent ({
               return saveResult;
             }}
             onCompleted={() => {
-              onCompleted();
+              if (!isCompleting && !isCompleted) {
+                onCompleted();
+              }
             }}
           />
         )}

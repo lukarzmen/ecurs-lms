@@ -114,34 +114,43 @@ export default function Editor( {
 
   const [isLinkEditMode, setIsLinkEditMode] = useState<boolean>(false);
   const [editor] = useLexicalComposerContext();
+  const completedCalled = React.useRef(false);
 
   useEffect(() => {
     const unregisterListener = editor.registerUpdateListener(({ editorState }) => {
-
       editorState.read(() => {
-        if(isCompleted){
+        if (isCompleted) {
           console.debug("Editor is completed, skipping completion check.");
           return; // Skip completion check if isCompleted is true
         }
         const root = $getRoot();
-        if(root.isEmpty()){
+        if (root.isEmpty()) {
           console.debug("Editor is empty");
-          return; 
+          return;
         }
         const completableNodes: LexicalNode[] = [];
         $findNodesWithIsCompleted(root, completableNodes);
         console.debug('Nodes with __isCompleted:', completableNodes);
 
+        const callOnCompletedWithDelay = () => {
+          if (!completedCalled.current) {
+            completedCalled.current = true;
+            setTimeout(() => {
+              onCompleted();
+            }, 300);
+          }
+        };
+
         if (completableNodes.length > 0) {
-            const allCompleted = completableNodes.every((node) => (node as any).__isCompleted === true);
-            if (allCompleted) {
-                // Notify parent component that all completable nodes are completed
-                onCompleted();
-            }
-            console.debug(`All completable nodes completed: ${allCompleted}`);
+          const allCompleted = completableNodes.every((node) => (node as any).__isCompleted === true);
+          if (allCompleted) {
+            // Notify parent component that all completable nodes are completed
+            callOnCompletedWithDelay();
+          }
+          console.debug(`All completable nodes completed: ${allCompleted}`);
         } else {
-            onCompleted();
-            console.debug('No nodes with __isCompleted found.');
+          callOnCompletedWithDelay();
+          console.debug('No nodes with __isCompleted found.');
         }
       });
 
