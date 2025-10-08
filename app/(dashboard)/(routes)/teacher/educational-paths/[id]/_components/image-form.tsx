@@ -8,12 +8,14 @@ import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 import Image from "next/image";
 
+
 interface ImageFormProps {
   imageId: string;
-  courseId: string;
+  educationalPathId: string;
+  onImageChange?: (imageId: string) => void;
 }
 
-const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => {
+const ImageForm: React.FC<ImageFormProps> = ({ imageId, educationalPathId, onImageChange }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [image, setImage] = useState<File | null>(null);
   const router = useRouter();
@@ -47,9 +49,11 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
       const { id } = await response.json();
 
       const values = { imageId: id };
-      await axios.patch(`/api/courses/${courseId}`, values);
-
-      toast.success("Zaktualizowano kurs");
+      const patchRes = await axios.patch(`/api/educational-paths/${educationalPathId}`, values);
+      if (onImageChange) {
+        onImageChange(id);
+      }
+      toast.success("Zaktualizowano ścieżkę edukacyjną");
       toggleEdit();
       router.refresh();
     } catch (error) {
@@ -58,9 +62,9 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
   };
 
   return (
-    <div className="mt-6 border bg-orange-100 rounded-md p-4 select-none">
+  <div className="mt-6 border bg-orange-100 rounded-md p-4 select-none h-full flex flex-col justify-between">
       <div className="font-medium flex items-center justify-between pb-2">
-        Miniatura
+  Miniatura 
         <Button onClick={toggleEdit} variant="ghost">
           {isEditing && <>Anuluj</>}
           {!isEditing && imageId && (
@@ -86,7 +90,7 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
           {imageId ? (
             <Image
               src={imageUrl}
-              alt="Course Image"
+              alt="Educational Path Image"
               width={400}
               height={160}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

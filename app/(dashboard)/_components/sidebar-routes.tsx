@@ -24,6 +24,11 @@ const teacherRoutes = [
     href: "/teacher/courses",
   },
   {
+    icon: Compass,
+    label: "Ścieżki edukacyjne",
+    href: "/teacher/educational-paths",
+  },
+  {
     icon: BarChart,
     label: "Statystyki",
     href: "/teacher/analytics",
@@ -33,11 +38,11 @@ const teacherRoutes = [
     label: "Kursanci",
     href: "/teacher/students",
   },
-    {
-      icon: Layout,
-      label: "Powiadomienia",
-      href: "/teacher/notifications",
-    },
+  {
+    icon: Layout,
+    label: "Powiadomienia",
+    href: "/teacher/notifications",
+  },
 ];
 export const SidebarRoutes = () => {
   const pathName = usePathname();
@@ -51,7 +56,7 @@ export const SidebarRoutes = () => {
         return (
           <SidebarItem
             key={route.href}
-            // icon={route.icon}
+            icon={<route.icon />}
             label={route.label}
             href={route.href}
           ></SidebarItem>

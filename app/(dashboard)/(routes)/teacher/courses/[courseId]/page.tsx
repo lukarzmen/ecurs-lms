@@ -83,7 +83,7 @@ const CourseIdPage = async ({ params }: { params: Promise<{ courseId: string }> 
           />
           <CourseModeForm courseId={courseId} mode={course.mode ?? 0}/>
           <ImageForm imageId={course.imageId ?? ''} courseId={courseId} />
-          <PriceForm price={course.price ?? 0} courseId={courseId} />
+          <PriceForm price={course.price} courseId={courseId} />
         </div>
         <div className="space-y-6 ">
           <div>
