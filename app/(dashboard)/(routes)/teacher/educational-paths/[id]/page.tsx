@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import ImageForm from "./_components/image-form";
+import EducationalPathStateBar from "./_components/state-bar";
 import PriceForm from "./_components/price-form";
 import CategoryForm from "./_components/category-form";
 import EduPathModeForm from "./_components/mode_form";
@@ -12,6 +13,8 @@ import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import React from "react";
 import { ArrowLeft } from "lucide-react";
+import { PromoCodesForm } from "./_components/promo-codes-form";
+import { useParams } from "next/navigation";
 
 const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id: pathId } = React.use(params);
@@ -154,6 +157,10 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
         </Link>
       </div>
 
+      {/* State bar for educational path */}
+      <div className="w-full">
+        <EducationalPathStateBar educationalPathId={pathId} mode={path?.mode ?? 0} state={path?.state ?? 0} />
+      </div>
       {/* Title and description in one row, but description has its own section */}
       <div className="flex flex-col md:flex-row gap-8 mb-6">
         {/* Title card */}
@@ -277,6 +284,11 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
             >Dodaj</Button>
           </div>
         </div>
+      </div>
+
+      <div className="mt-12">
+        <h2 className="text-2xl font-bold mb-4">Zarządzaj kodami promocyjnymi</h2>
+        <PromoCodesForm educationalPathId={pathId} />
       </div>
     </div>
   );

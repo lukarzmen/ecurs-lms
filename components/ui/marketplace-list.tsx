@@ -7,8 +7,7 @@ export interface MarketplaceCourse {
     id: number;
     title: string;
     imageId?: string;
-    modulesCount: number;
-    nonFinishedModuleId: number;
+    type?: string | null; // "educationalPath" or "course" or null
     enrolled: boolean;
     author?: {
         displayName?: string | null;
@@ -42,13 +41,12 @@ export const MarketplaceCoursesList = ({ items }: MarketplaceCoursesListBaseProp
                     id: item.id,
                     title: item.title,
                     imageId: item.imageId ?? "",
-                    chaptersLength: item.modulesCount,
                     category: item.category?.name!,
-                    nonFinishedModuleId: item.nonFinishedModuleId,
                     price: item.price !== undefined && item.price !== null ? Number(item.price) : 0,
                     currency: item.currency,
                     isRecurring: item.isRecurring,
                     interval: item.interval,
+                    type: item.type ?? null,
                     trialPeriodDays: item.trialPeriodDays ?? null,
                     trialPeriodEnd: item.trialPeriodEnd ?? null,
                     trialPeriodType: item.trialPeriodType ?? null,

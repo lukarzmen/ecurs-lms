@@ -33,12 +33,8 @@ model PromoCode {
   discount       Int
   description    String?
   expirationDate DateTime?
-  courseId       Int
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
-  course         Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  @@index([courseId])
 }
 
 model Course {
@@ -57,7 +53,6 @@ model Course {
   category              Category?               @relation(fields: [categoryId], references: [id])
   modules               Module[]
   userCourses           UserCourse[]
-  promoCodes            PromoCode[]
   EducationalPathCourse EducationalPathCourse[]
 
   @@index([categoryId])
@@ -265,6 +260,22 @@ model EducationalPathPrice {
   trialPeriodDays   Int?
   trialPeriodEnd    DateTime? @db.Timestamp(6)
   trialPeriodType   String?   @db.VarChar(10)
+}
+
+model CoursePromoCode {
+  id          Int @id @default(autoincrement())
+  courseId    Int
+  promoCodeId Int
+
+  @@unique([courseId, promoCodeId], map: "CoursePromoCode_unique")
+}
+
+model EducationalPathPromoCode {
+  id                Int @id @default(autoincrement())
+  educationalPathId Int
+  promoCodeId       Int
+
+  @@unique([educationalPathId, promoCodeId], map: "EducationalPathPromoCode_unique")
 }
 
 enum PriceInterval {

@@ -71,3 +71,28 @@ ADD COLUMN "imageId" VARCHAR(255);
 ALTER TABLE "EducationalPath"
   ADD COLUMN "mode" integer NOT NULL DEFAULT 0,
   ADD COLUMN "state" integer NOT NULL DEFAULT 0;
+
+
+  -- Remove old foreign key from PromoCode
+ALTER TABLE "PromoCode" DROP CONSTRAINT IF EXISTS "PromoCode_courseId_fkey";
+ALTER TABLE "PromoCode" DROP COLUMN IF EXISTS "courseId";
+
+-- Create join table for courses
+CREATE TABLE "CoursePromoCode" (
+  "id" SERIAL PRIMARY KEY,
+  "courseId" INTEGER NOT NULL,
+  "promoCodeId" INTEGER NOT NULL,
+  CONSTRAINT "CoursePromoCode_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE CASCADE,
+  CONSTRAINT "CoursePromoCode_promoCodeId_fkey" FOREIGN KEY ("promoCodeId") REFERENCES "PromoCode"("id") ON DELETE CASCADE,
+  CONSTRAINT "CoursePromoCode_unique" UNIQUE ("courseId", "promoCodeId")
+);
+
+-- Create join table for educational paths
+CREATE TABLE "EducationalPathPromoCode" (
+  "id" SERIAL PRIMARY KEY,
+  "educationalPathId" INTEGER NOT NULL,
+  "promoCodeId" INTEGER NOT NULL,
+  CONSTRAINT "EducationalPathPromoCode_educationalPathId_fkey" FOREIGN KEY ("educationalPathId") REFERENCES "EducationalPath"("id") ON DELETE CASCADE,
+  CONSTRAINT "EducationalPathPromoCode_promoCodeId_fkey" FOREIGN KEY ("promoCodeId") REFERENCES "PromoCode"("id") ON DELETE CASCADE,
+  CONSTRAINT "EducationalPathPromoCode_unique" UNIQUE ("educationalPathId", "promoCodeId")
+);

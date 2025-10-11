@@ -16,10 +16,15 @@ interface CategoryFormProps {
 
 const CategoryForm = ({ categoryId, id, options, onCategoryChange }: CategoryFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [categoryIdState, setCategoryIdState] = useState(categoryId);
+  // If categoryId is undefined or null, use empty string for select
+  const [categoryIdState, setCategoryIdState] = useState(
+    typeof categoryId === "undefined" || categoryId === null ? "" : categoryId
+  );
   // Sync categoryIdState with prop changes
   useEffect(() => {
-    setCategoryIdState(categoryId);
+    setCategoryIdState(
+      typeof categoryId === "undefined" || categoryId === null ? "" : categoryId
+    );
   }, [categoryId]);
   const router = useRouter();
 
@@ -29,6 +34,10 @@ const CategoryForm = ({ categoryId, id, options, onCategoryChange }: CategoryFor
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (categoryIdState === "") {
+      toast.error("Musisz wybrać kategorię przed zapisaniem.");
+      return;
+    }
     try {
       const res = await axios.patch(`/api/educational-paths/${id}`, { categoryId: categoryIdState });
       if (res.data && typeof res.data.categoryId !== "undefined") {
@@ -70,9 +79,13 @@ const CategoryForm = ({ categoryId, id, options, onCategoryChange }: CategoryFor
             <label className="block text-sm font-medium text-gray-700">Kategoria</label>
             <select
               value={categoryIdState}
-              onChange={(e) => setCategoryIdState(Number(e.target.value))}
+              onChange={(e) => {
+                const val = e.target.value;
+                setCategoryIdState(val === "" ? "" : Number(val));
+              }}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md"
             >
+              <option value="">Wybierz kategorię...</option>
               {options.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -81,7 +94,11 @@ const CategoryForm = ({ categoryId, id, options, onCategoryChange }: CategoryFor
             </select>
           </div>
           <div className="flex items-center gap-x-2">
-            <button type="submit" className="bg-orange-600 text-white font-semibold py-2 px-4 rounded-md">
+            <button
+              type="submit"
+              className="bg-orange-600 text-white font-semibold py-2 px-4 rounded-md"
+              disabled={categoryIdState === ""}
+            >
               Zapisz
             </button>
           </div>

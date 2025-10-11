@@ -10,9 +10,8 @@ interface BaseCourseCardProps {
     title: string;
     imageId: string;
     author: string;
-    chaptersLength: number;
     category: string;
-    nonFinishedModuleId: number | null;
+    type: string | null; // "educationalPath" or "course" or null
 }
 
 interface MarketplaceCourseCardProps extends BaseCourseCardProps {
@@ -26,6 +25,8 @@ interface MarketplaceCourseCardProps extends BaseCourseCardProps {
 }
 
 export interface CourseInfoCardProps extends BaseCourseCardProps {
+    chaptersLength: number;
+    nonFinishedModuleId: number | null;
     enrolled?: boolean;
     isCompleted?: boolean;
 }
@@ -35,7 +36,6 @@ export function MarketplaceCourseCard({
     title,
     imageId,
     author,
-    chaptersLength,
     category,
     price,
     currency,
@@ -43,12 +43,15 @@ export function MarketplaceCourseCard({
     interval,
     trialPeriodDays,
     trialPeriodEnd,
-    trialPeriodType
+    trialPeriodType,
+    type
 }: MarketplaceCourseCardProps) {
     const imageUrl = imageId ? `/api/image/${imageId}` : null;
     const placeholderImageUrl = "/logo.png";
     const [isImageLoading, setIsImageLoading] = useState(true);
-    const linkHref = `/courses/${id}/enroll`;
+    const linkHref = type === "educationalPath"
+        ? `/educational-paths/${id}/enroll`
+        : `/courses/${id}/enroll`;
     return (
         <Link href={linkHref}>
             <div className="group hover:shadow-sm transition overflow-hidden border rounded-lg p-3 h-full text-center">

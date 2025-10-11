@@ -1,21 +1,21 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import PurchaseCard from "./_components/purchase-card";
+import EduPathPurchaseCard from "./_components/purchase-card";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { cookies } from "next/headers";
 
-type EnrollCoursePageParams = Promise<{ courseId: string }>;
+type EnrollPathPageParams = Promise<{ id: string }>;
 
 
-const EnrollPage = async ({ params, searchParams }: { params: EnrollCoursePageParams, searchParams?: Promise<{ promoCode?: string }> }) => {
+const EnrollPage = async ({ params, searchParams }: { params: EnrollPathPageParams, searchParams?: Promise<{ promoCode?: string }> }) => {
   const { userId } = await auth();
   if (!userId) {
     return redirect("/sign-in");
   }
   const awaitedParams = await params;
   const awaitedSearchParams = searchParams ? await searchParams : {};
-  const { courseId } = awaitedParams;
+  const { id } = awaitedParams;
   const promoCode = awaitedSearchParams?.promoCode || "";
 
   return (
@@ -31,7 +31,7 @@ const EnrollPage = async ({ params, searchParams }: { params: EnrollCoursePagePa
       </Link>
       </div>
     </div>
-      <PurchaseCard userId={userId} courseId={courseId} promoCode={promoCode} />
+      <EduPathPurchaseCard userId={userId} educationalPathId={id} promoCode={promoCode} />
     </>
   );
 };

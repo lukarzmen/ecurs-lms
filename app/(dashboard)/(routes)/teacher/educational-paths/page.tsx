@@ -59,7 +59,7 @@ const EducationalPathsPage = () => {
       <div className="flex flex-col space-y-4 py-4 md:flex-row md:space-y-0 md:space-x-4 md:justify-between select-none">
         <div></div>
         <div className="flex gap-2 md:ml-auto">
-          <Link href="/teacher/educational-path/create">
+          <Link href="/teacher/educational-paths/create">
             <Button>
               <PlusCircle className="h-4 w-4 mr-2" />
               Nowa ścieżka edukacyjna

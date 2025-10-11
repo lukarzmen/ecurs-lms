@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-export async function GET(req: NextRequest, context: { params: Promise<{ courseId: string }> }) {
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { courseId } = await context.params;
-    const courseIdNum = parseInt(courseId, 10);
-    if (isNaN(courseIdNum)) {
-      return NextResponse.json({ error: "Invalid courseId" }, { status: 400 });
+    const { id: id } = await context.params;
+    const educationalPathId = parseInt(id, 10);
+    if (isNaN(educationalPathId)) {
+      return NextResponse.json({ error: "Invalid educationalPathId" }, { status: 400 });
     }
-    // Find all promo codes for this course via join table
-    const coursePromoCodes = await prisma.coursePromoCode.findMany({
-      where: { courseId: courseIdNum },
+    // Find all promo codes for this educational path via join table
+    const pathPromoCodes = await prisma.educationalPathPromoCode.findMany({
+      where: { educationalPathId },
       orderBy: { id: "desc" },
     });
     // Fetch promo codes for each join
-    const promos = await Promise.all(coursePromoCodes.map(async cp => {
+    const promos = await Promise.all(pathPromoCodes.map(async cp => {
       return await prisma.promoCode.findUnique({ where: { id: cp.promoCodeId } });
     }));
     return NextResponse.json(promos, { status: 200 });
@@ -25,24 +25,24 @@ export async function GET(req: NextRequest, context: { params: Promise<{ courseI
 
 const prisma = new PrismaClient();
 
-export async function POST(req: NextRequest, context: { params: Promise<{ courseId: string }> }) {
+export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { courseId } = await context.params;
-    const courseIdNum = parseInt(courseId, 10);
+    const { id: courseId } = await context.params;
+    const educationalPathId = parseInt(courseId, 10);
     const body = await req.json();
     const { code, discount, description, expirationDate } = body;
-    if (!code || !discount || isNaN(courseIdNum)) {
+    if (!code || !discount || isNaN(educationalPathId)) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
-    // Check for existing active promo code with same code for this course via join table
+    // Check for existing active promo code with same code for this educational path via join table
     const now = new Date();
     const existingPromo = await prisma.promoCode.findFirst({ where: { code } });
     if (existingPromo) {
-      const existingJoin = await prisma.coursePromoCode.findFirst({
-        where: { courseId: courseIdNum, promoCodeId: existingPromo.id },
+      const existingJoin = await prisma.educationalPathPromoCode.findFirst({
+        where: { educationalPathId, promoCodeId: existingPromo.id },
       });
       if (existingJoin && (!existingPromo.expirationDate || existingPromo.expirationDate > now)) {
-        return NextResponse.json({ error: "Promo code already exists and is active for this course" }, { status: 409 });
+        return NextResponse.json({ error: "Promo code already exists and is active for this educational path" }, { status: 409 });
       }
     }
     // Create promo code
@@ -54,10 +54,10 @@ export async function POST(req: NextRequest, context: { params: Promise<{ course
         expirationDate: expirationDate ? new Date(expirationDate) : undefined,
       },
     });
-    // Link promo code to course
-    await prisma.coursePromoCode.create({
+    // Link promo code to educational path
+    await prisma.educationalPathPromoCode.create({
       data: {
-        courseId: courseIdNum,
+        educationalPathId,
         promoCodeId: promo.id,
       },
     });

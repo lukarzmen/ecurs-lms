@@ -15,11 +15,13 @@ interface PromoCode {
   expirationDate?: string;
 }
 
+
 interface PromoCodesFormProps {
-  courseId: string;
+  educationalPathId: string;
 }
 
-export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ courseId }) => {
+export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ educationalPathId }) => {
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [code, setCode] = useState("");
   const [discount, setDiscount] = useState("");
@@ -30,21 +32,21 @@ export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ courseId }) => {
 
   const fetchPromoCodes = React.useCallback(async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}/promocode`);
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/educational-paths/${educationalPathId}/promocode`);
       setPromoCodes(res.data);
     } catch {
       setPromoCodes([]);
     }
-  }, [courseId]);
+  }, [educationalPathId]);
 
   React.useEffect(() => {
     fetchPromoCodes();
-  }, [fetchPromoCodes]);
+  }, [educationalPathId, fetchPromoCodes]);
 
   const handleAddPromo = async () => {
     setLoading(true);
     try {
-      await axios.post(`/api/courses/${courseId}/promocode`, {
+      await axios.post(`/api/educational-paths/${educationalPathId}/promocode`, {
         code,
         discount: Number(discount),
         description,
@@ -66,7 +68,7 @@ export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ courseId }) => {
   const handleDeletePromo = async (code: string) => {
     setLoading(true);
     try {
-      await axios.delete(`/api/courses/${courseId}/promocode/${code}`);
+      await axios.delete(`/api/educational-paths/${educationalPathId}/promocode/${code}`);
       toast.success("Kod promocyjny usunięty");
       fetchPromoCodes();
     } catch (error) {
@@ -89,7 +91,7 @@ export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ courseId }) => {
       <div className="mt-4">
         {promoCodes && promoCodes.length > 0 ? (
           <ul className="space-y-2">
-            {promoCodes.map((promo) => (
+            {promoCodes.map((promo: PromoCode) => (
               <li key={promo.id} className="flex items-center justify-between bg-white rounded p-2">
                 <div>
                   <span className="font-bold">{promo.code}</span> - {promo.discount}%
