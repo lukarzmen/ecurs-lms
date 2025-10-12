@@ -36,7 +36,6 @@ export const SidebarItem = ({ label, href, icon }: SidebarItemProps) => {
       <div className="flex items-center gap-x-2 py-4 select-none w-full">
         {icon && <span className="mr-2">{icon}</span>}
         {label}
-        {/* Removed orange dot indicator */}
       </div>
     </button>
   );

@@ -11,16 +11,23 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ cour
     if (!code || isNaN(courseId)) {
       return NextResponse.json({ error: "Missing code or invalid courseId" }, { status: 400 });
     }
-    // Find promo code by code
-    const promo = await prisma.promoCode.findFirst({ where: { code } });
-    if (!promo) {
-      return NextResponse.json({ error: "Promo code not found" }, { status: 404 });
-    }
-    // Check if promo code is linked to this course
-    const join = await prisma.coursePromoCode.findFirst({
-      where: { courseId, promoCodeId: promo.id },
+    // Get all joins for this course
+    const joins = await prisma.coursePromoCode.findMany({
+      where: { courseId },
     });
-    if (!join) {
+    if (!joins.length) {
+      return NextResponse.json({ error: "No promo codes for this course" }, { status: 404 });
+    }
+    // Get all promoCodeIds for this course
+    const promoCodeIds = joins.map(j => j.promoCodeId);
+    // Find promoCode with matching code and id
+    const promo = await prisma.promoCode.findFirst({
+      where: {
+        code,
+        id: { in: promoCodeIds },
+      },
+    });
+    if (!promo) {
       return NextResponse.json({ error: "Promo code not found for this course" }, { status: 404 });
     }
     return NextResponse.json({ discount: promo.discount, promo }, { status: 200 });

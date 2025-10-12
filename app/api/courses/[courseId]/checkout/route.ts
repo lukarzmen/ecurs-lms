@@ -103,17 +103,23 @@ export async function POST(
         const isRecurring = price?.isRecurring;
         const interval = price?.interval;
         if (promoCode) {
-            // Find promo code for this course
-            const promo = await db.promoCode.findFirst({
-                where: {
-                    courseId: Number(courseId),
-                    code: promoCode,
-                },
-                select: { discount: true }
+            // Find all promo code joins for this course
+            const joins = await db.coursePromoCode.findMany({
+                where: { courseId: Number(courseId) },
             });
-            if (promo && typeof promo.discount === "number" && promo.discount > 0) {
-                discount = promo.discount;
-                finalPrice = finalPrice * (1 - discount / 100);
+            if (joins.length) {
+                // Find promoCode with matching code and id in join table
+                const promo = await db.promoCode.findFirst({
+                    where: {
+                        code: promoCode,
+                        id: { in: joins.map(j => j.promoCodeId) },
+                    },
+                    select: { discount: true }
+                });
+                if (promo && typeof promo.discount === "number" && promo.discount > 0) {
+                    discount = promo.discount;
+                    finalPrice = finalPrice * (1 - discount / 100);
+                }
             }
         }
 

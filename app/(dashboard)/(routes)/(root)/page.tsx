@@ -3,13 +3,17 @@ import { auth } from "@clerk/nextjs/server";
 import { CheckCircle, Clock } from "lucide-react";
 import { InfoCard } from "./_components/info-card";
 import { redirect } from "next/navigation";
-import {authorizeUser} from "@/hooks/use-auth";
+import { authorizeUser } from "@/hooks/use-auth";
 import { DashboardCoursesResponse, CourseDetails } from "@/app/api/user/courses/route"; // Import CourseDetails
-import { EnrolledCoursesList } from "@/components/ui/enrolled-list";
+import { EnrolledEduList } from "@/components/ui/enrolled-list";
+import { EnrolledEduList as EnrolledEduPathList } from "@/components/ui/enrolled-list";
 
 export default async function Home() {
-  const {userId, sessionId} = await auth();
-  if(!userId) {
+  let educationalPaths: any[] = [];
+  let eduPathFinishedCount = 0;
+  let eduPathUnfinishedCount = 0;
+  const { userId, sessionId } = await auth();
+  if (!userId) {
     return redirect("/sign-in");
   }
   const authState = await authorizeUser(userId, sessionId);
@@ -25,6 +29,15 @@ export default async function Home() {
   let fetchError: string | null = null;
 
   try {
+    // Fetch enrolled educational paths
+    const eduPathRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/educational-paths?userId=${userId}`, { cache: 'no-store' });
+    if (eduPathRes.ok) {
+      const eduPathData = await eduPathRes.json();
+      console.log(eduPathData);
+      educationalPaths = eduPathData.educationalPaths || [];
+      eduPathFinishedCount = eduPathData.finishedCount ?? 0;
+      eduPathUnfinishedCount = eduPathData.unfinishedCount ?? 0;
+    }
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/courses?userId=${userId}`, { cache: 'no-store' }); // Added no-store cache option for dynamic data
     if (!response.ok) {
       // Handle HTTP errors (e.g., 400, 500)
@@ -39,8 +52,8 @@ export default async function Home() {
         console.error("API returned error:", fetchError);
       } else {
         // Destructure only if it's the success structure
-        ({ courses, finishedCount, unfinishedCount } = userCourses);     
-    }
+        ({ courses, finishedCount, unfinishedCount } = userCourses);
+      }
     }
   } catch (error) {
     // Handle fetch/network errors or JSON parsing errors
@@ -56,23 +69,43 @@ export default async function Home() {
   return (
     <div className="min-h-screen px-4 pt-4">
       <SignedOut>
-      <div className="flex items-center justify-center">
-        <SignIn  />
-      </div>
+        <div className="flex items-center justify-center">
+          <SignIn />
+        </div>
       </SignedOut>
       <SignedIn>
-      <div className="p-6 space-y-4">
-        {fetchError && ( // Conditionally render an error message
-          <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
-            <span className="font-medium">Błąd!</span> Nie udało się załadować kursów: {fetchError}
-          </div>
-        )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <InfoCard icon={Clock} label="W trakcie" numberOfItems={unfinishedCount} />
-        <InfoCard icon={CheckCircle} label="Ukończono" numberOfItems={finishedCount} />
+        <div className="p-6 space-y-4">
+          {fetchError && ( // Conditionally render an error message
+            <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+              <span className="font-medium">Błąd!</span> Nie udało się załadować kursów: {fetchError}
+            </div>
+          )}
+          <section>
+            <h2 className="text-xl font-bold mb-4 text-green-700">Twoje postępy</h2>
+            {/* Educational Paths statistics */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <InfoCard icon={Clock} label="Ścieżki w trakcie" numberOfItems={eduPathUnfinishedCount} variant="path" />
+              <InfoCard icon={CheckCircle} label="Ścieżki ukończone" numberOfItems={eduPathFinishedCount} variant="path" />
+            </div>
+            {/* Courses statistics */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <InfoCard icon={Clock} label="Kursy w trakcie" numberOfItems={unfinishedCount} variant="course" />
+              <InfoCard icon={CheckCircle} label="Kursy ukończone" numberOfItems={finishedCount} variant="course" />
+            </div>
+
+          </section>
+
+          {/* Educational Paths Section */}
+          <section className="mt-8">
+            <h2 className="text-xl font-bold mb-4 text-orange-700">Twoje ścieżki edukacyjne</h2>
+            <EnrolledEduPathList items={educationalPaths} />
+          </section>
+          {/* Courses Section */}
+          <section className="mt-8">
+            <h2 className="text-xl font-bold mb-4 text-blue-700">Twoje kursy</h2>
+            <EnrolledEduList items={courses} />
+          </section>
         </div>
-        <EnrolledCoursesList items={courses} />
-      </div>
       </SignedIn>
     </div>
   );

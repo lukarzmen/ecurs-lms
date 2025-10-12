@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 const guestRoutes = [
   {
     icon: Layout,
-    label: "Twoje kursy",
+    label: "Twoja edukacja",
     href: "/",
   },
   {

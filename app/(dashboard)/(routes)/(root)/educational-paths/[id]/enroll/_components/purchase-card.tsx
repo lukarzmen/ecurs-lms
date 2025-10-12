@@ -39,7 +39,6 @@ const EduPathPurchaseCard = ({ userId, educationalPathId }: PurchaseCardProps & 
         }
     }, [promoCode]);
 
-    // Validate promo code on mount if present and courseData is loaded
     useEffect(() => {
         async function validateOnMount() {
             const priceAmount = pathData?.price?.amount !== undefined ? parseFloat(pathData.price.amount) : 0;
@@ -122,7 +121,7 @@ const EduPathPurchaseCard = ({ userId, educationalPathId }: PurchaseCardProps & 
     const handleBuy = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/courses/${educationalPathId}/checkout`, {
+            const res = await fetch(`/api/educational-paths/${educationalPathId}/checkout`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ promoCode }),

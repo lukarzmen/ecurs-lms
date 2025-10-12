@@ -48,26 +48,67 @@ export async function POST(
                 data: {
                     userId: user.id,
                     educationalPathId: Number(educationalPathId),
-                    state: 0,
+                    state: 1,
                 }
             });
         }
 
+        // Get all courses in the educational path
         const eduPath = await db.educationalPath.findUnique({
             where: { id: Number(educationalPathId) },
             select: {
                 title: true,
-                imageId: true
+                imageId: true,
+                courses: {
+                    select: {
+                        courseId: true
+                    }
+                }
             }
         });
         if (!eduPath) {
             console.error("Educational Path not found for id:", educationalPathId);
             return new NextResponse("Educational Path not found", { status: 404 });
         }
-            // Fetch price from EducationalPathPrice
-            const price = await db.educationalPathPrice.findUnique({
-                where: { educationalPathId: Number(educationalPathId) },
-            });
+        // Fetch price from EducationalPathPrice
+        const price = await db.educationalPathPrice.findUnique({
+            where: { educationalPathId: Number(educationalPathId) },
+        });
+
+        // Create or update UserCourse for all courses in the path
+        if (eduPath.courses && eduPath.courses.length > 0) {
+            for (const course of eduPath.courses) {
+                const userCourse = await db.userCourse.findUnique({
+                    where: {
+                        userId_courseId: {
+                            userId: user.id,
+                            courseId: course.courseId,
+                        }
+                    }
+                });
+                if (!userCourse) {
+                    await db.userCourse.create({
+                        data: {
+                            userId: user.id,
+                            courseId: course.courseId,
+                            state: 1, // active
+                        }
+                    });
+                } else if (userCourse.state !== 1) {
+                    await db.userCourse.update({
+                        where: {
+                            userId_courseId: {
+                                userId: user.id,
+                                courseId: course.courseId,
+                            }
+                        },
+                        data: {
+                            state: 1,
+                        }
+                    });
+                }
+            }
+        }
         const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
             apiVersion: "2025-05-28.basil",
         });
@@ -96,17 +137,23 @@ export async function POST(
         const isRecurring = price?.isRecurring;
         const interval = price?.interval;
         if (promoCode) {
-            // Find promo code for this educational path
-            const promo = await db.promoCode.findFirst({
-                where: {
-                    educationalPathId: Number(educationalPathId),
-                    code: promoCode,
-                },
-                select: { discount: true }
+            // Find all promo code joins for this educational path
+            const joins = await db.educationalPathPromoCode.findMany({
+                where: { educationalPathId: Number(educationalPathId) },
             });
-            if (promo && typeof promo.discount === "number" && promo.discount > 0) {
-                discount = promo.discount;
-                finalPrice = finalPrice * (1 - discount / 100);
+            if (joins.length) {
+                // Find promoCode with matching code and id in join table
+                const promo = await db.promoCode.findFirst({
+                    where: {
+                        code: promoCode,
+                        id: { in: joins.map(j => j.promoCodeId) },
+                    },
+                    select: { discount: true }
+                });
+                if (promo && typeof promo.discount === "number" && promo.discount > 0) {
+                    discount = promo.discount;
+                    finalPrice = finalPrice * (1 - discount / 100);
+                }
             }
         }
 

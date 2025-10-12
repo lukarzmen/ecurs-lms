@@ -25,6 +25,111 @@ export async function GET(req: NextRequest) {
         });
         const authorCourseIds = authorCourses.map(c => c.id);
 
+        // Ścieżki edukacyjne autora
+        const authorPaths = await db.educationalPath.findMany({
+            where: { authorId: user.id },
+            select: { id: true, title: true },
+        });
+        const authorPathIds = authorPaths.map(p => p.id);
+
+        // Unikalni użytkownicy zapisani na ścieżki autora
+        const userPathsGroup = await db.userEducationalPath.groupBy({
+            by: ['userId'],
+            where: { educationalPathId: { in: authorPathIds } },
+        });
+        const pathUserCount = userPathsGroup.length;
+
+        // Liczba ścieżek autora
+        const pathsCount = authorPathIds.length;
+
+        // Liczba kursów we wszystkich ścieżkach autora
+        const pathCoursesCount = await db.educationalPathCourse.count({
+            where: { educationalPathId: { in: authorPathIds } },
+        });
+
+        // Średni procent ukończenia ścieżek (średnia completion rate dla wszystkich ścieżek autora)
+        let totalPathCompletionRate = 0;
+        let countedPaths = 0;
+        for (const path of authorPaths) {
+            const pathCourses = await db.educationalPathCourse.findMany({
+                where: { educationalPathId: path.id },
+                select: { courseId: true },
+            });
+            const courseIds = pathCourses.map(pc => pc.courseId);
+            if (courseIds.length === 0) continue;
+            // Użytkownicy, którzy ukończyli wszystkie kursy w ścieżce
+            const finishedUserPaths = await db.userEducationalPath.findMany({
+                where: { educationalPathId: path.id, state: 2 },
+                select: { userId: true },
+            });
+            const enrolledUserPaths = await db.userEducationalPath.count({ where: { educationalPathId: path.id } });
+            const completionRate = enrolledUserPaths > 0 ? finishedUserPaths.length / enrolledUserPaths : 0;
+            totalPathCompletionRate += completionRate;
+            countedPaths++;
+        }
+        const averagePathCompletionRate = countedPaths > 0 ? ((totalPathCompletionRate / countedPaths) * 100).toFixed(2) + "%" : "0%";
+
+        // Najpopularniejsza ścieżka (najwięcej zapisów)
+        let mostPopularPath = "Brak danych";
+        let mostPopularPathCount = 0;
+        for (const path of authorPaths) {
+            const count = await db.userEducationalPath.count({ where: { educationalPathId: path.id } });
+            if (count > mostPopularPathCount) {
+                mostPopularPathCount = count;
+                mostPopularPath = path.title;
+            }
+        }
+
+        // Najmniej popularna ścieżka (najmniej zapisów)
+        let leastPopularPath = "Brak danych";
+        let leastPopularPathCount = Number.MAX_SAFE_INTEGER;
+        for (const path of authorPaths) {
+            const count = await db.userEducationalPath.count({ where: { educationalPathId: path.id } });
+            if (count < leastPopularPathCount) {
+                leastPopularPathCount = count;
+                leastPopularPath = path.title;
+            }
+        }
+
+        // Nowi użytkownicy ścieżek w ostatnim miesiącu
+        const lastMonthPath = new Date();
+        lastMonthPath.setMonth(lastMonthPath.getMonth() - 1);
+        const newPathUsersLastMonth = await db.userEducationalPath.groupBy({
+            by: ['userId'],
+            where: {
+                educationalPathId: { in: authorPathIds },
+                createdAt: { gte: lastMonthPath },
+            },
+        });
+
+        // Nowe ścieżki w ostatnim miesiącu
+        const newPathsLastMonth = await db.educationalPath.count({
+            where: {
+                authorId: user.id,
+                createdAt: { gte: lastMonthPath },
+            },
+        });
+
+        // Szczegółowe statystyki dla każdej ścieżki autora
+        const pathsDetails = [];
+        for (const path of authorPaths) {
+            // Liczba użytkowników zapisanych na ścieżkę
+            const usersCount = await db.userEducationalPath.count({ where: { educationalPathId: path.id } });
+            // Liczba kursów w ścieżce
+            const coursesCount = await db.educationalPathCourse.count({ where: { educationalPathId: path.id } });
+            // Użytkownicy, którzy ukończyli ścieżkę
+            const finishedUsersCount = await db.userEducationalPath.count({ where: { educationalPathId: path.id, state: 2 } });
+            // Średni procent ukończenia ścieżki
+            const averageCompletionRate = usersCount > 0 ? ((finishedUsersCount / usersCount) * 100).toFixed(2) + "%" : "0%";
+            pathsDetails.push({
+                id: path.id,
+                title: path.title,
+                usersCount,
+                coursesCount,
+                averageCompletionRate,
+            });
+        }
+
         // Unikalni użytkownicy zapisani na kursy autora
         const userCoursesGroup = await db.userCourse.groupBy({
             by: ['userId'],
@@ -330,6 +435,16 @@ export async function GET(req: NextRequest) {
             mostActiveStudent,
             mostCoursesStudent,
             coursesDetails, // <--- new field
+            // --- Educational Path Analytics ---
+            pathUserCount,
+            pathsCount,
+            pathCoursesCount,
+            averagePathCompletionRate,
+            mostPopularPath,
+            leastPopularPath,
+            newPathUsersLastMonth: newPathUsersLastMonth.length,
+            newPathsLastMonth,
+            pathsDetails,
         });
 
     } catch (error) {

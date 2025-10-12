@@ -59,10 +59,12 @@ export async function GET(
       },
     });
 
-    const firstNotFinishedModuleId = course.modules.find(
+    let firstNotFinishedModuleId = course.modules.find(
       (module) => !userModules.some((userModule) => userModule.moduleId === module.id && userModule.isFinished)
     )?.id;
-
+    if(!firstNotFinishedModuleId){
+      firstNotFinishedModuleId = course.modules[0]?.id;
+    }
     return NextResponse.json({
       ...course,
       firstNotFinishedModuleId: firstNotFinishedModuleId || null,

@@ -21,7 +21,7 @@ const EnrollPage = async ({ params, searchParams }: { params: EnrollPathPagePara
   return (
     <>
     <div className="flex items-center justify-between">
-      <div className="flex flex-col gap-y-2 ml-2">
+      <div className="flex flex-col gap-y-2 ml-2 mt-4 ">
       <Link
         href="/search"
         className="flex items-center text-sm hover:opacity-75 transition pt-4 select-none"

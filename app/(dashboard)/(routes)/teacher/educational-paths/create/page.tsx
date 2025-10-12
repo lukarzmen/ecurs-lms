@@ -1,10 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import Combobox from "@/components/ui/combobox";
-import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 
 const CreateEducationalPathPage = () => {
@@ -42,7 +43,7 @@ const CreateEducationalPathPage = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-  if (!userId) throw new Error("Brak użytkownika");
+      if (!userId) throw new Error("Brak użytkownika");
       const res = await fetch("/api/educational-paths", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -65,11 +66,18 @@ const CreateEducationalPathPage = () => {
   };
 
   return (
-    <div className="max-w-2xl w-full mx-auto flex md:items-center md:justify-center h-full p-6">
-      <div className="text-2xl w-full">
-        <h1>Utwórz ścieżkę edukacyjną</h1>
-        <form onSubmit={handleSubmit} className="space-y-8 mt-8">
-        <div>
+    <div className="max-w-5xl py-8 ml-8 mr-8">
+      <Link
+        href="/teacher/educational-paths"
+        className="flex items-center text-sm hover:opacity-75 transition pt-4 select-none mb-4"
+      >
+        <ArrowLeft className="h-4 w-4 mr-1" />
+        Wróć do listy ścieżek
+      </Link>
+      <h1 className="text-2xl font-bold mb-6">Utwórz ścieżkę edukacyjną</h1>
+      <div className="mb-8 p-6 rounded bg-orange-50 border border-orange-200">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div>
             <label className="block text-sm font-medium text-gray-700">Tytuł</label>
             <input
               type="text"

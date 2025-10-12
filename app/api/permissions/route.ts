@@ -29,7 +29,7 @@ export async function POST(req: Request) {
         if (!course) {
             return new NextResponse("Course not found", { status: 404 });
         }
-        // Add user to UserCourse table with state 1
+        // Add user to UserCourse table with state 1 if user has access to the course via educational path
         const userCourse = await db.userCourse.findUnique({
             where: {
                 userId_courseId: {
@@ -42,17 +42,48 @@ export async function POST(req: Request) {
         const isFreeCourse = Number(course.price?.amount) === 0;
         const hasPurchase = !!userCourse?.purchase;
         console.log(userCourse, "User course data:", userCourse);
+
+        // Check if user has access via educational path
+        const eduPathWithCourse = await db.userEducationalPath.findFirst({
+            where: {
+                userId: user.id,
+                educationalPath: {
+                    courses: {
+                        some: {
+                            courseId: Number(courseId)
+                        }
+                    }
+                }
+            }
+        });
+        let hasAccessViaEduPath = !!eduPathWithCourse;
+
         if (userCourse) {
             if(userCourse.purchase){
                 return NextResponse.json({ hasAccess: true, hasPurchase });
             }
+            // If user has access via educational path, upsert UserCourse with state 1
+            if (hasAccessViaEduPath && userCourse.state !== 1) {
+                await db.userCourse.update({
+                    where: {
+                        userId_courseId: {
+                            userId: user.id,
+                            courseId: Number(courseId),
+                        },
+                    },
+                    data: {
+                        state: 1,
+                    },
+                });
+                return NextResponse.json({ hasAccess: true, hasPurchase });
+            }
             return NextResponse.json({ hasAccess: userCourse.state === 1, hasPurchase: hasPurchase || isFreeCourse });
         }
-       
+
         const isPublic = course.mode === 1;
         const isPublicAndFree = (isPublic && isFreeCourse) ? 1 : 0;
         console.log("User ID:", user.id, "Course ID:", courseId, "Is public:", isPublic, "Is free course:", isFreeCourse, "User has access:", isPublicAndFree);
-        if(isPublicAndFree){
+        if(isPublicAndFree || hasAccessViaEduPath){
             await db.userCourse.upsert({
                 where: {
                     userId_courseId: {
@@ -69,6 +100,7 @@ export async function POST(req: Request) {
                     state: 1,
                 },
             });
+            return NextResponse.json({ hasAccess: true, hasPurchase: true });
         }
 
         return NextResponse.json({ hasAccess: false, hasPurchase: true });

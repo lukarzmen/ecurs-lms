@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = await params;
@@ -6,39 +7,51 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     if (!pathId || isNaN(pathId)) {
       return NextResponse.json({ error: "Invalid pathId" }, { status: 400 });
     }
-    const path = await db.educationalPath.findUnique({
-      where: { id: pathId },
-      include: {
-        courses: {
-          include: {
-            course: true,
+      const path = await db.educationalPath.findUnique({
+        where: { id: pathId },
+        include: {
+          courses: {
+            include: {
+              course: true,
+            },
+            orderBy: { position: "asc" },
           },
-          orderBy: { position: "asc" },
         },
-      },
-    });
-    if (!path) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    // Flatten courses for frontend
-    const courses = path.courses.map(ec => ({
-      courseId: ec.courseId,
-      title: ec.course.title,
-      position: ec.position,
-    }));
-    const educationalPathPrice = await db.educationalPathPrice.findUnique({
-      where: { educationalPathId: pathId },
-    });
-    return NextResponse.json({
-      id: path.id,
-      title: path.title,
-      description: path.description,
-      imageId: path.imageId ?? "",
-      categoryId: path.categoryId ?? "",
-      authorId: path.authorId ?? "",
-      state: path.state ?? "",
-      mode: path.mode ?? "",
-      courses,
-      price: educationalPathPrice
-    });
+      });
+      if (!path) return NextResponse.json({ error: "Not found" }, { status: 404 });
+      // Pobierz nazwę kategorii
+      let categoryName = "";
+      if (path.categoryId) {
+        const category = await db.category.findUnique({ where: { id: path.categoryId } });
+        categoryName = category?.name ?? "";
+      }
+      // Pobierz nazwę autora
+      let authorName = "";
+      if (path.authorId) {
+        const author = await db.user.findUnique({ where: { id: path.authorId } });
+        authorName = author?.displayName || [author?.firstName, author?.lastName].filter(Boolean).join(" ") || "";
+      }
+      // Flatten courses for frontend
+      const courses = path.courses.map(ec => ({
+        courseId: ec.courseId,
+        title: ec.course.title,
+        position: ec.position,
+      }));
+      const educationalPathPrice = await db.educationalPathPrice.findUnique({
+        where: { educationalPathId: pathId },
+      });
+      return NextResponse.json({
+        id: path.id,
+        title: path.title,
+        description: path.description,
+        imageId: path.imageId ?? "",
+        categoryName,
+        authorName,
+        state: path.state ?? "",
+        mode: path.mode ?? "",
+        courses,
+        price: educationalPathPrice
+      });
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch details" }, { status: 500 });
   }

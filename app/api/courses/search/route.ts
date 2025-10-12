@@ -12,8 +12,8 @@ export type LearningUnit = Course & {
 }
 
 type LearningUnitSearchResponse = LearningUnit & {
-  nonFinishedModuleId: number;
   enrolled: boolean;
+  type: "educationalPath" | "course" | null;
 };
 
 export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSearchResponse[] | { error: string }>> {
@@ -23,10 +23,11 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
   const categoryId = searchParams.get('categoryId') ? parseInt(searchParams.get('categoryId')!) : undefined;
   const userId = searchParams.get('userId') || undefined;
   let enrolledCourseIds: number[] = [];
+  let user: { id: number } | null = null;
 
   try {
     if (userId) {
-      const user = await db.user.findUnique({
+      user = await db.user.findUnique({
         where: { providerId: userId },
         select: { id: true }
       });
@@ -94,7 +95,16 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
       };
     });
 
-    // Map educational paths (fetch author and price per path)
+    // Get all enrolled educationalPath IDs for user
+    let enrolledEduPathIds: number[] = [];
+    if (user) {
+      const userEduPaths = await db.userEducationalPath.findMany({
+        where: { userId: user.id, state: 1 },
+        select: { educationalPathId: true }
+      });
+      enrolledEduPathIds = userEduPaths.map(up => up.educationalPathId);
+    }
+
     const mappedPaths = await Promise.all(
       educationalPaths.map(async (path: any) => {
         // Fetch author
@@ -123,9 +133,11 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
             where: { id: path.categoryId }
           });
         }
+        // Mark as enrolled if path.id is in enrolledEduPathIds
+        const enrolled = enrolledEduPathIds.includes(path.id);
         return {
           ...path,
-          enrolled: false,
+          enrolled,
           price: priceObj?.amount ?? null,
           currency: priceObj?.currency ?? null,
           isRecurring: priceObj?.isRecurring ?? false,
