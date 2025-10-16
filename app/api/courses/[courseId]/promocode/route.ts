@@ -17,8 +17,11 @@ export async function GET(req: NextRequest, context: { params: Promise<{ courseI
     const promos = await Promise.all(coursePromoCodes.map(async cp => {
       return await prisma.promoCode.findUnique({ where: { id: cp.promoCodeId } });
     }));
-    return NextResponse.json(promos, { status: 200 });
+    // Filter out any null promo codes
+    const validPromos = promos.filter(Boolean);
+    return NextResponse.json(validPromos, { status: 200 });
   } catch (error) {
+    console.error('GET /api/courses/[courseId]/promocode error:', error);
     return NextResponse.json({ error: "Server error", details: String(error) }, { status: 500 });
   }
 }
@@ -50,6 +53,8 @@ export async function POST(req: NextRequest, context: { params: Promise<{ course
       data: {
         code,
         discount: Number(discount),
+        createdAt: new Date(),
+        updatedAt: new Date(),
         description,
         expirationDate: expirationDate ? new Date(expirationDate) : undefined,
       },
@@ -63,6 +68,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ course
     });
     return NextResponse.json(promo, { status: 201 });
   } catch (error) {
+    console.error('POST /api/courses/[courseId]/promocode error:', error);
     return NextResponse.json({ error: "Server error", details: String(error) }, { status: 500 });
   }
 }

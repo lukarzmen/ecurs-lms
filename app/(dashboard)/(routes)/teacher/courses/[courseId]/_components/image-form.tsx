@@ -18,7 +18,6 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
   const [image, setImage] = useState<File | null>(null);
   const router = useRouter();
   const imageUrl = `/api/image/${imageId}`;
-  console.debug("imageUrl", imageUrl);
   const toggleEdit = () => {
     setIsEditing((current) => !current);
   };

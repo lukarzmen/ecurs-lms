@@ -55,7 +55,7 @@ export async function POST(req: Request) {
         authorId: user.id,
         courses: {
           create: courseIds.map((courseId: number, idx: number) => ({
-            course: { connect: { id: courseId } },
+            courseId: courseId,
             position: idx + 1,
           })),
         },
@@ -69,6 +69,8 @@ export async function POST(req: Request) {
         userId: user.id,
         educationalPathId: educationalPath.id,
         state: 1,
+        updatedAt: new Date(),
+        createdAt: new Date(),
         roleId: 1, // Assuming 1 is the role ID for the teacher
       },
     });

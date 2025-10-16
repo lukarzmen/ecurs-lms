@@ -47,12 +47,15 @@ export async function POST(req: Request) {
         const eduPathWithCourse = await db.userEducationalPath.findFirst({
             where: {
                 userId: user.id,
-                educationalPath: {
-                    courses: {
-                        some: {
+                educationalPathId: {
+                    in: await db.educationalPathCourse.findMany({
+                        where: {
                             courseId: Number(courseId)
+                        },
+                        select: {
+                            educationalPathId: true
                         }
-                    }
+                    }).then(results => results.map(r => r.educationalPathId))
                 }
             }
         });
@@ -97,6 +100,8 @@ export async function POST(req: Request) {
                 create: {
                     userId: user.id,
                     courseId: Number(courseId),
+                    updatedAt: new Date(),
+                    createdAt: new Date(),
                     state: 1,
                 },
             });

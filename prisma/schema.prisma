@@ -9,32 +9,21 @@ datasource db {
   relationMode      = "prisma"
 }
 
-model UserEducationalPath {
-  id                Int             @id @default(autoincrement())
-  userId            Int
-  educationalPathId Int
-  createdAt         DateTime        @default(now()) @db.Timestamp(6)
-  updatedAt         DateTime        @updatedAt @db.Timestamp(6)
-  state             Int             @default(0)
-  roleId            Int?            @default(0)
-  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  educationalPath   EducationalPath @relation(fields: [educationalPathId], references: [id], onDelete: Cascade)
-  role              Role?           @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, educationalPathId], map: "UserEducationalPath_userId_educationalPathId_unique")
-  @@index([userId])
-  @@index([educationalPathId])
-  @@index([roleId])
+model Attachment {
+  id        Int      @id @default(autoincrement())
+  guid      String   @unique
+  filename  String
+  fileData  Bytes
+  createdAt DateTime @default(now())
 }
 
-model PromoCode {
-  id             Int       @id @default(autoincrement())
-  code           String
-  discount       Int
-  description    String?
-  expirationDate DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+model Category {
+  id               Int               @id @default(autoincrement())
+  name             String            @unique
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime
+  courses          Course[]
+  educationalPaths EducationalPath[]
 }
 
 model Course {
@@ -44,56 +33,139 @@ model Course {
   imageId               String?
   categoryId            Int?
   createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
+  updatedAt             DateTime
   authorId              Int
   mode                  Int                     @default(0)
   state                 Int                     @default(0)
   author                User                    @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  price                 CoursePrice?
   category              Category?               @relation(fields: [categoryId], references: [id])
+  price                 CoursePrice?
   modules               Module[]
   userCourses           UserCourse[]
-  EducationalPathCourse EducationalPathCourse[]
+  educationalPathCourses EducationalPathCourse[]
 
-  @@index([categoryId])
   @@index([authorId])
+  @@index([categoryId])
 }
 
-model Category {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  courses   Course[]
+model CoursePrice {
+  id              Int            @id @default(autoincrement())
+  amount          Decimal        @default(0) @db.Decimal(10, 2)
+  currency        String         @default("PLN")
+  isRecurring     Boolean        @default(false)
+  interval        PriceInterval?
+  courseId        Int            @unique
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @default(now())
+  trialPeriodDays Int?
+  trialPeriodEnd  DateTime?      @db.Timestamp(6)
+  trialPeriodType String?        @db.VarChar(255)
+  course          Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
-model User {
-  id                      Int                       @id @default(autoincrement())
-  providerId              String                    @unique
-  email                   String                    @unique
-  firstName               String?
-  lastName                String?
-  displayName             String?
-  createdAt               DateTime                  @default(now())
-  updatedAt               DateTime                  @updatedAt
-  roleId                  Int                       @default(0)
-  userCourses             UserCourse[]
-  userModules             UserModule[]
-  role                    Role?                     @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  stripeCustomers         StripeCustomer[]
-  Course                  Course[]
-  EducationalPathPurchase EducationalPathPurchase[]
-  userEducationalPaths    UserEducationalPath[]
+model CoursePromoCode {
+  id          Int @id @default(autoincrement())
+  courseId    Int
+  promoCodeId Int
 
-  @@index([roleId])
+  @@unique([courseId, promoCodeId], map: "CoursePromoCode_unique")
 }
 
-model Role {
-  id                  Int                   @id @default(autoincrement())
-  name                String                @unique
-  users               User[]
-  UserCourse          UserCourse[]
-  UserEducationalPath UserEducationalPath[]
+model EducationalPath {
+  id          Int                       @id @default(autoincrement())
+  title       String                    @db.VarChar(255)
+  description String?
+  createdAt   DateTime                  @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime                  @default(now()) @db.Timestamp(6)
+  imageId     String?                   @db.VarChar(255)
+  mode        Int                       @default(0)
+  state       Int                       @default(0)
+  authorId    Int?
+  categoryId  Int?
+  author      User?                     @relation(fields: [authorId], references: [id])
+  category    Category?                 @relation(fields: [categoryId], references: [id])
+  courses     EducationalPathCourse[]
+  price       EducationalPathPrice?
+  userPaths   UserEducationalPath[]
+  purchases   EducationalPathPurchase[]
+
+  @@index([authorId])
+  @@index([categoryId])
+}
+
+model EducationalPathCourse {
+  id                Int             @id @default(autoincrement())
+  educationalPathId Int
+  courseId          Int
+  position          Int
+  educationalPath   EducationalPath @relation(fields: [educationalPathId], references: [id], onDelete: Cascade)
+  course            Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([educationalPathId, courseId], map: "EducationalPathCourse_unique")
+  @@index([courseId])
+  @@index([educationalPathId])
+}
+
+model EducationalPathPrice {
+  id                Int             @id @default(autoincrement())
+  amount            Decimal         @default(0) @db.Decimal(10, 2)
+  currency          String          @default("PLN") @db.VarChar(10)
+  isRecurring       Boolean         @default(false)
+  interval          String?         @db.VarChar(10)
+  educationalPathId Int             @unique
+  createdAt         DateTime        @default(now()) @db.Timestamp(6)
+  updatedAt         DateTime        @default(now()) @db.Timestamp(6)
+  trialPeriodDays   Int?
+  trialPeriodEnd    DateTime?       @db.Timestamp(6)
+  trialPeriodType   String?         @db.VarChar(10)
+  educationalPath   EducationalPath @relation(fields: [educationalPathId], references: [id], onDelete: Cascade)
+}
+
+model EducationalPathPromoCode {
+  id                Int @id @default(autoincrement())
+  educationalPathId Int
+  promoCodeId       Int
+
+  @@unique([educationalPathId, promoCodeId], map: "EducationalPathPromoCode_unique")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model EducationalPathPurchase {
+  id                 Int             @id @default(autoincrement())
+  userId             Int
+  educationalPathId  Int
+  purchaseDate       DateTime        @default(now()) @db.Timestamp(6)
+  paymentId          String?         @db.VarChar(255)
+  eventType          String?         @db.VarChar(100)
+  amount             Decimal?        @db.Decimal(10, 2)
+  currency           String?         @db.VarChar(10)
+  paymentStatus      String?         @db.VarChar(50)
+  paymentMethod      String?         @db.VarChar(100)
+  subscriptionId     String?         @db.VarChar(255)
+  isRecurring        Boolean         @default(false)
+  subscriptionStatus String?         @db.VarChar(50)
+  currentPeriodStart DateTime?       @db.Timestamp(6)
+  currentPeriodEnd   DateTime?       @db.Timestamp(6)
+  trialStart         DateTime?       @db.Timestamp(6)
+  trialEnd           DateTime?       @db.Timestamp(6)
+  customerEmail      String?         @db.VarChar(255)
+  invoiceId          String?         @db.VarChar(255)
+  receiptUrl         String?
+  refundedAmount     Decimal?        @db.Decimal(10, 2)
+  refundReason       String?         @db.VarChar(255)
+  metadata           Json?
+  stripeCustomerId   String?         @db.VarChar(255)
+  createdAt          DateTime        @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime        @default(now()) @db.Timestamp(6)
+  user               User            @relation(fields: [userId], references: [id])
+  educationalPath    EducationalPath @relation(fields: [educationalPathId], references: [id])
+
+  @@unique([userId, educationalPathId], map: "EducationalPathPurchase_unique")
+  @@index([customerEmail])
+  @@index([educationalPathId])
+  @@index([paymentId])
+  @@index([subscriptionId])
+  @@index([userId])
 }
 
 model Module {
@@ -101,7 +173,7 @@ model Module {
   position      Int
   courseId      Int?
   createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  updatedAt     DateTime
   title         String
   state         Int             @default(0)
   course        Course?         @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -122,12 +194,60 @@ model ModuleContent {
   @@index([moduleId])
 }
 
+model PromoCode {
+  id             Int       @id @default(autoincrement())
+  code           String
+  discount       Int
+  description    String?
+  expirationDate DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime
+}
+
+model Role {
+  id         Int          @id @default(autoincrement())
+  name       String       @unique
+  users      User[]
+  UserCourse UserCourse[]
+}
+
+model StripeCustomer {
+  id               Int      @id @default(autoincrement())
+  stripeCustomerId String   @unique
+  userId           Int      @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id                          Int                       @id @default(autoincrement())
+  providerId                  String                    @unique
+  email                       String                    @unique
+  firstName                   String?
+  lastName                    String?
+  displayName                 String?
+  createdAt                   DateTime                  @default(now())
+  updatedAt                   DateTime
+  roleId                      Int                       @default(0)
+  userCourses                 UserCourse[]
+  userModules                 UserModule[]
+  role                        Role?                     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  stripeCustomers             StripeCustomer[]
+  courses                     Course[]
+  educationalPaths            EducationalPath[]
+  userEducationalPaths        UserEducationalPath[]
+  educationalPathPurchases    EducationalPathPurchase[]
+
+  @@index([roleId])
+}
+
 model UserCourse {
   id        Int                 @id @default(autoincrement())
   userId    Int
   courseId  Int
   createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
+  updatedAt DateTime
   state     Int                 @default(0)
   roleId    Int?                @default(0)
   user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -136,9 +256,60 @@ model UserCourse {
   purchase  UserCoursePurchase? @relation("UserCoursePurchaseToUserCourse")
 
   @@unique([userId, courseId])
-  @@index([userId])
   @@index([courseId])
   @@index([roleId])
+  @@index([userId])
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model UserCoursePurchase {
+  id                 Int        @id @default(autoincrement())
+  userCourseId       Int        @unique
+  paymentId          String?
+  purchaseDate       DateTime   @default(now())
+  eventType          String?    @db.VarChar(100)
+  amount             Decimal?   @db.Decimal(10, 2)
+  currency           String?    @db.VarChar(10)
+  paymentStatus      String?    @db.VarChar(50)
+  paymentMethod      String?    @db.VarChar(100)
+  subscriptionId     String?    @db.VarChar(255)
+  isRecurring        Boolean    @default(false)
+  subscriptionStatus String?    @db.VarChar(50)
+  currentPeriodStart DateTime?  @db.Timestamp(6)
+  currentPeriodEnd   DateTime?  @db.Timestamp(6)
+  trialStart         DateTime?  @db.Timestamp(6)
+  trialEnd           DateTime?  @db.Timestamp(6)
+  customerEmail      String?    @db.VarChar(255)
+  invoiceId          String?    @db.VarChar(255)
+  receiptUrl         String?
+  refundedAmount     Decimal?   @db.Decimal(10, 2)
+  refundReason       String?    @db.VarChar(255)
+  metadata           Json?
+  stripeCustomerId   String?    @db.VarChar(255)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @default(now())
+  userCourse         UserCourse @relation("UserCoursePurchaseToUserCourse", fields: [userCourseId], references: [id])
+
+  @@index([customerEmail])
+  @@index([paymentId])
+  @@index([subscriptionId])
+}
+
+model UserEducationalPath {
+  id                Int             @id @default(autoincrement())
+  userId            Int
+  educationalPathId Int
+  createdAt         DateTime        @default(now()) @db.Timestamp(6)
+  updatedAt         DateTime        @db.Timestamp(6)
+  state             Int             @default(0)
+  roleId            Int?            @default(0)
+  user              User            @relation(fields: [userId], references: [id])
+  educationalPath   EducationalPath @relation(fields: [educationalPathId], references: [id])
+
+  @@unique([userId, educationalPathId], map: "UserEducationalPath_userId_educationalPathId_unique")
+  @@index([educationalPathId])
+  @@index([roleId])
+  @@index([userId])
 }
 
 model UserModule {
@@ -148,134 +319,19 @@ model UserModule {
   isOpen     Boolean  @default(false)
   isFinished Boolean  @default(false)
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  updatedAt  DateTime
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   module     Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
   @@unique([userId, moduleId])
-  @@index([userId])
   @@index([moduleId])
-}
-
-model Attachment {
-  id        Int      @id @default(autoincrement())
-  guid      String   @unique @default(uuid())
-  filename  String
-  fileData  Bytes
-  createdAt DateTime @default(now())
+  @@index([userId])
 }
 
 model Wishlist {
   id      Int     @id @default(autoincrement())
   name    String?
   contact String?
-}
-
-model StripeCustomer {
-  id               Int      @id @default(autoincrement())
-  stripeCustomerId String   @unique
-  userId           Int      @unique
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model UserCoursePurchase {
-  id           Int        @id @default(autoincrement())
-  userCourseId Int        @unique
-  paymentId    String?
-  purchaseDate DateTime   @default(now())
-  userCourse   UserCourse @relation("UserCoursePurchaseToUserCourse", fields: [userCourseId], references: [id])
-}
-
-model CoursePrice {
-  id              Int            @id @default(autoincrement())
-  amount          Decimal        @default(0) @db.Decimal(10, 2)
-  currency        String         @default("PLN")
-  isRecurring     Boolean        @default(false)
-  interval        PriceInterval?
-  courseId        Int            @unique
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @default(now()) @updatedAt
-  trialPeriodDays Int?
-  trialPeriodEnd  DateTime?      @db.Timestamp(6)
-  trialPeriodType String?        @db.VarChar(255)
-  course          Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
-}
-
-model EducationalPath {
-  id                   Int                       @id @default(autoincrement())
-  title                String                    @db.VarChar(255)
-  description          String?
-  createdAt            DateTime                  @default(now()) @db.Timestamp(6)
-  updatedAt            DateTime                  @default(now()) @updatedAt @db.Timestamp(6)
-  authorId             Int?
-  imageId              String?                   @db.VarChar(255)
-  state                Int                       @default(0)
-  mode                 Int                       @default(0)
-  categoryId           Int?
-  courses              EducationalPathCourse[]
-  purchases            EducationalPathPurchase[]
-  userEducationalPaths UserEducationalPath[]
-
-  @@index([authorId])
-}
-
-model EducationalPathCourse {
-  id                Int             @id @default(autoincrement())
-  educationalPathId Int
-  courseId          Int
-  position          Int
-  educationalPath   EducationalPath @relation(fields: [educationalPathId], references: [id], onDelete: Cascade)
-  course            Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  @@unique([educationalPathId, courseId], map: "EducationalPathCourse_unique")
-  @@index([educationalPathId])
-  @@index([courseId])
-}
-
-model EducationalPathPurchase {
-  id                Int             @id @default(autoincrement())
-  userId            Int
-  educationalPathId Int
-  purchaseDate      DateTime        @default(now()) @db.Timestamp(6)
-  paymentId         String?         @db.VarChar(255)
-  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  educationalPath   EducationalPath @relation(fields: [educationalPathId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, educationalPathId], map: "EducationalPathPurchase_unique")
-  @@index([userId])
-  @@index([educationalPathId])
-}
-
-model EducationalPathPrice {
-  id                Int       @id @default(autoincrement())
-  amount            Decimal   @default(0) @db.Decimal(10, 2)
-  currency          String    @default("PLN") @db.VarChar(10)
-  isRecurring       Boolean   @default(false)
-  interval          String?   @db.VarChar(10)
-  educationalPathId Int       @unique
-  createdAt         DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt         DateTime  @default(now()) @db.Timestamp(6)
-  trialPeriodDays   Int?
-  trialPeriodEnd    DateTime? @db.Timestamp(6)
-  trialPeriodType   String?   @db.VarChar(10)
-}
-
-model CoursePromoCode {
-  id          Int @id @default(autoincrement())
-  courseId    Int
-  promoCodeId Int
-
-  @@unique([courseId, promoCodeId], map: "CoursePromoCode_unique")
-}
-
-model EducationalPathPromoCode {
-  id                Int @id @default(autoincrement())
-  educationalPathId Int
-  promoCodeId       Int
-
-  @@unique([educationalPathId, promoCodeId], map: "EducationalPathPromoCode_unique")
 }
 
 enum PriceInterval {

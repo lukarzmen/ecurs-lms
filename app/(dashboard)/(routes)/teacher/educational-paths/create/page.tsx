@@ -4,7 +4,7 @@ import Combobox from "@/components/ui/combobox";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import Link from "next/link";
 
 

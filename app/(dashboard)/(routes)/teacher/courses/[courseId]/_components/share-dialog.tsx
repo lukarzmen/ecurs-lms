@@ -26,7 +26,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ courseIdNumber, apiUrl
       try {
         const res = await fetch(`/api/courses/${courseIdNumber}/promocode`);
         const data = await res.json();
-        setPromoCodes(data);
+        setPromoCodes(Array.isArray(data) ? data : []);
       } catch {
         setPromoCodes([]);
       }

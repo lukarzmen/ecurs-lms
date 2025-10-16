@@ -50,6 +50,8 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
       data: {
         code,
         discount: Number(discount),
+        createdAt: new Date(),
+        updatedAt: new Date(),
         description,
         expirationDate: expirationDate ? new Date(expirationDate) : undefined,
       },

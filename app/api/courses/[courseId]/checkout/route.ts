@@ -17,6 +17,7 @@ export async function POST(
 
         const body = await req.json();
         const promoCode = body.promoCode || "";
+        const paymentType = "course";
 
         const currentAuthUser = await currentUser();
         const email = currentAuthUser?.emailAddresses[0]?.emailAddress;
@@ -46,6 +47,8 @@ export async function POST(
             userCourse = await db.userCourse.create({
                 data: {
                     userId: user.id,
+                    updatedAt: new Date(),
+                    createdAt: new Date(),
                     courseId: Number(courseId),
                     state: 0,
                 }
@@ -91,6 +94,8 @@ export async function POST(
             await db.stripeCustomer.create({
                 data: {
                     stripeCustomerId: stripeCustomerId,
+                    updatedAt: new Date(),
+                    createdAt: new Date(),
                     userId: user.id,
                 },
             });
@@ -176,6 +181,7 @@ export async function POST(
                     promoCode: promoCode,
                     discount: discount.toString(),
                     mode: "subscription",
+                    type: paymentType,
                 },
                 subscription_data: {
                     trial_period_days: trialPeriodDays,
@@ -187,6 +193,7 @@ export async function POST(
                         promoCode: promoCode,
                         discount: discount.toString(),
                         mode: "subscription",
+                        type: paymentType,
                     }
                 },
             });
@@ -220,6 +227,7 @@ export async function POST(
                     promoCode: promoCode,
                     discount: discount.toString(),
                     mode: "payment",
+                    type: paymentType,
                 },
                 payment_intent_data: {
                     metadata: {
@@ -229,6 +237,7 @@ export async function POST(
                         email: email,
                         promoCode: promoCode,
                         discount: discount.toString(),
+                        type: paymentType,
                     }
                 },
             });

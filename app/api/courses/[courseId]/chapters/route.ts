@@ -47,6 +47,8 @@ export async function POST(
         data: {
           courseId: courseIdInt,
           position: position++,
+          updatedAt: new Date(),
+          createdAt: new Date(),
           title,
         },
       });

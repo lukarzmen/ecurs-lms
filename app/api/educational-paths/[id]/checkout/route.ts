@@ -17,6 +17,7 @@ export async function POST(
 
         const body = await req.json();
         const promoCode = body.promoCode || "";
+        const paymentType = "educationalPath";
 
         const currentAuthUser = await currentUser();
         const email = currentAuthUser?.emailAddresses[0]?.emailAddress;
@@ -48,6 +49,8 @@ export async function POST(
                 data: {
                     userId: user.id,
                     educationalPathId: Number(educationalPathId),
+                    updatedAt: new Date(),
+                    createdAt: new Date(),
                     state: 1,
                 }
             });
@@ -90,6 +93,8 @@ export async function POST(
                     await db.userCourse.create({
                         data: {
                             userId: user.id,
+                            updatedAt: new Date(),
+                            createdAt: new Date(),
                             courseId: course.courseId,
                             state: 1, // active
                         }
@@ -124,6 +129,8 @@ export async function POST(
             stripeCustomerId = customer.id;
             await db.stripeCustomer.create({
                 data: {
+                    updatedAt: new Date(),
+                    createdAt: new Date(),
                     stripeCustomerId: stripeCustomerId,
                     userId: user.id,
                 },
@@ -210,6 +217,7 @@ export async function POST(
                     promoCode: promoCode,
                     discount: discount.toString(),
                     mode: "subscription",
+                    type: paymentType,
                 },
                 subscription_data: {
                     trial_period_days: trialPeriodDays,
@@ -221,6 +229,7 @@ export async function POST(
                         promoCode: promoCode,
                         discount: discount.toString(),
                         mode: "subscription",
+                        type: paymentType,
                     }
                 },
             });
@@ -254,6 +263,7 @@ export async function POST(
                     promoCode: promoCode,
                     discount: discount.toString(),
                     mode: "payment",
+                    type: paymentType,
                 },
                 payment_intent_data: {
                     metadata: {
@@ -263,6 +273,7 @@ export async function POST(
                         email: email,
                         promoCode: promoCode,
                         discount: discount.toString(),
+                        type: paymentType,
                     }
                 },
             });

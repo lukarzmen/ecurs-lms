@@ -1,6 +1,7 @@
-import { NextRequest } from "next/server";
+import { db } from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const pathId = Number(id);
@@ -56,7 +57,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: "Failed to fetch details" }, { status: 500 });
   }
 }
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id} = await params;
     const pathId = Number(id);
@@ -78,9 +79,6 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
 }
-import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
-
 export async function DELETE(req: Request) {
   try {
     const { id } = await req.json();
