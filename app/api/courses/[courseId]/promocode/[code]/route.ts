@@ -11,14 +11,25 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ cour
     if (!code || isNaN(courseId)) {
       return NextResponse.json({ error: "Missing code or invalid courseId" }, { status: 400 });
     }
-    const promo = await prisma.promoCode.findFirst({
-      where: { courseId, code },
-    });
-    if (!promo) {
-      return NextResponse.json({ error: "Promo code not found" }, { status: 404 });
+    // Find all join entries for this course
+    const joins = await prisma.coursePromoCode.findMany({ where: { courseId } });
+    let foundPromo = null;
+    let foundJoin = null;
+    for (const join of joins) {
+      const promo = await prisma.promoCode.findUnique({ where: { id: join.promoCodeId } });
+      if (promo && promo.code === code) {
+        foundPromo = promo;
+        foundJoin = join;
+        break;
+      }
     }
-    return NextResponse.json({ discount: promo.discount, promo }, { status: 200 });
+    if (!foundPromo) {
+      console.error('GET 404: Promo code not linked to this course', { courseId, code });
+      return NextResponse.json({ error: "Promo code not found for this course" }, { status: 404 });
+    }
+    return NextResponse.json({ discount: foundPromo.discount, promo: foundPromo }, { status: 200 });
   } catch (error) {
+    console.error('GET /api/courses/[courseId]/promocode/[code] error:', error);
     return NextResponse.json({ error: "Server error", details: String(error) }, { status: 500 });
   }
 }
@@ -31,14 +42,25 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ c
     if (!code || isNaN(courseId)) {
       return NextResponse.json({ error: "Missing code or invalid courseId" }, { status: 400 });
     }
-    const deleted = await prisma.promoCode.deleteMany({
-      where: { courseId, code },
-    });
-    if (deleted.count === 0) {
-      return NextResponse.json({ error: "Promo code not found" }, { status: 404 });
+    // Find all join entries for this course
+    const joins = await prisma.coursePromoCode.findMany({ where: { courseId } });
+    let foundJoin = null;
+    for (const join of joins) {
+      const promo = await prisma.promoCode.findUnique({ where: { id: join.promoCodeId } });
+      if (promo && promo.code === code) {
+        foundJoin = join;
+        break;
+      }
     }
-    return NextResponse.json({ message: "Promo code deleted" }, { status: 200 });
+    if (!foundJoin) {
+      console.error('DELETE 404: Promo code not linked to this course', { courseId, code });
+      return NextResponse.json({ error: "Promo code not found for this course" }, { status: 404 });
+    }
+    // Delete join entry
+    await prisma.coursePromoCode.delete({ where: { id: foundJoin.id } });
+    return NextResponse.json({ message: "Promo code unlinked from course" }, { status: 200 });
   } catch (error) {
+    console.error('DELETE /api/courses/[courseId]/promocode/[code] error:', error);
     return NextResponse.json({ error: "Server error", details: String(error) }, { status: 500 });
   }
 }

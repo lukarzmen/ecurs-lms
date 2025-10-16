@@ -17,6 +17,7 @@ export async function POST(
 
         const body = await req.json();
         const promoCode = body.promoCode || "";
+        const paymentType = "course";
 
         const currentAuthUser = await currentUser();
         const email = currentAuthUser?.emailAddresses[0]?.emailAddress;
@@ -46,6 +47,8 @@ export async function POST(
             userCourse = await db.userCourse.create({
                 data: {
                     userId: user.id,
+                    updatedAt: new Date(),
+                    createdAt: new Date(),
                     courseId: Number(courseId),
                     state: 0,
                 }
@@ -91,6 +94,8 @@ export async function POST(
             await db.stripeCustomer.create({
                 data: {
                     stripeCustomerId: stripeCustomerId,
+                    updatedAt: new Date(),
+                    createdAt: new Date(),
                     userId: user.id,
                 },
             });
@@ -103,17 +108,23 @@ export async function POST(
         const isRecurring = price?.isRecurring;
         const interval = price?.interval;
         if (promoCode) {
-            // Find promo code for this course
-            const promo = await db.promoCode.findFirst({
-                where: {
-                    courseId: Number(courseId),
-                    code: promoCode,
-                },
-                select: { discount: true }
+            // Find all promo code joins for this course
+            const joins = await db.coursePromoCode.findMany({
+                where: { courseId: Number(courseId) },
             });
-            if (promo && typeof promo.discount === "number" && promo.discount > 0) {
-                discount = promo.discount;
-                finalPrice = finalPrice * (1 - discount / 100);
+            if (joins.length) {
+                // Find promoCode with matching code and id in join table
+                const promo = await db.promoCode.findFirst({
+                    where: {
+                        code: promoCode,
+                        id: { in: joins.map(j => j.promoCodeId) },
+                    },
+                    select: { discount: true }
+                });
+                if (promo && typeof promo.discount === "number" && promo.discount > 0) {
+                    discount = promo.discount;
+                    finalPrice = finalPrice * (1 - discount / 100);
+                }
             }
         }
 
@@ -170,6 +181,7 @@ export async function POST(
                     promoCode: promoCode,
                     discount: discount.toString(),
                     mode: "subscription",
+                    type: paymentType,
                 },
                 subscription_data: {
                     trial_period_days: trialPeriodDays,
@@ -181,6 +193,7 @@ export async function POST(
                         promoCode: promoCode,
                         discount: discount.toString(),
                         mode: "subscription",
+                        type: paymentType,
                     }
                 },
             });
@@ -214,6 +227,7 @@ export async function POST(
                     promoCode: promoCode,
                     discount: discount.toString(),
                     mode: "payment",
+                    type: paymentType,
                 },
                 payment_intent_data: {
                     metadata: {
@@ -223,6 +237,7 @@ export async function POST(
                         email: email,
                         promoCode: promoCode,
                         discount: discount.toString(),
+                        type: paymentType,
                     }
                 },
             });

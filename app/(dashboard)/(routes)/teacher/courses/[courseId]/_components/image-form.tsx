@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Pencil, PlusCircle, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
+import Image from "next/image";
 
 interface ImageFormProps {
   imageId: string;
@@ -17,7 +18,6 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
   const [image, setImage] = useState<File | null>(null);
   const router = useRouter();
   const imageUrl = `/api/image/${imageId}`;
-  console.debug("imageUrl", imageUrl);
   const toggleEdit = () => {
     setIsEditing((current) => !current);
   };
@@ -83,9 +83,11 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
       ) : (
         <div className="flex items-center justify-center h-40 bg-orange-100 rounded-md overflow-hidden">
           {imageId ? (
-            <img
+            <Image
               src={imageUrl}
               alt="Course Image"
+              width={400}
+              height={160}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-contain rounded-md h-full w-full"
               style={{ objectFit: "contain", width: "100%", height: "100%" }}

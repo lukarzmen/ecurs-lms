@@ -5,10 +5,10 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { cookies } from "next/headers";
 
-type EnrollPageParams = Promise<{ courseId: string }>;
+type EnrollCoursePageParams = Promise<{ courseId: string }>;
 
 
-const EnrollPage = async ({ params, searchParams }: { params: EnrollPageParams, searchParams?: Promise<{ promoCode?: string }> }) => {
+const EnrollPage = async ({ params, searchParams }: { params: EnrollCoursePageParams, searchParams?: Promise<{ promoCode?: string }> }) => {
   const { userId } = await auth();
   if (!userId) {
     return redirect("/sign-in");

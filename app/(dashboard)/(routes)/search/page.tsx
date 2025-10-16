@@ -20,7 +20,6 @@ const SearchPage = async ({ searchParams }: { searchParams: Promise<{ title?: st
   const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/courses/search?title=${encodeURIComponent(title)}&categoryId=${encodeURIComponent(categoryId)}&userId=${userId}`;
   const res = await fetch(apiUrl);
   const courses = await res.json();
-
   return (
     <>
       <SignedOut>

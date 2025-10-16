@@ -20,13 +20,13 @@ export type CourseDetails = Omit<Course, 'userModules'> & {
     category: Category | null;
     modulesCount: number;
     isCompleted: boolean;
-    nonFinishedModuleId: number | null; // ID of the last unfinished module, or last module if completed
-        author: {
-            firstName: string | null;
-            lastName: string | null;
-            displayName?: string | null; // Added displayName as optional
-        } | null;
-        enrolled?: boolean; // Optional field to indicate if the user is enrolled in the course
+    author: {
+        firstName: string | null;
+        lastName: string | null;
+        displayName?: string | null;
+    } | null;
+    enrolled?: boolean;
+    type: "course" | "educationalPath" | null;
 };
 
 // Type for the final API response structure, including counts
@@ -112,36 +112,18 @@ export async function GET(req: Request): Promise<NextResponse<DashboardCoursesRe
     courses.forEach((course: CourseWithProgress) => {
         const totalModules = course.modules.length;
         let allModulesFinished = false;
-        let nonFinishedModuleId: number | null = null; // Initialize nonFinishedModuleId
         const state = course.state;
         if (totalModules === 0) {
             // If there are no modules, consider the course completed
             allModulesFinished = true;
-            nonFinishedModuleId = null; // No modules to reference
         } else {
             // Check if every module is finished
             allModulesFinished = course.modules.every(module =>
                 module.userModules.length > 0 && module.userModules[0].isFinished
             );
-
-            if (allModulesFinished) {
-                // If all finished, get the ID of the last module (highest position)
-                nonFinishedModuleId = course.modules[course.modules.length - 1].id;
-            } else {
-                // If not all finished, find the *first* module that is *not* finished
-                let firstUnfinished: Module | null = null;
-                for (let i = 0; i < course.modules.length; i++) {
-                    const courseModule = course.modules[i];
-                    if (!(courseModule.userModules.length > 0 && courseModule.userModules[0].isFinished)) {
-                        firstUnfinished = courseModule;
-                        break; // Found the first unfinished one
-                    }
-                }
-                nonFinishedModuleId = firstUnfinished ? firstUnfinished.id : null; // Assign its ID
-            }
         }
 
-        console.log(`[GET /user/courses] Course ID ${course.id}: Total Modules: ${totalModules}, All Finished: ${allModulesFinished}, Non-Finished/First Module ID: ${nonFinishedModuleId}`);
+        console.log(`[GET /user/courses] Course ID ${course.id}: Total Modules: ${totalModules}, All Finished: ${allModulesFinished}`);
 
         // Prepare the detailed course object for the response
         const { modules, ...courseBaseData } = course;
@@ -156,9 +138,9 @@ export async function GET(req: Request): Promise<NextResponse<DashboardCoursesRe
                 }
                 : null,
             category: course.category,
+            type: "course",
             modulesCount: totalModules,
             isCompleted: closeCourseCompleted,
-            nonFinishedModuleId: nonFinishedModuleId,
             enrolled: false,
         };
 

@@ -7,7 +7,8 @@ import { Category } from "@prisma/client";
 import toast from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
 import next from "next";
-import { Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import Link from "next/link";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
@@ -83,8 +84,17 @@ const CreatePage = () => {
   }, []);
 
   return (
-    <div className="max-w-2xl w-full mx-auto flex md:items-center md:justify-center h-full p-6">
-      <div className="text-2xl w-full">
+    <div className="max-w-2xl w-full mx-auto flex flex-col h-full p-6">
+      <div className="mb-6">
+        <Link
+          href="/teacher/courses"
+          className="flex items-center text-sm hover:opacity-75 transition pt-4 select-none"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Powrót do listy kursów
+        </Link>
+      </div>
+      <div className="text-2xl w-full mb-6">
         <h1>
           {step === 1 && "Nazwij swój kurs"}
           {step === 2 && "Wybierz kategorię dla swojego kursu"}

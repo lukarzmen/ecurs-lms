@@ -28,18 +28,18 @@ export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ courseId }) => {
   const [loading, setLoading] = useState(false);
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
 
-  const fetchPromoCodes = async () => {
+  const fetchPromoCodes = React.useCallback(async () => {
     try {
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/courses/${courseId}/promocode`);
       setPromoCodes(res.data);
     } catch {
       setPromoCodes([]);
     }
-  };
+  }, [courseId]);
 
   React.useEffect(() => {
     fetchPromoCodes();
-  }, [courseId]);
+  }, [fetchPromoCodes]);
 
   const handleAddPromo = async () => {
     setLoading(true);

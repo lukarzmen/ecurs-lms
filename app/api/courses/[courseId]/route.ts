@@ -86,7 +86,7 @@ export async function GET(
   const url = new URL(req.url);
   const showDraftsParam = url.searchParams.get("showDrafts") || url.searchParams.get("showdrafts");
   const showDrafts = showDraftsParam === "true" || showDraftsParam === "1";
-    const courseIdNumber = parseInt(courseId, 10);
+  const courseIdNumber = parseInt(courseId, 10);
 
     if (isNaN(courseIdNumber)) {
       return new NextResponse("Invalid courseId", { status: 400 });

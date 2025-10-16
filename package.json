@@ -33,6 +33,7 @@
     "@radix-ui/react-popover": "^1.1.1",
     "@radix-ui/react-progress": "^1.1.0",
     "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-visually-hidden": "^1.2.3",
     "@tanstack/react-table": "^8.20.5",
     "@types/node": "22.3.0",
     "@types/react": "18.3.3",
@@ -54,6 +55,7 @@
     "lodash-es": "^4.17.21",
     "lucide-react": "^0.427.0",
     "next": "^15.5.0",
+    "nodemailer": "^7.0.6",
     "openai": "^4.77.0",
     "pdf-lib": "^1.17.1",
     "pg": "^8.13.1",
@@ -90,6 +92,7 @@
   "devDependencies": {
     "@types/bun": "^1.2.9",
     "@types/lodash-es": "^4.17.12",
+    "@types/nodemailer": "^7.0.2",
     "eslint-config-next": "^14.2.14",
     "prettier": "^3.3.3",
     "prisma": "^6.16.2"

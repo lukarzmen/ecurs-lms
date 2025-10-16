@@ -1,22 +1,17 @@
-import { CourseInfoCard } from "./course-card";
-import { MarketplaceCoursesListBaseProps } from "./marketplace-list";
-import type { CourseInfoCardProps } from "./course-card";
 
-
-
-// Accepts CourseDetails[] from API, maps to CourseInfoCardProps for UI
 import type { CourseDetails } from "@/app/api/user/courses/route";
+import CourseInfoCard from "./course-card";
 
 export type EnrolledCoursesListBaseProps = {
     items: CourseDetails[];
 };
 
 
-export const EnrolledCoursesList = ({ items }: EnrolledCoursesListBaseProps) => {
+export const EnrolledEduList = ({ items }: EnrolledCoursesListBaseProps) => {
     if (!items || items.length === 0) {
         return (
             <div className="flex justify-center items-center w-full h-full">
-                <div className="text-center text-sm text-muted-foreground mt-10">Nie znaleziono kursów</div>
+                <div className="text-center text-sm text-muted-foreground mt-10">Nie znaleziono.</div>
             </div>
         );
     }
@@ -35,10 +30,9 @@ export const EnrolledCoursesList = ({ items }: EnrolledCoursesListBaseProps) => 
                         title={item.title}
                         imageId={item.imageId ?? ""}
                         author={authorString}
-                        chaptersLength={item.modulesCount}
+                        modulesCount={item.modulesCount}
                         category={categoryString}
-                        nonFinishedModuleId={item.nonFinishedModuleId}
-                        enrolled={item.enrolled}
+                        type={item.type}
                         isCompleted={item.isCompleted}
                     />
                 );

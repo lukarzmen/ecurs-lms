@@ -27,6 +27,8 @@ export async function POST(req: Request) {
         title,
         categoryId: categoryId,
         description,
+        updatedAt: new Date(),
+        createdAt: new Date(),
       },
     });
 
@@ -60,6 +62,8 @@ export async function POST(req: Request) {
       data: {
         userId: user.id,
         courseId: course.id,
+        updatedAt: new Date(),
+        createdAt: new Date(),
         state: 1,
         roleId: 1, // Assuming 1 is the role ID for the teacher
       },

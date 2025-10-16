@@ -1,4 +1,4 @@
-import { MarketplaceCourseCard } from "./course-card";
+import { MarketplaceCourseCard } from "./marketplace-course-card";
 
 export interface MarketplaceCourse {
     trialPeriodDays?: number | null;
@@ -7,8 +7,7 @@ export interface MarketplaceCourse {
     id: number;
     title: string;
     imageId?: string;
-    modulesCount: number;
-    nonFinishedModuleId: number;
+    type?: string | null; // "educationalPath" or "course" or null
     enrolled: boolean;
     author?: {
         displayName?: string | null;
@@ -30,7 +29,7 @@ export const MarketplaceCoursesList = ({ items }: MarketplaceCoursesListBaseProp
     if (!items || items.length === 0) {
         return (
             <div className="flex justify-center items-center w-full h-full">
-                <div className="text-center text-sm text-muted-foreground mt-10">Nie znaleziono kursów</div>
+                <div className="text-center text-sm text-muted-foreground mt-10">Nie znaleziono.</div>
             </div>
         );
     }
@@ -42,13 +41,13 @@ export const MarketplaceCoursesList = ({ items }: MarketplaceCoursesListBaseProp
                     id: item.id,
                     title: item.title,
                     imageId: item.imageId ?? "",
-                    chaptersLength: item.modulesCount,
                     category: item.category?.name!,
-                    nonFinishedModuleId: item.nonFinishedModuleId,
                     price: item.price !== undefined && item.price !== null ? Number(item.price) : 0,
                     currency: item.currency,
                     isRecurring: item.isRecurring,
                     interval: item.interval,
+                    type: item.type === "course" || item.type === "educationalPath" ? (item.type as "course" | "educationalPath") : null,
+                    enrolled: item.enrolled ?? false,
                     trialPeriodDays: item.trialPeriodDays ?? null,
                     trialPeriodEnd: item.trialPeriodEnd ?? null,
                     trialPeriodType: item.trialPeriodType ?? null,

@@ -39,15 +39,15 @@ export function Combobox({ options, value, onChange }: ComboboxProps) {
         >
           {value
             ? options.find((option) => option.value === value)?.label
-            : "Select category..."}
+            : "Wyszukaj kategorię..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
         <Command>
-          <CommandInput placeholder="Search category..." />
+          <CommandInput placeholder="Wyszukaj kategorię..." />
           <CommandList>
-            <CommandEmpty>No category found.</CommandEmpty>
+            <CommandEmpty>Nie znaleziono kategorii.</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem

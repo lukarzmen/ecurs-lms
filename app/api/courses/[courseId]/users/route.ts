@@ -160,6 +160,8 @@ export async function POST(req: Request, context: { params: Promise<{ courseId: 
                 data: {
                     userId: uid,
                     courseId: courseIdNumber,
+                    updatedAt: new Date(),
+                    createdAt: new Date(),
                     roleId: 0,
                     state: 1,
                 }

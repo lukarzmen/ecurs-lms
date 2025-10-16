@@ -2,17 +2,24 @@
 
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
+import { ReactNode } from "react";
 
 interface SidebarItemProps {
   label: string;
   href: string;
 }
 
-export const SidebarItem = ({ label, href }: SidebarItemProps) => {
+interface SidebarItemProps {
+  label: string;
+  href: string;
+  icon?: ReactNode;
+}
+
+export const SidebarItem = ({ label, href, icon }: SidebarItemProps) => {
   const pathName = usePathname();
   const router = useRouter();
   const isActive = (pathName === "/" && href === "/") || pathName.startsWith(href) && href !== "/";
-
+  // icon prop is expected to be a ReactNode, e.g. <BarChart />, <Compass />, etc.
   const onClick = () => {
     router.push(href);
   };
@@ -26,14 +33,9 @@ export const SidebarItem = ({ label, href }: SidebarItemProps) => {
         isActive && "text-orange-700 bg-orange-200 hover:bg-orange-200"
       )}
     >
-      <div className="flex items-center gap-x-2 py-4 select-none">
+      <div className="flex items-center gap-x-2 py-4 select-none w-full">
+        {icon && <span className="mr-2">{icon}</span>}
         {label}
-        <div
-          className={cn(
-            "ml-auto opacity-0 border-2 border-orange-600 h-full transition-all",
-            isActive && "opacity-100"
-          )}
-        ></div>
       </div>
     </button>
   );

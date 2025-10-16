@@ -41,6 +41,16 @@ interface AnalyticsData {
   mostActiveStudent?: string;
   mostCoursesStudent?: string;
   coursesDetails?: CourseDetail[];
+  // Educational Path Analytics
+  pathUserCount?: number;
+  pathsCount?: number;
+  pathCoursesCount?: number;
+  averagePathCompletionRate?: string;
+  mostPopularPath?: string;
+  leastPopularPath?: string;
+  newPathUsersLastMonth?: number;
+  newPathsLastMonth?: number;
+  pathsDetails?: { id: string; title: string; usersCount: number; coursesCount: number; averageCompletionRate: string; }[];
 }
 
 const AnalyticsPage = () => {
@@ -59,6 +69,15 @@ const AnalyticsPage = () => {
     mostActiveStudent: "???",
     mostCoursesStudent: "???",
     coursesDetails: [],
+    pathUserCount: 0,
+    pathsCount: 0,
+    pathCoursesCount: 0,
+    averagePathCompletionRate: "0%",
+    mostPopularPath: "???",
+    leastPopularPath: "???",
+    newPathUsersLastMonth: 0,
+    newPathsLastMonth: 0,
+    pathsDetails: [],
   });
   const { userId } = useAuth();
 
@@ -99,6 +118,15 @@ const AnalyticsPage = () => {
     mostActiveStudent,
     mostCoursesStudent,
     coursesDetails = [],
+    pathUserCount,
+    pathsCount,
+    pathCoursesCount,
+    averagePathCompletionRate,
+    mostPopularPath,
+    leastPopularPath,
+    newPathUsersLastMonth,
+    newPathsLastMonth,
+    pathsDetails = [],
   } = analyticsData;
 
   // Chart data
@@ -143,81 +171,147 @@ const AnalyticsPage = () => {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6 mt-6">📊 Panel analityczny nauczyciela</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
-          <h2 className="font-semibold mb-2">Użytkownicy</h2>
-          <Bar data={barData} options={{
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-          }} />
+
+      {/* SECTION: Użytkownicy i Kursy (Charts) */}
+      <section className="mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
+            <h2 className="font-semibold mb-2">Użytkownicy</h2>
+            <Bar data={barData} options={{
+              plugins: { legend: { display: false } },
+              scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }} />
+          </div>
+          <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
+            <h2 className="font-semibold mb-2">Kursy</h2>
+            <Doughnut data={doughnutData} options={{
+              plugins: { legend: { position: "bottom" } }
+            }} />
+          </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
-          <h2 className="font-semibold mb-2">Kursy</h2>
-          <Doughnut data={doughnutData} options={{
-            plugins: { legend: { position: "bottom" } }
-          }} />
+      </section>
+
+      {/* SECTION: Statystyki kursów */}
+      <section className="mb-10">
+        <h2 className="text-xl font-semibold mb-4">Statystyki kursów</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <DataCard label="Liczba kursów" value={coursesCount.toString()} />
+          <DataCard label="Liczba kursantów" value={userCount.toString()} />
+          <DataCard label="Liczba wszystkich modułów" value={modulesCount.toString()} />
+          <DataCard label="Średni procent ukończenia kursów" value={averageCompletionRate} />
+          {typeof mostPopularCourse === "string" && (
+            <DataCard label="Najpopularniejszy kurs" value={mostPopularCourse} />
+          )}
+          {typeof leastPopularCourse === "string" && (
+            <DataCard label="Najmniej popularny kurs" value={leastPopularCourse} />
+          )}
+          {leastActiveStudent && (
+            <DataCard label="Najmniej aktywny student" value={leastActiveStudent} />
+          )}
+          {mostActiveStudent && (
+            <DataCard label="Najbardziej aktywny student" value={mostActiveStudent} />
+          )}
+          {mostCoursesStudent && (
+            <DataCard label="Student zapisany na najwięcej kursów" value={mostCoursesStudent} />
+          )}
         </div>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <DataCard label="Liczba kursów" value={coursesCount.toString()} />
-        <DataCard label="Liczba kursantów" value={userCount.toString()} />
-        <DataCard label="Liczba wszystkich modułów" value={modulesCount.toString()} />
-        <DataCard label="Średni procent ukończenia kursów" value={averageCompletionRate} />
-        {typeof mostPopularCourse === "string" && (
-          <DataCard label="Najpopularniejszy kurs" value={mostPopularCourse} />
-        )}
-        {typeof leastPopularCourse === "string" && (
-          <DataCard label="Najmniej popularny kurs" value={leastPopularCourse} />
-        )}
-        {leastActiveStudent && (
-          <DataCard label="Najmniej aktywny student" value={leastActiveStudent} />
-        )}
-        {mostActiveStudent && (
-          <DataCard label="Najbardziej aktywny student" value={mostActiveStudent} />
-        )}
-        {mostCoursesStudent && (
-          <DataCard label="Student zapisany na najwięcej kursów" value={mostCoursesStudent} />
-        )}
-      </div>
-      <div className="overflow-x-auto mt-10">
+      </section>
+
+      {/* SECTION: Statystyki ścieżek edukacyjnych */}
+      <section className="mb-10">
+        <h2 className="text-xl font-semibold mb-4">Statystyki ścieżek edukacyjnych</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <DataCard label="Liczba ścieżek edukacyjnych" value={pathsCount?.toString() ?? "0"} />
+          <DataCard label="Liczba użytkowników ścieżek" value={pathUserCount?.toString() ?? "0"} />
+          <DataCard label="Liczba kursów w ścieżkach" value={pathCoursesCount?.toString() ?? "0"} />
+          <DataCard label="Średni procent ukończenia ścieżek" value={averagePathCompletionRate ?? "0%"} />
+          {typeof mostPopularPath === "string" && (
+            <DataCard label="Najpopularniejsza ścieżka" value={mostPopularPath} />
+          )}
+          {typeof leastPopularPath === "string" && (
+            <DataCard label="Najmniej popularna ścieżka" value={leastPopularPath} />
+          )}
+          <DataCard label="Nowi użytkownicy ścieżek (miesiąc)" value={newPathUsersLastMonth?.toString() ?? "0"} />
+          <DataCard label="Nowe ścieżki (miesiąc)" value={newPathsLastMonth?.toString() ?? "0"} />
+        </div>
+      </section>
+
+      {/* SECTION: Szczegółowe statystyki kursów */}
+      <section className="mb-10">
         <h2 className="text-xl font-semibold mb-4">Szczegółowe statystyki kursów</h2>
-        <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow">
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Nazwa kursu</th>
-              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Kursanci</th>
-              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Moduły</th>
-              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Śr. ukończenia</th>
-              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Najbardziej aktywny</th>
-              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Ostatnio aktywny</th>
-              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Data aktywności</th>
-            </tr>
-          </thead>
-          <tbody>
-            {coursesDetails.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-gray-400">Brak danych o kursach</td>
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Nazwa kursu</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Kursanci</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Moduły</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Śr. ukończenia</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Najbardziej aktywny</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Ostatnio aktywny</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Data aktywności</th>
               </tr>
-            ) : (
-              coursesDetails.map((course) => (
-                <tr key={course.id} className="border-t hover:bg-orange-50 transition">
-                  <td className="px-4 py-2 font-medium">{course.title}</td>
-                  <td className="px-4 py-2">{course.usersCount}</td>
-                  <td className="px-4 py-2">{course.modulesCount}</td>
-                  <td className="px-4 py-2">{course.averageCompletionRate}</td>
-                  <td className="px-4 py-2">{course.mostActiveUser}</td>
-                  <td className="px-4 py-2">{course.lastActiveUser}</td>
-                  <td className="px-4 py-2">
-                    {course.lastActiveDate
-                      ? new Date(course.lastActiveDate).toLocaleString("pl-PL")
-                      : "Brak"}
-                  </td>
+            </thead>
+            <tbody>
+              {coursesDetails.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-6 text-center text-gray-400">Brak danych o kursach</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                coursesDetails.map((course) => (
+                  <tr key={course.id} className="border-t hover:bg-orange-50 transition">
+                    <td className="px-4 py-2 font-medium">{course.title}</td>
+                    <td className="px-4 py-2">{course.usersCount}</td>
+                    <td className="px-4 py-2">{course.modulesCount}</td>
+                    <td className="px-4 py-2">{course.averageCompletionRate}</td>
+                    <td className="px-4 py-2">{course.mostActiveUser}</td>
+                    <td className="px-4 py-2">{course.lastActiveUser}</td>
+                    <td className="px-4 py-2">
+                      {course.lastActiveDate
+                        ? new Date(course.lastActiveDate).toLocaleString("pl-PL")
+                        : "Brak"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* SECTION: Szczegółowe statystyki ścieżek edukacyjnych */}
+      <section className="mb-10">
+        <h2 className="text-xl font-semibold mb-4">Szczegółowe statystyki ścieżek edukacyjnych</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Nazwa ścieżki</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Użytkownicy</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Kursy w ścieżce</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Śr. ukończenia</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pathsDetails.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-6 text-center text-gray-400">Brak danych o ścieżkach edukacyjnych</td>
+                </tr>
+              ) : (
+                pathsDetails.map((path) => (
+                  <tr key={path.id} className="border-t hover:bg-orange-50 transition">
+                    <td className="px-4 py-2 font-medium">{path.title}</td>
+                    <td className="px-4 py-2">{path.usersCount}</td>
+                    <td className="px-4 py-2">{path.coursesCount}</td>
+                    <td className="px-4 py-2">{path.averageCompletionRate}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <div className="text-sm text-gray-500 mt-2">
         <p>
           <span className="font-semibold">Wskazówka:</span> Kliknij na kurs, aby zobaczyć szczegółowe statystyki.
