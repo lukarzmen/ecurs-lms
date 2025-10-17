@@ -1,5 +1,6 @@
 import { DataTable } from "./_components/data-table";
 import { columns } from "./_components/columns";
+import { StripeStatusBanner } from "./_components/stripe-status-banner";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
@@ -25,6 +26,7 @@ const CoursesPage = async () => {
           ({courses.length})
         </span>
       </h1>
+      <StripeStatusBanner />
       <DataTable columns={columns} data={courses} />
     </div>
   );

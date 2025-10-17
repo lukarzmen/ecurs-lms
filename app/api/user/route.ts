@@ -119,7 +119,7 @@ export async function POST(req: Request) {
             });
             
             // If teacher role and no Stripe account, indicate onboarding needed
-            if (roleId === 1 && !user.stripeAccountId) {
+            if (roleId === 1 && (!user.stripeAccountId || !user.stripeOnboardingComplete)) {
                 return NextResponse.json({ 
                     created: false, 
                     updated: true, 
