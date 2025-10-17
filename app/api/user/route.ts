@@ -96,20 +96,84 @@ export async function POST(req: Request) {
                     displayName: `${clerkUser.username}` || `${clerkUser.firstName} ${clerkUser.lastName}`,
                 },
             });
+            
+            // If teacher role, include stripe account setup info
+            if (roleId === 1) {
+                return NextResponse.json({ 
+                    created: true, 
+                    user,
+                    needsStripeOnboarding: true 
+                });
+            }
+            
             return NextResponse.json({ created: true, user });
         } else {
-            // Update providerId if user exists
+            // Update providerId and role if user exists
             user = await db.user.update({
                 where: { id: user.id },
                 data: {
                     providerId: userId,
+                    roleId: roleId,
                     updatedAt: new Date(),
                 },
             });
+            
+            // If teacher role and no Stripe account, indicate onboarding needed
+            if (roleId === 1 && !user.stripeAccountId) {
+                return NextResponse.json({ 
+                    created: false, 
+                    updated: true, 
+                    user,
+                    needsStripeOnboarding: true 
+                });
+            }
+            
             return NextResponse.json({ created: false, updated: true, user });
         }
     } catch (error) {
         console.error(error);
+        return new NextResponse("Internal error", {
+            status: 500,
+        });
+    }
+}
+
+export async function PATCH(req: Request) {
+    const { userId, stripeAccountId, stripeAccountStatus } = await req.json();
+    
+    if (!userId || !stripeAccountId) {
+        return new NextResponse("Invalid parameters", {
+            status: 400,
+        });
+    }
+
+    try {
+        const user = await db.user.findUnique({
+            where: { providerId: userId }
+        });
+
+        if (!user) {
+            return new NextResponse("User not found", {
+                status: 404,
+            });
+        }
+
+        const updatedUser = await db.user.update({
+            where: { id: user.id },
+            data: {
+                stripeAccountId: stripeAccountId,
+                stripeAccountStatus: stripeAccountStatus || 'created',
+                stripeOnboardingComplete: false,
+                updatedAt: new Date(),
+            },
+        });
+
+        return NextResponse.json({ 
+            updated: true, 
+            user: updatedUser 
+        });
+    } catch (error) {
+        console.error("Error updating user with Stripe account:", error);
         return new NextResponse("Internal error", {
             status: 500,
         });

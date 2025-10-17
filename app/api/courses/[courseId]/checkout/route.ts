@@ -60,6 +60,12 @@ export async function POST(
             select: {
                 title: true,
                 imageId: true,
+                author: {
+                    select: {
+                        stripeAccountId: true,
+                        stripeOnboardingComplete: true
+                    }
+                },
                 price: {
                     select: {
                         amount: true,
@@ -78,9 +84,37 @@ export async function POST(
             console.error("Course not found for courseId:", courseId);
             return new NextResponse("Course not found", { status: 404 });
         }
+
         const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
             apiVersion: "2025-05-28.basil",
         });
+
+        // Check if teacher has completed Stripe onboarding
+        if (!course.author.stripeAccountId || !course.author.stripeOnboardingComplete) {
+            console.error(`Teacher payment account not configured for course ${courseId}. StripeAccountId: ${course.author.stripeAccountId}, OnboardingComplete: ${course.author.stripeOnboardingComplete}`);
+            return new NextResponse("Autor kursu nie ma skonfigurowanego konta płatności. Płatność została anulowana.", { 
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        // Verify that the Stripe account is still active
+        try {
+            const teacherAccount = await stripeClient.accounts.retrieve(course.author.stripeAccountId);
+            if (!teacherAccount.charges_enabled || !teacherAccount.payouts_enabled) {
+                console.error(`Teacher Stripe account ${course.author.stripeAccountId} is not fully enabled. Charges: ${teacherAccount.charges_enabled}, Payouts: ${teacherAccount.payouts_enabled}`);
+                return new NextResponse("Konto płatności autora kursu nie jest aktywne. Płatność została anulowana.", { 
+                    status: 400,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+        } catch (stripeError) {
+            console.error(`Failed to verify teacher Stripe account ${course.author.stripeAccountId}:`, stripeError);
+            return new NextResponse("Nie można zweryfikować konta płatności autora. Płatność została anulowana.", { 
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
 
         let stripeCustomerId = user.stripeCustomers[0]?.stripeCustomerId || null;
         if (!stripeCustomerId) {
@@ -182,9 +216,13 @@ export async function POST(
                     discount: discount.toString(),
                     mode: "subscription",
                     type: paymentType,
+                    teacherAccountId: course.author.stripeAccountId,
                 },
                 subscription_data: {
                     trial_period_days: trialPeriodDays,
+                    transfer_data: {
+                        destination: course.author.stripeAccountId,
+                    },
                     metadata: {
                         userCourseId: userCourse.id.toString(),
                         courseId: courseId,
@@ -194,6 +232,7 @@ export async function POST(
                         discount: discount.toString(),
                         mode: "subscription",
                         type: paymentType,
+                        teacherAccountId: course.author.stripeAccountId,
                     }
                 },
             });
@@ -228,8 +267,12 @@ export async function POST(
                     discount: discount.toString(),
                     mode: "payment",
                     type: paymentType,
+                    teacherAccountId: course.author.stripeAccountId,
                 },
                 payment_intent_data: {
+                    transfer_data: {
+                        destination: course.author.stripeAccountId,
+                    },
                     metadata: {
                         userCourseId: userCourse.id.toString(),
                         courseId: courseId,
@@ -238,6 +281,7 @@ export async function POST(
                         promoCode: promoCode,
                         discount: discount.toString(),
                         type: paymentType,
+                        teacherAccountId: course.author.stripeAccountId,
                     }
                 },
             });

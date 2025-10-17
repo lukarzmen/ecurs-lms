@@ -230,6 +230,9 @@ model User {
   createdAt                   DateTime                  @default(now())
   updatedAt                   DateTime
   roleId                      Int                       @default(0)
+  stripeAccountId             String?
+  stripeAccountStatus         String?                   @default("pending")
+  stripeOnboardingComplete    Boolean                   @default(false)
   userCourses                 UserCourse[]
   userModules                 UserModule[]
   role                        Role?                     @relation(fields: [roleId], references: [id], onDelete: Cascade)

@@ -109,7 +109,25 @@ const TEACHER_TERMS = (
       <li>Nauczyciel ponosi odpowiedzialność za treści publikowane w ramach prowadzonych kursów.</li>
       <li>Administrator ma prawo do moderowania treści oraz usuwania materiałów naruszających regulamin.</li>
     </ul>
-    <p className="font-semibold text-gray-700 mt-2">§5. Warunki płatności, okresy rozliczeniowe i zmiana licencji</p>
+    <p className="font-semibold text-gray-700 mt-2">§5. Rejestracja w systemie płatności Stripe</p>
+    <ul className="list-disc ml-6 text-gray-700">
+      <li>
+        <b>Obowiązkowa rejestracja konta płatności:</b> Każdy nauczyciel musi zarejestrować się w systemie płatności Stripe w celu otrzymywania płatności od uczniów. Jest to wymagane prawnie do przetwarzania transakcji.
+      </li>
+      <li>
+        <b>Proces rejestracji:</b> Po akceptacji regulaminu zostaniesz automatycznie przekierowany na bezpieczną stronę Stripe, gdzie podasz swoje dane do celów płatności i fiskalnych. Po zakończeniu procesu zostaniesz przekierowany z powrotem na platformę Ecurs.
+      </li>
+      <li>
+        <b>Dane wymagane przez Stripe:</b> Imię i nazwisko, adres, numer telefonu, dane bankowe do otrzymywania płatności oraz informacje niezbędne do wystawiania faktur zgodnie z polskim prawem podatkowym.
+      </li>
+      <li>
+        <b>Obowiązki fiskalne:</b> Nauczyciel jest odpowiedzialny za rozliczenie podatkowe otrzymanych płatności zgodnie z obowiązującym prawem. Platforma przekazuje dane o transakcjach niezbędne do rozliczeń podatkowych.
+      </li>
+      <li>
+        <b>Bezpieczeństwo danych:</b> Wszystkie dane płatności są przetwarzane przez certyfikowany system Stripe zgodnie z najwyższymi standardami bezpieczeństwa (PCI DSS Level 1). Platforma Ecurs nie przechowuje wrażliwych danych płatności.
+      </li>
+    </ul>
+    <p className="font-semibold text-gray-700 mt-2">§6. Warunki płatności, okresy rozliczeniowe i zmiana licencji</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li>
         <b>Indywidualny twórca</b> – osoba fizyczna prowadząca kursy na platformie Ecurs, posiadająca nie więcej niż 10 aktywnych uczniów oraz jedno konto nauczyciela.
@@ -150,13 +168,13 @@ const TEACHER_TERMS = (
       <li>Wszelkie materiały udostępniane przez nauczyciela w ramach kursów pozostają jego własnością intelektualną, jednak nauczyciel udziela platformie Ecurs niewyłącznej, nieodpłatnej licencji na ich prezentację w ramach platformy na czas trwania kursu.</li>
       <li>W przypadku pytań dotyczących płatności lub faktur, prosimy o kontakt z administratorem platformy.</li>
     </ul>
-    <p className="font-semibold text-gray-700 mt-2">§6. Pliki cookies</p>
+    <p className="font-semibold text-gray-700 mt-2">§7. Pliki cookies</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li>
         Serwis wykorzystuje pliki cookies w celu zapewnienia prawidłowego działania, personalizacji treści oraz analizy ruchu. Korzystając z serwisu, użytkownik wyraża zgodę na używanie plików cookies zgodnie z Polityką Prywatności. Użytkownik może zmienić ustawienia dotyczące cookies w swojej przeglądarce internetowej.
       </li>
     </ul>
-    <p className="font-semibold text-gray-700 mt-2">§7. Postanowienia końcowe</p>
+    <p className="font-semibold text-gray-700 mt-2">§8. Postanowienia końcowe</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li>Administrator zastrzega sobie prawo do zmiany regulaminu, informując o tym nauczycieli.</li>
       <li>Wszelkie spory wynikające z korzystania z platformy będą rozstrzygane zgodnie z prawem polskim.</li>
@@ -192,11 +210,66 @@ export default function RegisterPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, sessionId, roleId }),
       });
+      
       if (response.ok) {
+        const result = await response.json();
         toast.success("Rejestracja zakończona sukcesem!");
-        if (selectedRole === "teacher") {
+        
+        if (selectedRole === "teacher" && result.needsStripeOnboarding) {
+          // Create Stripe Connect account first, then update user with Stripe ID
+          try {
+            const stripeResponse = await fetch("/api/stripe/connect", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+            });
+            
+            if (stripeResponse.ok) {
+              const stripeResult = await stripeResponse.json();
+              
+              // If Stripe account was created, update user with Stripe account ID
+              if (stripeResult.accountId && !stripeResult.existingAccount) {
+                try {
+                  const updateResponse = await fetch("/api/user", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                      userId, 
+                      stripeAccountId: stripeResult.accountId,
+                      stripeAccountStatus: stripeResult.accountStatus || 'created'
+                    }),
+                  });
+                  
+                  if (!updateResponse.ok) {
+                    console.error("Błąd podczas aktualizacji użytkownika z Stripe ID");
+                  }
+                } catch (updateError) {
+                  console.error("Błąd aktualizacji użytkownika:", updateError);
+                }
+              }
+              
+              // Redirect to Stripe onboarding if URL is available
+              if (stripeResult.onboardingUrl) {
+                toast.success("Przekierowujemy Cię do konfiguracji konta płatności...");
+                window.location.href = stripeResult.onboardingUrl;
+                return;
+              }
+            } else {
+              const stripeError = await stripeResponse.json();
+              console.error("Błąd Stripe:", stripeError);
+              throw new Error("Stripe account creation failed");
+            }
+            
+            // Fallback if Stripe setup fails
+            toast.error("Błąd podczas konfiguracji konta płatności. Możesz to zrobić później w panelu nauczyciela.");
+            router.push("/teacher/courses");
+          } catch (stripeError) {
+            console.error("Błąd konfiguracji Stripe:", stripeError);
+            toast.error("Błąd podczas konfiguracji konta płatności. Możesz to zrobić później w panelu nauczyciela.");
+            router.push("/teacher/courses");
+          }
+        } else if (selectedRole === "teacher") {
           router.push("/teacher/courses");
-        }else{
+        } else {
           router.push("/");
         }
         router.refresh();
@@ -265,9 +338,20 @@ export default function RegisterPage() {
                 <span className="ml-2 text-sm text-gray-700">
                   {selectedRole === "student"
                     ? "Akceptuję regulamin platformy Ecurs"
-                    : "Akceptuję regulamin i warunki płatności"}
+                    : "Akceptuję regulamin, warunki płatności i wyrażam zgodę na rejestrację w systemie płatności Stripe"}
                 </span>
               </label>
+              
+              {selectedRole === "teacher" && (
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-xs text-blue-700 font-medium">ℹ️ Następny krok:</p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Po kliknięciu &quot;Kontynuuj&quot; zostaniesz przekierowany na bezpieczną stronę Stripe w celu konfiguracji konta płatności. 
+                    Po zakończeniu procesu automatycznie wrócisz na platformę Ecurs.
+                  </p>
+                </div>
+              )}
+              
               <button
                 onClick={handleSignUp}
                 disabled={isLoading || !isSignedIn || !acceptTerms}
@@ -283,7 +367,7 @@ export default function RegisterPage() {
               >
                 {isLoading ? (
                   <Loader2 className="mx-auto animate-spin" size={24} />
-                ) : selectedRole === "student" ? "Zarejestruj się jako uczeń" : "Zarejestruj się jako nauczyciel"}
+                ) : selectedRole === "student" ? "Zarejestruj się jako uczeń" : "Kontynuuj (następny krok: konfiguracja płatności)"}
               </button>
             </div>
           )}

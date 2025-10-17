@@ -62,6 +62,12 @@ export async function POST(
             select: {
                 title: true,
                 imageId: true,
+                author: {
+                    select: {
+                        stripeAccountId: true,
+                        stripeOnboardingComplete: true
+                    }
+                },
                 courses: {
                     select: {
                         courseId: true
@@ -72,6 +78,37 @@ export async function POST(
         if (!eduPath) {
             console.error("Educational Path not found for id:", educationalPathId);
             return new NextResponse("Educational Path not found", { status: 404 });
+        }
+
+        const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+            apiVersion: "2025-05-28.basil",
+        });
+
+        // Check if teacher has completed Stripe onboarding
+        if (!eduPath.author?.stripeAccountId || !eduPath.author?.stripeOnboardingComplete) {
+            console.error(`Teacher payment account not configured for educational path ${educationalPathId}. StripeAccountId: ${eduPath.author?.stripeAccountId}, OnboardingComplete: ${eduPath.author?.stripeOnboardingComplete}`);
+            return new NextResponse("Autor ścieżki edukacyjnej nie ma skonfigurowanego konta płatności. Płatność została anulowana.", { 
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        // Verify that the Stripe account is still active
+        try {
+            const teacherAccount = await stripeClient.accounts.retrieve(eduPath.author.stripeAccountId);
+            if (!teacherAccount.charges_enabled || !teacherAccount.payouts_enabled) {
+                console.error(`Teacher Stripe account ${eduPath.author.stripeAccountId} is not fully enabled. Charges: ${teacherAccount.charges_enabled}, Payouts: ${teacherAccount.payouts_enabled}`);
+                return new NextResponse("Konto płatności autora ścieżki edukacyjnej nie jest aktywne. Płatność została anulowana.", { 
+                    status: 400,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+        } catch (stripeError) {
+            console.error(`Failed to verify teacher Stripe account ${eduPath.author.stripeAccountId}:`, stripeError);
+            return new NextResponse("Nie można zweryfikować konta płatności autora. Płatność została anulowana.", { 
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
         // Fetch price from EducationalPathPrice
         const price = await db.educationalPathPrice.findUnique({
@@ -114,9 +151,6 @@ export async function POST(
                 }
             }
         }
-        const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-            apiVersion: "2025-05-28.basil",
-        });
 
         let stripeCustomerId = user.stripeCustomers[0]?.stripeCustomerId || null;
         if (!stripeCustomerId) {
@@ -218,9 +252,13 @@ export async function POST(
                     discount: discount.toString(),
                     mode: "subscription",
                     type: paymentType,
+                    teacherAccountId: eduPath.author.stripeAccountId,
                 },
                 subscription_data: {
                     trial_period_days: trialPeriodDays,
+                    transfer_data: {
+                        destination: eduPath.author.stripeAccountId,
+                    },
                     metadata: {
                         userEducationalPathId: userEducationalPath.id.toString(),
                         educationalPathId: educationalPathId,
@@ -230,6 +268,7 @@ export async function POST(
                         discount: discount.toString(),
                         mode: "subscription",
                         type: paymentType,
+                        teacherAccountId: eduPath.author.stripeAccountId,
                     }
                 },
             });
@@ -264,8 +303,12 @@ export async function POST(
                     discount: discount.toString(),
                     mode: "payment",
                     type: paymentType,
+                    teacherAccountId: eduPath.author.stripeAccountId,
                 },
                 payment_intent_data: {
+                    transfer_data: {
+                        destination: eduPath.author.stripeAccountId,
+                    },
                     metadata: {
                         userEducationalPathId: userEducationalPath.id.toString(),
                         educationalPathId: educationalPathId,
@@ -274,6 +317,7 @@ export async function POST(
                         promoCode: promoCode,
                         discount: discount.toString(),
                         type: paymentType,
+                        teacherAccountId: eduPath.author.stripeAccountId,
                     }
                 },
             });

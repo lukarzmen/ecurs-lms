@@ -83,6 +83,33 @@ export async function POST(req: Request) {
             baseData.invoiceId = invoiceData.id;
             baseData.amount = invoiceData.total;
             baseData.currency = invoiceData.currency;
+            
+            // Add subscription data from invoice if available
+            if (invoiceData.subscription && !baseData.subscriptionId) {
+                baseData.subscriptionId = invoiceData.subscription;
+                baseData.isRecurring = true;
+            }
+            
+            // Add period information from invoice
+            if (invoiceData.period_start) {
+                baseData.currentPeriodStart = new Date(invoiceData.period_start * 1000);
+            }
+            if (invoiceData.period_end) {
+                baseData.currentPeriodEnd = new Date(invoiceData.period_end * 1000);
+            }
+        }
+
+        // Add checkout session specific data
+        if (stripeObject.object === 'checkout.session') {
+            baseData.paymentStatus = stripeObject.payment_status;
+            baseData.amount = stripeObject.amount_total;
+            baseData.customerEmail = stripeObject.customer_email || stripeObject.customer_details?.email;
+            
+            // Add subscription data from session if available
+            if (stripeObject.subscription && !baseData.subscriptionId) {
+                baseData.subscriptionId = stripeObject.subscription;
+                baseData.isRecurring = true;
+            }
         }
 
         return baseData;
@@ -153,9 +180,39 @@ export async function POST(req: Request) {
             },
         });
     }
-    async function createCoursePurchase(userCourseId: number, paymentId: string) {
+    async function createCoursePurchase(userCourseId: number, paymentId: string, eventData?: any) {
+        const baseData = {
+            userCourseId,
+            paymentId,
+            purchaseDate: new Date(),
+        };
+
+        // If eventData is provided, extract additional Stripe data
+        if (eventData) {
+            const stripeData = extractPaymentData(eventData, event.type);
+            Object.assign(baseData, {
+                eventType: stripeData.eventType,
+                amount: stripeData.amount ? stripeData.amount / 100 : null, // Convert from cents
+                currency: stripeData.currency?.toUpperCase(),
+                paymentStatus: stripeData.paymentStatus,
+                paymentMethod: stripeData.paymentMethod,
+                subscriptionId: stripeData.subscriptionId,
+                isRecurring: stripeData.isRecurring || false,
+                subscriptionStatus: stripeData.subscriptionStatus,
+                currentPeriodStart: stripeData.currentPeriodStart,
+                currentPeriodEnd: stripeData.currentPeriodEnd,
+                trialStart: stripeData.trialStart,
+                trialEnd: stripeData.trialEnd,
+                customerEmail: stripeData.customerEmail,
+                invoiceId: stripeData.invoiceId,
+                receiptUrl: stripeData.receiptUrl,
+                metadata: stripeData.metadata,
+                stripeCustomerId: stripeData.stripeCustomerId,
+            });
+        }
+
         await db.userCoursePurchase.create({
-            data: { userCourseId, paymentId, purchaseDate: new Date() },
+            data: baseData,
         });
     }
 
@@ -208,9 +265,40 @@ export async function POST(req: Request) {
             },
         });
     }
-    async function createEduPathPurchase(appUserId: number, educationalPathId: number, paymentId: string) {
+    async function createEduPathPurchase(appUserId: number, educationalPathId: number, paymentId: string, eventData?: any) {
+        const baseData = {
+            userId: appUserId,
+            educationalPathId,
+            paymentId,
+            purchaseDate: new Date(),
+        };
+
+        // If eventData is provided, extract additional Stripe data
+        if (eventData) {
+            const stripeData = extractPaymentData(eventData, event.type);
+            Object.assign(baseData, {
+                eventType: stripeData.eventType,
+                amount: stripeData.amount ? stripeData.amount / 100 : null, // Convert from cents
+                currency: stripeData.currency?.toUpperCase(),
+                paymentStatus: stripeData.paymentStatus,
+                paymentMethod: stripeData.paymentMethod,
+                subscriptionId: stripeData.subscriptionId,
+                isRecurring: stripeData.isRecurring || false,
+                subscriptionStatus: stripeData.subscriptionStatus,
+                currentPeriodStart: stripeData.currentPeriodStart,
+                currentPeriodEnd: stripeData.currentPeriodEnd,
+                trialStart: stripeData.trialStart,
+                trialEnd: stripeData.trialEnd,
+                customerEmail: stripeData.customerEmail,
+                invoiceId: stripeData.invoiceId,
+                receiptUrl: stripeData.receiptUrl,
+                metadata: stripeData.metadata,
+                stripeCustomerId: stripeData.stripeCustomerId,
+            });
+        }
+
         await db.educationalPathPurchase.create({
-            data: { userId: appUserId, educationalPathId, paymentId, purchaseDate: new Date() },
+            data: baseData,
         });
     }
 
@@ -304,9 +392,8 @@ export async function POST(req: Request) {
                     }
                     await upsertEduPath(userEducationalPathId, appUserId, educationalPathId, 1);
                     
-                    // Create enhanced purchase record
-                    const paymentData = extractPaymentData(paymentIntent, event.type);
-                    await createEnhancedEduPathPurchase(appUserId, educationalPathId, paymentData);
+                    // Create purchase record with detailed payment info
+                    await createEduPathPurchase(appUserId, educationalPathId, paymentIntent.id, paymentIntent);
                     
                     return NextResponse.json({ success: true }, { status: 200 });
                 } else {
@@ -331,7 +418,7 @@ export async function POST(req: Request) {
                                         const sUserCourseId = subMeta.userCourseId;
                                         if (sUserId && sCourseId && sUserCourseId) {
                                             await upsertCourse(Number(sUserCourseId), Number(sUserId), Number(sCourseId), 1);
-                                            await createCoursePurchase(Number(sUserCourseId), paymentIntent.id);
+                                            await createCoursePurchase(Number(sUserCourseId), paymentIntent.id, paymentIntent);
                                             return NextResponse.json({ success: true }, { status: 200 });
                                         } else {
                                             logError("PI_SUCCEEDED_MISSING_SUB_META", { eventId: event.id, paymentIntentId: paymentIntent.id, subMeta });
@@ -352,9 +439,8 @@ export async function POST(req: Request) {
                     }
                     await upsertCourse(Number(userCourseId), Number(appUserId), Number(courseId), 1);
                     
-                    // Create enhanced purchase record
-                    const paymentData = extractPaymentData(paymentIntent, event.type);
-                    await createEnhancedCoursePurchase(Number(userCourseId), paymentData);
+                    // Create purchase record with detailed payment info
+                    await createCoursePurchase(Number(userCourseId), paymentIntent.id, paymentIntent);
                     
                     return NextResponse.json({ success: true }, { status: 200 });
                 }
@@ -386,7 +472,7 @@ export async function POST(req: Request) {
                         return new NextResponse("Missing educational path metadata", { status: 400 });
                     }
                     await upsertEduPath(userEducationalPathId, appUserId, educationalPathId, 1);
-                    await createEduPathPurchase(appUserId, educationalPathId, session.id);
+                    await createEduPathPurchase(appUserId, educationalPathId, session.id, session);
                     return NextResponse.json({ success: true }, { status: 200 });
                 } else {
                     // Course subscription logic
@@ -424,7 +510,7 @@ export async function POST(req: Request) {
                         } catch (err) {
                             logError("CHECKOUT_COMPLETED_PI_META_UPDATE_FAIL", { eventId: event.id, sessionId: session.id, error: String(err) });
                         }
-                        await createCoursePurchase(Number(userCourseId), session.id);
+                        await createCoursePurchase(Number(userCourseId), session.id, session);
                         return NextResponse.json({ success: true }, { status: 200 });
                     } catch (err) {
                         logError("CHECKOUT_COMPLETED_HANDLER_ERROR", { eventId: event.id, error: String(err) });
@@ -461,7 +547,7 @@ export async function POST(req: Request) {
                         return new NextResponse("Missing educational path metadata", { status: 400 });
                     }
                     await upsertEduPath(userEducationalPathId, appUserId, educationalPathId, 1);
-                    await createEduPathPurchase(appUserId, educationalPathId, (invoice as any)['payment_intent'] as string);
+                    await createEduPathPurchase(appUserId, educationalPathId, (invoice as any)['payment_intent'] as string, invoice);
                     return NextResponse.json({ success: true }, { status: 200 });
                 } else {
                     // Course subscription logic
@@ -473,7 +559,7 @@ export async function POST(req: Request) {
                         return new NextResponse("Missing metadata", { status: 400 });
                     }
                     await upsertCourse(Number(userCourseId), Number(appUserId), Number(courseId), 1);
-                    await createCoursePurchase(Number(userCourseId), (invoice as any)['payment_intent'] as string);
+                    await createCoursePurchase(Number(userCourseId), (invoice as any)['payment_intent'] as string, invoice);
                     return NextResponse.json({ success: true }, { status: 200 });
                 }
             }
