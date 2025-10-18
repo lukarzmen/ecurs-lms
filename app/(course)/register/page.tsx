@@ -240,8 +240,15 @@ const TEACHER_TERMS = (
   </div>
 );
 
-type RegistrationStep = "role-selection" | "terms-acceptance" | "user-creation" | "stripe-setup" | "completed";
-type LoadingState = "idle" | "creating-user" | "creating-stripe-account" | "redirecting-to-stripe" | "updating-user";
+type RegistrationStep = "role-selection" | "business-type-selection" | "terms-acceptance" | "user-creation" | "stripe-setup" | "completed";
+type LoadingState = "idle" | "creating-user" | "updating-business-type" | "creating-stripe-account" | "redirecting-to-stripe" | "updating-user";
+
+interface BusinessTypeData {
+  businessType: "individual" | "company";
+  companyName?: string;
+  taxId?: string;
+  requiresVatInvoices?: boolean;
+}
 
 export default function RegisterPage() {
   const { isSignedIn, userId, sessionId } = useAuth();
@@ -250,16 +257,23 @@ export default function RegisterPage() {
   const [currentStep, setCurrentStep] = useState<RegistrationStep>("role-selection");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedRole, setSelectedRole] = useState<null | "student" | "teacher">(null);
+  const [businessData, setBusinessData] = useState<BusinessTypeData>({
+    businessType: "individual",
+    companyName: "",
+    taxId: "",
+    requiresVatInvoices: false
+  });
   const [registrationError, setRegistrationError] = useState<string | null>(null);
   const router = useRouter();
 
   const getStepNumber = (step: RegistrationStep): number => {
     const stepMap = {
       "role-selection": 1,
-      "terms-acceptance": 2,
-      "user-creation": 3,
-      "stripe-setup": 4,
-      "completed": 5
+      "business-type-selection": 2,
+      "terms-acceptance": 3,
+      "user-creation": 4,
+      "stripe-setup": 5,
+      "completed": 6
     };
     return stepMap[step];
   };
@@ -268,6 +282,7 @@ export default function RegisterPage() {
     const messages = {
       "idle": "",
       "creating-user": "Tworzenie konta użytkownika...",
+      "updating-business-type": "Zapisywanie typu działalności...",
       "creating-stripe-account": "Przygotowywanie konta płatności...",
       "redirecting-to-stripe": "Przekierowywanie do Stripe...",
       "updating-user": "Aktualizowanie danych użytkownika..."
@@ -279,7 +294,7 @@ export default function RegisterPage() {
     if (!selectedRole || currentStep === "role-selection") return null;
     
     const steps = selectedRole === "teacher" 
-      ? ["Wybór roli", "Akceptacja regulaminu", "Tworzenie konta", "Konfiguracja płatności", "Zakończone"]
+      ? ["Wybór roli", "Typ działalności", "Akceptacja regulaminu", "Tworzenie konta", "Konfiguracja płatności", "Zakończone"]
       : ["Wybór roli", "Akceptacja regulaminu", "Tworzenie konta", "Zakończone"];
     
     const currentStepNumber = getStepNumber(currentStep);
@@ -441,10 +456,56 @@ export default function RegisterPage() {
 
   const handleRoleSelection = (role: "student" | "teacher") => {
     setSelectedRole(role);
-    setCurrentStep("terms-acceptance");
+    if (role === "teacher") {
+      setCurrentStep("business-type-selection");
+    } else {
+      setCurrentStep("terms-acceptance");
+    }
     setAcceptTerms(false);
     setRegistrationError(null);
     setLoadingState("idle");
+  };
+
+  const handleBusinessTypeSelection = async () => {
+    if (!isSignedIn) {
+      setRegistrationError("Zaloguj się, aby kontynuować");
+      return;
+    }
+
+    if (businessData.businessType === "company" && (!businessData.companyName || !businessData.taxId)) {
+      setRegistrationError("Dla firmy wymagana jest nazwa firmy i NIP");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setLoadingState("updating-business-type");
+      setRegistrationError(null);
+
+      const response = await fetch("/api/user/business-type", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(businessData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Nie udało się zapisać typu działalności");
+      }
+
+      setCurrentStep("terms-acceptance");
+    } catch (error) {
+      console.error("Business type selection error:", error);
+      setRegistrationError(error instanceof Error ? error.message : "Błąd podczas zapisywania typu działalności");
+    } finally {
+      setIsLoading(false);
+      setLoadingState("idle");
+    }
+  };
+
+  const handleBackToBusinessType = () => {
+    setCurrentStep("business-type-selection");
+    setAcceptTerms(false);
+    setRegistrationError(null);
   };
 
   const handleBackToRoleSelection = () => {
@@ -513,6 +574,139 @@ export default function RegisterPage() {
                 </button>
               </div>
             </div>
+          ) : currentStep === "business-type-selection" ? (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="flex items-center gap-2 text-lg font-semibold text-blue-600">
+                  👨‍🏫 Typ działalności
+                </span>
+                <button
+                  onClick={handleBackToRoleSelection}
+                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  disabled={isLoading}
+                >
+                  ← Zmień rolę
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-md font-semibold text-gray-700">Wybierz typ swojej działalności:</h3>
+                
+                <div className="space-y-3">
+                  <label className="flex items-start space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input
+                      type="radio"
+                      name="businessType"
+                      value="individual"
+                      checked={businessData.businessType === "individual"}
+                      onChange={(e) => setBusinessData(prev => ({ 
+                        ...prev, 
+                        businessType: e.target.value as "individual" | "company",
+                        companyName: "",
+                        taxId: "",
+                        requiresVatInvoices: false
+                      }))}
+                      className="mt-1"
+                      disabled={isLoading}
+                    />
+                    <div>
+                      <div className="font-medium text-gray-700">🧑‍💼 Osoba fizyczna (JDG)</div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        Prowadzisz kursy jako osoba fizyczna prowadząca działalność gospodarczą
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input
+                      type="radio"
+                      name="businessType"
+                      value="company"
+                      checked={businessData.businessType === "company"}
+                      onChange={(e) => setBusinessData(prev => ({ 
+                        ...prev, 
+                        businessType: e.target.value as "individual" | "company" 
+                      }))}
+                      className="mt-1"
+                      disabled={isLoading}
+                    />
+                    <div>
+                      <div className="font-medium text-gray-700">🏢 Firma (spółka)</div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        Prowadzisz kursy jako firma (sp. z o.o., S.A., itp.) - wymagane faktury VAT
+                      </div>
+                    </div>
+                  </label>
+                </div>
+
+                {businessData.businessType === "company" && (
+                  <div className="mt-4 space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-medium text-blue-800">Dane firmy:</h4>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nazwa firmy *
+                      </label>
+                      <input
+                        type="text"
+                        value={businessData.companyName || ""}
+                        onChange={(e) => setBusinessData(prev => ({ ...prev, companyName: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="np. Przykładowa Sp. z o.o."
+                        disabled={isLoading}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        NIP *
+                      </label>
+                      <input
+                        type="text"
+                        value={businessData.taxId || ""}
+                        onChange={(e) => setBusinessData(prev => ({ ...prev, taxId: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="np. 1234567890"
+                        disabled={isLoading}
+                      />
+                    </div>
+
+                    <label className="flex items-start space-x-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={businessData.requiresVatInvoices || false}
+                        onChange={(e) => setBusinessData(prev => ({ ...prev, requiresVatInvoices: e.target.checked }))}
+                        className="mt-1"
+                        disabled={isLoading}
+                      />
+                      <div className="text-sm">
+                        <div className="font-medium text-gray-700">Wymagam wystawiania faktur VAT</div>
+                        <div className="text-gray-600">Będę wystawiać faktury VAT swoim uczniom</div>
+                      </div>
+                    </label>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleBusinessTypeSelection}
+                  disabled={isLoading || (businessData.businessType === "company" && (!businessData.companyName || !businessData.taxId))}
+                  className={`w-full py-3 px-8 rounded-lg font-medium text-white text-lg transition-all
+                    ${isLoading || (businessData.businessType === "company" && (!businessData.companyName || !businessData.taxId))
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg"
+                    }`}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <Loader2 className="animate-spin" size={20} />
+                      <span>Zapisywanie...</span>
+                    </div>
+                  ) : (
+                    "Kontynuuj do akceptacji regulaminu"
+                  )}
+                </button>
+              </div>
+            </div>
           ) : (
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -521,11 +715,11 @@ export default function RegisterPage() {
                 </span>
                 <button
                   className="text-xs text-gray-500 underline hover:text-orange-700 transition disabled:opacity-50"
-                  onClick={handleBackToRoleSelection}
+                  onClick={selectedRole === "teacher" ? handleBackToBusinessType : handleBackToRoleSelection}
                   type="button"
                   disabled={isLoading}
                 >
-                  Wróć do wyboru roli
+                  {selectedRole === "teacher" ? "← Wróć do typu działalności" : "Wróć do wyboru roli"}
                 </button>
               </div>
               {selectedRole === "student" ? STUDENT_TERMS : TEACHER_TERMS}

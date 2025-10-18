@@ -158,5 +158,5 @@ export async function GET(req: Request): Promise<NextResponse<DashboardCoursesRe
         courses: allCoursesDetails,
         finishedCount: finishedCount,
         unfinishedCount: unfinishedCount
-    }, { status: 200 });
+}, { status: 200 });
 }

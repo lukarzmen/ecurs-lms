@@ -1,19 +1,22 @@
+import { SignedIn } from "@clerk/nextjs";
 import Footer from "./_components/footer";
 import Navbar from "./_components/navbar";
 import { Sidebar } from "./_components/sidebar";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="h-[80px] md:pl-56 fixed inset-y-0 w-full z-50">
-        <Navbar />
+    <SignedIn>
+      <div className="min-h-screen flex flex-col">
+        <div className="h-[80px] md:pl-56 fixed inset-y-0 w-full z-50">
+          <Navbar />
+        </div>
+        <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-50">
+          <Sidebar />
+        </div>
+        <main className="pt-16 h-full md:pl-56 flex-1">{children}</main>
+        <Footer />
       </div>
-      <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-50">
-        <Sidebar />
-      </div>
-      <main className="pt-16 h-full md:pl-56 flex-1">{children}</main>
-      <Footer />
-    </div>
+    </SignedIn>
   );
 };
 

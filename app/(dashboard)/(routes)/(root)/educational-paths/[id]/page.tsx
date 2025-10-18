@@ -18,7 +18,6 @@ export default async function EducationalPathPage({ params }: { params: Promise<
     if (!data || data.error) {
         return redirect('/');
     }
-    console.log(data);
     // Statystyki kursów w ścieżce
     const totalCourses = data.courses.length;
     // Zakładamy, że kurs ma pole isCompleted (jeśli nie, domyślnie false)

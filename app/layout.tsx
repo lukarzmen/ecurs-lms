@@ -43,14 +43,30 @@ export default function RootLayout({
       <html lang="pl-PL">
         <body className={inter.className}>
         <SignedIn>
+          <ConfettiProvider/>
+          <ToastProvider />
+          
         </SignedIn>
         <SignedOut>
-          Odśwież stronę, aby zalogować się ponownie.
+          <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+            <div className="bg-white p-8 rounded-lg shadow-md text-center">
+              <h2 className="text-2xl font-bold mb-4 text-gray-800">Wylogowano</h2>
+              <p className="text-gray-600 mb-6">
+                Odśwież stronę, aby zalogować się ponownie.
+              </p>
+              <div className="space-y-3">
+                <p className="text-sm text-gray-500">
+                  Naciśnij F5 lub Ctrl+R aby odświeżyć stronę
+                </p>
+                <noscript>
+                  <meta httpEquiv="refresh" content="0" />
+                </noscript>
+              </div>
+            </div>
+          </div>
           <RedirectToSignIn />
         </SignedOut>
-        <ConfettiProvider/>
-        <ToastProvider />
-        {children}
+          {children}
         </body>
       </html>
     </ClerkProvider>

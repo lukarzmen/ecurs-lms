@@ -12,7 +12,7 @@ import { toast } from "react-hot-toast";
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import React from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { PromoCodesForm } from "./_components/promo-codes-form";
 import { useParams } from "next/navigation";
 
@@ -140,7 +140,13 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
     }
   };
 
-  if (loading || !path) return <div className="p-6">Ładowanie...</div>;
+  if (loading || !path) return (
+    <div className="p-6">
+      <div className="flex justify-center items-center mt-8">
+        <Loader2 className="animate-spin text-orange-700" size={32} />
+      </div>
+    </div>
+  );
 
   return (
     <div className="p-6">

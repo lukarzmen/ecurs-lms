@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { XCircle, ArrowLeft, CreditCard } from "lucide-react";
 import toast from "react-hot-toast";
 
-export default function OnboardingCancelledPage() {
+function OnboardingCancelledContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -101,5 +101,20 @@ export default function OnboardingCancelledPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function OnboardingCancelledPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-white p-4">
+        <div className="max-w-md mx-auto text-center p-8 space-y-6 bg-white rounded-xl shadow-lg border border-red-100">
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-red-600 border-t-transparent mx-auto"></div>
+          <p className="text-gray-600">Ładowanie...</p>
+        </div>
+      </div>
+    }>
+      <OnboardingCancelledContent />
+    </Suspense>
   );
 }

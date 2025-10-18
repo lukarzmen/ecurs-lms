@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle, Trash2, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
 
@@ -68,7 +68,9 @@ const EducationalPathsPage = () => {
         </div>
       </div>
       {loading ? (
-        <div>Ładowanie...</div>
+        <div className="flex justify-center items-center mt-8">
+          <Loader2 className="animate-spin text-orange-700" size={32} />
+        </div>
       ) : paths.length === 0 ? (
         <div className="text-gray-500">Brak ścieżek edukacyjnych.</div>
       ) : (

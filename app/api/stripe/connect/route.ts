@@ -90,16 +90,25 @@ export async function POST(req: Request) {
         // For localhost development, don't include business_profile URL as Stripe doesn't accept localhost
         const isLocalhost = businessUrl.includes('localhost') || businessUrl.includes('127.0.0.1');
         
+        // Użyj typu działalności z bazy danych użytkownika
+        const businessType = user.businessType || 'individual';
+        
         const accountData: any = {
             type: 'express',
             country: 'PL', // Poland
             email: email,
-            business_type: 'individual',
+            business_type: businessType,
             capabilities: {
                 card_payments: { requested: true },
                 transfers: { requested: true },
             },
         };
+
+        // Dla firm dodaj dodatkowe capabilities związane z fakturowaniem VAT
+        if (businessType === 'company' && user.requiresVatInvoices) {
+            accountData.capabilities.tax_reporting_us_1099_misc = { requested: true };
+            accountData.capabilities.tax_reporting_us_1099_k = { requested: true };
+        }
 
         // Only add business_profile with URL for production (non-localhost) environments
         if (!isLocalhost) {
