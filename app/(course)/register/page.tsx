@@ -10,7 +10,7 @@ const TERMS_EFFECTIVE_DATE = "18.10.2025";
 const TERMS_LAST_UPDATE = "18.10.2025";
 
 const STUDENT_TERMS = (
-  <div className="text-left max-h-64 overflow-y-auto px-2 py-2 bg-orange-50 rounded-lg border border-orange-200 shadow-inner text-sm leading-relaxed space-y-2">
+  <div className="text-left max-h-48 sm:max-h-64 overflow-y-auto px-2 py-2 bg-orange-50 rounded-lg border border-orange-200 shadow-inner text-xs sm:text-sm leading-relaxed space-y-2">
     <h2 className="text-lg font-bold text-orange-700 mb-2">📜 Warunki uczestnictwa użytkownika w platformie Ecurs</h2>
     <p className="text-xs text-gray-500 mb-2">
       Obowiązuje od: {TERMS_EFFECTIVE_DATE} &nbsp;|&nbsp; Ostatnia aktualizacja: {TERMS_LAST_UPDATE}
@@ -97,7 +97,7 @@ const STUDENT_TERMS = (
 );
 
 const TEACHER_TERMS = (
-  <div className="text-left max-h-64 overflow-y-auto px-2 py-2 bg-blue-50 rounded-lg border border-blue-200 shadow-inner text-sm leading-relaxed space-y-2">
+  <div className="text-left max-h-48 sm:max-h-64 overflow-y-auto px-2 py-2 bg-blue-50 rounded-lg border border-blue-200 shadow-inner text-xs sm:text-sm leading-relaxed space-y-2">
     <h2 className="text-lg font-bold text-blue-700 mb-2">📜 Warunki uczestnictwa nauczyciela w platformie Ecurs</h2>
     <p className="text-xs text-gray-500 mb-2">
       Obowiązuje od: {TERMS_EFFECTIVE_DATE} &nbsp;|&nbsp; Ostatnia aktualizacja: {TERMS_LAST_UPDATE}
@@ -530,13 +530,13 @@ export default function RegisterPage() {
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-white p-4">
-      <div className="flex flex-col items-center max-w-lg mx-auto text-center p-6 space-y-6 bg-white rounded-xl shadow-lg border border-orange-100">
-        <h1 className="text-3xl font-bold text-orange-700">Witamy w Ecurs!</h1>
-        <p className="text-gray-600">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-white p-2 sm:p-4">
+      <div className="flex flex-col items-center w-full max-w-lg mx-auto text-center p-4 sm:p-6 space-y-4 sm:space-y-6 bg-white rounded-lg sm:rounded-xl shadow-lg border border-orange-100">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-700">Witamy w Ecurs!</h1>
+        <p className="text-sm sm:text-base text-gray-600 px-2">
           Dołącz do naszej platformy edukacyjnej, aby uzyskać dostęp do wszystkich kursów, zasobów i spersonalizowanych doświadczeń edukacyjnych.
         </p>
-        <div className="w-16 h-1 bg-orange-500 mx-auto my-2 rounded"></div>
+        <div className="w-12 sm:w-16 h-1 bg-orange-500 mx-auto my-2 rounded"></div>
         
         <ProgressIndicator currentStep={currentStep} selectedRole={selectedRole} />
         
@@ -557,16 +557,16 @@ export default function RegisterPage() {
           {!selectedRole ? (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-gray-700 mb-2">Wybierz swoją rolę:</h2>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3 sm:gap-4">
                 <button
-                  className="w-full py-3 px-8 rounded-lg font-medium text-white text-lg bg-orange-600 hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-orange-600 hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => handleRoleSelection("student")}
                   disabled={isLoading}
                 >
                   👩‍🎓 Uczniem
                 </button>
                 <button
-                  className="w-full py-3 px-8 rounded-lg font-medium text-white text-lg bg-blue-600 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-blue-600 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => handleRoleSelection("teacher")}
                   disabled={isLoading}
                 >
@@ -577,12 +577,12 @@ export default function RegisterPage() {
           ) : currentStep === "business-type-selection" ? (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <span className="flex items-center gap-2 text-lg font-semibold text-blue-600">
+                <span className="flex items-center gap-2 text-base sm:text-lg font-semibold text-blue-600">
                   👨‍🏫 Typ działalności
                 </span>
                 <button
                   onClick={handleBackToRoleSelection}
-                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  className="text-xs sm:text-sm text-gray-500 hover:text-gray-700 transition-colors"
                   disabled={isLoading}
                 >
                   ← Zmień rolę
@@ -593,7 +593,7 @@ export default function RegisterPage() {
                 <h3 className="text-md font-semibold text-gray-700">Wybierz typ swojej działalności:</h3>
                 
                 <div className="space-y-3">
-                  <label className="flex items-start space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <label className="flex items-start space-x-3 p-3 sm:p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                     <input
                       type="radio"
                       name="businessType"
@@ -610,14 +610,14 @@ export default function RegisterPage() {
                       disabled={isLoading}
                     />
                     <div>
-                      <div className="font-medium text-gray-700">🧑‍💼 Osoba fizyczna (JDG)</div>
-                      <div className="text-sm text-gray-600 mt-1">
+                      <div className="font-medium text-gray-700 text-sm sm:text-base">🧑‍💼 Osoba fizyczna (JDG)</div>
+                      <div className="text-xs sm:text-sm text-gray-600 mt-1">
                         Prowadzisz kursy jako osoba fizyczna prowadząca działalność gospodarczą
                       </div>
                     </div>
                   </label>
 
-                  <label className="flex items-start space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <label className="flex items-start space-x-3 p-3 sm:p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                     <input
                       type="radio"
                       name="businessType"
@@ -631,8 +631,8 @@ export default function RegisterPage() {
                       disabled={isLoading}
                     />
                     <div>
-                      <div className="font-medium text-gray-700">🏢 Firma (spółka)</div>
-                      <div className="text-sm text-gray-600 mt-1">
+                      <div className="font-medium text-gray-700 text-sm sm:text-base">🏢 Firma (spółka)</div>
+                      <div className="text-xs sm:text-sm text-gray-600 mt-1">
                         Prowadzisz kursy jako firma (sp. z o.o., S.A., itp.) - wymagane faktury VAT
                       </div>
                     </div>
@@ -690,7 +690,7 @@ export default function RegisterPage() {
                 <button
                   onClick={handleBusinessTypeSelection}
                   disabled={isLoading || (businessData.businessType === "company" && (!businessData.companyName || !businessData.taxId))}
-                  className={`w-full py-3 px-8 rounded-lg font-medium text-white text-lg transition-all
+                  className={`w-full py-3 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg transition-all
                     ${isLoading || (businessData.businessType === "company" && (!businessData.companyName || !businessData.taxId))
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg"
@@ -710,7 +710,7 @@ export default function RegisterPage() {
           ) : (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <span className={`flex items-center gap-2 text-lg font-semibold ${selectedRole === "student" ? "text-orange-600" : "text-blue-600"}`}>
+                <span className={`flex items-center gap-2 text-base sm:text-lg font-semibold ${selectedRole === "student" ? "text-orange-600" : "text-blue-600"}`}>
                   {selectedRole === "student" ? "👩‍🎓 Rejestracja ucznia" : "👨‍🏫 Rejestracja nauczyciela"}
                 </span>
                 <button
@@ -719,7 +719,7 @@ export default function RegisterPage() {
                   type="button"
                   disabled={isLoading}
                 >
-                  {selectedRole === "teacher" ? "← Wróć do typu działalności" : "Wróć do wyboru roli"}
+                  {selectedRole === "teacher" ? "← Wróć" : "← Wróć"}
                 </button>
               </div>
               {selectedRole === "student" ? STUDENT_TERMS : TEACHER_TERMS}
@@ -756,7 +756,7 @@ export default function RegisterPage() {
               <button
                 onClick={handleSignUp}
                 disabled={isLoading || !isSignedIn || !acceptTerms}
-                className={`w-full mt-4 py-3 px-8 rounded-lg font-medium text-white text-lg transition-all
+                className={`w-full mt-4 py-3 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg transition-all
                   ${selectedRole === "student"
                     ? (isLoading || !isSignedIn || !acceptTerms
                         ? "bg-gray-400 cursor-not-allowed"
