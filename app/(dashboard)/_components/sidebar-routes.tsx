@@ -16,6 +16,11 @@ const guestRoutes = [
     href: "/search",
   },
   {
+    icon: BarChart,
+    label: "Mój postęp",
+    href: "/analytics",
+  },
+  {
     icon: Settings,
     label: "Ustawienia",
     href: "/settings",
