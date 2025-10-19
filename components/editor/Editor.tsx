@@ -114,6 +114,7 @@ export default function Editor( {
 
   const [isLinkEditMode, setIsLinkEditMode] = useState<boolean>(false);
   const [editor] = useLexicalComposerContext();
+  const [activeEditor, setActiveEditor] = useState(editor);
   const completedCalled = React.useRef(false);
 
   useEffect(() => {
@@ -177,7 +178,11 @@ export default function Editor( {
   return (
     <>
       {showTableOfContents && <TableOfContentsPlugin />}
-      {isEditable && <ToolbarPlugin setIsLinkEditMode={setIsLinkEditMode} onSave={handleSave} />}
+      {isEditable && <ToolbarPlugin 
+              editor={editor}
+          activeEditor={activeEditor}
+          setActiveEditor={setActiveEditor}
+      setIsLinkEditMode={setIsLinkEditMode} onSave={handleSave} />}
       <div
         className={`editor-container plain-text`}>
         {isMaxLength && <MaxLengthPlugin maxLength={30} />}

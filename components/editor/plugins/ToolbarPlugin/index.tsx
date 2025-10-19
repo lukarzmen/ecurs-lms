@@ -7,10 +7,14 @@
  */
 
 import {
+  normalizeCodeLanguage as normalizeCodeLanguageShiki,
+} from '@lexical/code-shiki';
+import {
   $createCodeNode,
   $isCodeNode,
   CODE_LANGUAGE_FRIENDLY_NAME_MAP,
-  CODE_LANGUAGE_MAP,
+  normalizeCodeLanguage as normalizeCodeLanguagePrism,
+  getCodeLanguageOptions as getCodeLanguageOptionsPrism,
   getLanguageFriendlyName,
 } from '@lexical/code';
 import { $isLinkNode, TOGGLE_LINK_COMMAND } from '@lexical/link';
@@ -22,7 +26,6 @@ import {
   ListNode,
 } from '@lexical/list';
 import { INSERT_EMBED_COMMAND } from '@lexical/react/LexicalAutoEmbedPlugin';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $isDecoratorBlockNode } from '@lexical/react/LexicalDecoratorBlockNode';
 import {
   $createHeadingNode,
@@ -46,11 +49,13 @@ import {
   mergeRegister,
 } from '@lexical/utils';
 import {
+  $addUpdateTag,
   $createParagraphNode,
   $getNodeByKey,
   $getRoot,
   $getSelection,
   $isElementNode,
+  $isNodeSelection,
   $isParagraphNode,
   $isRangeSelection,
   $isRootOrShadowRoot,
@@ -60,16 +65,21 @@ import {
   CLEAR_EDITOR_COMMAND,
   COMMAND_PRIORITY_CRITICAL,
   COMMAND_PRIORITY_NORMAL,
+  CommandPayloadType,
   ElementFormatType,
   FORMAT_ELEMENT_COMMAND,
   FORMAT_TEXT_COMMAND,
   INDENT_CONTENT_COMMAND,
   KEY_MODIFIER_COMMAND,
+  LexicalCommand,
   LexicalEditor,
+  LexicalNode,
   NodeKey,
   OUTDENT_CONTENT_COMMAND,
   REDO_COMMAND,
   SELECTION_CHANGE_COMMAND,
+  SKIP_DOM_SELECTION_TAG,
+  TextFormatType,
   UNDO_COMMAND,
 } from 'lexical';
 import { Dispatch, useCallback, useEffect, useState } from 'react';
@@ -87,7 +97,9 @@ import { INSERT_COLLAPSIBLE_COMMAND } from '../CollapsiblePlugin';
 import { InsertEquationDialog } from '../EquationsPlugin';
 import { INSERT_EXCALIDRAW_COMMAND } from '../ExcalidrawPlugin';
 import {
+  INSERT_IMAGE_COMMAND,
   InsertImageDialog,
+  InsertImagePayload,
 } from '../ImagesPlugin';
 import { InsertInlineImageDialog } from '../InlineImagePlugin';
 import InsertLayoutDialog from '../LayoutPlugin/InsertLayoutDialog';
@@ -105,12 +117,36 @@ import { LanguageSelectorDialog } from '../TranslationPlugin';
 import { TextToVoiceDialog } from '../../TextToVoicePlugin';
 import { InsertSelectAnswerDialog } from '../SelectAnswerPlugin/InsertSelectAnswerDialog';
 import { DoTaskDialog } from '../TaskPlugin/DoTaskDialog';
-import toast from 'react-hot-toast';
-import { SerializedDocument } from '@lexical/file';
-import { SaveResult } from '../ActionsPlugin';
 import { Button } from '@/components/ui/button';
 import { InsertTodoDialog } from '../TodoPlugin/InsertTodoDialog';
-
+import { useToolbarState } from '../../context/ToolbarContext';
+import { useSettings } from '../../context/SettingsContext';
+import { isKeyboardInput } from '../../utils/focusUtils';
+const CODE_LANGUAGE_OPTIONS_PRISM: [string, string][] =
+  getCodeLanguageOptionsPrism().filter((option) =>
+    [
+      'c',
+      'clike',
+      'cpp',
+      'css',
+      'html',
+      'java',
+      'js',
+      'javascript',
+      'markdown',
+      'objc',
+      'objective-c',
+      'plain',
+      'powershell',
+      'py',
+      'python',
+      'rust',
+      'sql',
+      'swift',
+      'typescript',
+      'xml',
+    ].includes(option[0]),
+  );
 const blockTypeToBlockName = {
   bullet: 'Lista punktowana',
   check: 'Lista kontrolna',
@@ -532,42 +568,47 @@ function ElementFormatDropdown({
 }
 
 export default function ToolbarPlugin({
+  editor,
+  activeEditor,
+  setActiveEditor,
   setIsLinkEditMode,
   onSave
 }: {
+  editor: LexicalEditor;
+  activeEditor: LexicalEditor;
+  setActiveEditor: Dispatch<LexicalEditor>;
   setIsLinkEditMode: Dispatch<boolean>;
   onSave: () => void;
 }): JSX.Element {
-  const [editor] = useLexicalComposerContext();
-  const [activeEditor, setActiveEditor] = useState(editor);
-  const [blockType, setBlockType] =
-    useState<keyof typeof blockTypeToBlockName>('paragraph');
-  const [rootType, setRootType] =
-    useState<keyof typeof rootTypeToRootName>('root');
   const [selectedElementKey, setSelectedElementKey] = useState<NodeKey | null>(
     null,
   );
-  const [fontSize, setFontSize] = useState<string>('15px');
-  const [fontColor, setFontColor] = useState<string>('#000');
-  const [bgColor, setBgColor] = useState<string>('#fff');
-  const [fontFamily, setFontFamily] = useState<string>('Arial');
-  const [elementFormat, setElementFormat] = useState<ElementFormatType>('left');
-  const [isLink, setIsLink] = useState(false);
-  const [isBold, setIsBold] = useState(false);
-  const [isItalic, setIsItalic] = useState(false);
-  const [isUnderline, setIsUnderline] = useState(false);
-  const [isStrikethrough, setIsStrikethrough] = useState(false);
-  const [isSubscript, setIsSubscript] = useState(false);
-  const [isSuperscript, setIsSuperscript] = useState(false);
-  const [isCode, setIsCode] = useState(false);
-  const [canUndo, setCanUndo] = useState(false);
-  const [canRedo, setCanRedo] = useState(false);
+
   const [modal, showModal] = useModal();
-  const [isRTL, setIsRTL] = useState(false);
-  const [codeLanguage, setCodeLanguage] = useState<string>('');
   const [isEditable, setIsEditable] = useState(() => editor.isEditable());
-  const [isEditorEmpty, setIsEditorEmpty] = useState(true);
-  const [isImageCaption, setIsImageCaption] = useState(false);
+  const {toolbarState, updateToolbarState} = useToolbarState();
+
+  const dispatchToolbarCommand = <T extends LexicalCommand<unknown>>(
+    command: T,
+    payload: CommandPayloadType<T> | undefined = undefined,
+    skipRefocus: boolean = false,
+  ) => {
+    activeEditor.update(() => {
+      if (skipRefocus) {
+        $addUpdateTag(SKIP_DOM_SELECTION_TAG);
+      }
+
+      // Re-assert on Type so that payload can have a default param
+      activeEditor.dispatchCommand(command, payload as CommandPayloadType<T>);
+    });
+  };
+
+  const dispatchFormatTextCommand = (
+    payload: TextFormatType,
+    skipRefocus: boolean = false,
+  ) => dispatchToolbarCommand(FORMAT_TEXT_COMMAND, payload, skipRefocus);
+
+
   useEffect(() => {
     return editor.registerUpdateListener(
       () => {
@@ -591,52 +632,93 @@ export default function ToolbarPlugin({
       },
     );
   }, [editor, isEditable]);
+  const $handleHeadingNode = useCallback(
+    (selectedElement: LexicalNode) => {
+      const type = $isHeadingNode(selectedElement)
+        ? selectedElement.getTag()
+        : selectedElement.getType();
+
+      if (type in blockTypeToBlockName) {
+        updateToolbarState(
+          'blockType',
+          type as keyof typeof blockTypeToBlockName,
+        );
+      }
+    },
+    [updateToolbarState],
+  );
+  function $findTopLevelElement(node: LexicalNode) {
+  let topLevelElement =
+    node.getKey() === 'root'
+      ? node
+      : $findMatchingParent(node, (e) => {
+          const parent = e.getParent();
+          return parent !== null && $isRootOrShadowRoot(parent);
+        });
+
+  if (topLevelElement === null) {
+    topLevelElement = node.getTopLevelElementOrThrow();
+  }
+  return topLevelElement;
+}
+  const {
+    settings: {isCodeHighlighted, isCodeShiki},
+  } = useSettings();
+  
+  const $handleCodeNode = useCallback(
+    (element: LexicalNode) => {
+      if ($isCodeNode(element)) {
+        const language = element.getLanguage();
+        updateToolbarState(
+          'codeLanguage',
+          language
+            ? (isCodeHighlighted &&
+                (isCodeShiki
+                  ? normalizeCodeLanguageShiki(language)
+                  : normalizeCodeLanguagePrism(language))) ||
+                language
+            : '',
+        );
+        const theme = element.getTheme();
+        updateToolbarState('codeTheme', theme || '');
+        return;
+      }
+    },
+    [updateToolbarState, isCodeHighlighted, isCodeShiki],
+  );
   const $updateToolbar = useCallback(() => {
     const selection = $getSelection();
     if ($isRangeSelection(selection)) {
       if (activeEditor !== editor && $isEditorIsNestedEditor(activeEditor)) {
         const rootElement = activeEditor.getRootElement();
-        setIsImageCaption(
+        updateToolbarState(
+          'isImageCaption',
           !!rootElement?.parentElement?.classList.contains(
             'image-caption-container',
           ),
         );
       } else {
-        setIsImageCaption(false);
+        updateToolbarState('isImageCaption', false);
       }
 
       const anchorNode = selection.anchor.getNode();
-      let element =
-        anchorNode.getKey() === 'root'
-          ? anchorNode
-          : $findMatchingParent(anchorNode, (e) => {
-            const parent = e.getParent();
-            return parent !== null && $isRootOrShadowRoot(parent);
-          });
-
-      if (element === null) {
-        element = anchorNode.getTopLevelElementOrThrow();
-      }
-
+      const element = $findTopLevelElement(anchorNode);
       const elementKey = element.getKey();
       const elementDOM = activeEditor.getElementByKey(elementKey);
 
-      setIsRTL($isParentElementRTL(selection));
+      updateToolbarState('isRTL', $isParentElementRTL(selection));
 
       // Update links
       const node = getSelectedNode(selection);
       const parent = node.getParent();
-      if ($isLinkNode(parent) || $isLinkNode(node)) {
-        setIsLink(true);
-      } else {
-        setIsLink(false);
-      }
+      const isLink = $isLinkNode(parent) || $isLinkNode(node);
+      updateToolbarState('isLink', isLink);
 
       const tableNode = $findMatchingParent(node, $isTableNode);
       if ($isTableNode(tableNode)) {
-        setRootType('table');
+        updateToolbarState('rootType', 'table');
       } else {
-        setRootType('root');
+        updateToolbarState('rootType', 'root');
       }
 
       if (elementDOM !== null) {
@@ -649,36 +731,29 @@ export default function ToolbarPlugin({
           const type = parentList
             ? parentList.getListType()
             : element.getListType();
-          setBlockType(type);
+
+          updateToolbarState('blockType', type);
         } else {
-          const type = $isHeadingNode(element)
-            ? element.getTag()
-            : element.getType();
-          if (type in blockTypeToBlockName) {
-            setBlockType(type as keyof typeof blockTypeToBlockName);
-          }
-          if ($isCodeNode(element)) {
-            const language =
-              element.getLanguage() as keyof typeof CODE_LANGUAGE_MAP;
-            setCodeLanguage(
-              language ? CODE_LANGUAGE_MAP[language] || language : '',
-            );
-            return;
-          }
+          $handleHeadingNode(element);
+          $handleCodeNode(element);
         }
       }
+
       // Handle buttons
-      setFontColor(
+      updateToolbarState(
+        'fontColor',
         $getSelectionStyleValueForProperty(selection, 'color', '#000'),
       );
-      setBgColor(
+      updateToolbarState(
+        'bgColor',
         $getSelectionStyleValueForProperty(
           selection,
           'background-color',
           '#fff',
         ),
       );
-      setFontFamily(
+      updateToolbarState(
+        'fontFamily',
         $getSelectionStyleValueForProperty(selection, 'font-family', 'Arial'),
       );
       let matchingParent;
@@ -691,7 +766,8 @@ export default function ToolbarPlugin({
       }
 
       // If matchingParent is a valid node, pass it's format type
-      setElementFormat(
+      updateToolbarState(
+        'elementFormat',
         $isElementNode(matchingParent)
           ? matchingParent.getFormatType()
           : $isElementNode(node)
@@ -701,21 +777,57 @@ export default function ToolbarPlugin({
     }
     if ($isRangeSelection(selection) || $isTableSelection(selection)) {
       // Update text format
-      setIsBold(selection.hasFormat('bold'));
-      setIsItalic(selection.hasFormat('italic'));
-      setIsUnderline(selection.hasFormat('underline'));
-      setIsStrikethrough(selection.hasFormat('strikethrough'));
-      setIsSubscript(selection.hasFormat('subscript'));
-      setIsSuperscript(selection.hasFormat('superscript'));
-      setIsCode(selection.hasFormat('code'));
-
-      setFontSize(
+      updateToolbarState('isBold', selection.hasFormat('bold'));
+      updateToolbarState('isItalic', selection.hasFormat('italic'));
+      updateToolbarState('isUnderline', selection.hasFormat('underline'));
+      updateToolbarState(
+        'isStrikethrough',
+        selection.hasFormat('strikethrough'),
+      );
+      updateToolbarState('isSubscript', selection.hasFormat('subscript'));
+      updateToolbarState('isSuperscript', selection.hasFormat('superscript'));
+      updateToolbarState('isHighlight', selection.hasFormat('highlight'));
+      updateToolbarState('isCode', selection.hasFormat('code'));
+      updateToolbarState(
+        'fontSize',
         $getSelectionStyleValueForProperty(selection, 'font-size', '15px'),
       );
+      updateToolbarState('isLowercase', selection.hasFormat('lowercase'));
+      updateToolbarState('isUppercase', selection.hasFormat('uppercase'));
+      updateToolbarState('isCapitalize', selection.hasFormat('capitalize'));
     }
-  }, [activeEditor, editor]);
-
-  useEffect(() => {
+    if ($isNodeSelection(selection)) {
+      const nodes = selection.getNodes();
+      for (const selectedNode of nodes) {
+        const parentList = $getNearestNodeOfType<ListNode>(
+          selectedNode,
+          ListNode,
+        );
+        if (parentList) {
+          const type = parentList.getListType();
+          updateToolbarState('blockType', type);
+        } else {
+          const selectedElement = $findTopLevelElement(selectedNode);
+          $handleHeadingNode(selectedElement);
+          $handleCodeNode(selectedElement);
+          // Update elementFormat for node selection (e.g., images)
+          if ($isElementNode(selectedElement)) {
+            updateToolbarState(
+              'elementFormat',
+              selectedElement.getFormatType(),
+            );
+          }
+        }
+      }
+    }
+  }, [
+    activeEditor,
+    editor,
+    updateToolbarState,
+    $handleHeadingNode,
+    $handleCodeNode,
+  ]);
+   useEffect(() => {
     return editor.registerCommand(
       SELECTION_CHANGE_COMMAND,
       (_payload, newEditor) => {
@@ -725,12 +837,15 @@ export default function ToolbarPlugin({
       },
       COMMAND_PRIORITY_CRITICAL,
     );
-  }, [editor, $updateToolbar]);
+  }, [editor, $updateToolbar, setActiveEditor]);
 
   useEffect(() => {
-    activeEditor.getEditorState().read(() => {
-      $updateToolbar();
-    });
+    activeEditor.getEditorState().read(
+      () => {
+        $updateToolbar();
+      },
+      {editor: activeEditor},
+    );
   }, [activeEditor, $updateToolbar]);
 
   useEffect(() => {
@@ -738,15 +853,18 @@ export default function ToolbarPlugin({
       editor.registerEditableListener((editable) => {
         setIsEditable(editable);
       }),
-      activeEditor.registerUpdateListener(({ editorState }) => {
-        editorState.read(() => {
-          $updateToolbar();
-        });
+      activeEditor.registerUpdateListener(({editorState}) => {
+        editorState.read(
+          () => {
+            $updateToolbar();
+          },
+          {editor: activeEditor},
+        );
       }),
       activeEditor.registerCommand<boolean>(
         CAN_UNDO_COMMAND,
         (payload) => {
-          setCanUndo(payload);
+          updateToolbarState('canUndo', payload);
           return false;
         },
         COMMAND_PRIORITY_CRITICAL,
@@ -754,126 +872,56 @@ export default function ToolbarPlugin({
       activeEditor.registerCommand<boolean>(
         CAN_REDO_COMMAND,
         (payload) => {
-          setCanRedo(payload);
+          updateToolbarState('canRedo', payload);
           return false;
         },
         COMMAND_PRIORITY_CRITICAL,
       ),
     );
-  }, [$updateToolbar, activeEditor, editor]);
-
-  useEffect(() => {
-    return activeEditor.registerCommand(
-      KEY_MODIFIER_COMMAND,
-      (payload) => {
-        const event: KeyboardEvent = payload;
-        const { code, ctrlKey, metaKey } = event;
-
-        if (code === 'KeyK' && (ctrlKey || metaKey)) {
-          event.preventDefault();
-          let url: string | null;
-          if (!isLink) {
-            setIsLinkEditMode(true);
-            url = sanitizeUrl('https://');
-          } else {
-            setIsLinkEditMode(false);
-            url = null;
-          }
-          return activeEditor.dispatchCommand(TOGGLE_LINK_COMMAND, url);
-        }
-        return false;
-      },
-      COMMAND_PRIORITY_NORMAL,
-    );
-  }, [activeEditor, isLink, setIsLinkEditMode]);
+  }, [$updateToolbar, activeEditor, editor, updateToolbarState]);
 
   const applyStyleText = useCallback(
-    (styles: Record<string, string>, skipHistoryStack?: boolean) => {
+    (
+      styles: Record<string, string>,
+      skipHistoryStack?: boolean,
+      skipRefocus: boolean = false,
+    ) => {
       activeEditor.update(
         () => {
+          if (skipRefocus) {
+            $addUpdateTag(SKIP_DOM_SELECTION_TAG);
+          }
           const selection = $getSelection();
           if (selection !== null) {
             $patchStyleText(selection, styles);
           }
         },
-        skipHistoryStack ? { tag: 'historic' } : {},
+        skipHistoryStack ? {tag: HISTORIC_TAG} : {},
       );
     },
     [activeEditor],
   );
 
-  const clearFormatting = useCallback(() => {
-    activeEditor.update(() => {
-      const selection = $getSelection();
-      if ($isRangeSelection(selection) || $isTableSelection(selection)) {
-        const anchor = selection.anchor;
-        const focus = selection.focus;
-        const nodes = selection.getNodes();
-        const extractedNodes = selection.extract();
-
-        if (anchor.key === focus.key && anchor.offset === focus.offset) {
-          return;
-        }
-
-        nodes.forEach((node, idx) => {
-          // We split the first and last node by the selection
-          // So that we don't format unselected text inside those nodes
-          if ($isTextNode(node)) {
-            // Use a separate variable to ensure TS does not lose the refinement
-            let textNode = node;
-            if (idx === 0 && anchor.offset !== 0) {
-              textNode = textNode.splitText(anchor.offset)[1] || textNode;
-            }
-            if (idx === nodes.length - 1) {
-              textNode = textNode.splitText(focus.offset)[0] || textNode;
-            }
-            /**
-             * If the selected text has one format applied
-             * selecting a portion of the text, could
-             * clear the format to the wrong portion of the text.
-             *
-             * The cleared text is based on the length of the selected text.
-             */
-            // We need this in case the selected text only has one format
-            const extractedTextNode = extractedNodes[0];
-            if (nodes.length === 1 && $isTextNode(extractedTextNode)) {
-              textNode = extractedTextNode;
-            }
-
-            if (textNode.__style !== '') {
-              textNode.setStyle('');
-            }
-            if (textNode.__format !== 0) {
-              textNode.setFormat(0);
-              $getNearestBlockElementAncestorOrThrow(textNode).setFormat('');
-            }
-            node = textNode;
-          } else if ($isHeadingNode(node) || $isQuoteNode(node)) {
-            node.replace($createParagraphNode(), true);
-          } else if ($isDecoratorBlockNode(node)) {
-            node.setFormat('');
-          }
-        });
-      }
-    });
-  }, [activeEditor]);
-
   const onFontColorSelect = useCallback(
-    (value: string, skipHistoryStack: boolean) => {
-      applyStyleText({ color: value }, skipHistoryStack);
+    (value: string, skipHistoryStack: boolean, skipRefocus: boolean) => {
+      applyStyleText({color: value}, skipHistoryStack, skipRefocus);
     },
     [applyStyleText],
   );
 
   const onBgColorSelect = useCallback(
-    (value: string, skipHistoryStack: boolean) => {
-      applyStyleText({ 'background-color': value }, skipHistoryStack);
+    (value: string, skipHistoryStack: boolean, skipRefocus: boolean) => {
+      applyStyleText(
+        {'background-color': value},
+        skipHistoryStack,
+        skipRefocus,
+      );
     },
     [applyStyleText],
   );
 
   const insertLink = useCallback(() => {
-    if (!isLink) {
+    if (!toolbarState.isLink) {
       setIsLinkEditMode(true);
       activeEditor.dispatchCommand(
         TOGGLE_LINK_COMMAND,
@@ -883,11 +931,12 @@ export default function ToolbarPlugin({
       setIsLinkEditMode(false);
       activeEditor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
     }
-  }, [activeEditor, isLink, setIsLinkEditMode]);
+  }, [activeEditor, setIsLinkEditMode, toolbarState.isLink]);
 
   const onCodeLanguageSelect = useCallback(
     (value: string) => {
       activeEditor.update(() => {
+        $addUpdateTag(SKIP_SELECTION_FOCUS_TAG);
         if (selectedElementKey !== null) {
           const node = $getNodeByKey(selectedElementKey);
           if ($isCodeNode(node)) {
@@ -898,72 +947,88 @@ export default function ToolbarPlugin({
     },
     [activeEditor, selectedElementKey],
   );
+  const onCodeThemeSelect = useCallback(
+    (value: string) => {
+      activeEditor.update(() => {
+        if (selectedElementKey !== null) {
+          const node = $getNodeByKey(selectedElementKey);
+          if ($isCodeNode(node)) {
+            node.setTheme(value);
+          }
+        }
+      });
+    },
+    [activeEditor, selectedElementKey],
+  );
+  const insertGifOnClick = (payload: InsertImagePayload) => {
+    activeEditor.dispatchCommand(INSERT_IMAGE_COMMAND, payload);
+  };
 
-  const canViewerSeeInsertDropdown = !isImageCaption;
-  const canViewerSeeInsertCodeButton = !isImageCaption;
+  const canViewerSeeInsertDropdown = !toolbarState.isImageCaption;
+  const canViewerSeeInsertCodeButton = !toolbarState.isImageCaption;
   return (
     <div className="toolbar">
-      <button
-        disabled={!isEditable}
-        onClick={() => onSave()}
-        title='Zapisz'
+ <button
+        disabled={!toolbarState.canUndo || !isEditable}
+        onClick={(e) =>
+          dispatchToolbarCommand(UNDO_COMMAND, undefined, isKeyboardInput(e))
+        }
+        title={IS_APPLE ? 'Undo (⌘Z)' : 'Undo (Ctrl+Z)'}
         type="button"
         className="toolbar-item spaced"
-        aria-label="Zapisz">
-        <i className="format save" />
-      </button>
-      <button
-        disabled={!canUndo || !isEditable}
-        onClick={() => {
-          activeEditor.dispatchCommand(UNDO_COMMAND, undefined);
-        }}
-        title={IS_APPLE ? 'Cofnij (⌘Z)' : 'Cofnij (Ctrl+Z)'}
-        type="button"
-        className="toolbar-item spaced"
-        aria-label="Cofnij">
+        aria-label="Undo">
         <i className="format undo" />
       </button>
       <button
-        disabled={!canRedo || !isEditable}
-        onClick={() => {
-          activeEditor.dispatchCommand(REDO_COMMAND, undefined);
-        }}
-        title={IS_APPLE ? 'Ponów (⇧⌘Z)' : 'Ponów (Ctrl+Y)'}
+        disabled={!toolbarState.canRedo || !isEditable}
+        onClick={(e) =>
+          dispatchToolbarCommand(REDO_COMMAND, undefined, isKeyboardInput(e))
+        }
+        title={IS_APPLE ? 'Redo (⇧⌘Z)' : 'Redo (Ctrl+Y)'}
         type="button"
         className="toolbar-item"
-        aria-label="Ponów">
+        aria-label="Redo">
         <i className="format redo" />
       </button>
       <Divider />
-      {blockType in blockTypeToBlockName && activeEditor === editor && (
+        {toolbarState.blockType in blockTypeToBlockName &&
+        activeEditor === editor && (
+          <>
+            <BlockFormatDropDown
+              disabled={!isEditable}
+              blockType={toolbarState.blockType}
+              rootType={toolbarState.rootType}
+              editor={activeEditor}
+            />
+            <Divider />
+          </>
+        )}
+      {toolbarState.blockType === 'code' && isCodeHighlighted ? (
         <>
-          <BlockFormatDropDown
-            disabled={!isEditable}
-            blockType={blockType}
-            rootType={rootType}
-            editor={activeEditor}
-          />
-          <Divider />
-        </>
-      )}
-      {blockType === 'code' ? (
-        <DropDown
-          disabled={!isEditable}
-          buttonClassName="toolbar-item code-language"
-          buttonLabel={getLanguageFriendlyName(codeLanguage)}
-          buttonAriaLabel="Wybierz język">
-          {CODE_LANGUAGE_OPTIONS.map(([value, name]) => {
-            return (
-              <DropDownItem
-                className={`item ${dropDownActiveClass(
-                  value === codeLanguage,
-                )}`}
-                onClick={() => onCodeLanguageSelect(value)}
-                key={value}>
-                <span className="text">{name}</span>
-              </DropDownItem>
-            );
-          })}
+          {!isCodeShiki && (
+            <DropDown
+              disabled={!isEditable}
+              buttonClassName="toolbar-item code-language"
+              buttonLabel={
+                (CODE_LANGUAGE_OPTIONS_PRISM.find(
+                  (opt) =>
+                    opt[0] ===
+                    normalizeCodeLanguagePrism(toolbarState.codeLanguage),
+                ) || ['', ''])[1]
+              }
+              buttonAriaLabel="Select language">
+              {CODE_LANGUAGE_OPTIONS_PRISM.map(([value, name]) => {
+                return (
+                  <DropDownItem
+                    className={`item ${dropDownActiveClass(
+                      value === toolbarState.codeLanguage,
+                    )}`}
+                    onClick={() => onCodeLanguageSelect(value)}
+                    key={value}>
+                    <span className="text">{name}</span>
+                  </DropDownItem>
+                );
+              })}
         </DropDown>
       ) : (
         <>

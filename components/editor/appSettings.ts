@@ -14,6 +14,8 @@ export const DEFAULT_SETTINGS = {
   isCollab: false,
   isMaxLength: false,
   isRichText: true,
+  isCodeHighlighted: true,
+  isCodeShiki: false,
   measureTypingPerf: false,
   shouldPreserveNewLinesInMarkdown: false,
   shouldUseLexicalContextMenu: false,
