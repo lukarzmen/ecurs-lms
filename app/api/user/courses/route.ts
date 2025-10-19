@@ -123,8 +123,6 @@ export async function GET(req: Request): Promise<NextResponse<DashboardCoursesRe
             );
         }
 
-        console.log(`[GET /user/courses] Course ID ${course.id}: Total Modules: ${totalModules}, All Finished: ${allModulesFinished}`);
-
         // Prepare the detailed course object for the response
         const { modules, ...courseBaseData } = course;
         const closeCourseCompleted = allModulesFinished && state === 1;

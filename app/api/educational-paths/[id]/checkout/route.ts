@@ -45,13 +45,14 @@ export async function POST(
         });
 
         if (!userEducationalPath) {
+            // Create userEducationalPath with state 0 (unpaid) - will be updated to 1 by webhook upon successful payment
             userEducationalPath = await db.userEducationalPath.create({
                 data: {
                     userId: user.id,
                     educationalPathId: Number(educationalPathId),
                     updatedAt: new Date(),
                     createdAt: new Date(),
-                    state: 1,
+                    state: 0, // 0 = unpaid, 1 = paid/enrolled
                 }
             });
         }
@@ -115,7 +116,8 @@ export async function POST(
             where: { educationalPathId: Number(educationalPathId) },
         });
 
-        // Create or update UserCourse for all courses in the path
+        // Create or update UserCourse for all courses in the path with state 0 initially
+        // These will be updated to state 1 by webhook upon successful payment
         if (eduPath.courses && eduPath.courses.length > 0) {
             for (const course of eduPath.courses) {
                 const userCourse = await db.userCourse.findUnique({
@@ -133,10 +135,11 @@ export async function POST(
                             updatedAt: new Date(),
                             createdAt: new Date(),
                             courseId: course.courseId,
-                            state: 1, // active
+                            state: 0, // 0 = unpaid, will be set to 1 by webhook upon successful payment
                         }
                     });
-                } else if (userCourse.state !== 1) {
+                } else if (userCourse.state !== 0) {
+                    // Reset to unpaid state since this is a new payment attempt
                     await db.userCourse.update({
                         where: {
                             userId_courseId: {
@@ -145,7 +148,8 @@ export async function POST(
                             }
                         },
                         data: {
-                            state: 1,
+                            state: 0,
+                            updatedAt: new Date(),
                         }
                     });
                 }

@@ -6,12 +6,54 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import CourseInfoCard from "@/components/ui/course-card";
 
-export default async function EducationalPathPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EducationalPathPage({ 
+    params, 
+    searchParams 
+}: { 
+    params: Promise<{ id: string }>;
+    searchParams?: Promise<{ success?: string; canceled?: string; }>;
+}) {
     const userAuth = await auth();
     const awaitedParams = await params;
+    const awaitedSearchParams = searchParams ? await searchParams : {};
+    
     if (!userAuth) {
         return redirect(`/sign-in?redirectUrl=${encodeURIComponent(`/educational-paths/${awaitedParams.id}`)}`);
     }
+
+    // Handle payment status from Stripe redirect
+    if (awaitedSearchParams.canceled === '1') {
+        // Payment was canceled, ensure userEducationalPath state is set to 0
+        try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/educational-paths/${awaitedParams.id}/payment-status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'canceled' })
+            });
+        } catch (error) {
+            console.error('Failed to update payment status:', error);
+        }
+        
+        // Redirect to enrollment page with canceled status
+        return redirect(`/educational-paths/${awaitedParams.id}/enroll?canceled=1`);
+    }
+
+    if (awaitedSearchParams.success === '0') {
+        // Payment failed, ensure userEducationalPath state is set to 0
+        try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/educational-paths/${awaitedParams.id}/payment-status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'failed' })
+            });
+        } catch (error) {
+            console.error('Failed to update payment status:', error);
+        }
+        
+        // Redirect to enrollment page with failed status
+        return redirect(`/educational-paths/${awaitedParams.id}/enroll?failed=1`);
+    }
+
     // Fetch educational path details and courses for user
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/educational-paths/${awaitedParams.id}/user?userId=${userAuth.userId}`);
     const data = await res.json();

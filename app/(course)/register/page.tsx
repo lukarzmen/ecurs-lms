@@ -49,7 +49,8 @@ const STUDENT_TERMS = (
     <p className="font-semibold text-gray-700 mt-2">§5. Warunki płatności</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li>Uczestnictwo w płatnych kursach wymaga zakupu dostępu do wybranego kursu według ceny podanej w marketplace.</li>
-      <li>Płatność za kurs jest jednorazowa i umożliwia dostęp do materiałów przez czas określony przez nauczyciela.</li>
+      <li>Płatność za kurs może być jednorazowa lub w formie subskrypcji, w zależności od opcji wybranej przez nauczyciela.</li>
+      <li><b>Anulowanie subskrypcji:</b> W przypadku subskrypcji, uczeń może anulować subskrypcję w dowolnym momencie przez panel ustawień. Anulowanie jest skuteczne na koniec bieżącego okresu rozliczeniowego - do tego czasu uczeń zachowuje dostęp do zakupionych materiałów.</li>
       <li>Zwroty i reklamacje są rozpatrywane indywidualnie zgodnie z polityką platformy.</li>
       <li><b>Umowa sprzedaży kursu zawierana jest bezpośrednio między uczniem a nauczycielem.</b> Platforma Ecurs pełni wyłącznie rolę pośrednika technicznego umożliwiającego zawarcie umowy.</li>
       <li><b>Płatności za kursy trafiają bezpośrednio na konto nauczyciela.</b> Platforma nie jest stroną umowy sprzedaży i nie ponosi odpowiedzialności za jej wykonanie.</li>
@@ -178,7 +179,7 @@ const TEACHER_TERMS = (
         <b>Zasady naliczania opłat:</b> W przypadku zmiany planu w trakcie trwania okresu rozliczeniowego, opłata za nową licencję zostanie naliczona proporcjonalnie do pozostałego okresu rozliczeniowego.
       </li>
       <li>
-        <b>Prawo do anulowania subskrypcji:</b> Użytkownik ma prawo do anulowania subskrypcji w dowolnym momencie bez ponoszenia dodatkowych kosztów, z wyjątkiem należności za już rozpoczęty okres rozliczeniowy.
+        <b>Prawo do anulowania subskrypcji:</b> Nauczyciel ma prawo do anulowania subskrypcji w dowolnym momencie przez panel ustawień. Anulowanie jest skuteczne na koniec bieżącego okresu rozliczeniowego - do tego czasu nauczyciel zachowuje dostęp do wszystkich funkcji platformy. Nie pobieramy dodatkowych kosztów za anulowanie.
       </li>
       <li>
         <b>Powiadomienie użytkownika:</b> Wszystkie informacje dotyczące konieczności zmiany licencji, promocji lub zmian cen będą przekazywane mailowo na adres podany przy rejestracji oraz poprzez komunikat w panelu platformy.
@@ -240,8 +241,8 @@ const TEACHER_TERMS = (
   </div>
 );
 
-type RegistrationStep = "role-selection" | "business-type-selection" | "terms-acceptance" | "user-creation" | "stripe-setup" | "completed";
-type LoadingState = "idle" | "creating-user" | "updating-business-type" | "creating-stripe-account" | "redirecting-to-stripe" | "updating-user";
+type RegistrationStep = "role-selection" | "business-type-selection" | "terms-acceptance" | "user-creation" | "stripe-setup" | "platform-subscription" | "completed";
+type LoadingState = "idle" | "creating-user" | "updating-business-type" | "creating-stripe-account" | "redirecting-to-stripe" | "updating-user" | "creating-platform-subscription";
 
 interface BusinessTypeData {
   businessType: "individual" | "company";
@@ -273,7 +274,8 @@ export default function RegisterPage() {
       "terms-acceptance": 3,
       "user-creation": 4,
       "stripe-setup": 5,
-      "completed": 6
+      "platform-subscription": 6,
+      "completed": 7
     };
     return stepMap[step];
   };
@@ -285,7 +287,8 @@ export default function RegisterPage() {
       "updating-business-type": "Zapisywanie typu działalności...",
       "creating-stripe-account": "Przygotowywanie konta płatności...",
       "redirecting-to-stripe": "Przekierowywanie do Stripe...",
-      "updating-user": "Aktualizowanie danych użytkownika..."
+      "updating-user": "Aktualizowanie danych użytkownika...",
+      "creating-platform-subscription": "Przygotowywanie subskrypcji platformy..."
     };
     return messages[state];
   };
@@ -294,7 +297,7 @@ export default function RegisterPage() {
     if (!selectedRole || currentStep === "role-selection") return null;
     
     const steps = selectedRole === "teacher" 
-      ? ["Wybór roli", "Typ działalności", "Akceptacja regulaminu", "Tworzenie konta", "Konfiguracja płatności", "Zakończone"]
+      ? ["Wybór roli", "Typ działalności", "Akceptacja regulaminu", "Tworzenie konta", "Konfiguracja płatności", "Subskrypcja platformy", "Zakończone"]
       : ["Wybór roli", "Akceptacja regulaminu", "Tworzenie konta", "Zakończone"];
     
     const currentStepNumber = getStepNumber(currentStep);
@@ -421,21 +424,23 @@ export default function RegisterPage() {
           setRegistrationError(`${stripeErrorMessage}. Możesz dokończyć konfigurację później w panelu nauczyciela.`);
           toast.error(stripeErrorMessage + ". Możesz to zrobić później w panelu nauczyciela.");
           
-          // Wait a bit then redirect to teacher panel
-          setTimeout(() => {
-            router.push("/teacher/courses");
-          }, 3000);
+          // For teachers, skip to platform subscription step if Stripe fails
+          setCurrentStep("platform-subscription");
         }
       } else {
-        // Student registration or teacher without Stripe onboarding needed
-        setCurrentStep("completed");
-        toast.success("Rejestracja zakończona sukcesem!");
-        
-        const redirectPath = selectedRole === "teacher" ? "/teacher/courses" : "/";
-        setTimeout(() => {
-          router.push(redirectPath);
-          router.refresh();
-        }, 1000);
+        // Student registration completes here
+        if (selectedRole === "student") {
+          setCurrentStep("completed");
+          toast.success("Rejestracja zakończona sukcesem!");
+          
+          setTimeout(() => {
+            router.push("/");
+            router.refresh();
+          }, 1000);
+        } else {
+          // Teacher without Stripe onboarding goes to platform subscription
+          setCurrentStep("platform-subscription");
+        }
       }
       
     } catch (error) {
@@ -448,6 +453,56 @@ export default function RegisterPage() {
       setRegistrationError(errorMessage);
       toast.error(errorMessage);
       setCurrentStep("terms-acceptance"); // Reset to previous step
+    } finally {
+      setIsLoading(false);
+      setLoadingState("idle");
+    }
+  };
+
+  const handlePlatformSubscription = async (subscriptionType: "individual" | "school") => {
+    if (!selectedRole || selectedRole !== "teacher") return;
+    
+    try {
+      setIsLoading(true);
+      setLoadingState("creating-platform-subscription");
+      
+      const response = await fetch("/api/platform-subscription", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          subscriptionType: subscriptionType
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (result.sessionUrl) {
+          toast.success("Przekierowujemy Cię do płatności za dostęp do platformy...");
+          
+          setTimeout(() => {
+            window.location.href = result.sessionUrl;
+          }, 1500);
+        } else {
+          throw new Error("Nie otrzymano linku do płatności");
+        }
+      } else {
+        const errorData = await response.text();
+        throw new Error(errorData || "Błąd podczas tworzenia subskrypcji platformy");
+      }
+    } catch (error) {
+      console.error("Platform subscription error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Błąd subskrypcji platformy";
+      setRegistrationError(errorMessage + ". Możesz skonfigurować to później w panelu nauczyciela.");
+      toast.error(errorMessage + ". Możesz to zrobić później w panelu nauczyciela.");
+      
+      // Allow user to proceed to completion
+      setCurrentStep("completed");
+      setTimeout(() => {
+        router.push("/teacher/courses");
+      }, 3000);
     } finally {
       setIsLoading(false);
       setLoadingState("idle");
@@ -704,6 +759,94 @@ export default function RegisterPage() {
                   ) : (
                     "Kontynuuj do akceptacji regulaminu"
                   )}
+                </button>
+              </div>
+            </div>
+          ) : currentStep === "platform-subscription" ? (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="flex items-center gap-2 text-base sm:text-lg font-semibold text-blue-600">
+                  💳 Subskrypcja platformy
+                </span>
+              </div>
+              
+              <div className="space-y-4">
+                <h3 className="text-md font-semibold text-gray-700">Wybierz plan dostępu do platformy:</h3>
+                <p className="text-sm text-gray-600">
+                  Wybierz plan, który najlepiej odpowiada Twoim potrzebom. Każdy plan zawiera 30-dniowy okres próbny.
+                </p>
+                
+                <div className="space-y-3">
+                  <button
+                    onClick={() => handlePlatformSubscription("individual")}
+                    disabled={isLoading}
+                    className="w-full p-4 border-2 rounded-lg hover:bg-blue-50 transition-colors text-left disabled:opacity-50 border-blue-200 hover:border-blue-300"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-medium text-gray-700 text-base">🧑‍💼 Plan Indywidualny</div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          Do 20 uczniów w zamkniętych kursach
+                        </div>
+                        <div className="text-xs text-gray-500 mt-2">
+                          • Pełny dostęp do funkcji<br/>
+                          • Tworzenie interaktywnych kursów<br/>
+                          • Podstawowe wsparcie techniczne
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-blue-600">39 zł</div>
+                        <div className="text-xs text-gray-500">miesięcznie</div>
+                        <div className="text-xs text-green-600 mt-1">30 dni GRATIS</div>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handlePlatformSubscription("school")}
+                    disabled={isLoading}
+                    className="w-full p-4 border-2 rounded-lg hover:bg-blue-50 transition-colors text-left disabled:opacity-50 border-blue-200 hover:border-blue-300"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-medium text-gray-700 text-base">🏫 Plan dla Szkół</div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          Powyżej 20 uczniów lub więcej niż 1 nauczyciel
+                        </div>
+                        <div className="text-xs text-gray-500 mt-2">
+                          • Wszystkie funkcjonalności<br/>
+                          • Nielimitowani członkowie zespołu<br/>
+                          • Pełne wsparcie techniczne
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-blue-600">1499 zł</div>
+                        <div className="text-xs text-gray-500">rocznie</div>
+                        <div className="text-xs text-green-600 mt-1">30 dni GRATIS</div>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+                
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-xs text-yellow-700">
+                    ℹ️ <strong>Okres próbny:</strong> Wszystkie plany zawierają 30-dniowy bezpłatny okres próbny. 
+                    Możesz anulować subskrypcję w każdym momencie bez dodatkowych kosztów.
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setCurrentStep("completed");
+                    toast.success("Rejestracja zakończona! Możesz skonfigurować płatność później.");
+                    setTimeout(() => {
+                      router.push("/teacher/courses");
+                    }, 2000);
+                  }}
+                  disabled={isLoading}
+                  className="w-full py-2 px-4 rounded-lg font-medium text-gray-600 text-sm border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Pomiń teraz (można dodać później w ustawieniach)
                 </button>
               </div>
             </div>

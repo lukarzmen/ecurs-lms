@@ -463,7 +463,55 @@ export async function POST(req: Request) {
             
             if (session.mode === "subscription" && session.subscription) {
                 const sessMeta = (session.metadata || {}) as any;
-                if (sessMeta.type === "educationalPath") {
+                if (sessMeta.type === "platform_subscription") {
+                    // Handle platform subscription
+                    const appUserId = Number(sessMeta.userId);
+                    const teacherSubscriptionId = Number(sessMeta.teacherSubscriptionId);
+                    const subscriptionType = sessMeta.subscriptionType;
+                    
+                    if (!appUserId || !teacherSubscriptionId) {
+                        logError("CHECKOUT_COMPLETED_PLATFORM_MISSING_META", { eventId: event.id, sessionId: session.id, sessMeta });
+                        return new NextResponse("Missing platform subscription metadata", { status: 400 });
+                    }
+
+                    try {
+                        // Get subscription details from Stripe
+                        const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2025-05-28.basil" });
+                        const subscriptionMetadata = await getSubscriptionMetadata(stripeClient, session.subscription as string);
+                        const paymentData = extractPaymentData(session, event.type, { subscription: subscriptionMetadata });
+
+                        // Update teacher platform subscription
+                        // Note: This will work after running Prisma migration
+                        await db.teacherPlatformSubscription.update({
+                            where: { id: teacherSubscriptionId },
+                            data: {
+                                paymentId: session.id,
+                                eventType: event.type,
+                                amount: paymentData.amount ? paymentData.amount / 100 : null,
+                                currency: paymentData.currency?.toUpperCase(),
+                                paymentStatus: paymentData.paymentStatus,
+                                paymentMethod: paymentData.paymentMethod,
+                                subscriptionId: session.subscription as string,
+                                isRecurring: true,
+                                subscriptionStatus: "active",
+                                currentPeriodStart: paymentData.currentPeriodStart,
+                                currentPeriodEnd: paymentData.currentPeriodEnd,
+                                trialStart: paymentData.trialStart,
+                                trialEnd: paymentData.trialEnd,
+                                customerEmail: paymentData.customerEmail,
+                                receiptUrl: paymentData.receiptUrl,
+                                metadata: paymentData.metadata,
+                                stripeCustomerId: paymentData.stripeCustomerId,
+                                updatedAt: new Date(),
+                            },
+                        });
+
+                        console.log(`[WEBHOOK] Platform subscription activated for user ${appUserId}, subscription ${session.subscription}`);
+                    } catch (err) {
+                        logError("CHECKOUT_COMPLETED_PLATFORM_ERROR", { eventId: event.id, error: String(err), appUserId, teacherSubscriptionId });
+                        return NextResponse.json({ success: false }, { status: 200 });
+                    }
+                } else if (sessMeta.type === "educationalPath") {
                     const appUserId = Number(sessMeta.userId);
                     const educationalPathId = Number(sessMeta.educationalPathId);
                     const userEducationalPathId = Number(sessMeta.userEducationalPathId || session.client_reference_id);
@@ -472,6 +520,50 @@ export async function POST(req: Request) {
                         return new NextResponse("Missing educational path metadata", { status: 400 });
                     }
                     await upsertEduPath(userEducationalPathId, appUserId, educationalPathId, 1);
+                    
+                    // Also activate all courses in the educational path
+                    try {
+                        const eduPath = await db.educationalPath.findUnique({
+                            where: { id: educationalPathId },
+                            include: {
+                                courses: {
+                                    select: { courseId: true }
+                                }
+                            }
+                        });
+                        
+                        if (eduPath?.courses) {
+                            for (const course of eduPath.courses) {
+                                await db.userCourse.upsert({
+                                    where: {
+                                        userId_courseId: {
+                                            userId: appUserId,
+                                            courseId: course.courseId,
+                                        }
+                                    },
+                                    update: { 
+                                        state: 1,
+                                        updatedAt: new Date()
+                                    },
+                                    create: {
+                                        userId: appUserId,
+                                        courseId: course.courseId,
+                                        state: 1,
+                                        createdAt: new Date(),
+                                        updatedAt: new Date(),
+                                    }
+                                });
+                            }
+                        }
+                    } catch (courseUpdateError) {
+                        logError("CHECKOUT_COMPLETED_EDUPATH_COURSE_UPDATE_ERROR", { 
+                            eventId: event.id, 
+                            sessionId: session.id, 
+                            educationalPathId, 
+                            error: String(courseUpdateError) 
+                        });
+                    }
+                    
                     await createEduPathPurchase(appUserId, educationalPathId, session.id, session);
                     return NextResponse.json({ success: true }, { status: 200 });
                 } else {
@@ -520,6 +612,112 @@ export async function POST(req: Request) {
             }
             break;
         }
+        case "checkout.session.async_payment_failed": {
+            const session = event.data.object as Stripe.Checkout.Session;
+            
+            // Log detailed failed checkout session information
+            logEventData("CHECKOUT_SESSION_ASYNC_PAYMENT_FAILED", session, {
+                amountFormatted: session.amount_total ? `${(session.amount_total / 100).toFixed(2)} ${session.currency?.toUpperCase()}` : 'N/A',
+                customerEmail: session.customer_email,
+                customerDetails: session.customer_details,
+                paymentStatus: session.payment_status,
+                subscriptionId: session.subscription,
+            });
+            
+            const sessMeta = (session.metadata || {}) as any;
+            if (sessMeta.type === "platform_subscription") {
+                // Handle failed platform subscription payment
+                const appUserId = Number(sessMeta.userId);
+                const teacherSubscriptionId = Number(sessMeta.teacherSubscriptionId);
+                
+                if (!appUserId || !teacherSubscriptionId) {
+                    logError("CHECKOUT_ASYNC_FAILED_PLATFORM_MISSING_META", { eventId: event.id, sessionId: session.id, sessMeta });
+                    return new NextResponse("Missing platform subscription metadata", { status: 400 });
+                }
+
+                try {
+                    // Note: This will work after running Prisma migration
+                    await db.teacherPlatformSubscription.update({
+                        where: { id: teacherSubscriptionId },
+                        data: {
+                            paymentStatus: "failed",
+                            subscriptionStatus: "payment_failed",
+                            updatedAt: new Date(),
+                        },
+                    });
+
+                    console.log(`[WEBHOOK] Platform subscription payment failed for user ${appUserId}`);
+                } catch (err) {
+                    logError("CHECKOUT_ASYNC_FAILED_PLATFORM_ERROR", { eventId: event.id, error: String(err) });
+                }
+            } else if (sessMeta.type === "educationalPath") {
+                const appUserId = Number(sessMeta.userId);
+                const educationalPathId = Number(sessMeta.educationalPathId);
+                const userEducationalPathId = Number(sessMeta.userEducationalPathId || session.client_reference_id);
+                if (!appUserId || !educationalPathId || !userEducationalPathId) {
+                    logError("CHECKOUT_ASYNC_FAILED_EDUPATH_MISSING_META", { eventId: event.id, sessionId: session.id, sessMeta });
+                    return new NextResponse("Missing educational path metadata", { status: 400 });
+                }
+                await upsertEduPath(userEducationalPathId, appUserId, educationalPathId, 0);
+                
+                // Also deactivate all courses in the educational path
+                try {
+                    const eduPath = await db.educationalPath.findUnique({
+                        where: { id: educationalPathId },
+                        include: {
+                            courses: {
+                                select: { courseId: true }
+                            }
+                        }
+                    });
+                    
+                    if (eduPath?.courses) {
+                        for (const course of eduPath.courses) {
+                            await db.userCourse.upsert({
+                                where: {
+                                    userId_courseId: {
+                                        userId: appUserId,
+                                        courseId: course.courseId,
+                                    }
+                                },
+                                update: { 
+                                    state: 0,
+                                    updatedAt: new Date()
+                                },
+                                create: {
+                                    userId: appUserId,
+                                    courseId: course.courseId,
+                                    state: 0,
+                                    createdAt: new Date(),
+                                    updatedAt: new Date(),
+                                }
+                            });
+                        }
+                    }
+                } catch (courseUpdateError) {
+                    logError("CHECKOUT_ASYNC_FAILED_EDUPATH_COURSE_UPDATE_ERROR", { 
+                        eventId: event.id, 
+                        sessionId: session.id, 
+                        educationalPathId, 
+                        error: String(courseUpdateError) 
+                    });
+                }
+                
+                return NextResponse.json({ success: true }, { status: 200 });
+            } else {
+                // Course logic - set state to 0 for failed payment
+                const appUserId = sessMeta.userId;
+                const courseId = sessMeta.courseId;
+                const userCourseId = sessMeta.userCourseId || session.client_reference_id;
+                if (!appUserId || !courseId || !userCourseId) {
+                    logError("CHECKOUT_ASYNC_FAILED_MISSING_META", { eventId: event.id, sessionId: session.id, sessMeta });
+                    return new NextResponse("Missing metadata", { status: 400 });
+                }
+                await upsertCourse(Number(userCourseId), Number(appUserId), Number(courseId), 0);
+                return NextResponse.json({ success: true }, { status: 200 });
+            }
+            break;
+        }
         case "invoice.paid": {
             const invoice = event.data.object as Stripe.Invoice;
             const subscriptionId = (invoice as any)['subscription'];
@@ -547,6 +745,50 @@ export async function POST(req: Request) {
                         return new NextResponse("Missing educational path metadata", { status: 400 });
                     }
                     await upsertEduPath(userEducationalPathId, appUserId, educationalPathId, 1);
+                    
+                    // Also activate all courses in the educational path
+                    try {
+                        const eduPath = await db.educationalPath.findUnique({
+                            where: { id: educationalPathId },
+                            include: {
+                                courses: {
+                                    select: { courseId: true }
+                                }
+                            }
+                        });
+                        
+                        if (eduPath?.courses) {
+                            for (const course of eduPath.courses) {
+                                await db.userCourse.upsert({
+                                    where: {
+                                        userId_courseId: {
+                                            userId: appUserId,
+                                            courseId: course.courseId,
+                                        }
+                                    },
+                                    update: { 
+                                        state: 1,
+                                        updatedAt: new Date()
+                                    },
+                                    create: {
+                                        userId: appUserId,
+                                        courseId: course.courseId,
+                                        state: 1,
+                                        createdAt: new Date(),
+                                        updatedAt: new Date(),
+                                    }
+                                });
+                            }
+                        }
+                    } catch (courseUpdateError) {
+                        logError("INVOICE_PAID_EDUPATH_COURSE_UPDATE_ERROR", { 
+                            eventId: event.id, 
+                            invoiceId: invoice.id, 
+                            educationalPathId, 
+                            error: String(courseUpdateError) 
+                        });
+                    }
+                    
                     await createEduPathPurchase(appUserId, educationalPathId, (invoice as any)['payment_intent'] as string, invoice);
                     return NextResponse.json({ success: true }, { status: 200 });
                 } else {
@@ -591,6 +833,50 @@ export async function POST(req: Request) {
                         return new NextResponse("Missing educational path metadata", { status: 400 });
                     }
                     await upsertEduPath(userEducationalPathId, appUserId, educationalPathId, 0);
+                    
+                    // Also deactivate all courses in the educational path
+                    try {
+                        const eduPath = await db.educationalPath.findUnique({
+                            where: { id: educationalPathId },
+                            include: {
+                                courses: {
+                                    select: { courseId: true }
+                                }
+                            }
+                        });
+                        
+                        if (eduPath?.courses) {
+                            for (const course of eduPath.courses) {
+                                await db.userCourse.upsert({
+                                    where: {
+                                        userId_courseId: {
+                                            userId: appUserId,
+                                            courseId: course.courseId,
+                                        }
+                                    },
+                                    update: { 
+                                        state: 0,
+                                        updatedAt: new Date()
+                                    },
+                                    create: {
+                                        userId: appUserId,
+                                        courseId: course.courseId,
+                                        state: 0,
+                                        createdAt: new Date(),
+                                        updatedAt: new Date(),
+                                    }
+                                });
+                            }
+                        }
+                    } catch (courseUpdateError) {
+                        logError("INVOICE_FAILED_EDUPATH_COURSE_UPDATE_ERROR", { 
+                            eventId: event.id, 
+                            invoiceId: invoice.id, 
+                            educationalPathId, 
+                            error: String(courseUpdateError) 
+                        });
+                    }
+                    
                     return NextResponse.json({ success: true }, { status: 200 });
                 } else {
                     // Course subscription logic (revoke)
@@ -627,6 +913,50 @@ export async function POST(req: Request) {
                         return NextResponse.json({ success: false, error: "Missing educational path metadata" }, { status: 200 });
                     }
                     await upsertEduPath(userEducationalPathId, appUserId, educationalPathId, 0);
+                    
+                    // Also deactivate all courses in the educational path
+                    try {
+                        const eduPath = await db.educationalPath.findUnique({
+                            where: { id: educationalPathId },
+                            include: {
+                                courses: {
+                                    select: { courseId: true }
+                                }
+                            }
+                        });
+                        
+                        if (eduPath?.courses) {
+                            for (const course of eduPath.courses) {
+                                await db.userCourse.upsert({
+                                    where: {
+                                        userId_courseId: {
+                                            userId: appUserId,
+                                            courseId: course.courseId,
+                                        }
+                                    },
+                                    update: { 
+                                        state: 0,
+                                        updatedAt: new Date()
+                                    },
+                                    create: {
+                                        userId: appUserId,
+                                        courseId: course.courseId,
+                                        state: 0,
+                                        createdAt: new Date(),
+                                        updatedAt: new Date(),
+                                    }
+                                });
+                            }
+                        }
+                    } catch (courseUpdateError) {
+                        logError("PAYMENT_INTENT_FAILED_EDUPATH_COURSE_UPDATE_ERROR", { 
+                            eventId: event.id, 
+                            paymentIntentId: paymentIntent.id, 
+                            educationalPathId, 
+                            error: String(courseUpdateError) 
+                        });
+                    }
+                    
                     return NextResponse.json({ success: true }, { status: 200 });
                 } else {
                     // Course payment failed logic

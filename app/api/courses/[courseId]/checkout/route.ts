@@ -44,13 +44,14 @@ export async function POST(
         });
 
         if (!userCourse) {
+            // Create userCourse with state 0 (unpaid) - will be updated to 1 by webhook upon successful payment
             userCourse = await db.userCourse.create({
                 data: {
                     userId: user.id,
                     updatedAt: new Date(),
                     createdAt: new Date(),
                     courseId: Number(courseId),
-                    state: 0,
+                    state: 0, // 0 = unpaid, 1 = paid/enrolled
                 }
             });
         }
