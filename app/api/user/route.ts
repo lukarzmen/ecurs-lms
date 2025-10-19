@@ -73,8 +73,10 @@ export async function POST(req: Request) {
     }
 
     try {
+        console.log('Attempting to fetch user from Clerk with ID:', userId);
         const clerk = await clerkClient();
         const clerkUser = await clerk.users.getUser(userId);
+        console.log('Successfully fetched user from Clerk:', clerkUser.id);
         const emails = clerkUser.emailAddresses.map((e: any) => e.emailAddress);
 
         let user = await db.user.findFirst({
@@ -131,7 +133,20 @@ export async function POST(req: Request) {
             return NextResponse.json({ created: false, updated: true, user });
         }
     } catch (error) {
-        console.error(error);
+        console.error('POST /api/user error:', error);
+        
+        // Handle Clerk-specific errors
+        if (error && typeof error === 'object' && 'clerkError' in error) {
+            console.error('Clerk error details:', {
+                status: (error as any).status,
+                clerkTraceId: (error as any).clerkTraceId,
+                errors: (error as any).errors
+            });
+            return new NextResponse("User not found or access denied", {
+                status: 404,
+            });
+        }
+        
         return new NextResponse("Internal error", {
             status: 500,
         });
