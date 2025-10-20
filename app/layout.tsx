@@ -13,6 +13,13 @@ import { plPL } from '@clerk/localizations'
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1.0,
+  maximumScale: 1.0,
+  userScalable: false,
+};
+
 export const metadata: Metadata = {
   title: "Ecurs - nowoczesna edukacja",
   description: "Ecurs to innowacyjna platforma edukacyjna, która oferuje tworzenie i uczestnictwo w interaktywnych wspieranych przez sztuczna inteligencję.",
@@ -30,7 +37,6 @@ export const metadata: Metadata = {
       },
     ]
   },
-
 };
 
 export default function RootLayout({

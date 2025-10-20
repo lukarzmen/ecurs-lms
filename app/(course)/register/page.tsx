@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -265,7 +265,22 @@ export default function RegisterPage() {
     requiresVatInvoices: false
   });
   const [registrationError, setRegistrationError] = useState<string | null>(null);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
   const router = useRouter();
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                       window.innerWidth <= 768;
+      setIsMobileDevice(isMobile);
+      console.log("Mobile device detected:", isMobile, "User agent:", navigator.userAgent);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const getStepNumber = (step: RegistrationStep): number => {
     const stepMap = {
@@ -509,7 +524,19 @@ export default function RegisterPage() {
     }
   };
 
-  const handleRoleSelection = (role: "student" | "teacher") => {
+  const touchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleRoleSelection = useCallback((role: "student" | "teacher") => {
+    console.log("Role selection clicked:", role); // Debug log for mobile testing
+    
+    // Prevent any concurrent selections
+    if (isLoading || selectedRole) return;
+    
+    // Clear any pending touch timeout
+    if (touchTimeoutRef.current) {
+      clearTimeout(touchTimeoutRef.current);
+    }
+    
     setSelectedRole(role);
     if (role === "teacher") {
       setCurrentStep("business-type-selection");
@@ -519,7 +546,37 @@ export default function RegisterPage() {
     setAcceptTerms(false);
     setRegistrationError(null);
     setLoadingState("idle");
-  };
+    
+    // Provide immediate visual feedback
+    toast.success(`Wybrano rolę: ${role === "student" ? "uczeń" : "nauczyciel"}`);
+  }, [isLoading, selectedRole]);
+
+  // Mobile-optimized touch handler
+  const createTouchHandler = useCallback((role: "student" | "teacher") => {
+    return {
+      onClick: (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isLoading && !selectedRole) {
+          handleRoleSelection(role);
+        }
+      },
+      onTouchEnd: (e: React.TouchEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isLoading && !selectedRole) {
+          // Small delay to prevent double-firing
+          touchTimeoutRef.current = setTimeout(() => {
+            handleRoleSelection(role);
+          }, 50);
+        }
+      },
+      onTouchStart: (e: React.TouchEvent) => {
+        // Prevent default to avoid ghost clicks
+        e.preventDefault();
+      }
+    };
+  }, [isLoading, selectedRole, handleRoleSelection]);
 
   const handleBusinessTypeSelection = async () => {
     if (!isSignedIn) {
@@ -585,8 +642,38 @@ export default function RegisterPage() {
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-white p-2 sm:p-4">
-      <div className="flex flex-col items-center w-full max-w-lg mx-auto text-center p-4 sm:p-6 space-y-4 sm:space-y-6 bg-white rounded-lg sm:rounded-xl shadow-lg border border-orange-100">
+    <>
+      {/* Mobile-specific styles */}
+      <style jsx>{`
+        /* Ensure proper touch behavior on mobile */
+        * {
+          -webkit-tap-highlight-color: transparent;
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          -khtml-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+        }
+        
+        /* Allow text selection for inputs and text areas */
+        input, textarea, [contenteditable] {
+          -webkit-user-select: text;
+          -khtml-user-select: text;
+          -moz-user-select: text;
+          -ms-user-select: text;
+          user-select: text;
+        }
+
+        /* Ensure proper touch targets */
+        button, [role="button"] {
+          min-height: 44px;
+          min-width: 44px;
+        }
+      `}</style>
+      
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-white p-2 sm:p-4">
+        <div className="flex flex-col items-center w-full max-w-lg mx-auto text-center p-4 sm:p-6 space-y-4 sm:space-y-6 bg-white rounded-lg sm:rounded-xl shadow-lg border border-orange-100">
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-700">Witamy w Ecurs!</h1>
         <p className="text-sm sm:text-base text-gray-600 px-2">
           Dołącz do naszej platformy edukacyjnej, aby uzyskać dostęp do wszystkich kursów, zasobów i spersonalizowanych doświadczeń edukacyjnych.
@@ -594,6 +681,16 @@ export default function RegisterPage() {
         <div className="w-12 sm:w-16 h-1 bg-orange-500 mx-auto my-2 rounded"></div>
         
         <ProgressIndicator currentStep={currentStep} selectedRole={selectedRole} />
+        
+        {/* Mobile Debug Info - Remove in production */}
+        {/* {isMobileDevice && (
+          <div className="mb-2 p-2 bg-gray-100 border border-gray-300 rounded text-xs">
+            <div>📱 Mobile Mode: {isMobileDevice ? "Yes" : "No"}</div>
+            <div>📊 Current Step: {currentStep}</div>
+            <div>👤 Selected Role: {selectedRole || "None"}</div>
+            <div>🔄 Loading: {isLoading ? "Yes" : "No"}</div>
+          </div>
+        )} */}
         
         {registrationError && <ErrorAlert error={registrationError} />}
         
@@ -613,20 +710,101 @@ export default function RegisterPage() {
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-gray-700 mb-2">Wybierz swoją rolę:</h2>
               <div className="flex flex-col gap-3 sm:gap-4">
-                <button
-                  className="w-full py-3 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-orange-600 hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => handleRoleSelection("student")}
-                  disabled={isLoading}
-                >
-                  👩‍🎓 Uczniem
-                </button>
-                <button
-                  className="w-full py-3 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-blue-600 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => handleRoleSelection("teacher")}
-                  disabled={isLoading}
-                >
-                  👨‍🏫 Nauczycielem
-                </button>
+                {isMobileDevice ? (
+                  // Mobile-optimized divs for better touch handling
+                  <>
+                    <div
+                      className="w-full py-4 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-orange-600 hover:bg-orange-700 active:bg-orange-800 transition-colors flex items-center justify-center gap-2 cursor-pointer touch-manipulation select-none"
+                      onClick={() => {
+                        console.log("Mobile div click - student");
+                        if (!isLoading && !selectedRole) {
+                          handleRoleSelection("student");
+                        }
+                      }}
+                      onTouchStart={(e) => {
+                        console.log("Mobile touch start - student");
+                        e.currentTarget.style.backgroundColor = '#ea580c';
+                      }}
+                      onTouchEnd={(e) => {
+                        console.log("Mobile touch end - student");
+                        e.currentTarget.style.backgroundColor = '#ea580c';
+                        if (!isLoading && !selectedRole) {
+                          setTimeout(() => handleRoleSelection("student"), 10);
+                        }
+                      }}
+                      style={{ 
+                        WebkitTapHighlightColor: 'rgba(234, 88, 12, 0.5)',
+                        WebkitUserSelect: 'none',
+                        WebkitTouchCallout: 'none',
+                        minHeight: '48px' // Minimum touch target size
+                      }}
+                    >
+                      👩‍🎓 Uczniem
+                    </div>
+                    <div
+                      className="w-full py-4 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 transition-colors flex items-center justify-center gap-2 cursor-pointer touch-manipulation select-none"
+                      onClick={() => {
+                        console.log("Mobile div click - teacher");
+                        if (!isLoading && !selectedRole) {
+                          handleRoleSelection("teacher");
+                        }
+                      }}
+                      onTouchStart={(e) => {
+                        console.log("Mobile touch start - teacher");
+                        e.currentTarget.style.backgroundColor = '#1d4ed8';
+                      }}
+                      onTouchEnd={(e) => {
+                        console.log("Mobile touch end - teacher");
+                        e.currentTarget.style.backgroundColor = '#1d4ed8';
+                        if (!isLoading && !selectedRole) {
+                          setTimeout(() => handleRoleSelection("teacher"), 10);
+                        }
+                      }}
+                      style={{ 
+                        WebkitTapHighlightColor: 'rgba(29, 78, 216, 0.5)',
+                        WebkitUserSelect: 'none',
+                        WebkitTouchCallout: 'none',
+                        minHeight: '48px' // Minimum touch target size
+                      }}
+                    >
+                      👨‍🏫 Nauczycielem
+                    </div>
+                  </>
+                ) : (
+                  // Desktop buttons
+                  <>
+                    <button
+                      type="button"
+                      className="w-full py-3 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-orange-600 hover:bg-orange-700 active:bg-orange-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation select-none cursor-pointer"
+                      {...createTouchHandler("student")}
+                      disabled={isLoading}
+                      role="button"
+                      tabIndex={0}
+                      style={{ 
+                        WebkitTapHighlightColor: 'transparent',
+                        WebkitUserSelect: 'none',
+                        WebkitTouchCallout: 'none'
+                      }}
+                    >
+                      👩‍🎓 Uczniem
+                    </button>
+                    <button
+                      type="button"
+                      className="w-full py-3 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation select-none cursor-pointer"
+                      {...createTouchHandler("teacher")}
+                      disabled={isLoading}
+                      role="button"
+                      tabIndex={0}
+                      style={{ 
+                        WebkitTapHighlightColor: 'transparent',
+                        WebkitUserSelect: 'none',
+                        WebkitTouchCallout: 'none'
+                      }}
+                    >
+                      👨‍🏫 Nauczycielem
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           ) : currentStep === "business-type-selection" ? (
@@ -934,7 +1112,8 @@ export default function RegisterPage() {
             Proszę najpierw się zalogować, aby zakończyć rejestrację
           </p>
         )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
