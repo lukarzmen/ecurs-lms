@@ -1370,16 +1370,23 @@ i.page-break,
 }
 
 .table-cell-action-button {
-  background-color: none;
+  background-color: #fed7aa;
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 0;
+  border: 1px solid #fdba74;
   position: relative;
-  border-radius: 15px;
+  border-radius: 8px;
   color: #222;
-  display: inline-block;
   cursor: pointer;
+  padding: 4px 8px;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.table-cell-action-button:hover {
+  background-color: #fdba74;
+  border-color: #fb923c;
 }
 
 i.chevron-down {
@@ -1397,7 +1404,7 @@ i.chevron-down {
   padding: 8px 12px;
   position: relative;
   margin-left: 5px;
-  border-radius: 15px;
+  border-radius: 10px;
   color: #222;
   display: inline-block;
   cursor: pointer;

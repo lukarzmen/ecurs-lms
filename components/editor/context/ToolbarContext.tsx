@@ -30,18 +30,18 @@ const rootTypeToRootName = {
 };
 
 export const blockTypeToBlockName = {
-  bullet: 'Bulleted List',
-  check: 'Check List',
-  code: 'Code Block',
-  h1: 'Heading 1',
-  h2: 'Heading 2',
-  h3: 'Heading 3',
-  h4: 'Heading 4',
-  h5: 'Heading 5',
-  h6: 'Heading 6',
-  number: 'Numbered List',
-  paragraph: 'Normal',
-  quote: 'Quote',
+  bullet: 'Lista punktowana',
+  check: 'Lista kontrolna',
+  code: 'Blok kodu',
+  h1: 'Nagłówek 1',
+  h2: 'Nagłówek 2',
+  h3: 'Nagłówek 3',
+  h4: 'Nagłówek 4',
+  h5: 'Nagłówek 5',
+  h6: 'Nagłówek 6',
+  number: 'Lista numerowana',
+  paragraph: 'Akapit',
+  quote: 'Cytat',
 };
 
 //disable eslint sorting rule for quick reference to toolbar state

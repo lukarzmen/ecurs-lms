@@ -26,7 +26,6 @@ import {EmojiNode} from './EmojiNode';
 import {EquationNode} from './EquationNode';
 import {ExcalidrawNode} from './ExcalidrawNode';
 import {ImageNode} from './ImageNode';
-import {InlineImageNode} from './InlineImageNode/InlineImageNode';
 import {KeywordNode} from './KeywordNode';
 import {LayoutContainerNode} from './LayoutContainerNode';
 import {LayoutItemNode} from './LayoutItemNode';
@@ -65,7 +64,6 @@ const EditorNodes: Array<Klass<LexicalNode>> = [
   PollNode,
   StickyNode,
   ImageNode,
-  InlineImageNode,
   MentionNode,
   EmojiNode,
   ExcalidrawNode,

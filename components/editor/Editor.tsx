@@ -20,7 +20,8 @@ import {TabIndentationPlugin} from '@lexical/react/LexicalTabIndentationPlugin';
 import {TablePlugin} from '@lexical/react/LexicalTablePlugin';
 import * as React from 'react';
 import {useEffect, useState} from 'react';
-
+import TableCellActionMenuPlugin from './plugins/TableActionMenuPlugin';
+import TableHoverActionsPlugin from './plugins/TableHoverActionsPlugin';
 import {useSettings} from './context/SettingsContext';
 import {useSharedHistoryContext} from './context/SharedHistoryContext';
 import { SaveResult } from './plugins/ActionsPlugin';
@@ -34,7 +35,6 @@ import EmojisPlugin from './plugins/EmojisPlugin';
 import EquationsPlugin from './plugins/EquationsPlugin';
 import ExcalidrawPlugin from './plugins/ExcalidrawPlugin';
 import ImagesPlugin from './plugins/ImagesPlugin';
-import InlineImagePlugin from './plugins/InlineImagePlugin';
 import KeywordsPlugin from './plugins/KeywordsPlugin';
 import {LayoutPlugin} from './plugins/LayoutPlugin/LayoutPlugin';
 import LinkPlugin from './plugins/LinkPlugin';
@@ -44,7 +44,6 @@ import PageBreakPlugin from './plugins/PageBreakPlugin';
 import QuizPlugin from './plugins/QuizPlugin';
 import TabFocusPlugin from './plugins/TabFocusPlugin';
 import TableCellResizer from './plugins/TableCellResizer';
-import ToolbarPlugin from './plugins/ToolbarPlugin';
 import YouTubePlugin from './plugins/YouTubePlugin';
 import ContentEditable from './ui/ContentEditable';
 import { SerializedDocument, serializedDocumentFromEditorState } from '@lexical/file';
@@ -62,6 +61,12 @@ import SelectAnswerPlugin from './plugins/SelectAnswerPlugin';
 import TaskPlugin from './plugins/TaskPlugin';
 import { $getRoot, $isElementNode, LexicalNode } from 'lexical';
 import { TodoPlugin } from './plugins/TodoPlugin';
+import NewToolbarPlugin from './plugins/ToolbarPlugin';
+import { CAN_USE_DOM } from './shared/canUseDOM';
+import FloatingLinkEditorPlugin from './plugins/FloatingLinkEditorPlugin';
+import FloatingTextFormatToolbarPlugin from './plugins/FloatingTextFormatToolbarPlugin';
+import DraggableBlockPlugin from './plugins/DraggableBlockPlugin';
+import CodeActionMenuPlugin from './plugins/CodeActionMenuPlugin';
 
 
 // Helper function to recursively find nodes with __isCompleted property
@@ -116,6 +121,33 @@ export default function Editor( {
   const [editor] = useLexicalComposerContext();
   const [activeEditor, setActiveEditor] = useState(editor);
   const completedCalled = React.useRef(false);
+  const [floatingAnchorElem, setFloatingAnchorElem] =
+    useState<HTMLDivElement | null>(null);
+  const [isSmallWidthViewport, setIsSmallWidthViewport] =
+    useState<boolean>(false);
+
+  const onRef = (_floatingAnchorElem: HTMLDivElement) => {
+    if (_floatingAnchorElem !== null) {
+      setFloatingAnchorElem(_floatingAnchorElem);
+    }
+  };
+
+  useEffect(() => {
+    const updateViewPortWidth = () => {
+      const isNextSmallWidthViewport =
+        CAN_USE_DOM && window.matchMedia('(max-width: 1025px)').matches;
+
+      if (isNextSmallWidthViewport !== isSmallWidthViewport) {
+        setIsSmallWidthViewport(isNextSmallWidthViewport);
+      }
+    };
+    updateViewPortWidth();
+    window.addEventListener('resize', updateViewPortWidth);
+
+    return () => {
+      window.removeEventListener('resize', updateViewPortWidth);
+    };
+  }, [isSmallWidthViewport]);
 
   useEffect(() => {
     const unregisterListener = editor.registerUpdateListener(({ editorState }) => {
@@ -178,7 +210,7 @@ export default function Editor( {
   return (
     <>
       {showTableOfContents && <TableOfContentsPlugin />}
-      {isEditable && <ToolbarPlugin 
+      {isEditable && <NewToolbarPlugin 
               editor={editor}
           activeEditor={activeEditor}
           setActiveEditor={setActiveEditor}
@@ -207,7 +239,7 @@ export default function Editor( {
         <RichTextPlugin
           contentEditable={
             <div className="editor-scroller">
-              <div className="editor">
+              <div className="editor" ref={onRef}>
                 <ContentEditable placeholder={""} />
               </div>
             </div>
@@ -226,7 +258,6 @@ export default function Editor( {
         />
         <TableCellResizer />
         <ImagesPlugin />
-        <InlineImagePlugin />
         <LinkPlugin hasLinkAttributes={hasLinkAttributes} />
         {/* <PollPlugin /> */}
         <TextGeneratorPlugin />
@@ -245,8 +276,30 @@ export default function Editor( {
         <TabIndentationPlugin />
         <CollapsiblePlugin />
         <PageBreakPlugin />
-        <LayoutPlugin />
-
+{floatingAnchorElem && (
+              <>
+                <FloatingLinkEditorPlugin
+                  anchorElem={floatingAnchorElem}
+                  isLinkEditMode={isLinkEditMode}
+                  setIsLinkEditMode={setIsLinkEditMode}
+                />
+                <TableCellActionMenuPlugin
+                  anchorElem={floatingAnchorElem}
+                  cellMerge={true}
+                />
+              </>
+            )}
+            {floatingAnchorElem && !isSmallWidthViewport && (
+              <>
+                <DraggableBlockPlugin anchorElem={floatingAnchorElem} />
+                <CodeActionMenuPlugin anchorElem={floatingAnchorElem} />
+                <TableHoverActionsPlugin anchorElem={floatingAnchorElem} />
+                <FloatingTextFormatToolbarPlugin
+                  anchorElem={floatingAnchorElem}
+                  setIsLinkEditMode={setIsLinkEditMode}
+                />
+              </>
+            )}
         {/* {isAutocomplete && <AutocompletePlugin />}        */}
         {/* {isEditable && (<ActionsPlugin
           onSave={onSave}
