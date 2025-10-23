@@ -13,9 +13,9 @@ import {useCallback, useEffect, useState} from 'react';
 import * as React from 'react';
 import { Thread, Comment } from '../../commenting';
 import { createPortal } from 'react-dom';
-import { CommentInputBox } from '../CommentPlugin';
 import { DefinitionNode } from '../../nodes/DefinitionNode';
 import { $wrapNodeInElement } from '@lexical/utils';
+import { CommentInputBox } from '../CommentPlugin';
 
 export const TO_DICTIONARY_COMMAND: LexicalCommand<string> = createCommand(
   'TO_DICTIONARY_COMMAND'

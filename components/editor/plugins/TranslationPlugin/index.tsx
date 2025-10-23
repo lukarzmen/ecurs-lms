@@ -131,8 +131,9 @@ export default function TranslationPlugin(): JSX.Element | null {
             .then((response) => response.text())
             .then((data) => {
               editor.update(() => {
-                if ($isRangeSelection(selection)) {
-                  selection.insertText(data);
+                const sel = $getSelection();
+                if ($isRangeSelection(sel)) {
+                  sel.insertText(data);
                 }
               });
 

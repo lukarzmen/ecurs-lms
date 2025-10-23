@@ -6,25 +6,17 @@
  *
  */
 
+import type {JSX} from 'react';
+
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {
-  $createTableNodeWithDimensions,
   INSERT_TABLE_COMMAND,
+  TableCellNode,
   TableNode,
+  TableRowNode,
 } from '@lexical/table';
-import {
-  $insertNodes,
-  COMMAND_PRIORITY_EDITOR,
-  createCommand,
-  EditorThemeClasses,
-  Klass,
-  LexicalCommand,
-  LexicalEditor,
-  LexicalNode,
-} from 'lexical';
+import {EditorThemeClasses, Klass, LexicalEditor, LexicalNode} from 'lexical';
 import {createContext, useContext, useEffect, useMemo, useState} from 'react';
-import * as React from 'react';
-import invariant from '../shared/invariant';
 
 import Button from '../ui/Button';
 import {DialogActions} from '../ui/Dialog';
@@ -52,9 +44,6 @@ export type CellEditorConfig = Readonly<{
   readOnly?: boolean;
   theme?: EditorThemeClasses;
 }>;
-
-export const INSERT_NEW_TABLE_COMMAND: LexicalCommand<InsertTableCommandPayload> =
-  createCommand('INSERT_NEW_TABLE_COMMAND');
 
 export const CellContext = createContext<CellContextShape>({
   cellEditorConfig: null,
@@ -123,7 +112,7 @@ export function InsertTableDialog({
     <>
       <TextInput
         placeholder={'# of rows (1-500)'}
-        label="Wiersze"
+        label="Rows"
         onChange={setRows}
         value={rows}
         data-test-id="table-modal-rows"
@@ -131,7 +120,7 @@ export function InsertTableDialog({
       />
       <TextInput
         placeholder={'# of columns (1-50)'}
-        label="Kolumny"
+        label="Columns"
         onChange={setColumns}
         value={columns}
         data-test-id="table-modal-columns"
@@ -139,7 +128,7 @@ export function InsertTableDialog({
       />
       <DialogActions data-test-id="table-model-confirm-insert">
         <Button disabled={isDisabled} onClick={onClick}>
-          Zatwierdź
+          Confirm
         </Button>
       </DialogActions>
     </>
@@ -155,28 +144,15 @@ export function TablePlugin({
 }): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
   const cellContext = useContext(CellContext);
-
   useEffect(() => {
-    if (!editor.hasNodes([TableNode])) {
-      invariant(false, 'TablePlugin: TableNode is not registered on editor');
+    if (!editor.hasNodes([TableNode, TableRowNode, TableCellNode])) {
+      throw new Error(
+        'TablePlugin: TableNode, TableRowNode, or TableCellNode is not registered on editor',
+      );
     }
-
+  }, [editor]);
+  useEffect(() => {
     cellContext.set(cellEditorConfig, children);
-
-    return editor.registerCommand<InsertTableCommandPayload>(
-      INSERT_NEW_TABLE_COMMAND,
-      ({columns, rows, includeHeaders}) => {
-        const tableNode = $createTableNodeWithDimensions(
-          Number(rows),
-          Number(columns),
-          includeHeaders,
-        );
-        $insertNodes([tableNode]);
-        return true;
-      },
-      COMMAND_PRIORITY_EDITOR,
-    );
-  }, [cellContext, cellEditorConfig, children, editor]);
-
+  }, [cellContext, cellEditorConfig, children]);
   return null;
 }

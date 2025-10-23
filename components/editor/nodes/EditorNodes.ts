@@ -26,13 +26,11 @@ import {EmojiNode} from './EmojiNode';
 import {EquationNode} from './EquationNode';
 import {ExcalidrawNode} from './ExcalidrawNode';
 import {ImageNode} from './ImageNode';
-import {InlineImageNode} from './InlineImageNode/InlineImageNode';
 import {KeywordNode} from './KeywordNode';
 import {LayoutContainerNode} from './LayoutContainerNode';
 import {LayoutItemNode} from './LayoutItemNode';
 import {MentionNode} from './MentionNode';
 import {PageBreakNode} from './PageBreakNode';
-import {PollNode} from './PollNode';
 import {StickyNode} from './StickyNode';
 import {YouTubeNode} from './YouTubeNode';
 import { GapNode } from './GapNode';
@@ -62,10 +60,8 @@ const EditorNodes: Array<Klass<LexicalNode>> = [
   AutoLinkNode,
   LinkNode,
   OverflowNode,
-  PollNode,
   StickyNode,
   ImageNode,
-  InlineImageNode,
   MentionNode,
   EmojiNode,
   ExcalidrawNode,

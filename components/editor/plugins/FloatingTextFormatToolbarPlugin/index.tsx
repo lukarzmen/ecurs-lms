@@ -5,12 +5,13 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-"use client";
+
+import type {JSX} from 'react';
 
 import './index.css';
 
 import {$isCodeHighlightNode} from '@lexical/code';
-import {$isLinkNode} from '@lexical/link';
+import {$isLinkNode, TOGGLE_LINK_COMMAND} from '@lexical/link';
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {mergeRegister} from '@lexical/utils';
 import {
@@ -20,19 +21,18 @@ import {
   $isTextNode,
   COMMAND_PRIORITY_LOW,
   FORMAT_TEXT_COMMAND,
+  getDOMSelection,
   LexicalEditor,
   SELECTION_CHANGE_COMMAND,
 } from 'lexical';
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {Dispatch, useCallback, useEffect, useRef, useState} from 'react';
 import * as React from 'react';
 import {createPortal} from 'react-dom';
 
 import {getDOMRangeRect} from '../../utils/getDOMRangeRect';
 import {getSelectedNode} from '../../utils/getSelectedNode';
 import {setFloatingElemPosition} from '../../utils/setFloatingElemPosition';
-import { INSERT_DEFINITION_NODE_COMMAND } from '../DescriptionPlugin';
-import { INSERT_GAP_NODE_COMMAND } from '../GapPlugin';
-import useModal from '../../hooks/useModal';
+import {INSERT_INLINE_COMMAND} from '../CommentPlugin';
 
 function TextFormatFloatingToolbar({
   editor,
@@ -41,10 +41,14 @@ function TextFormatFloatingToolbar({
   isBold,
   isItalic,
   isUnderline,
+  isUppercase,
+  isLowercase,
+  isCapitalize,
   isCode,
   isStrikethrough,
   isSubscript,
-  isSuperscript
+  isSuperscript,
+  setIsLinkEditMode,
 }: {
   editor: LexicalEditor;
   anchorElem: HTMLElement;
@@ -52,13 +56,31 @@ function TextFormatFloatingToolbar({
   isCode: boolean;
   isItalic: boolean;
   isLink: boolean;
+  isUppercase: boolean;
+  isLowercase: boolean;
+  isCapitalize: boolean;
   isStrikethrough: boolean;
   isSubscript: boolean;
   isSuperscript: boolean;
   isUnderline: boolean;
+  setIsLinkEditMode: Dispatch<boolean>;
 }): JSX.Element {
   const popupCharStylesEditorRef = useRef<HTMLDivElement | null>(null);
-  const [modal, showModal] = useModal();
+
+  const insertLink = useCallback(() => {
+    if (!isLink) {
+      setIsLinkEditMode(true);
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, 'https://');
+    } else {
+      setIsLinkEditMode(false);
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
+    }
+  }, [editor, isLink, setIsLinkEditMode]);
+
+  const insertComment = () => {
+    editor.dispatchCommand(INSERT_INLINE_COMMAND, undefined);
+  };
+
   function mouseMoveListener(e: MouseEvent) {
     if (
       popupCharStylesEditorRef?.current &&
@@ -100,7 +122,7 @@ function TextFormatFloatingToolbar({
     const selection = $getSelection();
 
     const popupCharStylesEditorElem = popupCharStylesEditorRef.current;
-    const nativeSelection = window.getSelection();
+    const nativeSelection = getDOMSelection(editor._window);
 
     if (popupCharStylesEditorElem === null) {
       return;
@@ -179,7 +201,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
             }}
             className={'popup-item spaced ' + (isBold ? 'active' : '')}
-            aria-label="Format text as bold">
+            title="Pogrubienie"
+            aria-label="Formatuj tekst jako pogrubiony">
             <i className="format bold" />
           </button>
           <button
@@ -188,7 +211,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
             }}
             className={'popup-item spaced ' + (isItalic ? 'active' : '')}
-            aria-label="Format text as italics">
+            title="Kursywa"
+            aria-label="Formatuj tekst jako kursywa">
             <i className="format italic" />
           </button>
           <button
@@ -197,7 +221,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
             }}
             className={'popup-item spaced ' + (isUnderline ? 'active' : '')}
-            aria-label="Format text to underlined">
+            title="Podkreślenie"
+            aria-label="Formatuj tekst jako podkreślony">
             <i className="format underline" />
           </button>
           <button
@@ -206,35 +231,18 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
             }}
             className={'popup-item spaced ' + (isStrikethrough ? 'active' : '')}
-            aria-label="Format text with a strikethrough">
+            title="Przekreślenie"
+            aria-label="Formatuj tekst z przekreśleniem">
             <i className="format strikethrough" />
           </button>
           <button
-           type="button"
-            onClick={() => {
-              editor.dispatchCommand(INSERT_DEFINITION_NODE_COMMAND, "");
-            }}
-            className={'popup-item spaced'}
-            aria-label="Add definition to text">
-            <i className="format dictionary" />
-          </button>
-          <button
-           type="button"
-            onClick={() => {
-              editor.dispatchCommand(INSERT_GAP_NODE_COMMAND, "");
-            }}
-            className={'popup-item spaced'}
-            aria-label="Replace text with gap">
-            <i className="format fillgap" />
-          </button>
-          {/* <button
             type="button"
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'subscript');
             }}
             className={'popup-item spaced ' + (isSubscript ? 'active' : '')}
-            title="Subscript"
-            aria-label="Format Subscript">
+            title="Indeks dolny"
+            aria-label="Formatuj jako indeks dolny">
             <i className="format subscript" />
           </button>
           <button
@@ -243,9 +251,39 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'superscript');
             }}
             className={'popup-item spaced ' + (isSuperscript ? 'active' : '')}
-            title="Superscript"
-            aria-label="Format Superscript">
+            title="Indeks górny"
+            aria-label="Formatuj jako indeks górny">
             <i className="format superscript" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'uppercase');
+            }}
+            className={'popup-item spaced ' + (isUppercase ? 'active' : '')}
+            title="Wielkie litery"
+            aria-label="Formatuj tekst na wielkie litery">
+            <i className="format uppercase" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'lowercase');
+            }}
+            className={'popup-item spaced ' + (isLowercase ? 'active' : '')}
+            title="Małe litery"
+            aria-label="Formatuj tekst na małe litery">
+            <i className="format lowercase" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'capitalize');
+            }}
+            className={'popup-item spaced ' + (isCapitalize ? 'active' : '')}
+            title="Wielka pierwsza litera"
+            aria-label="Formatuj tekst z wielką pierwszą literą">
+            <i className="format capitalize" />
           </button>
           <button
             type="button"
@@ -253,31 +291,45 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code');
             }}
             className={'popup-item spaced ' + (isCode ? 'active' : '')}
-            aria-label="Insert code block">
+            title="Wstaw blok kodu"
+            aria-label="Wstaw blok kodu">
             <i className="format code" />
-          </button> */}
-          {/* <button
+          </button>
+          <button
             type="button"
             onClick={insertLink}
             className={'popup-item spaced ' + (isLink ? 'active' : '')}
-            aria-label="Insert link">
+            title="Wstaw link"
+            aria-label="Wstaw link">
             <i className="format link" />
-          </button> */}
+          </button>
         </>
       )}
+      {/* <button
+        type="button"
+        onClick={insertComment}
+        className={'popup-item spaced insert-comment'}
+        title="Insert comment"
+        aria-label="Insert comment">
+        <i className="format add-comment" />
+      </button> */}
     </div>
   );
 }
 
 function useFloatingTextFormatToolbar(
   editor: LexicalEditor,
-  anchorElem: HTMLElement
+  anchorElem: HTMLElement,
+  setIsLinkEditMode: Dispatch<boolean>,
 ): JSX.Element | null {
   const [isText, setIsText] = useState(false);
   const [isLink, setIsLink] = useState(false);
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
+  const [isUppercase, setIsUppercase] = useState(false);
+  const [isLowercase, setIsLowercase] = useState(false);
+  const [isCapitalize, setIsCapitalize] = useState(false);
   const [isStrikethrough, setIsStrikethrough] = useState(false);
   const [isSubscript, setIsSubscript] = useState(false);
   const [isSuperscript, setIsSuperscript] = useState(false);
@@ -290,7 +342,7 @@ function useFloatingTextFormatToolbar(
         return;
       }
       const selection = $getSelection();
-      const nativeSelection = window.getSelection();
+      const nativeSelection = getDOMSelection(editor._window);
       const rootElement = editor.getRootElement();
 
       if (
@@ -313,6 +365,9 @@ function useFloatingTextFormatToolbar(
       setIsBold(selection.hasFormat('bold'));
       setIsItalic(selection.hasFormat('italic'));
       setIsUnderline(selection.hasFormat('underline'));
+      setIsUppercase(selection.hasFormat('uppercase'));
+      setIsLowercase(selection.hasFormat('lowercase'));
+      setIsCapitalize(selection.hasFormat('capitalize'));
       setIsStrikethrough(selection.hasFormat('strikethrough'));
       setIsSubscript(selection.hasFormat('subscript'));
       setIsSuperscript(selection.hasFormat('superscript'));
@@ -374,29 +429,27 @@ function useFloatingTextFormatToolbar(
       isLink={isLink}
       isBold={isBold}
       isItalic={isItalic}
+      isUppercase={isUppercase}
+      isLowercase={isLowercase}
+      isCapitalize={isCapitalize}
       isStrikethrough={isStrikethrough}
       isSubscript={isSubscript}
       isSuperscript={isSuperscript}
       isUnderline={isUnderline}
       isCode={isCode}
+      setIsLinkEditMode={setIsLinkEditMode}
     />,
     anchorElem,
   );
 }
 
 export default function FloatingTextFormatToolbarPlugin({
-  anchorElem,
+  anchorElem = document.body,
+  setIsLinkEditMode,
 }: {
   anchorElem?: HTMLElement;
+  setIsLinkEditMode: Dispatch<boolean>;
 }): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
-
-  // Check if `document` is defined
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    return null;
-  }
-
-  const actualAnchorElem = anchorElem || document.body;
-
-  return useFloatingTextFormatToolbar(editor, actualAnchorElem);
+  return useFloatingTextFormatToolbar(editor, anchorElem, setIsLinkEditMode);
 }
