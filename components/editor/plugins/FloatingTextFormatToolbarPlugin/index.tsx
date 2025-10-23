@@ -201,8 +201,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
             }}
             className={'popup-item spaced ' + (isBold ? 'active' : '')}
-            title="Bold"
-            aria-label="Format text as bold">
+            title="Pogrubienie"
+            aria-label="Formatuj tekst jako pogrubiony">
             <i className="format bold" />
           </button>
           <button
@@ -211,8 +211,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
             }}
             className={'popup-item spaced ' + (isItalic ? 'active' : '')}
-            title="Italic"
-            aria-label="Format text as italics">
+            title="Kursywa"
+            aria-label="Formatuj tekst jako kursywa">
             <i className="format italic" />
           </button>
           <button
@@ -221,8 +221,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
             }}
             className={'popup-item spaced ' + (isUnderline ? 'active' : '')}
-            title="Underline"
-            aria-label="Format text to underlined">
+            title="Podkreślenie"
+            aria-label="Formatuj tekst jako podkreślony">
             <i className="format underline" />
           </button>
           <button
@@ -231,8 +231,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
             }}
             className={'popup-item spaced ' + (isStrikethrough ? 'active' : '')}
-            title="Strikethrough"
-            aria-label="Format text with a strikethrough">
+            title="Przekreślenie"
+            aria-label="Formatuj tekst z przekreśleniem">
             <i className="format strikethrough" />
           </button>
           <button
@@ -241,8 +241,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'subscript');
             }}
             className={'popup-item spaced ' + (isSubscript ? 'active' : '')}
-            title="Subscript"
-            aria-label="Format Subscript">
+            title="Indeks dolny"
+            aria-label="Formatuj jako indeks dolny">
             <i className="format subscript" />
           </button>
           <button
@@ -251,8 +251,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'superscript');
             }}
             className={'popup-item spaced ' + (isSuperscript ? 'active' : '')}
-            title="Superscript"
-            aria-label="Format Superscript">
+            title="Indeks górny"
+            aria-label="Formatuj jako indeks górny">
             <i className="format superscript" />
           </button>
           <button
@@ -261,8 +261,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'uppercase');
             }}
             className={'popup-item spaced ' + (isUppercase ? 'active' : '')}
-            title="Uppercase"
-            aria-label="Format text to uppercase">
+            title="Wielkie litery"
+            aria-label="Formatuj tekst na wielkie litery">
             <i className="format uppercase" />
           </button>
           <button
@@ -271,8 +271,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'lowercase');
             }}
             className={'popup-item spaced ' + (isLowercase ? 'active' : '')}
-            title="Lowercase"
-            aria-label="Format text to lowercase">
+            title="Małe litery"
+            aria-label="Formatuj tekst na małe litery">
             <i className="format lowercase" />
           </button>
           <button
@@ -281,8 +281,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'capitalize');
             }}
             className={'popup-item spaced ' + (isCapitalize ? 'active' : '')}
-            title="Capitalize"
-            aria-label="Format text to capitalize">
+            title="Wielka pierwsza litera"
+            aria-label="Formatuj tekst z wielką pierwszą literą">
             <i className="format capitalize" />
           </button>
           <button
@@ -291,28 +291,28 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code');
             }}
             className={'popup-item spaced ' + (isCode ? 'active' : '')}
-            title="Insert code block"
-            aria-label="Insert code block">
+            title="Wstaw blok kodu"
+            aria-label="Wstaw blok kodu">
             <i className="format code" />
           </button>
           <button
             type="button"
             onClick={insertLink}
             className={'popup-item spaced ' + (isLink ? 'active' : '')}
-            title="Insert link"
-            aria-label="Insert link">
+            title="Wstaw link"
+            aria-label="Wstaw link">
             <i className="format link" />
           </button>
         </>
       )}
-      <button
+      {/* <button
         type="button"
         onClick={insertComment}
         className={'popup-item spaced insert-comment'}
         title="Insert comment"
         aria-label="Insert comment">
         <i className="format add-comment" />
-      </button>
+      </button> */}
     </div>
   );
 }

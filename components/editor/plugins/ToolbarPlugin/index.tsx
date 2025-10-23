@@ -97,7 +97,6 @@ import {
 } from '../ImagesPlugin';
 import InsertLayoutDialog from '../LayoutPlugin/InsertLayoutDialog';
 import {INSERT_PAGE_BREAK} from '../PageBreakPlugin';
-import {InsertPollDialog} from '../PollPlugin';
 import {InsertTableDialog} from '../TablePlugin';
 import FontSize, {parseFontSizeForToolbar} from './fontSize';
 import Settings from '../../Settings';
@@ -1166,7 +1165,7 @@ export default function NewToolbarPlugin({
             aria-label={`Podkreślenie. Skrót: ${SHORTCUTS.UNDERLINE}`}>
             <i className="format underline" />
           </button>
-          {/* {canViewerSeeInsertCodeButton && (
+          {canViewerSeeInsertCodeButton && (
             <button
               disabled={!isEditable}
               onClick={(e) =>
@@ -1191,7 +1190,7 @@ export default function NewToolbarPlugin({
             title={`Wstaw link (${SHORTCUTS.INSERT_LINK})`}
             type="button">
             <i className="format link" />
-          </button> */}
+          </button>
           <DropdownColorPicker
             disabled={!isEditable}
             buttonClassName="toolbar-item color-picker"

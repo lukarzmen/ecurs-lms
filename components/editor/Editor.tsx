@@ -259,7 +259,6 @@ export default function Editor( {
         <TableCellResizer />
         <ImagesPlugin />
         <LinkPlugin hasLinkAttributes={hasLinkAttributes} />
-        {/* <PollPlugin /> */}
         <TextGeneratorPlugin />
         <QuizPlugin />
         <TodoPlugin />
@@ -268,7 +267,7 @@ export default function Editor( {
         <QuestionAnswerPlugin />
         <DescriptionPlugin />
         <YouTubePlugin />
-        <ClickableLinkPlugin disabled={false} />
+        <ClickableLinkPlugin disabled={isEditable} />
         <HorizontalRulePlugin />
         <EquationsPlugin />
         <ExcalidrawPlugin />
