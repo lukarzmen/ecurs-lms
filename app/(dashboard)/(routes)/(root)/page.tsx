@@ -16,7 +16,7 @@ export default async function Home() {
     return redirect("/sign-in");
   }
   const authState = await authorizeUser(userId, sessionId);
-
+  console.debug('Authorization state:', authState);
   if (authState.authState === 'userNotExists') {
     return redirect("/register");
   }

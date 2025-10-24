@@ -79,12 +79,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
 }
-export async function DELETE(req: Request) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await req.json();
-    await db.educationalPath.delete({ where: { id } });
+    const { id } = await params;
+    const pathId = Number(id);
+    if (!pathId || isNaN(pathId)) {
+      return NextResponse.json({ error: "Invalid pathId" }, { status: 400 });
+    }
+    
+    await db.educationalPath.delete({ where: { id: pathId } });
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("Delete educational path error:", error);
     return NextResponse.json({ error: "Delete educational path failed" }, { status: 500 });
   }
 }

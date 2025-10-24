@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: Request) {
   try {
     const { title, description, courseIds, userProviderId } = await req.json();
-    if (!userProviderId || !Array.isArray(courseIds) || courseIds.length === 0) {
+    if (!userProviderId || !title) {
       return new NextResponse("Missing required fields", { status: 400 });
     }
     // Find user and check if teacher
@@ -51,14 +51,16 @@ export async function POST(req: Request) {
     const educationalPath = await db.educationalPath.create({
       data: {
         title,
-        description,
+        description: description || null,
         authorId: user.id,
-        courses: {
-          create: courseIds.map((courseId: number, idx: number) => ({
-            courseId: courseId,
-            position: idx + 1,
-          })),
-        },
+        ...(courseIds && Array.isArray(courseIds) && courseIds.length > 0 && {
+          courses: {
+            create: courseIds.map((courseId: number, idx: number) => ({
+              courseId: courseId,
+              position: idx + 1,
+            })),
+          },
+        }),
       },
       include: { courses: true },
     });

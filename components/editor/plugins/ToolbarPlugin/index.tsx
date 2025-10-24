@@ -1215,7 +1215,7 @@ export default function NewToolbarPlugin({
             buttonLabel=""
             buttonAriaLabel="Formatting options for additional text styles"
             buttonIconClassName="icon dropdown-more">
-            <DropDownItem
+            {/* <DropDownItem
               onClick={(e) =>
                 dispatchFormatTextCommand('lowercase', isKeyboardInput(e))
               }
@@ -1259,7 +1259,7 @@ export default function NewToolbarPlugin({
                 <span className="text">Wielkie Pierwsze</span>
               </div>
               <span className="shortcut">{SHORTCUTS.CAPITALIZE}</span>
-            </DropDownItem>
+            </DropDownItem> */}
             <DropDownItem
               onClick={(e) =>
                 dispatchFormatTextCommand('strikethrough', isKeyboardInput(e))

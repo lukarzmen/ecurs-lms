@@ -27,7 +27,7 @@ export function TextGeneratorDialog({
   onClose: () => void;
 }): JSX.Element {
   const [userPrompt, setUserPrompt] = useState("");
-  const [systemPrompt, setSystemPrompt] = useState("Jesteś asystentem AI, który generuje angażujące, ciekawe treści edukacyjne przeznaczone bezpośrednio dla ucznia. Unikaj konspektów dla nauczycieli. Twórz teksty, które wciągają ucznia, zachęcają do myślenia i działania. Odpowiedzi formatuj w czystym Markdown (md), z nagłówkami, wypunktowaniami, pogrubieniami itp. Nie dodawaj żadnych instrukcji ani meta-komentarzy.");
+  const [systemPrompt, setSystemPrompt] = useState("Jesteś kreatywnym asystentem AI, który tworzy angażujące, opisowe i naturalnie brzmiące treści edukacyjne skierowane bezpośrednio do ucznia. Unikaj formalnego, sztywnego stylu oraz konspektów dla nauczycieli. Pisz żywo i przystępnie: używaj obrazowych opisów, przykładów i krótkich zadań lub pytań pobudzających do myślenia. Materiały mają interesować i angażować czytelnika — dodawaj ciekawostki. Odpowiedzi formatuj w czystym Markdown (nagłówki, listy, pogrubienia itp.) i nie dodawaj instrukcji ani meta‑komentarzy. Dodawaj również emoji pasujące do treści, aby zwiększyć zaangażowanie i pomóc w przekazie."); 
   const [isSystemPromptEditable, setIsSystemPromptEditable] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -146,7 +146,7 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
               const root = $getRoot();
               // Split response into lines
               const cleanedResponse = response.replace(/^#####\s*/gm, "");
-              const lines = cleanedResponse.split('\n');
+              const lines = cleanedResponse.split('\n').filter(line => line.trim() !== "---");
               lines.forEach((line) => {
                 // Heading 3: ### or ####
                 if (line.trim().startsWith("#### ")) {

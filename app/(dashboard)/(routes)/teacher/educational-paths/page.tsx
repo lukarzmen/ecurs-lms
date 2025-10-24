@@ -30,7 +30,41 @@ const EducationalPathsPage = () => {
   }, []);
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Czy na pewno chcesz usunąć tę ścieżkę edukacyjną?")) return;
+    const confirmWithModal = (): Promise<boolean> =>
+      new Promise((resolve) => {
+      const dialog = document.createElement("dialog");
+      dialog.className = "rounded-md p-4";
+      dialog.innerHTML = `
+        <form method="dialog" class="flex flex-col gap-4">
+        <div class="text-lg font-medium">Potwierdź usunięcie</div>
+        <div>Czy na pewno chcesz usunąć tę ścieżkę edukacyjną?</div>
+        <div class="flex justify-end gap-2">
+          <button value="cancel" class="px-3 py-1 rounded bg-gray-200">Anuluj</button>
+          <button value="confirm" class="px-3 py-1 rounded bg-red-600 text-white">Usuń</button>
+        </div>
+        </form>
+      `;
+      document.body.appendChild(dialog);
+      dialog.addEventListener(
+        "close",
+        () => {
+        const confirmed = dialog.returnValue === "confirm";
+        dialog.remove();
+        resolve(confirmed);
+        },
+        { once: true }
+      );
+      // showModal may throw on older browsers, guard defensively
+      if (typeof dialog.showModal === "function") dialog.showModal();
+      else {
+        // fallback to window.confirm if dialog unsupported
+        const fallback = window.confirm("Czy na pewno chcesz usunąć tę ścieżkę edukacyjną?");
+        dialog.remove();
+        resolve(fallback);
+      }
+      });
+
+    if (!(await confirmWithModal())) return;
     setDeletingId(id);
     try {
       const res = await fetch(`/api/educational-paths/${id}`, {

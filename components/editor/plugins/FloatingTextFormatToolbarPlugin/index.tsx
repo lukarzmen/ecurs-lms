@@ -255,7 +255,7 @@ function TextFormatFloatingToolbar({
             aria-label="Formatuj jako indeks górny">
             <i className="format superscript" />
           </button>
-          <button
+          {/* <button
             type="button"
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'uppercase');
@@ -284,9 +284,9 @@ function TextFormatFloatingToolbar({
             title="Wielka pierwsza litera"
             aria-label="Formatuj tekst z wielką pierwszą literą">
             <i className="format capitalize" />
-          </button>
+          </button> */}
           <button
-            type="button"
+          type="button"
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code');
             }}

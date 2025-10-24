@@ -3,6 +3,7 @@ import { UserResponse } from "@/app/api/user/route";
 export type AuthState = 'notAuthorized' | 'userNotExists' | 'userExists';
 
 export const authorizeUser = async (userId: string | null, sessionId: string | null): Promise<{ authState: AuthState, userResponse?: UserResponse }> => {
+  console.debug('Authorizing user with ID:', userId, 'and session ID:', sessionId);
   if (!userId || !sessionId) {
     return { authState: 'notAuthorized' };
   }
@@ -13,7 +14,7 @@ export const authorizeUser = async (userId: string | null, sessionId: string | n
         'Content-Type': 'application/json',
       }
     });
-
+    console.debug('API response status:', response.status);
     if (!response.ok) {
       throw new Error(`Request failed with status ${response.status}`);
     }
