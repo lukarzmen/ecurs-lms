@@ -32,8 +32,8 @@ export const CategoryItem = ({ label, icon: Icon, value }: CategoryItemProps) =>
     };
     const isSelected = currentCategoryId === value;
     return (
-        <button className={cn("py-2 px-3 text-sm border-slate-200 rounded-full flex items-center gap-x-2 hover:border-sky-700 transition",
-           isSelected && "border-sky-700 bg-sky-200/20 text-sky-800"
+        <button className={cn("py-2 px-3 text-sm border-slate-200 rounded-full flex items-center gap-x-2 hover:border-orange-600 transition",
+           isSelected && "border-orange-600 bg-orange-100 text-orange-800"
         )} type="button" onClick={onClick}>
             {Icon && <Icon size={20} />}
             <div className="truncate">

@@ -33,10 +33,16 @@ const iconMap: Record<Category["name"], IconType> = {
 export const Categories = ({ items }: CategoriesProps) => {
 
     return (
-        <div className="flex flex-wrap items-center gap-2 pb-2">            
-        {items.map((category) => (
-            <CategoryItem key={category.id} label={category.name} icon={iconMap[category.name]} value={category.id}/>
-        ))}
+        <div className="space-y-4">
+            <div>
+                <h2 className="text-lg font-semibold text-gray-900">Kategorie</h2>
+                <p className="text-sm text-gray-600">Przeglądaj kursy według kategorii</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">            
+                {items.map((category) => (
+                    <CategoryItem key={category.id} label={category.name} icon={iconMap[category.name]} value={category.id}/>
+                ))}
+            </div>
         </div>
     );
     }

@@ -40,10 +40,10 @@ export const SearchInput = () => {
 
     return (
        <div className="relative">
-        <Search className="h-4 w-4 absolute top-3 left-3 text-slate-600"/>
+        <Search className="h-4 w-4 absolute top-3 left-3 text-gray-400"/>
         <Input value={value} onChange={(e) => {
             setValue(e.target.value);
-        }} className="w-full md:w-[300] pl-9 rounded-full bg-orange-100 focus-visible:ring-slate-200" placeholder="Wyszukaj..."></Input>
+        }} className="w-full md:w-[400px] pl-9 rounded-full bg-gray-50 border-gray-200 focus:bg-white focus:border-orange-500 focus:ring-orange-500 transition-colors" placeholder="Wyszukaj kursy..."></Input>
        </div>
     );
 }

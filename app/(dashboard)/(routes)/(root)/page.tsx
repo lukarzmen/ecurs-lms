@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { CheckCircle, Clock } from "lucide-react";
+import { CheckCircle, Clock, Home as HomeIcon, BookOpen, GraduationCap } from "lucide-react";
 import { InfoCard } from "./_components/info-card";
 import { redirect } from "next/navigation";
 import { authorizeUser } from "@/hooks/use-auth";
@@ -65,35 +65,73 @@ export default async function Home() {
   }
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-6 space-y-8">
+      {/* Header Section */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <HomeIcon className="h-8 w-8 text-orange-600" />
+            <span>Panel główny</span>
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Witaj ponownie! Śledź swoje postępy i kontynuuj naukę
+          </p>
+        </div>
+      </div>
+
       {fetchError && ( // Conditionally render an error message
-        <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+        <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200" role="alert">
           <span className="font-medium">Błąd!</span> Nie udało się załadować kursów: {fetchError}
         </div>
       )}
+      
+      {/* Progress Section */}
       <section>
-        <h2 className="text-xl font-bold mb-4 text-green-700">Twoje postępy</h2>
+        <h2 className="text-xl font-semibold mb-6 text-gray-900 flex items-center gap-2">
+          <CheckCircle className="h-6 w-6 text-orange-600" />
+          Twoje postępy
+        </h2>
+        
         {/* Educational Paths statistics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <InfoCard icon={Clock} label="Ścieżki w trakcie" numberOfItems={eduPathUnfinishedCount} variant="path" />
-          <InfoCard icon={CheckCircle} label="Ścieżki ukończone" numberOfItems={eduPathFinishedCount} variant="path" />
+        <div className="mb-8">
+          <h3 className="text-lg font-medium mb-4 text-gray-700 flex items-center gap-2">
+            <GraduationCap className="h-5 w-5 text-orange-600" />
+            Ścieżki edukacyjne
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <InfoCard icon={Clock} label="Ścieżki w trakcie" numberOfItems={eduPathUnfinishedCount} variant="path" />
+            <InfoCard icon={CheckCircle} label="Ścieżki ukończone" numberOfItems={eduPathFinishedCount} variant="path" />
+          </div>
         </div>
+        
         {/* Courses statistics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <InfoCard icon={Clock} label="Kursy w trakcie" numberOfItems={unfinishedCount} variant="course" />
-          <InfoCard icon={CheckCircle} label="Kursy ukończone" numberOfItems={finishedCount} variant="course" />
+        <div>
+          <h3 className="text-lg font-medium mb-4 text-gray-700 flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-orange-600" />
+            Kursy
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <InfoCard icon={Clock} label="Kursy w trakcie" numberOfItems={unfinishedCount} variant="course" />
+            <InfoCard icon={CheckCircle} label="Kursy ukończone" numberOfItems={finishedCount} variant="course" />
+          </div>
         </div>
-
       </section>
 
       {/* Educational Paths Section */}
-      <section className="mt-8">
-        <h2 className="text-xl font-bold mb-4 text-orange-700">Twoje ścieżki edukacyjne</h2>
+      <section>
+        <h2 className="text-xl font-semibold mb-6 text-gray-900 flex items-center gap-2">
+          <GraduationCap className="h-6 w-6 text-orange-600" />
+          Twoje ścieżki edukacyjne
+        </h2>
         <EnrolledEduPathList items={educationalPaths} />
       </section>
+      
       {/* Courses Section */}
-      <section className="mt-8">
-        <h2 className="text-xl font-bold mb-4 text-blue-700">Twoje kursy</h2>
+      <section>
+        <h2 className="text-xl font-semibold mb-6 text-gray-900 flex items-center gap-2">
+          <BookOpen className="h-6 w-6 text-orange-600" />
+          Twoje kursy
+        </h2>
         <EnrolledEduList items={courses} />
       </section>
     </div>

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import { Trash2, CreditCard } from "lucide-react";
+import { Trash2, CreditCard, Settings } from "lucide-react";
 
 interface UserCourse {
   id: number;
@@ -140,17 +140,25 @@ const SettingsPage = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Ustawienia</h1>
-        <p className="text-muted-foreground">Zarządzaj swoimi subskrypcjami i ustawieniami konta</p>
+    <div className="p-6 space-y-8">
+      {/* Header Section */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <Settings className="h-8 w-8 text-orange-600" />
+            <span>Ustawienia</span>
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Zarządzaj swoimi subskrypcjami i ustawieniami konta
+          </p>
+        </div>
       </div>
 
       {/* Course Subscriptions */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
+            <CreditCard className="h-5 w-5 text-orange-600" />
             Subskrypcje kursów
           </CardTitle>
           <CardDescription>
@@ -175,7 +183,7 @@ const SettingsPage = () => {
                   </div>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm">
+                      <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">
                         <Trash2 className="h-4 w-4 mr-2" />
                         Anuluj subskrypcję
                       </Button>
@@ -192,7 +200,7 @@ const SettingsPage = () => {
                         <AlertDialogCancel>Anuluj</AlertDialogCancel>
                         <AlertDialogAction 
                           onClick={() => cancelCourseSubscription(userCourse.id, userCourse.purchase?.subscriptionId)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          className="bg-red-600 text-white hover:bg-red-700"
                         >
                           Anuluj subskrypcję
                         </AlertDialogAction>
@@ -210,7 +218,7 @@ const SettingsPage = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
+            <CreditCard className="h-5 w-5 text-orange-600" />
             Subskrypcje ścieżek edukacyjnych
           </CardTitle>
           <CardDescription>
@@ -235,7 +243,7 @@ const SettingsPage = () => {
                   </div>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm">
+                      <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">
                         <Trash2 className="h-4 w-4 mr-2" />
                         Anuluj subskrypcję
                       </Button>
@@ -252,7 +260,7 @@ const SettingsPage = () => {
                         <AlertDialogCancel>Anuluj</AlertDialogCancel>
                         <AlertDialogAction 
                           onClick={() => cancelEducationalPathSubscription(purchase.id, purchase.subscriptionId)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          className="bg-red-600 text-white hover:bg-red-700"
                         >
                           Anuluj subskrypcję
                         </AlertDialogAction>
