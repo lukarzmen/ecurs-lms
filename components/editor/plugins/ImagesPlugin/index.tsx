@@ -40,6 +40,11 @@ import {DialogActions, DialogButtonsList} from '../../ui/Dialog';
 import FileInput from '../../ui/FileInput';
 import TextInput from '../../ui/TextInput';
 
+// Image resizing configuration
+const MAX_IMAGE_WIDTH = 1200; // Maximum width in pixels
+const IMAGE_QUALITY = 0.8; // JPEG quality (0.1 to 1.0)
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+
 export type InsertImagePayload = Readonly<ImagePayload>;
 
 const getDOMSelection = (targetWindow: Window | null): Selection | null =>
@@ -86,6 +91,69 @@ export function InsertImageUriDialogBody({
   );
 }
 
+// Utility function to resize image and convert to base64
+const resizeImage = (file: File, maxWidth: number, quality: number): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      try {
+        // Calculate new dimensions
+        const { width, height } = img;
+        const aspectRatio = height / width;
+        
+        let newWidth = width;
+        let newHeight = height;
+        
+        // Only resize if image is larger than maxWidth
+        if (width > maxWidth) {
+          newWidth = maxWidth;
+          newHeight = maxWidth * aspectRatio;
+        }
+        
+        // Set canvas dimensions
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        
+        if (ctx) {
+          // Enable image smoothing for better quality
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          
+          // Draw resized image
+          ctx.drawImage(img, 0, 0, newWidth, newHeight);
+          
+          // Determine output format - use JPEG for photos, PNG for images with transparency
+          const outputFormat = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+          const outputQuality = outputFormat === 'image/jpeg' ? quality : undefined;
+          
+          // Convert to base64 with specified quality
+          const resizedBase64 = canvas.toDataURL(outputFormat, outputQuality);
+          
+          // Clean up
+          URL.revokeObjectURL(img.src);
+          
+          resolve(resizedBase64);
+        } else {
+          reject(new Error('Could not get canvas context'));
+        }
+      } catch (error) {
+        reject(error);
+      }
+    };
+    
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src);
+      reject(new Error('Failed to load image'));
+    };
+    
+    // Load the image
+    img.src = URL.createObjectURL(file);
+  });
+};
+
 export function InsertImageUploadedDialogBody({
   onClick,
 }: {
@@ -93,19 +161,45 @@ export function InsertImageUploadedDialogBody({
 }) {
   const [src, setSrc] = useState('');
   const [altText, setAltText] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const isDisabled = src === '';
+  const isDisabled = src === '' || isProcessing;
 
   const loadImage = (files: FileList | null) => {
-    const reader = new FileReader();
-    reader.onload = function () {
-      if (typeof reader.result === 'string') {
-        setSrc(reader.result);
+    if (files !== null && files[0]) {
+      const file = files[0];
+      
+      // Check file size
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`Plik jest za duży. Maksymalny rozmiar to ${MAX_FILE_SIZE / (1024 * 1024)}MB.`);
+        return;
       }
-      return '';
-    };
-    if (files !== null) {
-      reader.readAsDataURL(files[0]);
+      
+      // Check if it's an image
+      if (!file.type.startsWith('image/')) {
+        alert('Proszę wybrać plik obrazu.');
+        return;
+      }
+      
+      setIsProcessing(true);
+      
+      resizeImage(file, MAX_IMAGE_WIDTH, IMAGE_QUALITY)
+        .then((resizedBase64: string) => {
+          setSrc(resizedBase64);
+          setIsProcessing(false);
+        })
+        .catch((error: Error) => {
+          console.error('Error resizing image:', error);
+          setIsProcessing(false);
+          // Fallback to original file
+          const reader = new FileReader();
+          reader.onload = function () {
+            if (typeof reader.result === 'string') {
+              setSrc(reader.result);
+            }
+          };
+          reader.readAsDataURL(file);
+        });
     }
   };
 
@@ -130,13 +224,29 @@ export function InsertImageUploadedDialogBody({
       value={altText}
       data-test-id="image-modal-alt-text-input"
       />
+      {src && (
+        <>
+          <label className="text-sm font-medium text-gray-700">
+            Podgląd
+          </label>
+          <div className="max-w-xs">
+            {/* Using img for base64 preview - Next.js Image component doesn't work with data URLs */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={src} 
+              alt="Podgląd obrazu" 
+              className="max-w-full h-auto rounded border"
+            />
+          </div>
+        </>
+      )}
       <DialogActions>
       <Button
         data-test-id="image-modal-file-upload-btn"
         disabled={isDisabled}
         onClick={() => onClick({ altText, src })}
       >
-        Potwierdź
+        {isProcessing ? 'Przetwarzanie...' : 'Potwierdź'}
       </Button>
       </DialogActions>
     </div>
