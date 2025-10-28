@@ -42,6 +42,7 @@ model Course {
   modules                Module[]
   userCourses            UserCourse[]
   educationalPathCourses EducationalPathCourse[]
+  communicationLinks     CourseCommunication[]
 
   @@index([authorId])
   @@index([categoryId])
@@ -396,4 +397,32 @@ model TeacherPlatformSubscription {
   @@index([paymentId])
   @@index([customerEmail])
   @@map("teacher_platform_subscriptions")
+}
+
+model CourseCommunication {
+  id          Int                    @id @default(autoincrement())
+  courseId    Int
+  platform    CommunicationPlatform
+  link        String                 @db.VarChar(500)
+  label       String?                @db.VarChar(100)
+  description String?                @db.Text
+  isActive    Boolean                @default(true)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  
+  course      Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, platform, label])
+  @@index([courseId])
+  @@index([platform])
+}
+
+enum CommunicationPlatform {
+  WHATSAPP
+  TELEGRAM
+  DISCORD
+  SLACK
+  TEAMS
+  ZOOM
+  CUSTOM
 }

@@ -2,6 +2,7 @@
 
 import CourseSidebarItem from "./course-sidebar-item";
 import { CourseSidebarProps } from "./course-mobile-sidebar";
+import { StudentCommunicationLinks } from "./student-communication-links";
 
 export const CourseSidebar = ({ course }: CourseSidebarProps) => {
     return (

@@ -74,7 +74,7 @@ export async function GET(
     if(!providerId) {
       return new NextResponse("Unauthorized - Missing providerId", { status: 401 });
     }
-    const courseIdInt = parseInt(params.courseId, 10);
+  const courseIdInt = parseInt(params.courseId, 10);
 
     if (isNaN(courseIdInt)) {
       return new NextResponse("Invalid courseId", { status: 400 });

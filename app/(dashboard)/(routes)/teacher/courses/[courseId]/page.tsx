@@ -15,6 +15,7 @@ import CourseModeForm from "./_components/mode_form";
 import PriceForm from "./_components/price-form";
 import CourseStateBar from "./_components/state-bar";
 import { PromoCodesForm } from "./_components/promo-codes-form";
+import { CommunicationLinksForm } from "./_components/communication-links-form";
 
 
 const CourseIdPage = async ({ params }: { params: Promise<{ courseId: string }> }) => {
@@ -102,6 +103,15 @@ const CourseIdPage = async ({ params }: { params: Promise<{ courseId: string }> 
             </div>
             <div>
               <PromoCodesForm courseId={courseId} />
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center gap-x-2 gap-6 mt-6">
+                <span className="text-xl">💬</span>
+                <h2 className="text-xl">Komunikacja z uczestnikami</h2>
+            </div>
+            <div>
+              <CommunicationLinksForm courseId={courseId} />
             </div>
           </div>
           <div className="flex items-center gap-x-2 gap-6 mt-6">
