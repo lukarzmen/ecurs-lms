@@ -395,8 +395,21 @@ export default function RegisterPage() {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        const errorMessage = errorData.message || "Rejestracja nie powiodła się";
+        let errorMessage = "Rejestracja nie powiodła się";
+        
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (parseError) {
+          try {
+            const errorText = await response.text();
+            console.error("User API returned non-JSON error:", errorText);
+            errorMessage = `Błąd serwera (${response.status}): ${errorText.slice(0, 100)}...`;
+          } catch {
+            errorMessage = `Błąd serwera (${response.status})`;
+          }
+        }
+        
         throw new Error(errorMessage);
       }
 
@@ -414,8 +427,24 @@ export default function RegisterPage() {
           });
           
           if (!stripeResponse.ok) {
-            const stripeError = await stripeResponse.json();
-            throw new Error(stripeError.message || "Nie udało się utworzyć konta płatności");
+            let errorMessage = "Nie udało się utworzyć konta płatności";
+            
+            try {
+              // Try to parse as JSON first
+              const stripeError = await stripeResponse.json();
+              errorMessage = stripeError.message || errorMessage;
+            } catch (parseError) {
+              // If JSON parsing fails, try to get text content
+              try {
+                const errorText = await stripeResponse.text();
+                console.error("Stripe API returned non-JSON error:", errorText);
+                errorMessage = `Błąd serwera (${stripeResponse.status}): ${errorText.slice(0, 100)}...`;
+              } catch {
+                errorMessage = `Błąd serwera (${stripeResponse.status})`;
+              }
+            }
+            
+            throw new Error(errorMessage);
           }
 
           const stripeResult = await stripeResponse.json();
@@ -509,8 +538,21 @@ export default function RegisterPage() {
           throw new Error("Nie otrzymano linku do płatności");
         }
       } else {
-        const errorData = await response.text();
-        throw new Error(errorData || "Błąd podczas tworzenia subskrypcji platformy");
+        let errorMessage = "Błąd podczas tworzenia subskrypcji platformy";
+        
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (parseError) {
+          try {
+            const errorText = await response.text();
+            errorMessage = errorText || errorMessage;
+          } catch {
+            errorMessage = `Błąd serwera (${response.status})`;
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error("Platform subscription error:", error);
