@@ -65,7 +65,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-    const { userId, sessionId, roleId } = await req.json();
+    const { userId, sessionId, roleId, businessData } = await req.json();
     if (!userId || !sessionId) {
         return new NextResponse("Invalid parameters", {
             status: 400,
@@ -85,6 +85,19 @@ export async function POST(req: Request) {
             },
         });
 
+        // Prepare business type data for user creation/update
+        const businessTypeData = businessData ? {
+            businessType: businessData.businessType || "individual",
+            companyName: businessData.businessType === "company" ? businessData.companyName : null,
+            taxId: businessData.businessType === "company" ? businessData.taxId : null,
+            requiresVatInvoices: businessData.businessType === "company" ? (businessData.requiresVatInvoices || false) : false,
+        } : {
+            businessType: "individual",
+            companyName: null,
+            taxId: null,
+            requiresVatInvoices: false,
+        };
+
         if (!user) {
             user = await db.user.create({
                 data: {
@@ -96,6 +109,7 @@ export async function POST(req: Request) {
                     updatedAt: new Date(),
                     roleId: roleId,
                     displayName: `${clerkUser.username}` || `${clerkUser.firstName} ${clerkUser.lastName}`,
+                    ...businessTypeData,
                 },
             });
             
@@ -110,14 +124,24 @@ export async function POST(req: Request) {
             
             return NextResponse.json({ created: true, user });
         } else {
-            // Update providerId and role if user exists
+            // User exists - update only providerId, role, and business data if provided
+            const updateData: any = {
+                providerId: userId,
+                roleId: roleId,
+                updatedAt: new Date(),
+            };
+
+            // Update business data if provided
+            if (businessData) {
+                updateData.businessType = businessData.businessType || "individual";
+                updateData.companyName = businessData.businessType === "company" ? businessData.companyName : null;
+                updateData.taxId = businessData.businessType === "company" ? businessData.taxId : null;
+                updateData.requiresVatInvoices = businessData.businessType === "company" ? (businessData.requiresVatInvoices || false) : false;
+            }
+
             user = await db.user.update({
                 where: { id: user.id },
-                data: {
-                    providerId: userId,
-                    roleId: roleId,
-                    updatedAt: new Date(),
-                },
+                data: updateData,
             });
             
             // If teacher role and no Stripe account, indicate onboarding needed

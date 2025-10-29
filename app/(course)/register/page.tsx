@@ -10,9 +10,9 @@ const TERMS_EFFECTIVE_DATE = "18.10.2025";
 const TERMS_LAST_UPDATE = "18.10.2025";
 
 const STUDENT_TERMS = (
-  <div className="text-left max-h-48 sm:max-h-64 overflow-y-auto px-2 py-2 bg-orange-50 rounded-lg border border-orange-200 shadow-inner text-xs sm:text-sm leading-relaxed space-y-2">
-    <h2 className="text-lg font-bold text-orange-700 mb-2">📜 Warunki uczestnictwa użytkownika w platformie Ecurs</h2>
-    <p className="text-xs text-gray-500 mb-2">
+  <div className="text-left max-h-40 sm:max-h-48 md:max-h-64 overflow-y-auto px-2 sm:px-3 py-2 sm:py-3 bg-orange-50 rounded-lg border border-orange-200 shadow-inner text-xs sm:text-sm leading-relaxed space-y-1 sm:space-y-2">
+    <h2 className="text-sm sm:text-lg font-bold text-orange-700 mb-1 sm:mb-2 sticky top-0 bg-orange-50 py-1">📜 Warunki uczestnictwa użytkownika w platformie Ecurs</h2>
+    <p className="text-xs text-gray-500 mb-1 sm:mb-2 sticky top-8 sm:top-10 bg-orange-50 py-1">
       Obowiązuje od: {TERMS_EFFECTIVE_DATE} &nbsp;|&nbsp; Ostatnia aktualizacja: {TERMS_LAST_UPDATE}
     </p>
     <p className="font-semibold text-gray-700">§1. Postanowienia ogólne</p>
@@ -98,9 +98,9 @@ const STUDENT_TERMS = (
 );
 
 const TEACHER_TERMS = (
-  <div className="text-left max-h-48 sm:max-h-64 overflow-y-auto px-2 py-2 bg-blue-50 rounded-lg border border-blue-200 shadow-inner text-xs sm:text-sm leading-relaxed space-y-2">
-    <h2 className="text-lg font-bold text-blue-700 mb-2">📜 Warunki uczestnictwa nauczyciela w platformie Ecurs</h2>
-    <p className="text-xs text-gray-500 mb-2">
+  <div className="text-left max-h-40 sm:max-h-48 md:max-h-64 overflow-y-auto px-2 sm:px-3 py-2 sm:py-3 bg-blue-50 rounded-lg border border-blue-200 shadow-inner text-xs sm:text-sm leading-relaxed space-y-1 sm:space-y-2">
+    <h2 className="text-sm sm:text-lg font-bold text-blue-700 mb-1 sm:mb-2 sticky top-0 bg-blue-50 py-1">📜 Warunki uczestnictwa nauczyciela w platformie Ecurs</h2>
+    <p className="text-xs text-gray-500 mb-1 sm:mb-2 sticky top-8 sm:top-10 bg-blue-50 py-1">
       Obowiązuje od: {TERMS_EFFECTIVE_DATE} &nbsp;|&nbsp; Ostatnia aktualizacja: {TERMS_LAST_UPDATE}
     </p>
     <p className="font-semibold text-gray-700">§1. Postanowienia ogólne</p>
@@ -242,7 +242,7 @@ const TEACHER_TERMS = (
 );
 
 type RegistrationStep = "role-selection" | "business-type-selection" | "terms-acceptance" | "user-creation" | "stripe-setup" | "platform-subscription" | "completed";
-type LoadingState = "idle" | "creating-user" | "updating-business-type" | "creating-stripe-account" | "redirecting-to-stripe" | "updating-user" | "creating-platform-subscription";
+type LoadingState = "idle" | "creating-user" | "creating-stripe-account" | "redirecting-to-stripe" | "updating-user" | "creating-platform-subscription";
 
 interface BusinessTypeData {
   businessType: "individual" | "company";
@@ -299,7 +299,6 @@ export default function RegisterPage() {
     const messages = {
       "idle": "",
       "creating-user": "Tworzenie konta użytkownika...",
-      "updating-business-type": "Zapisywanie typu działalności...",
       "creating-stripe-account": "Przygotowywanie konta płatności...",
       "redirecting-to-stripe": "Przekierowywanie do Stripe...",
       "updating-user": "Aktualizowanie danych użytkownika...",
@@ -319,21 +318,21 @@ export default function RegisterPage() {
     const totalSteps = steps.length;
     
     return (
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700">Postęp rejestracji</span>
-          <span className="text-sm text-gray-500">{currentStepNumber}/{totalSteps}</span>
+          <span className="text-xs sm:text-sm font-medium text-gray-700">Postęp rejestracji</span>
+          <span className="text-xs sm:text-sm text-gray-500">{currentStepNumber}/{totalSteps}</span>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center justify-center space-x-1 sm:space-x-2 overflow-x-auto">
           {steps.map((step, index) => {
             const stepNumber = index + 1;
             const isCompleted = stepNumber < currentStepNumber;
             const isCurrent = stepNumber === currentStepNumber;
             
             return (
-              <div key={index} className="flex items-center">
+              <div key={index} className="flex items-center flex-shrink-0">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium border-2 transition-colors
+                  className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-medium border-2 transition-colors
                     ${isCompleted 
                       ? `${selectedRole === "student" ? "bg-orange-500 border-orange-500" : "bg-blue-500 border-blue-500"} text-white` 
                       : isCurrent 
@@ -345,7 +344,7 @@ export default function RegisterPage() {
                 </div>
                 {index < steps.length - 1 && (
                   <div
-                    className={`w-8 h-0.5 mx-1 transition-colors
+                    className={`w-4 sm:w-8 h-0.5 mx-1 transition-colors flex-shrink-0
                       ${isCompleted 
                         ? selectedRole === "student" ? "bg-orange-500" : "bg-blue-500"
                         : "bg-gray-300"
@@ -356,7 +355,7 @@ export default function RegisterPage() {
             );
           })}
         </div>
-        <div className="mt-2 text-xs text-gray-600 text-center">
+        <div className="mt-2 text-xs sm:text-sm text-gray-600 text-center px-2">
           {steps[currentStepNumber - 1]}
         </div>
       </div>
@@ -383,10 +382,16 @@ export default function RegisterPage() {
       setCurrentStep("user-creation");
       setLoadingState("creating-user");
       
+      // Prepare request body with business data for teachers
+      const requestBody: any = { userId, sessionId, roleId };
+      if (selectedRole === "teacher") {
+        requestBody.businessData = businessData;
+      }
+      
       const response = await fetch("/api/user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, sessionId, roleId }),
+        body: JSON.stringify(requestBody),
       });
       
       if (!response.ok) {
@@ -589,29 +594,9 @@ export default function RegisterPage() {
       return;
     }
 
-    try {
-      setIsLoading(true);
-      setLoadingState("updating-business-type");
-      setRegistrationError(null);
-
-      const response = await fetch("/api/user/business-type", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(businessData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Nie udało się zapisać typu działalności");
-      }
-
-      setCurrentStep("terms-acceptance");
-    } catch (error) {
-      console.error("Business type selection error:", error);
-      setRegistrationError(error instanceof Error ? error.message : "Błąd podczas zapisywania typu działalności");
-    } finally {
-      setIsLoading(false);
-      setLoadingState("idle");
-    }
+    // No API call here - business data will be saved during user creation
+    setCurrentStep("terms-acceptance");
+    setRegistrationError(null);
   };
 
   const handleBackToBusinessType = () => {
@@ -670,15 +655,86 @@ export default function RegisterPage() {
           min-height: 44px;
           min-width: 44px;
         }
+
+        /* Custom radio button styling */
+        input[type="radio"] {
+          appearance: none;
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          width: 18px;
+          height: 18px;
+          border: 2px solid #d1d5db;
+          border-radius: 50%;
+          background-color: white;
+          cursor: pointer;
+          position: relative;
+          margin: 0;
+          flex-shrink: 0;
+        }
+
+        input[type="radio"]:checked {
+          border-color: #3b82f6;
+          background-color: white;
+        }
+
+        input[type="radio"]:checked::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 8px;
+          height: 8px;
+          background-color: #3b82f6;
+          border-radius: 50%;
+        }
+
+        input[type="radio"]:hover {
+          border-color: #6b7280;
+        }
+
+        input[type="radio"]:checked:hover {
+          border-color: #2563eb;
+        }
+
+        input[type="radio"]:focus {
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Prevent horizontal scroll on mobile */
+        @media (max-width: 640px) {
+          body {
+            overflow-x: hidden;
+          }
+          
+          /* Ensure content fits in viewport */
+          .registration-container {
+            max-width: 100vw;
+            margin: 0;
+            padding: 0.5rem;
+          }
+
+          /* Smaller radio buttons on mobile */
+          input[type="radio"] {
+            width: 16px;
+            height: 16px;
+          }
+
+          input[type="radio"]:checked::after {
+            width: 6px;
+            height: 6px;
+          }
+        }
       `}</style>
       
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-white p-2 sm:p-4">
-        <div className="flex flex-col items-center w-full max-w-lg mx-auto text-center p-4 sm:p-6 space-y-4 sm:space-y-6 bg-white rounded-lg sm:rounded-xl shadow-lg border border-orange-100">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-700">Witamy w Ecurs!</h1>
-        <p className="text-sm sm:text-base text-gray-600 px-2">
+        <div className="registration-container flex flex-col items-center w-full max-w-sm sm:max-w-lg mx-auto text-center p-3 sm:p-6 space-y-3 sm:space-y-6 bg-white rounded-lg sm:rounded-xl shadow-lg border border-orange-100">
+        <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-orange-700 leading-tight">Witamy w Ecurs!</h1>
+        <p className="text-sm sm:text-base text-gray-600 px-1 sm:px-2 leading-relaxed">
           Dołącz do naszej platformy edukacyjnej, aby uzyskać dostęp do wszystkich kursów, zasobów i spersonalizowanych doświadczeń edukacyjnych.
         </p>
-        <div className="w-12 sm:w-16 h-1 bg-orange-500 mx-auto my-2 rounded"></div>
+        <div className="w-12 sm:w-16 h-1 bg-orange-500 mx-auto my-1 sm:my-2 rounded"></div>
         
         <ProgressIndicator currentStep={currentStep} selectedRole={selectedRole} />
         
@@ -822,11 +878,11 @@ export default function RegisterPage() {
                 </button>
               </div>
 
-              <div className="space-y-4">
-                <h3 className="text-md font-semibold text-gray-700">Wybierz typ swojej działalności:</h3>
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-sm sm:text-md font-semibold text-gray-700">Wybierz typ swojej działalności:</h3>
                 
-                <div className="space-y-3">
-                  <label className="flex items-start space-x-3 p-3 sm:p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                <div className="space-y-2 sm:space-y-3">
+                  <label className="flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 md:p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                     <input
                       type="radio"
                       name="businessType"
@@ -839,18 +895,18 @@ export default function RegisterPage() {
                         taxId: "",
                         requiresVatInvoices: false
                       }))}
-                      className="mt-1"
+                      className="mt-1 flex-shrink-0"
                       disabled={isLoading}
                     />
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-700 text-sm sm:text-base">🧑‍💼 Osoba fizyczna (JDG)</div>
-                      <div className="text-xs sm:text-sm text-gray-600 mt-1">
+                      <div className="text-xs sm:text-sm text-gray-600 mt-1 leading-tight">
                         Prowadzisz kursy jako osoba fizyczna prowadząca działalność gospodarczą
                       </div>
                     </div>
                   </label>
 
-                  <label className="flex items-start space-x-3 p-3 sm:p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <label className="flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 md:p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                     <input
                       type="radio"
                       name="businessType"
@@ -860,12 +916,12 @@ export default function RegisterPage() {
                         ...prev, 
                         businessType: e.target.value as "individual" | "company" 
                       }))}
-                      className="mt-1"
+                      className="mt-1 flex-shrink-0"
                       disabled={isLoading}
                     />
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-700 text-sm sm:text-base">🏢 Firma (spółka)</div>
-                      <div className="text-xs sm:text-sm text-gray-600 mt-1">
+                      <div className="text-xs sm:text-sm text-gray-600 mt-1 leading-tight">
                         Prowadzisz kursy jako firma (sp. z o.o., S.A., itp.) - wymagane faktury VAT
                       </div>
                     </div>
@@ -873,46 +929,46 @@ export default function RegisterPage() {
                 </div>
 
                 {businessData.businessType === "company" && (
-                  <div className="mt-4 space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h4 className="font-medium text-blue-800">Dane firmy:</h4>
+                  <div className="mt-3 sm:mt-4 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-medium text-blue-800 text-sm sm:text-base">Dane firmy:</h4>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                         Nazwa firmy *
                       </label>
                       <input
                         type="text"
                         value={businessData.companyName || ""}
                         onChange={(e) => setBusinessData(prev => ({ ...prev, companyName: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="np. Przykładowa Sp. z o.o."
                         disabled={isLoading}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                         NIP *
                       </label>
                       <input
                         type="text"
                         value={businessData.taxId || ""}
                         onChange={(e) => setBusinessData(prev => ({ ...prev, taxId: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="np. 1234567890"
                         disabled={isLoading}
                       />
                     </div>
 
-                    <label className="flex items-start space-x-3 cursor-pointer">
+                    <label className="flex items-start space-x-2 sm:space-x-3 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={businessData.requiresVatInvoices || false}
                         onChange={(e) => setBusinessData(prev => ({ ...prev, requiresVatInvoices: e.target.checked }))}
-                        className="mt-1"
+                        className="mt-1 flex-shrink-0"
                         disabled={isLoading}
                       />
-                      <div className="text-sm">
+                      <div className="text-xs sm:text-sm">
                         <div className="font-medium text-gray-700">Wymagam wystawiania faktur VAT</div>
                         <div className="text-gray-600">Będę wystawiać faktury VAT swoim uczniom</div>
                       </div>
@@ -923,7 +979,7 @@ export default function RegisterPage() {
                 <button
                   onClick={handleBusinessTypeSelection}
                   disabled={isLoading || (businessData.businessType === "company" && (!businessData.companyName || !businessData.taxId))}
-                  className={`w-full py-3 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg transition-all
+                  className={`w-full py-3 px-3 sm:px-4 md:px-8 rounded-lg font-medium text-white text-sm sm:text-base lg:text-lg transition-all
                     ${isLoading || (businessData.businessType === "company" && (!businessData.companyName || !businessData.taxId))
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg"
@@ -931,8 +987,8 @@ export default function RegisterPage() {
                 >
                   {isLoading ? (
                     <div className="flex items-center justify-center space-x-2">
-                      <Loader2 className="animate-spin" size={20} />
-                      <span>Zapisywanie...</span>
+                      <Loader2 className="animate-spin" size={18} />
+                      <span className="text-sm">Zapisywanie...</span>
                     </div>
                   ) : (
                     "Kontynuuj do akceptacji regulaminu"
@@ -1030,12 +1086,12 @@ export default function RegisterPage() {
             </div>
           ) : (
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <span className={`flex items-center gap-2 text-base sm:text-lg font-semibold ${selectedRole === "student" ? "text-orange-600" : "text-blue-600"}`}>
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <span className={`flex items-center gap-1 sm:gap-2 text-sm sm:text-base lg:text-lg font-semibold ${selectedRole === "student" ? "text-orange-600" : "text-blue-600"}`}>
                   {selectedRole === "student" ? "👩‍🎓 Rejestracja ucznia" : "👨‍🏫 Rejestracja nauczyciela"}
                 </span>
                 <button
-                  className="text-xs text-gray-500 underline hover:text-orange-700 transition disabled:opacity-50"
+                  className="text-xs sm:text-sm text-gray-500 underline hover:text-orange-700 transition disabled:opacity-50 px-1 py-1"
                   onClick={selectedRole === "teacher" ? handleBackToBusinessType : handleBackToRoleSelection}
                   type="button"
                   disabled={isLoading}
@@ -1044,7 +1100,7 @@ export default function RegisterPage() {
                 </button>
               </div>
               {selectedRole === "student" ? STUDENT_TERMS : TEACHER_TERMS}
-              <label className="flex items-center mt-3 cursor-pointer select-none">
+              <label className="flex items-start mt-2 sm:mt-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={acceptTerms}
@@ -1055,9 +1111,9 @@ export default function RegisterPage() {
                     }
                   }}
                   disabled={isLoading}
-                  className={`form-checkbox h-4 w-4 ${selectedRole === "student" ? "accent-orange-500" : "accent-blue-500"} disabled:opacity-50`}
+                  className={`form-checkbox h-4 w-4 mt-0.5 flex-shrink-0 ${selectedRole === "student" ? "accent-orange-500" : "accent-blue-500"} disabled:opacity-50`}
                 />
-                <span className={`ml-2 text-sm ${isLoading ? "text-gray-400" : "text-gray-700"}`}>
+                <span className={`ml-2 text-xs sm:text-sm leading-tight ${isLoading ? "text-gray-400" : "text-gray-700"}`}>
                   {selectedRole === "student"
                     ? "Akceptuję regulamin platformy Ecurs"
                     : "Akceptuję regulamin, warunki płatności i wyrażam zgodę na rejestrację w systemie płatności Stripe"}
@@ -1065,9 +1121,9 @@ export default function RegisterPage() {
               </label>
               
               {selectedRole === "teacher" && (
-                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-xs text-blue-700 font-medium">ℹ️ Następny krok:</p>
-                  <p className="text-xs text-blue-600 mt-1">
+                <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-xs sm:text-sm text-blue-700 font-medium">ℹ️ Następny krok:</p>
+                  <p className="text-xs text-blue-600 mt-1 leading-tight">
                     Po kliknięciu &quot;Kontynuuj&quot; zostaniesz przekierowany na bezpieczną stronę Stripe w celu konfiguracji konta płatności. 
                     Po zakończeniu procesu automatycznie wrócisz na platformę Ecurs.
                   </p>
@@ -1077,7 +1133,7 @@ export default function RegisterPage() {
               <button
                 onClick={handleSignUp}
                 disabled={isLoading || !isSignedIn || !acceptTerms}
-                className={`w-full mt-4 py-3 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg transition-all
+                className={`w-full mt-3 sm:mt-4 py-3 px-3 sm:px-4 md:px-8 rounded-lg font-medium text-white text-sm sm:text-base lg:text-lg transition-all
                   ${selectedRole === "student"
                     ? (isLoading || !isSignedIn || !acceptTerms
                         ? "bg-gray-400 cursor-not-allowed"
@@ -1089,7 +1145,7 @@ export default function RegisterPage() {
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center space-x-2">
-                    <Loader2 className="animate-spin" size={20} />
+                    <Loader2 className="animate-spin" size={18} />
                     <span className="text-sm">
                       {loadingState === "creating-user" && "Tworzenie konta..."}
                       {loadingState === "creating-stripe-account" && "Konfiguracja płatności..."}
