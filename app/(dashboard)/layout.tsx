@@ -1,22 +1,47 @@
-import { SignedIn } from "@clerk/nextjs";
+"use client";
+
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 import Footer from "./_components/footer";
 import Navbar from "./_components/navbar";
 import { Sidebar } from "./_components/sidebar";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <SignedIn>
-      <div className="min-h-screen flex flex-col">
-        <div className="h-[80px] md:pl-56 fixed inset-y-0 w-full z-50">
-          <Navbar />
+    <>
+      <SignedIn>
+        <div className="min-h-screen flex flex-col">
+          <div className="h-[80px] md:pl-56 fixed inset-y-0 w-full z-50">
+            <Navbar />
+          </div>
+          <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-50">
+            <Sidebar />
+          </div>
+          <main className="pt-16 h-full md:pl-56 flex-1">{children}</main>
+          <Footer />
         </div>
-        <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-50">
-          <Sidebar />
+      </SignedIn>
+      <SignedOut>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+          <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">Wylogowano</h2>
+            <p className="text-gray-600 mb-6">
+              Zostałeś wylogowany z systemu. Odśwież stronę, aby zalogować się ponownie.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition-colors"
+              >
+                Odśwież stronę
+              </button>
+              <p className="text-sm text-gray-500">
+                lub naciśnij F5 / Ctrl+R
+              </p>
+            </div>
+          </div>
         </div>
-        <main className="pt-16 h-full md:pl-56 flex-1">{children}</main>
-        <Footer />
-      </div>
-    </SignedIn>
+      </SignedOut>
+    </>
   );
 };
 
