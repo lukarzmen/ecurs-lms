@@ -73,7 +73,7 @@ export default async function EducationalPathPage({
                 className="flex items-center text-sm hover:opacity-75 transition pt-4 select-none mb-4"
             >
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                Powrót do listy kursów
+                Powrót do panelu głównego
             </Link>
             <h1 className="text-2xl font-bold mb-6">Twoja ścieżka</h1>
             <div className="mb-8 p-6 rounded bg-orange-50 border border-orange-200">
