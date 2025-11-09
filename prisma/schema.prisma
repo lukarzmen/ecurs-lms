@@ -43,6 +43,7 @@ model Course {
   userCourses            UserCourse[]
   educationalPathCourses EducationalPathCourse[]
   communicationLinks     CourseCommunication[]
+  notificationSchedules  NotificationSchedule[]
 
   @@index([authorId])
   @@index([categoryId])
@@ -246,6 +247,8 @@ model User {
   userEducationalPaths        UserEducationalPath[]
   educationalPathPurchases    EducationalPathPurchase[]
   teacherPlatformSubscription TeacherPlatformSubscription?
+  notificationSchedules       NotificationSchedule[]       @relation("NotificationAuthor")
+  receivedNotifications       NotificationSentLog[]        @relation("NotificationRecipient")
 
   @@index([roleId])
 }
@@ -425,4 +428,52 @@ enum CommunicationPlatform {
   TEAMS
   ZOOM
   CUSTOM
+}
+
+model NotificationSchedule {
+  id            Int      @id @default(autoincrement())
+  courseId      Int
+  authorId      Int
+  title         String   @db.VarChar(255)
+  message       String   @db.Text
+  cronExpression String  @db.VarChar(100)
+  isEnabled     Boolean  @default(true)
+  notificationType String @db.VarChar(50) // 'newLesson', 'noActivity', etc.
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lastSentAt    DateTime?
+  
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  author        User     @relation("NotificationAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  sentLogs      NotificationSentLog[]
+
+  @@index([courseId])
+  @@index([authorId])
+  @@index([isEnabled])
+  @@index([cronExpression])
+}
+
+model NotificationSentLog {
+  id                     Int                  @id @default(autoincrement())
+  notificationScheduleId Int
+  recipientEmail         String               @db.VarChar(255)
+  recipientUserId        Int
+  sentAt                 DateTime             @default(now())
+  status                 NotificationStatus   @default(PENDING)
+  errorMessage           String?              @db.Text
+  
+  notificationSchedule   NotificationSchedule @relation(fields: [notificationScheduleId], references: [id], onDelete: Cascade)
+  recipient              User                 @relation("NotificationRecipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
+
+  @@index([notificationScheduleId])
+  @@index([recipientUserId])
+  @@index([sentAt])
+  @@index([status])
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
 }

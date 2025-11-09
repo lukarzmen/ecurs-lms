@@ -1,0 +1,23 @@
+name: Notification Cron Job
+
+on:
+  schedule:
+    # Uruchamia się co minutę
+    - cron: '* * * * *'
+  workflow_dispatch:
+    # Umożliwia ręczne uruchomienie
+
+jobs:
+  send-notifications:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call notification cron endpoint
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            https://ecurs-lms.vercel.app/api/notifications/cron
+        continue-on-error: true
+
+      - name: Log result
+        run: echo "Notification cron job completed"
