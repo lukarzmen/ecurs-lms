@@ -242,7 +242,7 @@ const TEACHER_TERMS = (
 );
 
 type RegistrationStep = "role-selection" | "business-type-selection" | "terms-acceptance" | "user-creation" | "stripe-setup" | "platform-subscription" | "completed";
-type LoadingState = "idle" | "creating-user" | "creating-stripe-account" | "redirecting-to-stripe" | "updating-user" | "creating-platform-subscription";
+type LoadingState = "idle" | "creating-user" | "creating-stripe-account" | "redirecting-to-stripe" | "updating-user" | "creating-platform-subscription" | "completing-registration";
 
 interface BusinessTypeData {
   businessType: "individual" | "company";
@@ -267,6 +267,39 @@ export default function RegisterPage() {
   const [registrationError, setRegistrationError] = useState<string | null>(null);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const router = useRouter();
+
+  // Block page navigation during redirect states
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+        e.preventDefault();
+        e.returnValue = "Rejestracja jest w toku. Czy na pewno chcesz opuścić tę stronę?";
+        return e.returnValue;
+      }
+    };
+
+    const handlePopState = (e: PopStateEvent) => {
+      if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+        e.preventDefault();
+        // Push the current state back to prevent navigation
+        window.history.pushState(null, "", window.location.href);
+        toast.error("Proszę poczekać na zakończenie przekierowywania");
+      }
+    };
+
+    if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+      window.addEventListener("beforeunload", handleBeforeUnload);
+      window.addEventListener("popstate", handlePopState);
+      
+      // Push current state to prevent back button
+      window.history.pushState(null, "", window.location.href);
+    }
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [loadingState]);
 
   // Detect mobile device
   useEffect(() => {
@@ -302,7 +335,8 @@ export default function RegisterPage() {
       "creating-stripe-account": "Przygotowywanie konta płatności...",
       "redirecting-to-stripe": "Przekierowywanie do Stripe...",
       "updating-user": "Aktualizowanie danych użytkownika...",
-      "creating-platform-subscription": "Przygotowywanie subskrypcji platformy..."
+      "creating-platform-subscription": "Przygotowywanie subskrypcji platformy...",
+      "completing-registration": "Finalizowanie rejestracji..."
     };
     return messages[state];
   };
@@ -576,8 +610,10 @@ export default function RegisterPage() {
   const handleRoleSelection = useCallback((role: "student" | "teacher") => {
     console.log("Role selection clicked:", role); // Debug log for mobile testing
     
-    // Prevent any concurrent selections
-    if (isLoading || selectedRole) return;
+    // Prevent any concurrent selections or during redirect states
+    if (isLoading || selectedRole || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+      return;
+    }
     
     // Clear any pending touch timeout
     if (touchTimeoutRef.current) {
@@ -596,7 +632,7 @@ export default function RegisterPage() {
     
     // Provide immediate visual feedback
     toast.success(`Wybrano rolę: ${role === "student" ? "uczeń" : "nauczyciel"}`);
-  }, [isLoading, selectedRole]);
+  }, [isLoading, selectedRole, loadingState]);
 
   // Mobile-optimized touch handler
   const createTouchHandler = useCallback((role: "student" | "teacher") => {
@@ -604,14 +640,14 @@ export default function RegisterPage() {
       onClick: (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!isLoading && !selectedRole) {
+        if (!isLoading && !selectedRole && loadingState !== "redirecting-to-stripe" && loadingState !== "creating-platform-subscription" && loadingState !== "completing-registration") {
           handleRoleSelection(role);
         }
       },
       onTouchEnd: (e: React.TouchEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!isLoading && !selectedRole) {
+        if (!isLoading && !selectedRole && loadingState !== "redirecting-to-stripe" && loadingState !== "creating-platform-subscription" && loadingState !== "completing-registration") {
           // Small delay to prevent double-firing
           touchTimeoutRef.current = setTimeout(() => {
             handleRoleSelection(role);
@@ -623,9 +659,14 @@ export default function RegisterPage() {
         e.preventDefault();
       }
     };
-  }, [isLoading, selectedRole, handleRoleSelection]);
+  }, [isLoading, selectedRole, handleRoleSelection, loadingState]);
 
   const handleBusinessTypeSelection = async () => {
+    // Block navigation during redirect states
+    if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+      return;
+    }
+    
     if (!isSignedIn) {
       setRegistrationError("Zaloguj się, aby kontynuować");
       return;
@@ -642,12 +683,22 @@ export default function RegisterPage() {
   };
 
   const handleBackToBusinessType = () => {
+    // Block navigation during redirect states
+    if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+      return;
+    }
+    
     setCurrentStep("business-type-selection");
     setAcceptTerms(false);
     setRegistrationError(null);
   };
 
   const handleBackToRoleSelection = () => {
+    // Block navigation during redirect states
+    if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+      return;
+    }
+    
     setSelectedRole(null);
     setCurrentStep("role-selection");
     setAcceptTerms(false);
@@ -768,7 +819,39 @@ export default function RegisterPage() {
             height: 6px;
           }
         }
+        
+        /* Disabled state for navigation blocking during redirects */
+        .navigation-blocked {
+          pointer-events: none !important;
+          opacity: 0.5 !important;
+          cursor: not-allowed !important;
+        }
       `}</style>
+      
+      {(loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full text-center shadow-xl">
+            <div className="mb-4">
+              <Loader2 className="animate-spin mx-auto" size={40} />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              {loadingState === "redirecting-to-stripe" ? "Przygotowywanie przekierowania..." : loadingState === "creating-platform-subscription" ? "Przetwarzanie płatności..." : "Finalizowanie rejestracji..."}
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              {loadingState === "redirecting-to-stripe" 
+                ? "Za chwilę zostaniesz przekierowany na bezpieczną stronę Stripe do konfiguracji konta płatności."
+                : loadingState === "creating-platform-subscription"
+                ? "Przekierowujemy Cię do systemu płatności platformy..."
+                : "Przekierowujemy Cię do panelu nauczyciela..."}
+            </p>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <p className="text-xs text-yellow-700">
+                ⚠️ Proszę nie zamykać tej strony i nie korzystać z przeglądarki podczas przekierowywania.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-white p-2 sm:p-4">
         <div className="registration-container flex flex-col items-center w-full max-w-sm sm:max-w-lg mx-auto text-center p-3 sm:p-6 space-y-3 sm:space-y-6 bg-white rounded-lg sm:rounded-xl shadow-lg border border-orange-100">
@@ -800,6 +883,11 @@ export default function RegisterPage() {
                 {getLoadingMessage(loadingState)}
               </span>
             </div>
+            {(loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") && (
+              <div className="mt-2 text-xs text-blue-600 text-center">
+                Proszę nie zamykać tej strony i nie korzystać z przycisków nawigacji podczas przekierowywania...
+              </div>
+            )}
           </div>
         )}
         
@@ -812,18 +900,27 @@ export default function RegisterPage() {
                   // Mobile-optimized divs for better touch handling
                   <>
                     <div
-                      className="w-full py-4 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-orange-600 hover:bg-orange-700 active:bg-orange-800 transition-colors flex items-center justify-center gap-2 cursor-pointer touch-manipulation select-none"
+                      className={`w-full py-4 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-orange-600 hover:bg-orange-700 active:bg-orange-800 transition-colors flex items-center justify-center gap-2 cursor-pointer touch-manipulation select-none
+                        ${(isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "opacity-50 pointer-events-none" : ""}`}
                       onClick={() => {
                         console.log("Mobile div click - student");
-                        if (!isLoading && !selectedRole) {
+                        if (!isLoading && !selectedRole && loadingState !== "redirecting-to-stripe" && loadingState !== "creating-platform-subscription" && loadingState !== "completing-registration") {
                           handleRoleSelection("student");
                         }
                       }}
                       onTouchStart={(e) => {
+                        if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+                          e.preventDefault();
+                          return;
+                        }
                         console.log("Mobile touch start - student");
                         e.currentTarget.style.backgroundColor = '#ea580c';
                       }}
                       onTouchEnd={(e) => {
+                        if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+                          e.preventDefault();
+                          return;
+                        }
                         console.log("Mobile touch end - student");
                         e.currentTarget.style.backgroundColor = '#ea580c';
                         if (!isLoading && !selectedRole) {
@@ -840,18 +937,27 @@ export default function RegisterPage() {
                       👩‍🎓 Uczniem
                     </div>
                     <div
-                      className="w-full py-4 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 transition-colors flex items-center justify-center gap-2 cursor-pointer touch-manipulation select-none"
+                      className={`w-full py-4 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 transition-colors flex items-center justify-center gap-2 cursor-pointer touch-manipulation select-none
+                        ${(isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "opacity-50 pointer-events-none" : ""}`}
                       onClick={() => {
                         console.log("Mobile div click - teacher");
-                        if (!isLoading && !selectedRole) {
+                        if (!isLoading && !selectedRole && loadingState !== "redirecting-to-stripe" && loadingState !== "creating-platform-subscription" && loadingState !== "completing-registration") {
                           handleRoleSelection("teacher");
                         }
                       }}
                       onTouchStart={(e) => {
+                        if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+                          e.preventDefault();
+                          return;
+                        }
                         console.log("Mobile touch start - teacher");
                         e.currentTarget.style.backgroundColor = '#1d4ed8';
                       }}
                       onTouchEnd={(e) => {
+                        if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+                          e.preventDefault();
+                          return;
+                        }
                         console.log("Mobile touch end - teacher");
                         e.currentTarget.style.backgroundColor = '#1d4ed8';
                         if (!isLoading && !selectedRole) {
@@ -873,9 +979,10 @@ export default function RegisterPage() {
                   <>
                     <button
                       type="button"
-                      className="w-full py-3 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-orange-600 hover:bg-orange-700 active:bg-orange-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation select-none cursor-pointer"
+                      className={`w-full py-3 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-orange-600 hover:bg-orange-700 active:bg-orange-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation select-none cursor-pointer
+                        ${(loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none opacity-50" : ""}`}
                       {...createTouchHandler("student")}
-                      disabled={isLoading}
+                      disabled={isLoading || (loadingState === "redirecting-to-stripe") || (loadingState === "creating-platform-subscription") || (loadingState === "completing-registration")}
                       role="button"
                       tabIndex={0}
                       style={{ 
@@ -888,9 +995,10 @@ export default function RegisterPage() {
                     </button>
                     <button
                       type="button"
-                      className="w-full py-3 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation select-none cursor-pointer"
+                      className={`w-full py-3 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation select-none cursor-pointer
+                        ${(loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none opacity-50" : ""}`}
                       {...createTouchHandler("teacher")}
-                      disabled={isLoading}
+                      disabled={isLoading || (loadingState === "redirecting-to-stripe") || (loadingState === "creating-platform-subscription") || (loadingState === "completing-registration")}
                       role="button"
                       tabIndex={0}
                       style={{ 
@@ -913,8 +1021,8 @@ export default function RegisterPage() {
                 </span>
                 <button
                   onClick={handleBackToRoleSelection}
-                  className="text-xs sm:text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                  disabled={isLoading}
+                  className={`text-xs sm:text-sm text-gray-500 hover:text-gray-700 transition-colors ${(isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none opacity-50" : ""}`}
+                  disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                 >
                   ← Zmień rolę
                 </button>
@@ -930,15 +1038,18 @@ export default function RegisterPage() {
                       name="businessType"
                       value="individual"
                       checked={businessData.businessType === "individual"}
-                      onChange={(e) => setBusinessData(prev => ({ 
-                        ...prev, 
-                        businessType: e.target.value as "individual" | "company",
-                        companyName: "",
-                        taxId: "",
-                        requiresVatInvoices: false
-                      }))}
+                      onChange={(e) => {
+                        if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") return;
+                        setBusinessData(prev => ({ 
+                          ...prev, 
+                          businessType: e.target.value as "individual" | "company",
+                          companyName: "",
+                          taxId: "",
+                          requiresVatInvoices: false
+                        }))
+                      }}
                       className="mt-1 flex-shrink-0"
-                      disabled={isLoading}
+                      disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-700 text-sm sm:text-base">🧑‍💼 Osoba fizyczna (JDG)</div>
@@ -954,12 +1065,15 @@ export default function RegisterPage() {
                       name="businessType"
                       value="company"
                       checked={businessData.businessType === "company"}
-                      onChange={(e) => setBusinessData(prev => ({ 
-                        ...prev, 
-                        businessType: e.target.value as "individual" | "company" 
-                      }))}
+                      onChange={(e) => {
+                        if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") return;
+                        setBusinessData(prev => ({ 
+                          ...prev, 
+                          businessType: e.target.value as "individual" | "company" 
+                        }))
+                      }}
                       className="mt-1 flex-shrink-0"
-                      disabled={isLoading}
+                      disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-700 text-sm sm:text-base">🏢 Firma (spółka)</div>
@@ -981,10 +1095,13 @@ export default function RegisterPage() {
                       <input
                         type="text"
                         value={businessData.companyName || ""}
-                        onChange={(e) => setBusinessData(prev => ({ ...prev, companyName: e.target.value }))}
+                        onChange={(e) => {
+                          if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") return;
+                          setBusinessData(prev => ({ ...prev, companyName: e.target.value }))
+                        }}
                         className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="np. Przykładowa Sp. z o.o."
-                        disabled={isLoading}
+                        disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                       />
                     </div>
 
@@ -995,10 +1112,13 @@ export default function RegisterPage() {
                       <input
                         type="text"
                         value={businessData.taxId || ""}
-                        onChange={(e) => setBusinessData(prev => ({ ...prev, taxId: e.target.value }))}
+                        onChange={(e) => {
+                          if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") return;
+                          setBusinessData(prev => ({ ...prev, taxId: e.target.value }))
+                        }}
                         className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="np. 1234567890"
-                        disabled={isLoading}
+                        disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                       />
                     </div>
 
@@ -1006,9 +1126,12 @@ export default function RegisterPage() {
                       <input
                         type="checkbox"
                         checked={businessData.requiresVatInvoices || false}
-                        onChange={(e) => setBusinessData(prev => ({ ...prev, requiresVatInvoices: e.target.checked }))}
+                        onChange={(e) => {
+                          if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") return;
+                          setBusinessData(prev => ({ ...prev, requiresVatInvoices: e.target.checked }))
+                        }}
                         className="mt-1 flex-shrink-0"
-                        disabled={isLoading}
+                        disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                       />
                       <div className="text-xs sm:text-sm">
                         <div className="font-medium text-gray-700">Wymagam wystawiania faktur VAT</div>
@@ -1020,9 +1143,9 @@ export default function RegisterPage() {
 
                 <button
                   onClick={handleBusinessTypeSelection}
-                  disabled={isLoading || (businessData.businessType === "company" && (!businessData.companyName || !businessData.taxId))}
+                  disabled={isLoading || (businessData.businessType === "company" && (!businessData.companyName || !businessData.taxId)) || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                   className={`w-full py-3 px-3 sm:px-4 md:px-8 rounded-lg font-medium text-white text-sm sm:text-base lg:text-lg transition-all
-                    ${isLoading || (businessData.businessType === "company" && (!businessData.companyName || !businessData.taxId))
+                    ${isLoading || (businessData.businessType === "company" && (!businessData.companyName || !businessData.taxId)) || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg"
                     }`}
@@ -1055,8 +1178,8 @@ export default function RegisterPage() {
                 <div className="space-y-3">
                   <button
                     onClick={() => handlePlatformSubscription("individual")}
-                    disabled={isLoading}
-                    className="w-full p-4 border-2 rounded-lg hover:bg-blue-50 transition-colors text-left disabled:opacity-50 border-blue-200 hover:border-blue-300"
+                    disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
+                    className={`w-full p-4 border-2 rounded-lg hover:bg-blue-50 transition-colors text-left disabled:opacity-50 border-blue-200 hover:border-blue-300 ${(loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none opacity-50" : ""}`}
                   >
                     <div className="flex justify-between items-start">
                       <div>
@@ -1080,8 +1203,8 @@ export default function RegisterPage() {
 
                   <button
                     onClick={() => handlePlatformSubscription("school")}
-                    disabled={isLoading}
-                    className="w-full p-4 border-2 rounded-lg hover:bg-blue-50 transition-colors text-left disabled:opacity-50 border-blue-200 hover:border-blue-300"
+                    disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
+                    className={`w-full p-4 border-2 rounded-lg hover:bg-blue-50 transition-colors text-left disabled:opacity-50 border-blue-200 hover:border-blue-300 ${(loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none opacity-50" : ""}`}
                   >
                     <div className="flex justify-between items-start">
                       <div>
@@ -1113,14 +1236,22 @@ export default function RegisterPage() {
 
                 <button
                   onClick={() => {
+                    // Block navigation during redirect states
+                    if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+                      return;
+                    }
+                    
+                    setIsLoading(true);
+                    setLoadingState("completing-registration");
                     setCurrentStep("completed");
-                    toast.success("Rejestracja zakończona! Możesz skonfigurować płatność później.");
+                    toast.success("Rejestracja zakończona! Przekierowujemy Cię do panelu nauczyciela...");
+                    
                     setTimeout(() => {
                       router.push("/teacher/courses");
                     }, 2000);
                   }}
-                  disabled={isLoading}
-                  className="w-full py-2 px-4 rounded-lg font-medium text-gray-600 text-sm border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
+                  className={`w-full py-2 px-4 rounded-lg font-medium text-gray-600 text-sm border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 ${(loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none" : ""}`}
                 >
                   Pomiń teraz (można dodać później w ustawieniach)
                 </button>
@@ -1133,10 +1264,10 @@ export default function RegisterPage() {
                   {selectedRole === "student" ? "👩‍🎓 Rejestracja ucznia" : "👨‍🏫 Rejestracja nauczyciela"}
                 </span>
                 <button
-                  className="text-xs sm:text-sm text-gray-500 underline hover:text-orange-700 transition disabled:opacity-50 px-1 py-1"
+                  className={`text-xs sm:text-sm text-gray-500 underline hover:text-orange-700 transition disabled:opacity-50 px-1 py-1 ${(isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none opacity-50" : ""}`}
                   onClick={selectedRole === "teacher" ? handleBackToBusinessType : handleBackToRoleSelection}
                   type="button"
-                  disabled={isLoading}
+                  disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                 >
                   {selectedRole === "teacher" ? "← Wróć" : "← Wróć"}
                 </button>
@@ -1147,12 +1278,17 @@ export default function RegisterPage() {
                   type="checkbox"
                   checked={acceptTerms}
                   onChange={e => {
+                    // Block checkbox during redirect states
+                    if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+                      e.preventDefault();
+                      return;
+                    }
                     setAcceptTerms(e.target.checked);
                     if (e.target.checked && registrationError) {
                       setRegistrationError(null);
                     }
                   }}
-                  disabled={isLoading}
+                  disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                   className={`form-checkbox h-4 w-4 mt-0.5 flex-shrink-0 ${selectedRole === "student" ? "accent-orange-500" : "accent-blue-500"} disabled:opacity-50`}
                 />
                 <span className={`ml-2 text-xs sm:text-sm leading-tight ${isLoading ? "text-gray-400" : "text-gray-700"}`}>
@@ -1174,13 +1310,13 @@ export default function RegisterPage() {
               
               <button
                 onClick={handleSignUp}
-                disabled={isLoading || !isSignedIn || !acceptTerms}
+                disabled={isLoading || !isSignedIn || !acceptTerms || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                 className={`w-full mt-3 sm:mt-4 py-3 px-3 sm:px-4 md:px-8 rounded-lg font-medium text-white text-sm sm:text-base lg:text-lg transition-all
                   ${selectedRole === "student"
-                    ? (isLoading || !isSignedIn || !acceptTerms
+                    ? (isLoading || !isSignedIn || !acceptTerms || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"
                         ? "bg-gray-400 cursor-not-allowed"
                         : "bg-orange-600 hover:bg-orange-700 hover:shadow-lg")
-                    : (isLoading || !isSignedIn || !acceptTerms
+                    : (isLoading || !isSignedIn || !acceptTerms || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"
                         ? "bg-gray-400 cursor-not-allowed"
                         : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg")
                   }`}
