@@ -13,9 +13,16 @@ interface NotificationTemplate {
 	title: string;
 	message: string;
 	category: string;
-	isActive: boolean;
+	isEnabled: boolean;
 	createdAt: string;
 	updatedAt: string;
+	courseId: number;
+	notificationType: string;
+	cronExpression: string;
+	course?: {
+		id: number;
+		title: string;
+	};
 }
 
 export default function NotificationsPage() {
@@ -23,12 +30,15 @@ export default function NotificationsPage() {
 	const [showCreateModal, setShowCreateModal] = useState(false);
 	const [editingTemplate, setEditingTemplate] = useState<NotificationTemplate | null>(null);
 	const [loading, setLoading] = useState(false);
+	const [courses, setCourses] = useState<{id: number, title: string}[]>([]);
 	
 	// Form state
 	const [templateForm, setTemplateForm] = useState({
 		title: '',
 		message: '',
 		category: 'general',
+		courseId: '',
+		cronExpression: '0 9 * * 1', // Default: Every Monday at 9 AM
 	});
 
 	// Test state
@@ -74,18 +84,72 @@ export default function NotificationsPage() {
 	// Fetch templates on component mount
 	useEffect(() => {
 		fetchTemplates();
+		fetchCourses();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	const fetchCourses = async () => {
+		if (!userId) return;
+		
+		try {
+			const response = await fetch(`/api/courses?userId=${userId}`);
+			if (response.ok) {
+				const coursesData = await response.json();
+				setCourses(coursesData);
+			} else {
+				console.error('Failed to fetch courses');
+			}
+		} catch (error) {
+			console.error('Error fetching courses:', error);
+		}
+	};
+
 	const fetchTemplates = async () => {
-		// Simulate API call - replace with actual API
-		setTemplates(defaultTemplates.map((template, index) => ({
-			id: index + 1,
-			...template,
-			isActive: true,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString()
-		})));
+		try {
+			setLoading(true);
+			
+			// Fetch actual schedules from API
+			const response = await fetch('/api/notifications/schedules');
+			let apiTemplates: NotificationTemplate[] = [];
+			
+			if (response.ok) {
+				const schedules = await response.json();
+				// Convert NotificationSchedule to NotificationTemplate format
+				apiTemplates = schedules.map((schedule: any) => ({
+					id: schedule.id,
+					title: schedule.title,
+					message: schedule.message,
+					category: schedule.notificationType,
+					isEnabled: schedule.isEnabled,
+					createdAt: schedule.createdAt,
+					updatedAt: schedule.updatedAt,
+					courseId: schedule.courseId,
+					notificationType: schedule.notificationType,
+					cronExpression: schedule.cronExpression,
+					course: schedule.course
+				}));
+			}
+
+			// Add predefined templates as examples (not saved to DB unless user creates them)
+			const exampleTemplates: NotificationTemplate[] = defaultTemplates.map((template, index) => ({
+				id: -(index + 1), // Negative IDs for examples
+				...template,
+				isEnabled: false, // Examples are disabled by default
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
+				courseId: 0, // No specific course for examples
+				notificationType: template.category,
+				cronExpression: '0 9 * * 1', // Default cron
+			}));
+
+			// Combine API templates with examples (API templates first)
+			setTemplates([...apiTemplates, ...exampleTemplates]);
+		} catch (error) {
+			console.error('Error fetching templates:', error);
+			toast.error('Błąd podczas ładowania szablonów');
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	const handleTemplateFormChange = (field: string, value: string) => {
@@ -100,6 +164,8 @@ export default function NotificationsPage() {
 			title: '',
 			message: '',
 			category: 'general',
+			courseId: '',
+			cronExpression: '0 9 * * 1', // Default: Every Monday at 9 AM
 		});
 	};
 
@@ -115,6 +181,8 @@ export default function NotificationsPage() {
 			title: template.title,
 			message: template.message,
 			category: template.category,
+			courseId: template.courseId.toString(),
+			cronExpression: template.cronExpression,
 		});
 		setShowCreateModal(true);
 	};
@@ -125,35 +193,96 @@ export default function NotificationsPage() {
 			return;
 		}
 
+		if (!editingTemplate && !templateForm.courseId) {
+			toast.error('Wybierz kurs dla nowego szablonu');
+			return;
+		}
+
 		setLoading(true);
 		try {
-			// Simulate API call
-			await new Promise(resolve => setTimeout(resolve, 1000));
-			
 			if (editingTemplate) {
-				// Update existing template
-				setTemplates(prev => prev.map(t => 
-					t.id === editingTemplate.id 
-						? { ...t, ...templateForm, updatedAt: new Date().toISOString() }
-						: t
-				));
-				toast.success('Szablon został zaktualizowany');
+				// Update existing template (only if it's a real template, not an example)
+				if (editingTemplate.id < 0) {
+					toast.error('Nie można edytować szablonu przykładowego. Utwórz nowy szablon.');
+					return;
+				}
+
+				const response = await fetch(`/api/notifications/schedules/${editingTemplate.id}`, {
+					method: 'PATCH',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						title: templateForm.title,
+						message: templateForm.message,
+						notificationType: templateForm.category,
+						cronExpression: templateForm.cronExpression,
+					}),
+				});
+
+				if (response.ok) {
+					const updatedSchedule = await response.json();
+					setTemplates(prev => prev.map(t => 
+						t.id === editingTemplate.id 
+							? {
+								...t,
+								title: updatedSchedule.title,
+								message: updatedSchedule.message,
+								category: updatedSchedule.notificationType,
+								notificationType: updatedSchedule.notificationType,
+								cronExpression: updatedSchedule.cronExpression,
+								updatedAt: updatedSchedule.updatedAt
+							}
+							: t
+					));
+					toast.success('Szablon został zaktualizowany');
+				} else {
+					toast.error('Błąd podczas aktualizacji szablonu');
+				}
 			} else {
 				// Create new template
-				const newTemplate: NotificationTemplate = {
-					id: Math.max(...templates.map(t => t.id), 0) + 1,
-					...templateForm,
-					isActive: true,
-					createdAt: new Date().toISOString(),
-					updatedAt: new Date().toISOString()
-				};
-				setTemplates(prev => [...prev, newTemplate]);
-				toast.success('Szablon został utworzony');
+				const response = await fetch('/api/notifications/schedules', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						courseId: parseInt(templateForm.courseId),
+						title: templateForm.title,
+						message: templateForm.message,
+						notificationType: templateForm.category,
+						cronExpression: templateForm.cronExpression,
+						isEnabled: true,
+					}),
+				});
+
+				if (response.ok) {
+					const newSchedule = await response.json();
+					const newTemplate: NotificationTemplate = {
+						id: newSchedule.id,
+						title: newSchedule.title,
+						message: newSchedule.message,
+						category: newSchedule.notificationType,
+						isEnabled: newSchedule.isEnabled,
+						createdAt: newSchedule.createdAt,
+						updatedAt: newSchedule.updatedAt,
+						courseId: newSchedule.courseId,
+						notificationType: newSchedule.notificationType,
+						cronExpression: newSchedule.cronExpression,
+						course: newSchedule.course
+					};
+					setTemplates(prev => [newTemplate, ...prev]);
+					toast.success('Szablon został utworzony');
+				} else {
+					const errorData = await response.json();
+					toast.error(`Błąd podczas tworzenia szablonu: ${errorData.message || 'Nieznany błąd'}`);
+				}
 			}
 			
 			setShowCreateModal(false);
 			resetTemplateForm();
 		} catch (error) {
+			console.error('Error saving template:', error);
 			toast.error('Błąd zapisywania szablonu');
 		} finally {
 			setLoading(false);
@@ -161,17 +290,63 @@ export default function NotificationsPage() {
 	};
 
 	const deleteTemplate = async (id: number) => {
+		if (id < 0) {
+			toast.error('Nie można usunąć szablonu przykładowego');
+			return;
+		}
+
 		if (!confirm('Czy na pewno chcesz usunąć ten szablon?')) return;
 
-		setTemplates(prev => prev.filter(t => t.id !== id));
-		toast.success('Szablon został usunięty');
+		try {
+			const response = await fetch(`/api/notifications/schedules/${id}`, {
+				method: 'DELETE',
+			});
+
+			if (response.ok) {
+				setTemplates(prev => prev.filter(t => t.id !== id));
+				toast.success('Szablon został usunięty');
+			} else {
+				toast.error('Błąd podczas usuwania szablonu');
+			}
+		} catch (error) {
+			console.error('Error deleting template:', error);
+			toast.error('Błąd podczas usuwania szablonu');
+		}
 	};
 
 	const toggleTemplate = async (id: number) => {
-		setTemplates(prev => prev.map(t => 
-			t.id === id ? { ...t, isActive: !t.isActive } : t
-		));
-		toast.success('Status szablonu został zmieniony');
+		if (id < 0) {
+			toast.error('Nie można włączać/wyłączać szablonów przykładowych. Utwórz nowy szablon na ich podstawie.');
+			return;
+		}
+
+		try {
+			const template = templates.find(t => t.id === id);
+			if (!template) return;
+
+			const response = await fetch(`/api/notifications/schedules/${id}`, {
+				method: 'PATCH',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					isEnabled: !template.isEnabled,
+				}),
+			});
+
+			if (response.ok) {
+				const updatedSchedule = await response.json();
+				setTemplates(prev => prev.map(t => 
+					t.id === id ? { ...t, isEnabled: !t.isEnabled, updatedAt: updatedSchedule.updatedAt } : t
+				));
+				toast.success('Status szablonu został zmieniony');
+			} else {
+				toast.error('Błąd podczas zmiany statusu szablonu');
+			}
+		} catch (error) {
+			console.error('Error toggling template:', error);
+			toast.error('Błąd podczas zmiany statusu szablonu');
+		}
 	};
 
 	const testTemplate = (message: string) => {
@@ -191,6 +366,18 @@ export default function NotificationsPage() {
 	const copyTemplate = (message: string) => {
 		navigator.clipboard.writeText(message);
 		toast.success('Szablon skopiowany do schowka');
+	};
+
+	const createTemplateFromExample = (template: NotificationTemplate) => {
+		setEditingTemplate(null);
+		setTemplateForm({
+			title: template.title,
+			message: template.message,
+			category: template.category,
+			courseId: '',
+			cronExpression: '0 9 * * 1', // Default cron
+		});
+		setShowCreateModal(true);
 	};
 
 	const sendTestEmail = async (message: string) => {
@@ -353,18 +540,32 @@ export default function NotificationsPage() {
 						<h2 className="text-xl font-semibold text-gray-900 mb-4">{category.label}</h2>
 						<div className="space-y-4">
 							{categoryTemplates.map((template) => (
-								<Card key={template.id} className={`${!template.isActive ? 'opacity-60' : ''}`}>
+								<Card key={template.id} className={`${!template.isEnabled ? 'opacity-60' : ''}`}>
 									<CardHeader>
 										<div className="flex items-center justify-between">
-											<CardTitle className="text-lg">{template.title}</CardTitle>
+											<div className="flex items-center gap-3">
+												<CardTitle className="text-lg">{template.title}</CardTitle>
+												{template.id < 0 && (
+													<span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+														Przykład
+													</span>
+												)}
+											</div>
 											<div className="flex items-center gap-2">
 												<span className={`px-2 py-1 rounded-full text-xs font-medium ${
-													template.isActive 
+													template.isEnabled 
 														? 'bg-green-100 text-green-800' 
-														: 'bg-gray-100 text-gray-800'
+														: template.id < 0 
+															? 'bg-gray-100 text-gray-600'
+															: 'bg-gray-100 text-gray-800'
 												}`}>
-													{template.isActive ? 'Aktywny' : 'Nieaktywny'}
+													{template.id < 0 ? 'Szablon' : (template.isEnabled ? 'Aktywny' : 'Nieaktywny')}
 												</span>
+												{template.course && (
+													<span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+														{template.course.title}
+													</span>
+												)}
 											</div>
 										</div>
 									</CardHeader>
@@ -403,35 +604,53 @@ export default function NotificationsPage() {
 													<Send className="h-3 w-3" />
 													Testuj email
 												</Button>
-												<Button
-													onClick={() => openEditModal(template)}
-													size="sm"
-													variant="outline"
-													className="flex items-center gap-1"
-												>
-													<Edit className="h-3 w-3" />
-													Edytuj
-												</Button>
-												<Button
-													onClick={() => toggleTemplate(template.id)}
-													size="sm"
-													variant="outline"
-													className={`flex items-center gap-1 ${
-														template.isActive ? 'text-yellow-600' : 'text-green-600'
-													}`}
-												>
-													{template.isActive ? '⏸️' : '▶️'}
-													{template.isActive ? 'Dezaktywuj' : 'Aktywuj'}
-												</Button>
-												<Button
-													onClick={() => deleteTemplate(template.id)}
-													size="sm"
-													variant="outline"
-													className="flex items-center gap-1 text-red-600 hover:text-red-700"
-												>
-													<Trash2 className="h-3 w-3" />
-													Usuń
-												</Button>
+												
+												{/* Different buttons for example templates vs real templates */}
+												{template.id < 0 ? (
+													// Example template buttons
+													<Button
+														onClick={() => createTemplateFromExample(template)}
+														size="sm"
+														variant="outline"
+														className="flex items-center gap-1 text-green-600 border-green-600 hover:bg-green-50"
+													>
+														<Plus className="h-3 w-3" />
+														Użyj jako nowy
+													</Button>
+												) : (
+													// Real template buttons
+													<>
+														<Button
+															onClick={() => openEditModal(template)}
+															size="sm"
+															variant="outline"
+															className="flex items-center gap-1"
+														>
+															<Edit className="h-3 w-3" />
+															Edytuj
+														</Button>
+														<Button
+															onClick={() => toggleTemplate(template.id)}
+															size="sm"
+															variant="outline"
+															className={`flex items-center gap-1 ${
+																template.isEnabled ? 'text-yellow-600' : 'text-green-600'
+															}`}
+														>
+															{template.isEnabled ? '⏸️' : '▶️'}
+															{template.isEnabled ? 'Dezaktywuj' : 'Aktywuj'}
+														</Button>
+														<Button
+															onClick={() => deleteTemplate(template.id)}
+															size="sm"
+															variant="outline"
+															className="flex items-center gap-1 text-red-600 hover:text-red-700"
+														>
+															<Trash2 className="h-3 w-3" />
+															Usuń
+														</Button>
+													</>
+												)}
 											</div>
 										</div>
 									</CardContent>
@@ -492,6 +711,47 @@ export default function NotificationsPage() {
 											</option>
 										))}
 									</select>
+								</div>
+
+								{/* Course selection - only show for new templates */}
+								{!editingTemplate && (
+									<div>
+										<label className="block text-sm font-medium text-gray-700 mb-2">Kurs *</label>
+										<select
+											value={templateForm.courseId}
+											onChange={(e) => handleTemplateFormChange('courseId', e.target.value)}
+											className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+										>
+											<option value="">Wybierz kurs...</option>
+											{courses.map((course) => (
+												<option key={course.id} value={course.id.toString()}>
+													{course.title}
+												</option>
+											))}
+										</select>
+										{courses.length === 0 && (
+											<p className="text-sm text-gray-500 mt-1">
+												Brak dostępnych kursów. Utwórz pierwszy kurs, aby dodać powiadomienia.
+											</p>
+										)}
+									</div>
+								)}
+
+								{/* Cron expression - only show for new templates or when editing */}
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">
+										Harmonogram (Cron) 
+										<span className="text-gray-500 text-xs ml-1">opcjonalne</span>
+									</label>
+									<Input
+										type="text"
+										value={templateForm.cronExpression}
+										onChange={(e) => handleTemplateFormChange('cronExpression', e.target.value)}
+										placeholder="np. 0 9 * * 1 (każdy poniedziałek o 9:00)"
+									/>
+									<p className="text-xs text-gray-500 mt-1">
+										Format: minuta godzina dzień miesiąc dzień_tygodnia
+									</p>
 								</div>
 
 								<div>

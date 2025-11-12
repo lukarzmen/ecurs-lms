@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
   try {
     await transporter.sendMail({
-      from: `"Masz nowe powiadomienie z ecurs" <${smtpUser}>`,
+      from: `"Masz nowe powiadomienie z Ecurs" <${smtpUser}>`,
       to,
       subject,
       text,
