@@ -15,10 +15,13 @@ interface UserCourse {
     title: string;
   };
   purchase?: {
+    id: number;
     subscriptionId?: string;
     isRecurring: boolean;
     subscriptionStatus?: string;
     currentPeriodEnd?: string;
+    amount?: number;
+    currency?: string;
   };
 }
 
@@ -40,6 +43,8 @@ interface EducationalPathPurchase {
   isRecurring: boolean;
   subscriptionStatus?: string;
   currentPeriodEnd?: string;
+  amount?: number;
+  currency?: string;
 }
 
 const SettingsPage = () => {
@@ -60,18 +65,25 @@ const SettingsPage = () => {
       const coursesResponse = await fetch('/api/student/courses');
       if (coursesResponse.ok) {
         const coursesData = await coursesResponse.json();
-        setUserCourses(coursesData.filter((course: UserCourse) => 
-          course.purchase?.isRecurring && course.purchase?.subscriptionStatus === 'active'
-        ));
+        console.log('Raw courses data:', coursesData);
+        
+        // Show all courses with any purchase data (for debugging)
+        const filteredCourses = coursesData.filter((course: UserCourse) => 
+          course.purchase != null
+        );
+        console.log('Filtered courses:', filteredCourses);
+        setUserCourses(filteredCourses);
       }
 
       // Fetch educational path purchases with subscriptions
       const pathsResponse = await fetch('/api/student/educational-paths');
       if (pathsResponse.ok) {
         const pathsData = await pathsResponse.json();
-        setEducationalPathPurchases(pathsData.filter((purchase: EducationalPathPurchase) => 
-          purchase.isRecurring && purchase.subscriptionStatus === 'active'
-        ));
+        console.log('Raw educational paths data:', pathsData);
+        
+        // Show all educational path purchases (for debugging)
+        console.log('All educational path purchases:', pathsData);
+        setEducationalPathPurchases(pathsData);
       }
     } catch (error) {
       console.error('Error fetching subscriptions:', error);
@@ -159,54 +171,73 @@ const SettingsPage = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-orange-600" />
-            Subskrypcje kursów
+            Zakupione kursy
           </CardTitle>
           <CardDescription>
-            Zarządzaj swoimi aktywnymi subskrypcjami kursów
+            Przegląd wszystkich zakupionych kursów i aktywnych subskrypcji
           </CardDescription>
         </CardHeader>
         <CardContent>
           {userCourses.length === 0 ? (
-            <p className="text-muted-foreground">Nie masz aktywnych subskrypcji kursów</p>
+            <p className="text-muted-foreground">Nie masz zakupionych kursów</p>
           ) : (
             <div className="space-y-4">
               {userCourses.map((userCourse) => (
                 <div key={userCourse.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <h3 className="font-medium">{userCourse.course.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Status: {userCourse.purchase?.subscriptionStatus}
-                      {userCourse.purchase?.currentPeriodEnd && (
-                        <> • Odnowienie: {new Date(userCourse.purchase.currentPeriodEnd).toLocaleDateString('pl-PL')}</>
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      {userCourse.purchase ? (
+                        <>
+                          <p>Typ: {userCourse.purchase.isRecurring ? 'Subskrypcja' : 'Jednorazowy zakup'}</p>
+                          <p>Status płatności: {userCourse.purchase.subscriptionStatus || 'N/A'}</p>
+                          <p>ID subskrypcji: {userCourse.purchase.subscriptionId || 'Brak'}</p>
+                          {userCourse.purchase.currentPeriodEnd && (
+                            <p>Odnowienie: {new Date(userCourse.purchase.currentPeriodEnd).toLocaleDateString('pl-PL')}</p>
+                          )}
+                          {userCourse.purchase.amount && (
+                            <p>Kwota: {userCourse.purchase.amount} {userCourse.purchase.currency}</p>
+                          )}
+                        </>
+                      ) : (
+                        <p>Brak danych o zakupie</p>
                       )}
-                    </p>
+                    </div>
                   </div>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Anuluj subskrypcję
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Anulować subskrypcję?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Czy na pewno chcesz anulować subskrypcję kursu &quot;{userCourse.course.title}&quot;? 
-                          Ta akcja jest nieodwracalna i stracisz dostęp do kursu po zakończeniu bieżącego okresu rozliczeniowego.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Anuluj</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={() => cancelCourseSubscription(userCourse.id, userCourse.purchase?.subscriptionId)}
-                          className="bg-red-600 text-white hover:bg-red-700"
-                        >
+                  {/* Show cancel button for any subscription with subscriptionId or if it's recurring */}
+                  {userCourse.purchase?.subscriptionId || (userCourse.purchase?.isRecurring && userCourse.purchase?.subscriptionStatus !== 'canceled') ? (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">
+                          <Trash2 className="h-4 w-4 mr-2" />
                           Anuluj subskrypcję
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Anulować subskrypcję?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Czy na pewno chcesz anulować subskrypcję kursu &quot;{userCourse.course.title}&quot;? 
+                            Ta akcja jest nieodwracalna i stracisz dostęp do kursu po zakończeniu bieżącego okresu rozliczeniowego.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => cancelCourseSubscription(userCourse.id, userCourse.purchase?.subscriptionId)}
+                            className="bg-red-600 text-white hover:bg-red-700"
+                          >
+                            Anuluj subskrypcję
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  ) : (
+                    <div className="text-sm text-muted-foreground px-3 py-2 bg-gray-50 rounded">
+                      {userCourse.purchase?.subscriptionStatus === 'canceled' ? 'Subskrypcja anulowana' : 
+                       !userCourse.purchase?.subscriptionId ? 'Jednorazowy zakup' : 'Nieaktywna subskrypcja'}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -219,54 +250,67 @@ const SettingsPage = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-orange-600" />
-            Subskrypcje ścieżek edukacyjnych
+            Zakupione ścieżki edukacyjne
           </CardTitle>
           <CardDescription>
-            Zarządzaj swoimi aktywnymi subskrypcjami ścieżek edukacyjnych
+            Przegląd wszystkich zakupionych ścieżek edukacyjnych i aktywnych subskrypcji
           </CardDescription>
         </CardHeader>
         <CardContent>
           {educationalPathPurchases.length === 0 ? (
-            <p className="text-muted-foreground">Nie masz aktywnych subskrypcji ścieżek edukacyjnych</p>
+            <p className="text-muted-foreground">Nie masz zakupionych ścieżek edukacyjnych</p>
           ) : (
             <div className="space-y-4">
               {educationalPathPurchases.map((purchase) => (
                 <div key={purchase.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <h3 className="font-medium">{purchase.educationalPath.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Status: {purchase.subscriptionStatus}
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p>Typ: {purchase.isRecurring ? 'Subskrypcja' : 'Jednorazowy zakup'}</p>
+                      <p>Status płatności: {purchase.subscriptionStatus || 'N/A'}</p>
+                      <p>ID subskrypcji: {purchase.subscriptionId || 'Brak'}</p>
                       {purchase.currentPeriodEnd && (
-                        <> • Odnowienie: {new Date(purchase.currentPeriodEnd).toLocaleDateString('pl-PL')}</>
+                        <p>Odnowienie: {new Date(purchase.currentPeriodEnd).toLocaleDateString('pl-PL')}</p>
                       )}
-                    </p>
+                      {purchase.amount && (
+                        <p>Kwota: {purchase.amount} {purchase.currency}</p>
+                      )}
+                    </div>
                   </div>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Anuluj subskrypcję
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Anulować subskrypcję?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Czy na pewno chcesz anulować subskrypcję ścieżki edukacyjnej &quot;{purchase.educationalPath.title}&quot;? 
-                          Ta akcja jest nieodwracalna i stracisz dostęp do ścieżki po zakończeniu bieżącego okresu rozliczeniowego.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Anuluj</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={() => cancelEducationalPathSubscription(purchase.id, purchase.subscriptionId)}
-                          className="bg-red-600 text-white hover:bg-red-700"
-                        >
+                  {/* Show cancel button for any subscription with subscriptionId or if it's recurring */}
+                  {purchase.subscriptionId || (purchase.isRecurring && purchase.subscriptionStatus !== 'canceled') ? (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">
+                          <Trash2 className="h-4 w-4 mr-2" />
                           Anuluj subskrypcję
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Anulować subskrypcję?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Czy na pewno chcesz anulować subskrypcję ścieżki edukacyjnej &quot;{purchase.educationalPath.title}&quot;? 
+                            Ta akcja jest nieodwracalna i stracisz dostęp do ścieżki po zakończeniu bieżącego okresu rozliczeniowego.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => cancelEducationalPathSubscription(purchase.id, purchase.subscriptionId)}
+                            className="bg-red-600 text-white hover:bg-red-700"
+                          >
+                            Anuluj subskrypcję
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  ) : (
+                    <div className="text-sm text-muted-foreground px-3 py-2 bg-gray-50 rounded">
+                      {purchase.subscriptionStatus === 'canceled' ? 'Subskrypcja anulowana' : 
+                       !purchase.subscriptionId ? 'Jednorazowy zakup' : 'Nieaktywna subskrypcja'}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
