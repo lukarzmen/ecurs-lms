@@ -157,6 +157,31 @@ export async function POST(req: Request) {
         }
     };
 
+    // Helper functions to get price data
+    async function getCoursePrice(courseId: number) {
+        try {
+            const coursePrice = await db.coursePrice.findUnique({
+                where: { courseId: courseId }
+            });
+            return coursePrice;
+        } catch (err) {
+            console.error("Error fetching course price:", err);
+            return null;
+        }
+    }
+
+    async function getEducationalPathPrice(educationalPathId: number) {
+        try {
+            const educationalPathPrice = await db.educationalPathPrice.findUnique({
+                where: { educationalPathId: educationalPathId }
+            });
+            return educationalPathPrice;
+        } catch (err) {
+            console.error("Error fetching educational path price:", err);
+            return null;
+        }
+    }
+
     // Upsert helpers
     async function upsertCourse(userCourseId: number, appUserId: number, courseId: number, state: number) {
         await db.userCourse.upsert({
@@ -181,7 +206,7 @@ export async function POST(req: Request) {
         });
     }
     async function createCoursePurchase(userCourseId: number, paymentId: string, eventData?: any) {
-        const baseData = {
+        const baseData: any = {
             userCourseId,
             paymentId,
             purchaseDate: new Date(),
@@ -209,6 +234,54 @@ export async function POST(req: Request) {
                 metadata: stripeData.metadata,
                 stripeCustomerId: stripeData.stripeCustomerId,
             });
+        }
+
+        // Get course ID from userCourse and fetch price data
+        try {
+            const userCourse = await db.userCourse.findUnique({
+                where: { id: userCourseId },
+                select: { courseId: true }
+            });
+            
+            if (userCourse) {
+                const coursePrice = await getCoursePrice(userCourse.courseId);
+                if (coursePrice) {
+                    console.log(`[WEBHOOK] Found course price data for course ${userCourse.courseId}:`, {
+                        amount: coursePrice.amount,
+                        currency: coursePrice.currency,
+                        isRecurring: coursePrice.isRecurring,
+                        interval: coursePrice.interval,
+                        trialPeriodDays: coursePrice.trialPeriodDays
+                    });
+                    
+                    // Override with price table data if available (unless already set by Stripe data)
+                    if (!baseData.amount && coursePrice.amount) {
+                        baseData.amount = coursePrice.amount;
+                    }
+                    if (!baseData.currency && coursePrice.currency) {
+                        baseData.currency = coursePrice.currency;
+                    }
+                    if (!baseData.isRecurring && coursePrice.isRecurring) {
+                        baseData.isRecurring = coursePrice.isRecurring;
+                    }
+                    
+                    // Add trial period information from price table
+                    if (coursePrice.trialPeriodDays) {
+                        const trialStart = new Date();
+                        const trialEnd = new Date(trialStart.getTime() + (coursePrice.trialPeriodDays * 24 * 60 * 60 * 1000));
+                        if (!baseData.trialStart) {
+                            baseData.trialStart = trialStart;
+                        }
+                        if (!baseData.trialEnd) {
+                            baseData.trialEnd = trialEnd;
+                        }
+                    }
+                } else {
+                    console.log(`[WEBHOOK] No course price data found for course ${userCourse.courseId}`);
+                }
+            }
+        } catch (err) {
+            console.error("Error fetching course price data:", err);
         }
 
         await db.userCoursePurchase.create({
@@ -240,33 +313,69 @@ export async function POST(req: Request) {
             stripeCustomerId?: string;
         }
     ) {
+        const baseData: any = {
+            userCourseId,
+            paymentId: paymentData.paymentId,
+            eventType: paymentData.eventType,
+            amount: paymentData.amount ? paymentData.amount / 100 : null, // Convert from cents
+            currency: paymentData.currency?.toUpperCase(),
+            paymentStatus: paymentData.paymentStatus,
+            paymentMethod: paymentData.paymentMethod,
+            subscriptionId: paymentData.subscriptionId,
+            isRecurring: paymentData.isRecurring || false,
+            subscriptionStatus: paymentData.subscriptionStatus,
+            currentPeriodStart: paymentData.currentPeriodStart,
+            currentPeriodEnd: paymentData.currentPeriodEnd,
+            trialStart: paymentData.trialStart,
+            trialEnd: paymentData.trialEnd,
+            customerEmail: paymentData.customerEmail,
+            invoiceId: paymentData.invoiceId,
+            receiptUrl: paymentData.receiptUrl,
+            metadata: paymentData.metadata,
+            stripeCustomerId: paymentData.stripeCustomerId,
+            purchaseDate: new Date(),
+        };
+
+        // Get course ID from userCourse and fetch price data
+        try {
+            const userCourse = await db.userCourse.findUnique({
+                where: { id: userCourseId },
+                select: { courseId: true }
+            });
+            
+            if (userCourse) {
+                const coursePrice = await getCoursePrice(userCourse.courseId);
+                if (coursePrice) {
+                    // Override with price table data if available (unless already set by payment data)
+                    if (!baseData.amount && coursePrice.amount) {
+                        baseData.amount = coursePrice.amount;
+                    }
+                    if (!baseData.currency && coursePrice.currency) {
+                        baseData.currency = coursePrice.currency;
+                    }
+                    if (!baseData.isRecurring && coursePrice.isRecurring) {
+                        baseData.isRecurring = coursePrice.isRecurring;
+                    }
+                    
+                    // Add trial period information from price table if not already set
+                    if (coursePrice.trialPeriodDays && !baseData.trialStart && !baseData.trialEnd) {
+                        const trialStart = new Date();
+                        const trialEnd = new Date(trialStart.getTime() + (coursePrice.trialPeriodDays * 24 * 60 * 60 * 1000));
+                        baseData.trialStart = trialStart;
+                        baseData.trialEnd = trialEnd;
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Error fetching course price data for enhanced purchase:", err);
+        }
+
         await db.userCoursePurchase.create({
-            data: {
-                userCourseId,
-                paymentId: paymentData.paymentId,
-                eventType: paymentData.eventType,
-                amount: paymentData.amount ? paymentData.amount / 100 : null, // Convert from cents
-                currency: paymentData.currency?.toUpperCase(),
-                paymentStatus: paymentData.paymentStatus,
-                paymentMethod: paymentData.paymentMethod,
-                subscriptionId: paymentData.subscriptionId,
-                isRecurring: paymentData.isRecurring || false,
-                subscriptionStatus: paymentData.subscriptionStatus,
-                currentPeriodStart: paymentData.currentPeriodStart,
-                currentPeriodEnd: paymentData.currentPeriodEnd,
-                trialStart: paymentData.trialStart,
-                trialEnd: paymentData.trialEnd,
-                customerEmail: paymentData.customerEmail,
-                invoiceId: paymentData.invoiceId,
-                receiptUrl: paymentData.receiptUrl,
-                metadata: paymentData.metadata,
-                stripeCustomerId: paymentData.stripeCustomerId,
-                purchaseDate: new Date(),
-            },
+            data: baseData,
         });
     }
     async function createEduPathPurchase(appUserId: number, educationalPathId: number, paymentId: string, eventData?: any) {
-        const baseData = {
+        const baseData: any = {
             userId: appUserId,
             educationalPathId,
             paymentId,
@@ -295,6 +404,47 @@ export async function POST(req: Request) {
                 metadata: stripeData.metadata,
                 stripeCustomerId: stripeData.stripeCustomerId,
             });
+        }
+
+        // Fetch price data from EducationalPathPrice table
+        try {
+            const educationalPathPrice = await getEducationalPathPrice(educationalPathId);
+            if (educationalPathPrice) {
+                console.log(`[WEBHOOK] Found educational path price data for path ${educationalPathId}:`, {
+                    amount: educationalPathPrice.amount,
+                    currency: educationalPathPrice.currency,
+                    isRecurring: educationalPathPrice.isRecurring,
+                    interval: educationalPathPrice.interval,
+                    trialPeriodDays: educationalPathPrice.trialPeriodDays
+                });
+                
+                // Override with price table data if available (unless already set by Stripe data)
+                if (!baseData.amount && educationalPathPrice.amount) {
+                    baseData.amount = educationalPathPrice.amount;
+                }
+                if (!baseData.currency && educationalPathPrice.currency) {
+                    baseData.currency = educationalPathPrice.currency;
+                }
+                if (!baseData.isRecurring && educationalPathPrice.isRecurring) {
+                    baseData.isRecurring = educationalPathPrice.isRecurring;
+                }
+                
+                // Add trial period information from price table
+                if (educationalPathPrice.trialPeriodDays) {
+                    const trialStart = new Date();
+                    const trialEnd = new Date(trialStart.getTime() + (educationalPathPrice.trialPeriodDays * 24 * 60 * 60 * 1000));
+                    if (!baseData.trialStart) {
+                        baseData.trialStart = trialStart;
+                    }
+                    if (!baseData.trialEnd) {
+                        baseData.trialEnd = trialEnd;
+                    }
+                }
+            } else {
+                console.log(`[WEBHOOK] No educational path price data found for path ${educationalPathId}`);
+            }
+        } catch (err) {
+            console.error("Error fetching educational path price data:", err);
         }
 
         await db.educationalPathPurchase.create({
@@ -327,30 +477,59 @@ export async function POST(req: Request) {
             stripeCustomerId?: string;
         }
     ) {
+        const baseData: any = {
+            userId: appUserId,
+            educationalPathId,
+            paymentId: paymentData.paymentId,
+            eventType: paymentData.eventType,
+            amount: paymentData.amount ? paymentData.amount / 100 : null, // Convert from cents
+            currency: paymentData.currency?.toUpperCase(),
+            paymentStatus: paymentData.paymentStatus,
+            paymentMethod: paymentData.paymentMethod,
+            subscriptionId: paymentData.subscriptionId,
+            isRecurring: paymentData.isRecurring || false,
+            subscriptionStatus: paymentData.subscriptionStatus,
+            currentPeriodStart: paymentData.currentPeriodStart,
+            currentPeriodEnd: paymentData.currentPeriodEnd,
+            trialStart: paymentData.trialStart,
+            trialEnd: paymentData.trialEnd,
+            customerEmail: paymentData.customerEmail,
+            invoiceId: paymentData.invoiceId,
+            receiptUrl: paymentData.receiptUrl,
+            metadata: paymentData.metadata,
+            stripeCustomerId: paymentData.stripeCustomerId,
+            purchaseDate: new Date(),
+        };
+
+        // Fetch price data from EducationalPathPrice table
+        try {
+            const educationalPathPrice = await getEducationalPathPrice(educationalPathId);
+            if (educationalPathPrice) {
+                // Override with price table data if available (unless already set by payment data)
+                if (!baseData.amount && educationalPathPrice.amount) {
+                    baseData.amount = educationalPathPrice.amount;
+                }
+                if (!baseData.currency && educationalPathPrice.currency) {
+                    baseData.currency = educationalPathPrice.currency;
+                }
+                if (!baseData.isRecurring && educationalPathPrice.isRecurring) {
+                    baseData.isRecurring = educationalPathPrice.isRecurring;
+                }
+                
+                // Add trial period information from price table if not already set
+                if (educationalPathPrice.trialPeriodDays && !baseData.trialStart && !baseData.trialEnd) {
+                    const trialStart = new Date();
+                    const trialEnd = new Date(trialStart.getTime() + (educationalPathPrice.trialPeriodDays * 24 * 60 * 60 * 1000));
+                    baseData.trialStart = trialStart;
+                    baseData.trialEnd = trialEnd;
+                }
+            }
+        } catch (err) {
+            console.error("Error fetching educational path price data for enhanced purchase:", err);
+        }
+
         await db.educationalPathPurchase.create({
-            data: {
-                userId: appUserId,
-                educationalPathId,
-                paymentId: paymentData.paymentId,
-                eventType: paymentData.eventType,
-                amount: paymentData.amount ? paymentData.amount / 100 : null, // Convert from cents
-                currency: paymentData.currency?.toUpperCase(),
-                paymentStatus: paymentData.paymentStatus,
-                paymentMethod: paymentData.paymentMethod,
-                subscriptionId: paymentData.subscriptionId,
-                isRecurring: paymentData.isRecurring || false,
-                subscriptionStatus: paymentData.subscriptionStatus,
-                currentPeriodStart: paymentData.currentPeriodStart,
-                currentPeriodEnd: paymentData.currentPeriodEnd,
-                trialStart: paymentData.trialStart,
-                trialEnd: paymentData.trialEnd,
-                customerEmail: paymentData.customerEmail,
-                invoiceId: paymentData.invoiceId,
-                receiptUrl: paymentData.receiptUrl,
-                metadata: paymentData.metadata,
-                stripeCustomerId: paymentData.stripeCustomerId,
-                purchaseDate: new Date(),
-            },
+            data: baseData,
         });
     }
 
