@@ -93,7 +93,7 @@ const CourseIdPage = async ({ params }: { params: Promise<{ courseId: string }> 
               <h2 className="text-xl">Lekcje</h2>
             </div>
             <div>
-              <ChaptersForm chapters={course.modules} courseId={courseId} />
+              <ChaptersForm chapters={course.modules} courseId={courseId} courseTitle={courseTitle} />
             </div>
           </div>
           <div>

@@ -204,8 +204,8 @@ const SettingsPage = () => {
                       )}
                     </div>
                   </div>
-                  {/* Show cancel button for any subscription with subscriptionId or if it's recurring */}
-                  {userCourse.purchase?.subscriptionId || (userCourse.purchase?.isRecurring && userCourse.purchase?.subscriptionStatus !== 'canceled') ? (
+                  {/* Show cancel button only for active subscriptions that are not already cancelled */}
+                  {userCourse.purchase?.subscriptionId && userCourse.purchase?.subscriptionStatus !== 'canceled' ? (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">
@@ -277,8 +277,8 @@ const SettingsPage = () => {
                       )}
                     </div>
                   </div>
-                  {/* Show cancel button for any subscription with subscriptionId or if it's recurring */}
-                  {purchase.subscriptionId || (purchase.isRecurring && purchase.subscriptionStatus !== 'canceled') ? (
+                  {/* Show cancel button only for active subscriptions that are not already cancelled */}
+                  {purchase.subscriptionId && purchase.subscriptionStatus !== 'canceled' ? (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">

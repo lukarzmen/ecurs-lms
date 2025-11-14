@@ -143,9 +143,14 @@ export default function OnboardingSuccessPage() {
               </div>
             )}
 
-            <p className="text-sm text-gray-500">
-              Zostaniesz automatycznie przekierowany do panelu nauczyciela za chwilę...
-            </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-700 font-medium">
+                🚀 Przekierowanie w toku...
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Zostaniesz automatycznie przekierowany do panelu nauczyciela za 3 sekundy
+              </p>
+            </div>
           </>
         )}
 
@@ -181,6 +186,14 @@ export default function OnboardingSuccessPage() {
                 Dokończ konfigurację teraz
               </button>
 
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-sm text-blue-700 font-medium">
+                  🚀 Przekierowanie w toku...
+                </p>
+                <p className="text-xs text-blue-600">
+                  Zostaniesz przekierowany do panelu nauczyciela za 5 sekund
+                </p>
+              </div>
               <p className="text-xs text-gray-500">
                 Możesz też dokończyć konfigurację później z panelu nauczyciela.
               </p>
@@ -215,6 +228,14 @@ export default function OnboardingSuccessPage() {
                 </button>
               </div>
 
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+                <p className="text-sm text-blue-700 font-medium">
+                  🚀 Przekierowanie w toku...
+                </p>
+                <p className="text-xs text-blue-600">
+                  Zostaniesz przekierowany do panelu nauczyciela za 5 sekund
+                </p>
+              </div>
               <p className="text-xs text-gray-500">
                 Jeśli problem się powtarza, skontaktuj się z wsparciem technicznym.
               </p>
