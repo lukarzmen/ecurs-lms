@@ -145,8 +145,8 @@ export const ChaptersList = ({
                       className={cn(
                         "group flex items-center gap-x-2 rounded-md mb-3 text-sm border transition-colors",
                         chapter.state === 0
-                          ? "bg-gray-200 border-gray-300 text-gray-600 hover:bg-gray-300"
-                          : "bg-orange-200 border-orange-100 text-orange-700 hover:bg-orange-300"
+                          ? "bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200"
+                          : "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
                       )}
                       ref={provided.innerRef}
                       {...provided.draggableProps}
@@ -155,15 +155,18 @@ export const ChaptersList = ({
                         className={cn(
                           "px-2 py-3 border-r rounded-l-md transition",
                           chapter.state === 0
-                            ? "bg-gray-200 border-r-gray-300 group-hover:bg-gray-300"
-                            : "bg-orange-200 border-r-orange-200 group-hover:bg-orange-300"
+                            ? "bg-gray-100 border-r-gray-200 group-hover:bg-gray-200"
+                            : "bg-blue-50 border-r-blue-200 group-hover:bg-blue-100"
                         )}
                         {...provided.dragHandleProps}
                       >
                         <Grip className="h-5 w-5" />
                       </div>
                         <div 
-                        className="flex-grow px-2 py-3 hover:bg-orange-300 transition flex items-center gap-x-2 select-none" // Added select-none to make text not selectable
+                        className={cn(
+                          "flex-grow px-2 py-3 transition flex items-center gap-x-2 select-none",
+                          chapter.state === 0 ? "hover:bg-gray-200" : "hover:bg-blue-100"
+                        )}
                         >
                         {editingTitleId === chapter.id ? (
                           <input
@@ -172,7 +175,7 @@ export const ChaptersList = ({
                             onChange={(e) => setEditingTitle(e.target.value)}
                             onBlur={() => saveTitleEdit(chapter.id)}
                             onKeyPress={(e) => handleKeyPress(e, chapter.id)}
-                            className="bg-white border border-orange-300 rounded px-2 py-1 text-sm flex-grow focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            className="bg-white border border-blue-300 rounded px-2 py-1 text-sm flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500"
                             autoFocus
                           />
                         ) : (
@@ -193,13 +196,16 @@ export const ChaptersList = ({
                           </span>
                         )}
                         {editingChapterId === chapter.id && (
-                          <Loader2 className="h-4 w-4 animate-spin text-orange-700" />
+                          <Loader2 className={cn(
+                            "h-4 w-4 animate-spin",
+                            chapter.state === 0 ? "text-gray-600" : "text-blue-600"
+                          )} />
                         )}
                       </div>
                       <div className="ml-auto pr-2 flex items-center gap-x-2">
                         <Pencil
                           onClick={() => startTitleEdit(chapter)}
-                          className="cursor-pointer hover:opacity-75 h-4 w-4 transition text-orange-600"
+                          className="cursor-pointer hover:opacity-75 h-4 w-4 transition text-blue-600"
                         />
                         <Trash2
                           onClick={() => handleDeleteConfirm(chapter.id)}

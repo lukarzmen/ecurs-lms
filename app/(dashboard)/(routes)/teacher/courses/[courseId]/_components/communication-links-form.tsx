@@ -305,8 +305,8 @@ export const CommunicationLinksForm = ({ courseId }: CommunicationLinksFormProps
                       <ExternalLink className="h-4 w-4" />
                     </Button>
                     <Button
-                      variant="destructive"
-                      size="sm"
+                      variant="ghost"
+                      className="h-4 w-8 p-0"
                       onClick={() => onDelete(link.id)}
                     >
                       <Trash2 className="h-4 w-4" />
