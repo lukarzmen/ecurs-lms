@@ -67,6 +67,8 @@ import FloatingLinkEditorPlugin from './plugins/FloatingLinkEditorPlugin';
 import FloatingTextFormatToolbarPlugin from './plugins/FloatingTextFormatToolbarPlugin';
 import DraggableBlockPlugin from './plugins/DraggableBlockPlugin';
 import CodeActionMenuPlugin from './plugins/CodeActionMenuPlugin';
+import CourseInfoPlugin from './plugins/CourseInfoPlugin';
+import EditorRefreshPlugin from './plugins/EditorRefreshPlugin';
 
 
 // Helper function to recursively find nodes with __isCompleted property
@@ -96,12 +98,14 @@ export default function Editor( {
   isEditable,
   isCompleted,
   onCompleted,
+  initialStateJSON,
 }: {
   onSave: (serializedDocument: SerializedDocument) => SaveResult;
   onEditorChange: (editorState: string) => void;
   isEditable: boolean;
   isCompleted?: boolean;
   onCompleted: () => void;
+  initialStateJSON: string | null;
 }): JSX.Element {
 
   const {historyState} = useSharedHistoryContext();
@@ -221,6 +225,7 @@ export default function Editor( {
         <DragDropPaste />
         <AutoFocusPlugin />
         <ClearEditorPlugin />
+        <EditorRefreshPlugin initialStateJSON={initialStateJSON} />
         {/* <ComponentPickerPlugin /> */}
         <EmojiPickerPlugin />
         <AutoEmbedPlugin />
@@ -275,6 +280,7 @@ export default function Editor( {
         <TabIndentationPlugin />
         <CollapsiblePlugin />
         <PageBreakPlugin />
+        <CourseInfoPlugin />
 {floatingAnchorElem && (
               <>
                 <FloatingLinkEditorPlugin

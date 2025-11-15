@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from 'react';
 import * as React from 'react';
 import { $createHeadingNode } from '@lexical/rich-text';
+import { useCourseContext } from '../../context/CourseContext';
 
 import ProgressSpinner from './ProgressComponent';
 import toast from 'react-hot-toast';
@@ -26,10 +27,44 @@ export function TextGeneratorDialog({
   activeEditor: LexicalEditor;
   onClose: () => void;
 }): JSX.Element {
+  const { module } = useCourseContext();
+  
+  // Create context-aware placeholders and prompts
+  const getDefaultUserPrompt = React.useCallback(() => {
+    if (module?.courseName && module?.moduleName) {
+      return `Wygeneruj treść lekcji "${module.moduleName}" dla kursu "${module.courseName}". Uwzględnij:`;
+    } else if (module?.moduleName) {
+      return `Wygeneruj treść lekcji "${module.moduleName}". Uwzględnij:`;
+    } else if (module?.courseName) {
+      return `Wygeneruj treść lekcji dla kursu "${module.courseName}". Uwzględnij:`;
+    }
+    return "Wygeneruj treść lekcji. Uwzględnij:";
+  }, [module?.courseName, module?.moduleName]);
+  
+  const getContextualSystemPrompt = React.useCallback(() => {
+    let basePrompt = "Jesteś kreatywnym asystentem AI, który tworzy angażujące, opisowe i naturalnie brzmiące treści edukacyjne skierowane bezpośrednio do ucznia. Unikaj formalnego, sztywnego stylu oraz konspektów dla nauczycieli. Pisz żywo i przystępnie: używaj obrazowych opisów, przykładów i krótkich zadań lub pytań pobudzających do myślenia. Materiały mają interesować i angażować czytelnika — dodawaj ciekawostki. Odpowiedzi formatuj w czystym Markdown (nagłówki, listy, pogrubienia itp.) i nie dodawaj instrukcji ani meta‑komentarzy. Dodawaj również emoji pasujące do treści, aby zwiększyć zaangażowanie i pomóc w przekazie.";
+    
+    if (module?.courseName && module?.moduleName) {
+      basePrompt += ` Tworzysz treści dla modułu "${module.moduleName}" w kursie "${module.courseName}". Dostosuj poziom trudności i styl do tego kontekstu edukacyjnego.`;
+    } else if (module?.moduleName) {
+      basePrompt += ` Tworzysz treści dla modułu "${module.moduleName}". Dostosuj poziom trudności i styl do tego kontekstu edukacyjnego.`;
+    } else if (module?.courseName) {
+      basePrompt += ` Tworzysz treści dla kursu "${module.courseName}". Dostosuj poziom trudności i styl do tego kontekstu edukacyjnego.`;
+    }
+    
+    return basePrompt;
+  }, [module?.courseName, module?.moduleName]);
+
   const [userPrompt, setUserPrompt] = useState("");
-  const [systemPrompt, setSystemPrompt] = useState("Jesteś kreatywnym asystentem AI, który tworzy angażujące, opisowe i naturalnie brzmiące treści edukacyjne skierowane bezpośrednio do ucznia. Unikaj formalnego, sztywnego stylu oraz konspektów dla nauczycieli. Pisz żywo i przystępnie: używaj obrazowych opisów, przykładów i krótkich zadań lub pytań pobudzających do myślenia. Materiały mają interesować i angażować czytelnika — dodawaj ciekawostki. Odpowiedzi formatuj w czystym Markdown (nagłówki, listy, pogrubienia itp.) i nie dodawaj instrukcji ani meta‑komentarzy. Dodawaj również emoji pasujące do treści, aby zwiększyć zaangażowanie i pomóc w przekazie."); 
+  const [systemPrompt, setSystemPrompt] = useState("");
   const [isSystemPromptEditable, setIsSystemPromptEditable] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Update prompts when course context becomes available
+  useEffect(() => {
+    setUserPrompt(getDefaultUserPrompt());
+    setSystemPrompt(getContextualSystemPrompt());
+  }, [module, getDefaultUserPrompt, getContextualSystemPrompt]);
 
   const handleSubmit = () => {
     if (userPrompt.trim()) {
@@ -75,7 +110,7 @@ export function TextGeneratorDialog({
         <textarea
           className="w-full p-2 border border-gray-300 rounded-md mb-4"
           rows={4}
-          placeholder="Wpisz swoje polecenie..."
+          placeholder="Edytuj polecenie lub dodaj szczegóły dotyczące treści, którą chcesz wygenerować..."
           value={userPrompt}
           onChange={(e) => setUserPrompt(e.target.value)}
         />

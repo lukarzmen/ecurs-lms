@@ -9,6 +9,7 @@ import { Pencil } from "lucide-react";
 import { SerializedDocument } from "@lexical/file";
 import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 import LexicalEditor from "@/components/editor/LexicalEditor";
+import { ModuleContextData } from "@/components/editor/context/CourseContext";
 import { calculatePayloadSize, formatFileSize } from "@/lib/upload-utils";
 
 interface ChapterDescriptionFormProps {
@@ -16,16 +17,50 @@ interface ChapterDescriptionFormProps {
   chapterId: string;
 }
 
+interface CourseModuleData {
+  course?: {
+    id: string;
+    title: string;
+  };
+  module?: {
+    id: string;
+    title: string;
+  };
+}
+
 export const ChapterDescriptionForm = ({
+  courseId,
   chapterId: moduleId,
 }: ChapterDescriptionFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<string>("");
+  const [courseModuleData, setCourseModuleData] = useState<CourseModuleData>({});
 
   // Extract fetch logic to a function
   const [notFound, setNotFound] = useState(false);
+  
+  // Function to fetch course and module information
+  const fetchCourseModuleData = useCallback(async () => {
+    try {
+      const [courseResponse, moduleResponse] = await Promise.all([
+        fetch(`/api/courses/${courseId}`),
+        fetch(`/api/module/${moduleId}`)
+      ]);
+
+      const courseData = courseResponse.ok ? await courseResponse.json() : null;
+      const moduleData = moduleResponse.ok ? await moduleResponse.json() : null;
+
+      setCourseModuleData({
+        course: courseData ? { id: courseData.id.toString(), title: courseData.title } : undefined,
+        module: moduleData ? { id: moduleData.id.toString(), title: moduleData.title } : undefined,
+      });
+    } catch (error) {
+      console.error('Error fetching course/module data:', error);
+    }
+  }, [courseId, moduleId]);
+
   const fetchData = useCallback(() => {
     setIsLoading(true);
     setNotFound(false);
@@ -63,7 +98,8 @@ export const ChapterDescriptionForm = ({
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    fetchCourseModuleData();
+  }, [fetchData, fetchCourseModuleData]);
 
   const toggleEdit = () => {
     if (isEditing) {
@@ -134,10 +170,10 @@ export const ChapterDescriptionForm = ({
       }
       
       toast.success("Zapisano dokument");
-      fetchData();
       setIsEditing(false);
-      setIsLoading(false);
       setUploadProgress("");
+      // Fetch new data after successful save
+      fetchData();
     } catch (error) {
       console.error('Regular upload error:', error);
       toast.error("Błąd połączenia podczas zapisywania dokumentu");
@@ -281,6 +317,12 @@ export const ChapterDescriptionForm = ({
               onCompleted={() => {
               }}
               isCompleted={true}
+              module={{
+                courseId,
+                courseName: courseModuleData.course?.title,
+                moduleId,
+                moduleName: courseModuleData.module?.title,
+              }}
             />
           </div>
         </div>

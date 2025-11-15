@@ -113,22 +113,69 @@ export async function sendNotificationEmail(
   }
 }
 
-// Process scheduled notifications
+// Process scheduled notifications and module publications
 export async function processScheduledNotifications(): Promise<{
   processed: number;
   sent: number;
   errors: number;
+  modulesPublished: number;
 }> {
-  console.log('Processing scheduled notifications...');
+  console.log('Processing scheduled notifications and module publications...');
   
   let processed = 0;
   let sent = 0;
   let errors = 0;
+  let modulesPublished = 0;
 
   try {
     // Get current time rounded to the nearest minute
     const currentTime = new Date();
     currentTime.setSeconds(0, 0);
+
+    // 1. Process scheduled module publications
+    try {
+      const modulesToPublish = await db.module.findMany({
+        where: {
+          state: 0, // Draft state
+          publishedAt: {
+            lte: currentTime, // Publication time has passed
+          },
+        },
+        include: {
+          course: {
+            select: {
+              id: true,
+              title: true,
+              authorId: true,
+            },
+          },
+        },
+      });
+
+      console.log(`Found ${modulesToPublish.length} modules to publish`);
+
+      for (const moduleToPublish of modulesToPublish) {
+        try {
+          await db.module.update({
+            where: { id: moduleToPublish.id },
+            data: {
+              state: 1, // Set to published state
+              publishedAt: null, // Clear the scheduled publication date
+              updatedAt: currentTime,
+            },
+          });
+
+          modulesPublished++;
+          console.log(`Published module: ${moduleToPublish.title} (ID: ${moduleToPublish.id})`);
+        } catch (moduleError) {
+          console.error(`Error publishing module ${moduleToPublish.id}:`, moduleError);
+          errors++;
+        }
+      }
+    } catch (modulePublishError) {
+      console.error('Error in module publication process:', modulePublishError);
+      errors++;
+    }
 
     // Find all enabled schedules
     const schedules = await db.notificationSchedule.findMany({
@@ -258,9 +305,9 @@ export async function processScheduledNotifications(): Promise<{
       });
     }
 
-    console.log(`Notification processing complete. Processed: ${processed}, Sent: ${sent}, Errors: ${errors}`);
+    console.log(`Processing complete. Notifications - Processed: ${processed}, Sent: ${sent}. Modules published: ${modulesPublished}. Errors: ${errors}`);
     
-    return { processed, sent, errors };
+    return { processed, sent, errors, modulesPublished };
   } catch (error) {
     console.error('Error processing scheduled notifications:', error);
     throw error;

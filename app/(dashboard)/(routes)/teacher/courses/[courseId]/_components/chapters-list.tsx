@@ -7,15 +7,17 @@ import {
   Draggable,
   DropResult,
 } from "@hello-pangea/dnd";
-import { Grip, Trash2, Loader2 } from "lucide-react"; // Added Loader2
+import { Grip, Trash2, Loader2, Pencil } from "lucide-react"; // Added Loader2 and Pencil
 import { cn } from "@/lib/utils";
 import { Module } from "@prisma/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface ChaptersListProps {
   items: Module[];
   onReorder: (updateData: { id: number; position: number }[]) => void;
   onEdit: (id: number) => void;
+  onEditTitle: (id: number, newTitle: string) => void;
   onDelete: (id: number) => void;
 }
 
@@ -23,6 +25,7 @@ export const ChaptersList = ({
   items,
   onReorder,
   onEdit,
+  onEditTitle,
   onDelete,
 }: ChaptersListProps) => {
   const [isMounted, setIsMounted] = useState(false);
@@ -32,6 +35,8 @@ export const ChaptersList = ({
     null
   );
   const [editingChapterId, setEditingChapterId] = useState<number | null>(null); // State to track the chapter being edited
+  const [editingTitleId, setEditingTitleId] = useState<number | null>(null); // State to track title editing
+  const [editingTitle, setEditingTitle] = useState<string>(""); // State for the title being edited
 
   useEffect(() => {
     setIsMounted(true);
@@ -93,6 +98,32 @@ export const ChaptersList = ({
     // onEdit would need to signal completion back to this component.
   };
 
+  const startTitleEdit = (chapter: Module) => {
+    setEditingTitleId(chapter.id);
+    setEditingTitle(chapter.title);
+  };
+
+  const saveTitleEdit = async (chapterId: number) => {
+    if (editingTitle.trim()) {
+      await onEditTitle(chapterId, editingTitle.trim());
+    }
+    setEditingTitleId(null);
+    setEditingTitle("");
+  };
+
+  const cancelTitleEdit = () => {
+    setEditingTitleId(null);
+    setEditingTitle("");
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent, chapterId: number) => {
+    if (e.key === 'Enter') {
+      saveTitleEdit(chapterId);
+    } else if (e.key === 'Escape') {
+      cancelTitleEdit();
+    }
+  };
+
   if (!isMounted) {
     return null;
   }
@@ -132,13 +163,33 @@ export const ChaptersList = ({
                         <Grip className="h-5 w-5" />
                       </div>
                         <div 
-                        className="flex-grow px-2 py-3 cursor-pointer hover:bg-orange-300 transition flex items-center gap-x-2 select-none" // Added select-none to make text not selectable
-                        onClick={() => editingChapterId !== chapter.id && handleEditClick(chapter.id)} // Prevent re-click if already "editing"
+                        className="flex-grow px-2 py-3 hover:bg-orange-300 transition flex items-center gap-x-2 select-none" // Added select-none to make text not selectable
                         >
-                        <span className="truncate max-w-[60%]">{chapter.title}</span>
+                        {editingTitleId === chapter.id ? (
+                          <input
+                            type="text"
+                            value={editingTitle}
+                            onChange={(e) => setEditingTitle(e.target.value)}
+                            onBlur={() => saveTitleEdit(chapter.id)}
+                            onKeyPress={(e) => handleKeyPress(e, chapter.id)}
+                            className="bg-white border border-orange-300 rounded px-2 py-1 text-sm flex-grow focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            autoFocus
+                          />
+                        ) : (
+                          <span 
+                            className="truncate max-w-[60%] cursor-pointer" 
+                            onClick={() => editingChapterId !== chapter.id && handleEditClick(chapter.id)}
+                          >
+                            {chapter.title}
+                          </span>
+                        )}
                         {chapter.state === 0 && (
                           <span className="text-xs italic text-gray-500 border border-gray-400/50 rounded px-1 py-0.5 bg-gray-100 whitespace-nowrap">
-                            wersja robocza
+                            {chapter.publishedAt ? (
+                              `zaplanowane: ${new Date(chapter.publishedAt).toLocaleDateString('pl-PL')}`
+                            ) : (
+                              'wersja robocza'
+                            )}
                           </span>
                         )}
                         {editingChapterId === chapter.id && (
@@ -146,6 +197,10 @@ export const ChaptersList = ({
                         )}
                       </div>
                       <div className="ml-auto pr-2 flex items-center gap-x-2">
+                        <Pencil
+                          onClick={() => startTitleEdit(chapter)}
+                          className="cursor-pointer hover:opacity-75 h-4 w-4 transition text-orange-600"
+                        />
                         <Trash2
                           onClick={() => handleDeleteConfirm(chapter.id)}
                           className="cursor-pointer hover:opacity-75 h-4 w-4 transition"

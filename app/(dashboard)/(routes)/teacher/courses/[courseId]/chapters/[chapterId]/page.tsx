@@ -5,7 +5,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import ChapterDescriptionForm from "./_components/chapter-description-form";
 import ChapterTitleForm from "./_components/chapter-title-form";
-import ChapterStateBar from "./_components/state-bar";
+import { ModulePublicationSchedule } from "./_components/module-publication-schedule";
 
 
 const ChapterEditPage = async ({ params }: { params: Promise<{ courseId: string; chapterId: string }> }) => {
@@ -48,7 +48,6 @@ const ChapterEditPage = async ({ params }: { params: Promise<{ courseId: string;
                   <span>✏️ Edytuj treść</span>
                 </h1>
             </div>
-            <ChapterStateBar chapterId={chapterId} state={chapterModule.state} />
             <ChapterTitleForm
               chapterId={chapterId}
               title={chapterModule.title}
@@ -60,6 +59,13 @@ const ChapterEditPage = async ({ params }: { params: Promise<{ courseId: string;
             <ChapterDescriptionForm
               chapterId={chapterId}
               courseId={courseId}
+            />
+          </div>
+
+          <div className="w-full">
+            <ModulePublicationSchedule 
+              courseId={courseId} 
+              chapterId={chapterId} 
             />
           </div>
         </div>

@@ -1,10 +1,10 @@
 import './index.css';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import * as React from 'react';
-import { useEffect, useState } from 'react';
 
 import { SettingsContext } from './context/SettingsContext';
 import { SharedHistoryContext } from './context/SharedHistoryContext';
+import { CourseProvider } from './context/CourseContext';
 import Editor from './Editor';
 import EditorNodes from './nodes/EditorNodes';
 import { SerializedDocument } from '@lexical/file';
@@ -13,6 +13,8 @@ import { FlashMessageContext } from './context/FlashMessageContext';
 import PlaygroundEditorTheme from './themes/PlaygroundEditorTheme';
 import { SaveResult } from './plugins/ActionsPlugin';
 import { ToolbarContext } from './context/ToolbarContext';
+import { ModuleContextData } from './context/CourseContext';
+
 interface LexicalEditorProps {
   onSave: (serializedDocument: SerializedDocument) => SaveResult;
   onEditorChange: (editorState: string) => void;
@@ -20,6 +22,7 @@ interface LexicalEditorProps {
   isEditable: boolean;
   isCompleted?: boolean;
   onCompleted: () => void;
+  module?: ModuleContextData;
 }
 export default function LexicalEditor({
   onSave,
@@ -28,9 +31,9 @@ export default function LexicalEditor({
   isEditable,
   isCompleted,
   onCompleted,
+  module,
 }: LexicalEditorProps): JSX.Element {
-
-  const [editorConfig, setEditorConfig] = useState({
+  const editorConfig = {
     editorState: initialStateJSON,
     namespace: 'Playground',
     nodes: [...EditorNodes],
@@ -39,15 +42,7 @@ export default function LexicalEditor({
       throw error;
     },
     theme: PlaygroundEditorTheme
-  });
-
-  useEffect(() => {
-    setEditorConfig((prevConfig) => ({
-      ...prevConfig,
-      editorState: initialStateJSON,
-      editable: isEditable,
-    }));
-  }, [initialStateJSON, isEditable]);
+  };
 
   return (
     <SettingsContext>
@@ -55,11 +50,13 @@ export default function LexicalEditor({
         <LexicalComposer initialConfig={editorConfig}>
            <ToolbarContext>
              <SharedHistoryContext>
-               <div className='flex flex-row'>
-                 <div className="editor-shell ">
-                   <Editor onSave={onSave} onEditorChange={onEditorChange} isCompleted={isCompleted} isEditable={isEditable} onCompleted={onCompleted} />
+               <CourseProvider module={module}>
+                 <div className='flex flex-row'>
+                   <div className="editor-shell ">
+                     <Editor onSave={onSave} onEditorChange={onEditorChange} isCompleted={isCompleted} isEditable={isEditable} onCompleted={onCompleted} initialStateJSON={initialStateJSON} />
+                   </div>
                  </div>
-               </div>
+               </CourseProvider>
              </SharedHistoryContext>
            </ToolbarContext>
         </LexicalComposer>

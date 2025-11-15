@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json({
       success: true,
-      message: 'Notification processing completed',
+      message: 'Notification processing and module publication completed',
       source,
       result,
       timestamp: new Date().toISOString(),

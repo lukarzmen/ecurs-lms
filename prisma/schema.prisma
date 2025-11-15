@@ -177,11 +177,13 @@ model Module {
   updatedAt     DateTime
   title         String
   state         Int             @default(0)
+  publishedAt   DateTime?       // Data publikacji - lekcja zostanie opublikowana automatycznie w tej dacie
   course        Course?         @relation(fields: [courseId], references: [id], onDelete: Cascade)
   userModules   UserModule[]
   ModuleContent ModuleContent[]
 
   @@index([courseId])
+  @@index([publishedAt]) // Index dla wydajnego wyszukiwania lekcji do publikacji
 }
 
 model ModuleContent {

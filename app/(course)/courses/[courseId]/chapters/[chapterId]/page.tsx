@@ -20,6 +20,7 @@ interface ChapterData {
     };
     course: {
         id: string;
+        title: string;
         // other course fields...
     };
     userModule: {
@@ -182,6 +183,12 @@ const ChapterIdPage = () => {
                         moduleId={chapterData.module.id}
                         onCompleted={handleCompletion}
                         isCompleting={isCompleting}
+                        module={{
+                            courseId,
+                            courseName: chapterData.course.title,
+                            moduleId: chapterData.module.id,
+                            moduleName: chapterData.module.title,
+                        }}
                     />
                 </div>
             </div>

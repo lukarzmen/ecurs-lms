@@ -2,6 +2,7 @@
 
 import LexicalEditor from "@/components/editor/LexicalEditor";
 import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
+import { ModuleContextData } from "@/components/editor/context/CourseContext";
 import { SerializedDocument } from "@lexical/file";
 import { set } from "lodash-es";
 import { useEffect, useState } from "react";
@@ -11,12 +12,14 @@ export default function ChapterContent ({
   moduleId: moduleId,
   isCompleted,
   onCompleted,
-  isCompleting = false
+  isCompleting = false,
+  module
 }: {
   moduleId: string | null;
   isCompleted: boolean;
   onCompleted: () => void;
   isCompleting?: boolean;
+  module?: ModuleContextData;
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
@@ -86,6 +89,7 @@ export default function ChapterContent ({
                 onCompleted();
               }
             }}
+            module={module}
           />
         )}
       </div>

@@ -52,6 +52,7 @@ export const ChaptersForm = ({ chapters, courseId, courseTitle }: ModulesFormPro
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
+  const [editableCourseTitle, setEditableCourseTitle] = useState(courseTitle || "");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -74,7 +75,7 @@ export const ChaptersForm = ({ chapters, courseId, courseTitle }: ModulesFormPro
   };
 
   const handleOpenAIModal = () => {
-    const defaultPrompt = courseTitle ? `Stwórz treść kursu ${courseTitle}` : "Stwórz treść kursu";
+    const defaultPrompt = editableCourseTitle ? `Stwórz treść kursu ${editableCourseTitle}` : "Stwórz treść kursu";
     setAiPrompt(defaultPrompt);
     setShowAIModal(true);
   };
@@ -88,9 +89,28 @@ export const ChaptersForm = ({ chapters, courseId, courseTitle }: ModulesFormPro
     try {
       setIsGeneratingAI(true);
       
+      // Prepare existing chapters information
+      const existingChapters = chapters.map(chapter => chapter.title);
+      const hasExistingChapters = existingChapters.length > 0;
+      
+      let systemPrompt = "Jesteś ekspertem w tworzeniu programów edukacyjnych. Generujesz tylko tytuły lekcji/modułów na podstawie opisu kursu.";
+      let userPrompt = "";
+      
+      if (hasExistingChapters) {
+        systemPrompt += " Unikaj duplikatów z już istniejącymi lekcjami.";
+        userPrompt = `Na podstawie tego opisu kursu: "${aiPrompt}", wygeneruj listę 5-10 NOWYCH tytułów lekcji/modułów, które UZUPEŁNIĄ już istniejące lekcje.
+
+ISTNIEJĄCE LEKCJE W KURSIE:
+${existingChapters.map((title, index) => `${index + 1}. ${title}`).join('\n')}
+
+Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących tematów. Zwróć tylko tytuły, każdy w nowej linii, bez numeracji, bez dodatkowych opisów.`;
+      } else {
+        userPrompt = `Na podstawie tego opisu kursu: "${aiPrompt}", wygeneruj listę 8-15 tytułów lekcji/modułów. Zwróć tylko tytuły, każdy w nowej linii, bez numeracji, bez dodatkowych opisów. Przykład formatu:\nWprowadzenie do geografii\nZiemia jako planeta\nLitosfera i procesy geologiczne`;
+      }
+      
       const llmPrompt = {
-        systemPrompt: "Jesteś ekspertem w tworzeniu programów edukacyjnych. Generujesz tylko tytuły lekcji/modułów na podstawie opisu kursu.",
-        userPrompt: `Na podstawie tego opisu kursu: "${aiPrompt}", wygeneruj listę 8-15 tytułów lekcji/modułów. Zwróć tylko tytuły, każdy w nowej linii, bez numeracji, bez dodatkowych opisów. Przykład formatu:\nWprowadzenie do geografii\nZiemia jako planeta\nLitosfera i procesy geologiczne`
+        systemPrompt,
+        userPrompt
       };
 
       const response = await axios.post('/api/tasks', llmPrompt);
@@ -115,13 +135,19 @@ export const ChaptersForm = ({ chapters, courseId, courseTitle }: ModulesFormPro
         return;
       }
 
-      // Set the generated titles in the form
-      form.setValue('titles', titles);
+      // Always add to existing form titles (even if chapters array is empty, there might be unsaved titles in form)
+      const currentTitles = form.getValues('titles').filter(t => t.trim().length > 0);
+      const allTitles = [...currentTitles, ...titles];
+      form.setValue('titles', allTitles);
+      
       setIsCreating(true);
       setShowAIModal(false);
       setAiPrompt("");
       
-      toast.success(`Wygenerowano ${titles.length} tytułów lekcji`);
+      const message = hasExistingChapters 
+        ? `Wygenerowano ${titles.length} nowych tytułów lekcji uzupełniających istniejące`
+        : `Wygenerowano ${titles.length} tytułów lekcji`;
+      toast.success(message);
     } catch (error) {
       console.error('Error generating lessons:', error);
       if (axios.isAxiosError(error)) {
@@ -171,6 +197,19 @@ export const ChaptersForm = ({ chapters, courseId, courseTitle }: ModulesFormPro
     router.push(`/teacher/courses/${courseId}/chapters/${chapterId}`);
   };
 
+  const onEditTitle = async (chapterId: number, newTitle: string) => {
+    try {
+      await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}`, {
+        title: newTitle
+      });
+      toast.success("Nazwa lekcji zaktualizowana");
+      router.refresh();
+    } catch (error) {
+      console.error('Error updating chapter title:', error);
+      toast.error("Błąd podczas aktualizacji nazwy lekcji");
+    }
+  };
+
   function onDelete(chapterId: number): void {
     console.log("Deleting chapter:", `/api/courses/${courseId}/chapters/${chapterId}`);
     axios
@@ -212,10 +251,25 @@ export const ChaptersForm = ({ chapters, courseId, courseTitle }: ModulesFormPro
               <DialogHeader>
                 <DialogTitle>Wygeneruj lekcje za pomocą AI</DialogTitle>
                 <DialogDescription>
-                  Opisz kurs, a AI wygeneruje dla Ciebie listę lekcji.
+                  {chapters.length > 0 
+                    ? "AI wygeneruje nowe lekcje i dodaj je do istniejących." 
+                    : "Opisz kurs, a AI wygeneruje dla Ciebie listę lekcji."
+                  }
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <label htmlFor="courseTitle" className="text-sm font-medium">
+                    Nazwa kursu
+                  </label>
+                  <Input
+                    id="courseTitle"
+                    value={editableCourseTitle}
+                    onChange={(e) => setEditableCourseTitle(e.target.value)}
+                    placeholder="Wprowadź nazwę kursu"
+                    disabled={isGeneratingAI}
+                  />
+                </div>
                 <div className="space-y-2">
                   <label htmlFor="aiPrompt" className="text-sm font-medium">
                     Opis kursu
@@ -334,6 +388,7 @@ export const ChaptersForm = ({ chapters, courseId, courseTitle }: ModulesFormPro
             {chapters.length > 0 ? (
               <ChaptersList
                 onEdit={onEdit}
+                onEditTitle={onEditTitle}
                 onReorder={onReorder}
                 onDelete={onDelete}
                 items={chapters}
