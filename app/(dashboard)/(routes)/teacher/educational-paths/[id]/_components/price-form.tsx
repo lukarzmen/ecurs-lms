@@ -1,7 +1,10 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+import { Pencil, DollarSign } from "lucide-react";
+import { FormCard, FormActions, FormGrid, FormSection } from "@/components/ui/form-card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import toast from "react-hot-toast";
 
 // New price structure: amount, currency, interval, isRecurring
@@ -109,20 +112,29 @@ export default function PriceForm({ price, educationalPathId: id }: { price: Pri
   };
 
   return (
-    <div className="mt-6 border bg-orange-100 rounded-md p-4">
-      <div className="font-medium flex items-center justify-between">
-        Cena kursu
-        <Button onClick={toggleEdit} variant="ghost">
-          {isEditing ? (
-            <>Anuluj</>
-          ) : (
-            <>
-              <Pencil className="h-4 w-4 mr-2" />
-              Edytuj
-            </>
-          )}
-        </Button>
-      </div>
+    <div className="mt-6">
+      <FormCard
+        title="Cena"
+        icon={DollarSign}
+        status={{
+          label: form.amount > 0 ? `${form.amount} ${form.currency}${form.isRecurring ? ` / ${intervalOptions.find(opt => opt.value === form.interval)?.label || form.interval}` : ''}` : "Za darmo",
+          variant: form.amount > 0 ? "default" : "outline",
+          className: form.amount > 0 ? "bg-green-500" : ""
+        }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm text-muted-foreground">Ustaw cenę dostępu do ścieżki edukacyjnej</span>
+          <Button onClick={toggleEdit} variant="ghost" size="sm">
+            {isEditing ? (
+              "Anuluj"
+            ) : (
+              <>
+                <Pencil className="h-4 w-4 mr-2" />
+                Edytuj
+              </>
+            )}
+          </Button>
+        </div>
       {isEditing ? (
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="form-group">
@@ -216,9 +228,9 @@ export default function PriceForm({ price, educationalPathId: id }: { price: Pri
             </>
           )}
           <div className="flex items-center gap-x-2">
-            <button type="submit" className="bg-orange-600 text-white font-semibold py-2 px-4 rounded-md">
+            <Button type="submit">
               Zapisz
-            </button>
+            </Button>
           </div>
         </form>
       ) : (
@@ -237,6 +249,7 @@ export default function PriceForm({ price, educationalPathId: id }: { price: Pri
           )}
         </>
       )}
+      </FormCard>
     </div>
   );
 }

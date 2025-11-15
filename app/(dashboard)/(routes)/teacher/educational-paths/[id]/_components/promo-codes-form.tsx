@@ -4,8 +4,9 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { FormCard, FormSection } from "@/components/ui/form-card";
 import toast from "react-hot-toast";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Percent, Trash2 } from "lucide-react";
 
 interface PromoCode {
   id: number;
@@ -78,38 +79,65 @@ export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ educationalPathI
   };
 
   return (
-    <div className="relative mt-6 bg-orange-100 rounded-md p-4">
-      <div className="font-medium flex items-center justify-between">
-        Kody promocyjne
-        <Button onClick={() => setIsModalOpen(true)} variant="ghost">
-            <>
-              <PlusCircle className="h-4 w-4 mr-2"></PlusCircle>   
-            </>
-          Dodaj kod
-        </Button>
-      </div>
-      <div className="mt-4">
-        {promoCodes && promoCodes.length > 0 ? (
-          <ul className="space-y-2">
-            {promoCodes.map((promo: PromoCode) => (
-              <li key={promo.id} className="flex items-center justify-between bg-white rounded p-2">
-                <div>
-                  <span className="font-bold">{promo.code}</span> - {promo.discount}%
-                  {promo.description && <span className="ml-2 text-sm text-muted-foreground">{promo.description}</span>}
-                  <span className="ml-2 text-xs text-slate-500">
-                    {promo.expirationDate ? `Ważny do: ${new Date(promo.expirationDate).toISOString().slice(0, 10)}` : 'Bez terminu'}
-                  </span>
+    <>
+      <div className="mt-6">
+        <FormCard
+          title="Kody promocyjne"
+          icon={Percent}
+          status={{
+            label: promoCodes.length > 0 ? `${promoCodes.length} kodów` : "Brak kodów",
+            variant: promoCodes.length > 0 ? "default" : "outline",
+            className: promoCodes.length > 0 ? "bg-purple-500" : ""
+          }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm text-muted-foreground">Zarządzaj kodami rabatowymi dla ścieżki edukacyjnej</span>
+            <Button onClick={() => setIsModalOpen(true)} variant="ghost" size="sm">
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Dodaj kod
+            </Button>
+          </div>
+          
+          {promoCodes && promoCodes.length > 0 ? (
+            <div className="space-y-3">
+              {promoCodes.map((promo: PromoCode) => (
+                <div key={promo.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-md border">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-purple-700">{promo.code}</span>
+                      <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-sm font-medium">
+                        -{promo.discount}%
+                      </span>
+                    </div>
+                    {promo.description && (
+                      <p className="text-sm text-muted-foreground mt-1">{promo.description}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {promo.expirationDate ? `Ważny do: ${new Date(promo.expirationDate).toISOString().slice(0, 10)}` : 'Bez terminu'}
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeletePromo(promo.code)}
+                    disabled={loading}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Button variant="destructive" size="sm" onClick={() => handleDeletePromo(promo.code)} disabled={loading}>
-                  Usuń
-                </Button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="text-slate-500 italic">Brak kodów promocyjnych</div>
-        )}
+              ))}
+            </div>
+          ) : (
+            <FormSection variant="warning">
+              <p>
+                <strong>Brak kodów promocyjnych</strong><br />
+                Dodaj pierwszy kod rabatowy aby zwiększyć atrakcyjność ścieżki
+              </p>
+            </FormSection>
+          )}
+        </FormCard>
       </div>
+
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
           <DialogHeader>
@@ -153,6 +181,6 @@ export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ educationalPathI
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 };

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function EducationalPathStateBar({ educationalPathId, mode, state }: { educationalPathId: string, mode: number, state: number }) {
 
@@ -43,13 +44,12 @@ export default function EducationalPathStateBar({ educationalPathId, mode, state
         <div className="w-full p-3 bg-yellow-100 border border-yellow-300 rounded flex flex-col sm:flex-row items-center gap-2">
           <span className="text-yellow-800 font-medium">Ścieżka edukacyjna jest w przygotowaniu (szkic)</span>
           <div className="ml-auto flex gap-2">
-            <button
-              className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded"
+            <Button
               onClick={() => changeState(1)}
               disabled={loading}
             >
               {loading ? "Zapisywanie..." : "Opublikuj"}
-            </button>
+            </Button>
             <button
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
               onClick={() => changeState(2)}

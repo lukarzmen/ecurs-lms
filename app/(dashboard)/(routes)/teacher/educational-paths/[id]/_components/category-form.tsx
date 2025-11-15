@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { Pencil, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FormCard, FormActions, FormSection } from "@/components/ui/form-card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import toast from "react-hot-toast";
 
 interface CategoryFormProps {
@@ -59,55 +61,67 @@ const CategoryForm = ({ categoryId, id, options, onCategoryChange }: CategoryFor
   )?.label;
 
   return (
-    <div className="mt-6 border bg-orange-100 rounded-md p-4">
-      <div className="font-medium flex items-center justify-between">
-        Kategoria
-        <Button onClick={toggleEdit} variant="ghost">
-          {isEditing ? (
-            <>Anuluj</>
-          ) : (
-            <>
-              <Pencil className="h-4 w-4 mr-2"></Pencil>
-              Edytuj
-            </>
-          )}
-        </Button>
-      </div>
-      {isEditing ? (
-        <form onSubmit={onSubmit} className="space-y-4 mt-4">
-          <div className="form-group">
-            <label className="block text-sm font-medium text-gray-700">Kategoria</label>
-            <select
-              value={categoryIdState}
-              onChange={(e) => {
-                const val = e.target.value;
-                setCategoryIdState(val === "" ? "" : Number(val));
-              }}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md"
+    <div className="mt-6">
+      <FormCard
+        title="Kategoria"
+        icon={Tag}
+        status={{
+          label: selectedOption ? selectedOption : "Brak kategorii",
+          variant: selectedOption ? "default" : "outline",
+          className: selectedOption ? "bg-blue-500" : ""
+        }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm text-muted-foreground">Przypisz ścieżkę edukacyjną do odpowiedniej kategorii</span>
+          <Button onClick={toggleEdit} variant="ghost" size="sm">
+            {isEditing ? (
+              "Anuluj"
+            ) : (
+              <>
+                <Pencil className="h-4 w-4 mr-2" />
+                Edytuj
+              </>
+            )}
+          </Button>
+        </div>
+        
+        {isEditing ? (
+          <form onSubmit={onSubmit} className="space-y-4">
+            <Select
+              value={categoryIdState.toString()}
+              onValueChange={(value) => setCategoryIdState(value === "" ? "" : Number(value))}
             >
-              <option value="">Wybierz kategorię...</option>
-              {options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Wybierz kategorię..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Wybierz kategorię...</SelectItem>
+                {options.map((option) => (
+                  <SelectItem key={option.value} value={option.value.toString()}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormActions>
+              <Button type="submit" disabled={categoryIdState === ""}>
+                Zapisz
+              </Button>
+            </FormActions>
+          </form>
+        ) : !selectedOption ? (
+          <FormSection variant="warning">
+            <p>
+              <strong>Brak kategorii</strong><br />
+              Przypisz kategorię aby ułatwić znalezienie ścieżki uczniom
+            </p>
+          </FormSection>
+        ) : (
+          <div className="p-3 bg-muted/50 rounded-md border">
+            <span className="font-medium">{selectedOption}</span>
           </div>
-          <div className="flex items-center gap-x-2">
-            <button
-              type="submit"
-              className="bg-orange-600 text-white font-semibold py-2 px-4 rounded-md"
-              disabled={categoryIdState === ""}
-            >
-              Zapisz
-            </button>
-          </div>
-        </form>
-      ) : (
-        <p className={`text-sm mt-2 ${!categoryId && "text-slate-500 italic"}`}>
-          {selectedOption || "No category selected"}
-        </p>
-      )}
+        )}
+      </FormCard>
     </div>
   );
 };

@@ -1,7 +1,13 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { FormCard, FormActions, FormGrid, FormSection } from "@/components/ui/form-card";
+import { Pencil, DollarSign } from "lucide-react";
 import toast from "react-hot-toast";
 
 // New price structure: amount, currency, interval, isRecurring
@@ -104,20 +110,29 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
   };
 
   return (
-    <div className="mt-6 border bg-orange-100 rounded-md p-4">
-      <div className="font-medium flex items-center justify-between">
-        Cena kursu
-        <Button onClick={toggleEdit} variant="ghost">
-          {isEditing ? (
-            <>Anuluj</>
-          ) : (
-            <>
-              <Pencil className="h-4 w-4 mr-2" />
-              Edytuj
-            </>
-          )}
-        </Button>
-      </div>
+    <div className="mt-6">
+      <FormCard
+        title="Cena kursu"
+        icon={DollarSign}
+        status={{
+          label: isEditing ? "Edycja" : (Number(form.amount) === 0 ? "Darmowy" : "Płatny"),
+          variant: isEditing ? "secondary" : (Number(form.amount) === 0 ? "outline" : "default"),
+          className: isEditing ? "bg-blue-500 text-white" : (Number(form.amount) === 0 ? "" : "bg-green-500")
+        }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm text-muted-foreground">Ustawienia cenowe kursu</span>
+          <Button onClick={toggleEdit} variant="ghost" size="sm">
+            {isEditing ? (
+              <>Anuluj</>
+            ) : (
+              <>
+                <Pencil className="h-4 w-4 mr-2" />
+                Edytuj
+              </>
+            )}
+          </Button>
+        </div>
       {isEditing ? (
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="form-group">
@@ -232,6 +247,7 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
           )}
         </>
       )}
+      </FormCard>
     </div>
   );
 }

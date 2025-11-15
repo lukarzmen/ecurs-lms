@@ -110,12 +110,12 @@ const EducationalPathsPage = () => {
   return (
     <div className="p-6 space-y-8">
       {/* Header Section */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <GraduationCap className="h-8 w-8 text-orange-600" />
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <GraduationCap className="h-6 w-6 md:h-8 md:w-8 text-gray-600" />
             <span>Ścieżki edukacyjne</span>
-            <span className="text-lg font-normal text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+            <span className="text-sm md:text-lg font-normal text-gray-500 bg-gray-100 px-2 py-1 md:px-3 rounded-full">
               {paths.length}
             </span>
           </h1>
@@ -123,10 +123,11 @@ const EducationalPathsPage = () => {
             Organizuj kursy w spójne ścieżki rozwoju dla swoich studentów
           </p>
         </div>
-        <Link href="/teacher/educational-paths/create">
-          <Button size="lg" className="bg-orange-600 hover:bg-orange-700">
+        <Link href="/teacher/educational-paths/create" className="w-full md:w-auto">
+          <Button size="lg" className="w-full md:w-auto">
             <PlusCircle className="h-5 w-5 mr-2" />
-            Nowa ścieżka edukacyjna
+            <span className="hidden sm:inline">Nowa ścieżka edukacyjna</span>
+            <span className="sm:hidden">Nowa ścieżka</span>
           </Button>
         </Link>
       </div>
@@ -160,7 +161,7 @@ const EducationalPathsPage = () => {
             {/* Content Section */}
             {loading ? (
               <div className="flex justify-center items-center py-12">
-                <Loader2 className="animate-spin text-orange-600 h-8 w-8" />
+                <Loader2 className="animate-spin text-gray-600 h-8 w-8" />
               </div>
             ) : filteredPaths.length === 0 ? (
               <div className="text-center py-12">
@@ -180,44 +181,50 @@ const EducationalPathsPage = () => {
                 </div>
               </div>
             ) : (
-              <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Tytuł</th>
-                        <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Opis</th>
-                        <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700">Akcje</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
+                <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Tytuł</th>
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Opis</th>
+                          <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700">Akcje</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
                       {filteredPaths.map(path => (
                         <tr key={path.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4">
                             <Link 
                               href={`/teacher/educational-paths/${path.id}`} 
-                              className="text-orange-600 hover:text-orange-800 font-medium hover:underline transition-colors"
+                              className="text-gray-600 hover:text-gray-900 font-medium hover:underline transition-colors text-sm"
                             >
                               {path.title}
                             </Link>
                           </td>
                           <td className="px-6 py-4 text-gray-600">
-                            <div className="max-w-md truncate">{path.description}</div>
+                            <div 
+                              className="max-w-md truncate cursor-help hover:text-gray-800 transition-colors relative group text-sm"
+                              title={path.description}
+                            >
+                              {path.description}
+                              <div className="absolute left-0 top-full mt-2 p-3 bg-gray-900 text-white text-sm rounded-lg shadow-lg z-50 max-w-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-normal">
+                                {path.description}
+                              </div>
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-right">
                             <Button
-                              variant="destructive"
-                              size="sm"
+                              variant="ghost"
+                              className="h-4 w-8 p-0"
                               disabled={deletingId === path.id}
                               onClick={() => handleDelete(path.id)}
-                              className="hover:bg-red-600"
                             >
                               {deletingId === path.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
-                                <Trash2 className="h-4 w-4 mr-1" />
+                                <Trash2 className="h-4 w-4" />
                               )}
-                              Usuń
                             </Button>
                           </td>
                         </tr>

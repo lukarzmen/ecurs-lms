@@ -54,7 +54,12 @@ const ChapterEditPage = async ({ params }: { params: Promise<{ courseId: string;
               courseId={courseId}
             />
           </div>
-
+<div className="w-full">
+            <ModulePublicationSchedule 
+              courseId={courseId} 
+              chapterId={chapterId} 
+            />
+          </div>
           <div className="w-full">
             <ChapterDescriptionForm
               chapterId={chapterId}
@@ -62,12 +67,7 @@ const ChapterEditPage = async ({ params }: { params: Promise<{ courseId: string;
             />
           </div>
 
-          <div className="w-full">
-            <ModulePublicationSchedule 
-              courseId={courseId} 
-              chapterId={chapterId} 
-            />
-          </div>
+          
         </div>
       </div>
     </>

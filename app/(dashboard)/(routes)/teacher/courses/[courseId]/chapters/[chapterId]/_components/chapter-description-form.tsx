@@ -5,7 +5,8 @@ import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+import { FormCard, FormSection } from "@/components/ui/form-card";
+import { Pencil, FileText, Edit3 } from "lucide-react";
 import { SerializedDocument } from "@lexical/file";
 import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 import LexicalEditor from "@/components/editor/LexicalEditor";
@@ -282,32 +283,38 @@ export const ChapterDescriptionForm = ({
   };
 
   return (
-    <div className="mt-6 border bg-orange-100 rounded-md p-4 overflow-hidden">
-      <div className="font-medium flex items-center justify-between">
-        Treść
-        <Button onClick={toggleEdit} variant="ghost">
-          {isEditing ? <>Anuluj</> : <>
-            <Pencil className="h-4 w-4 mr-2"></Pencil>
-            Edytuj
-          </>}
-        </Button>
-      </div>
-      {isLoading ? (
-        <div className="flex flex-col justify-center items-center space-y-2">
-          <Loader2 className="animate-spin text-orange-700" size={32} />
-          {uploadProgress && (
-            <div className="text-sm text-orange-600 font-medium">
-              {uploadProgress}
-            </div>
-          )}
+    <div className="mt-6">
+      <FormCard
+        title="Treść modułu"
+        icon={FileText}
+        status={{
+          label: isEditing ? "Edycja" : (notFound ? "Brak treści" : "Zapisano"),
+          variant: isEditing ? "secondary" : (notFound ? "outline" : "default"),
+          className: notFound ? "" : (isEditing ? "bg-blue-500 text-white" : "bg-green-500"),
+          icon: isEditing ? Edit3 : (notFound ? FileText : undefined)
+        }}
+        isLoading={isLoading}
+        loadingMessage={uploadProgress || "Ładowanie treści..."}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm text-muted-foreground">Edytor treści modułu</span>
+          <Button onClick={toggleEdit} variant="ghost" size="sm">
+            {isEditing ? <>Anuluj</> : <>
+              <Pencil className="h-4 w-4 mr-2"></Pencil>
+              Edytuj
+            </>}
+          </Button>
         </div>
-      ) : notFound && !isEditing ? (
-        <div className="space-y-4 mt-4 text-center text-orange-700 font-semibold">
-          Treść nie istnieje. Edytuj aby utworzyć treść lekcji.
-        </div>
-      ) : (
-        <div className="space-y-4 mt-4">
-          <div>
+        
+        {notFound && !isEditing ? (
+          <FormSection variant="warning">
+            <p>
+              <strong>Treść nie istnieje</strong><br />
+              Edytuj aby utworzyć treść lekcji
+            </p>
+          </FormSection>
+        ) : (
+          <div className="min-h-[200px]">
             <LexicalEditor
               initialStateJSON={notFound ? null : serializedEditorStateString}
               onSave={handleOnSave}
@@ -325,8 +332,8 @@ export const ChapterDescriptionForm = ({
               }}
             />
           </div>
-        </div>
-      )}
+        )}
+      </FormCard>
     </div>
   );
 };

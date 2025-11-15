@@ -9,6 +9,11 @@ import { useAuth } from "@clerk/nextjs";
 import next from "next";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
@@ -101,42 +106,44 @@ const CreatePage = () => {
           {step === 3 && "Opisz swój kurs"}
           {step === 4 && "Ustal cenę kursu"}
         </h1>
-        <form onSubmit={onSubmit} className="space-y-8 mt-8">
-          {step === 1 && (
-            <div className="mb-4">
+        <Card className="mt-8">
+          <CardContent className="p-6">
+            <form onSubmit={onSubmit} className="space-y-8">
+              {step === 1 && (
+                <div className="mb-4">
               <label htmlFor="title" className="block text-sm font-medium text-gray-700">
                 Tytuł
               </label>
               <p className="text-sm text-slate-600">
                 Jak chciałbyś nazwać swój kurs? Nie martw się, możesz to później zmienić.
               </p>
-              <input
+              <Input
                 type="text"
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={isSubmitting}
                 placeholder="np. 'Zaawansowane programowanie aplikacji web'"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
               />
               <p className="text-sm text-slate-600">Czego będziesz uczyć w tym kursie?</p>
               <div className="flex items-center gap-x-2 mt-4">
-                <button
+                <Button
                   type="button"
-                  className="w-40 sm:w-48 bg-gray-200 text-black py-2 px-4 rounded-md font-semibold shadow hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 flex items-center justify-center transition"
+                  variant="outline"
+                  className="w-40 sm:w-48"
                   onClick={() => router.push("/teacher/courses")}
                   disabled={isSubmitting}
                 >
                   Anuluj
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="w-40 sm:w-48 bg-orange-600 text-white py-2 px-4 rounded-md font-semibold shadow hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 flex items-center justify-center transition"
+                  className="w-40 sm:w-48"
                   disabled={!title || isSubmitting}
                   onClick={nextStep}
                 >
                   Dalej
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -149,37 +156,36 @@ const CreatePage = () => {
               <p className="text-sm text-slate-600">
                 Która kategoria najlepiej pasuje do twojego kursu? Możesz wybrać z listy dostępnych kategorii. Nie przejmuj się zbytnio; zawsze możesz to później zmienić.
               </p>
-              <select
-                id="category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                disabled={isSubmitting}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-              >
-                <option value="">Wybierz kategorię</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
+              <Select value={category} onValueChange={setCategory} disabled={isSubmitting}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Wybierz kategorię" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id.toString()}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <div className="flex items-center gap-x-2 mt-4">
-                <button
+                <Button
                   type="button"
-                  className="w-40 sm:w-48 bg-gray-200 text-black py-2 px-4 rounded-md font-semibold shadow hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 flex items-center justify-center transition"
+                  variant="outline"
+                  className="w-40 sm:w-48"
                   onClick={prevStep}
                   disabled={isSubmitting}
                 >
                   Wstecz
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="w-40 sm:w-48 bg-orange-600 text-white py-2 px-4 rounded-md font-semibold shadow hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 flex items-center justify-center transition"
+                  className="w-40 sm:w-48"
                   disabled={isSubmitting}
                   onClick={nextStep}
                 >
                   Dalej
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -192,31 +198,31 @@ const CreatePage = () => {
               <p className="text-sm text-slate-600">
                 Jak opisałbyś swój kurs? Podaj krótki przegląd, który uchwyci istotę tego, czego będziesz uczyć. Możesz dopracować lub rozszerzyć ten opis w miarę postępów.
               </p>
-              <textarea
+              <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 disabled={isSubmitting}
                 placeholder="np. 'Ten kurs obejmuje...'"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
               />
               <div className="flex items-center gap-x-2 mt-4">
-                <button
+                <Button
                   type="button"
-                  className="w-40 sm:w-48 bg-gray-200 text-black py-2 px-4 rounded-md font-semibold shadow hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 flex items-center justify-center transition"
+                  variant="outline"
+                  className="w-40 sm:w-48"
                   onClick={prevStep}
                   disabled={isSubmitting}
                 >
                   Wstecz
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="w-40 sm:w-48 bg-orange-600 text-white py-2 px-4 rounded-md font-semibold shadow hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 flex items-center justify-center transition"
+                  className="w-40 sm:w-48"
                   disabled={isSubmitting}
                   onClick={nextStep}
                 >
                   Dalej
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -228,28 +234,26 @@ const CreatePage = () => {
               </label>
               <p className="text-sm text-slate-600">
                 Ustal cenę kursu. Jeśli wpiszesz 0, kurs będzie{" "}
-                <span className="font-semibold text-orange-700">Darmowy</span>.
+                <span className="font-semibold text-slate-700">Darmowy</span>.
               </p>
               <div className="mt-1 grid grid-cols-2 gap-2">
-                <input
+                <Input
                   type="number"
                   id="price"
                   min={0}
                   step={0.01}
-                  value={price}
+                  value={price.toString()}
                   onChange={(e) => setPrice(Number(e.target.value))}
                   disabled={isSubmitting}
                   placeholder="np. 0 lub 199"
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
                 />
-                <input
+                <Input
                   type="text"
                   id="currency"
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value.toUpperCase())}
                   disabled={isSubmitting}
                   placeholder="Waluta (np. PLN)"
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
                 />
               </div>
 
@@ -271,16 +275,15 @@ const CreatePage = () => {
                   <>
                     <div className="flex flex-col mt-1">
                       <label htmlFor="interval" className="text-sm">Okres rozliczenia</label>
-                      <select
-                        id="interval"
-                        value={interval}
-                        onChange={e => setInterval(e.target.value as any)}
-                        disabled={isSubmitting}
-                        className="mt-0 block px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                      >
-                        <option value="MONTH">Miesięcznie</option>
-                        <option value="YEAR">Rocznie</option>
-                      </select>
+                      <Select value={interval} onValueChange={(value) => setInterval(value as any)} disabled={isSubmitting}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="MONTH">Miesięcznie</SelectItem>
+                          <SelectItem value="YEAR">Rocznie</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="flex flex-col mt-1">
                       <label className="text-xs">Tryb okresu próbnego</label>
@@ -298,30 +301,28 @@ const CreatePage = () => {
                     {trialPeriodType === "DAYS" && (
                       <div className="flex flex-col mt-1">
                         <label htmlFor="trialPeriodDays" className="text-xs">Okres próbny (dni)</label>
-                        <input
+                        <Input
                           type="number"
                           id="trialPeriodDays"
                           min={0}
                           step={1}
-                          value={trialPeriodDays}
+                          value={trialPeriodDays.toString()}
                           onChange={e => setTrialPeriodDays(Number(e.target.value))}
                           disabled={isSubmitting}
                           placeholder="np. 7"
-                          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
                         />
                       </div>
                     )}
                     {trialPeriodType === "DATE" && (
                       <div className="flex flex-col mt-1">
                         <label htmlFor="trialPeriodEnd" className="text-xs">Data zakończenia okresu próbnego</label>
-                        <input
+                        <Input
                           type="date"
                           id="trialPeriodEnd"
                           value={trialPeriodEnd}
                           onChange={e => setTrialPeriodEnd(e.target.value)}
                           disabled={isSubmitting}
                           min={new Date().toISOString().split('T')[0]}
-                          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
                         />
                       </div>
                     )}
@@ -330,39 +331,42 @@ const CreatePage = () => {
               </div>
               <div className="text-sm mt-2">
                 {price === 0 ? (
-                  <span className="font-semibold text-orange-700">Darmowy</span>
+                  <span className="font-semibold text-slate-700">Darmowy</span>
                 ) : (
-                  <span className="font-semibold text-orange-700">{price} {currency}</span>
+                  <span className="font-semibold text-slate-700">{price} {currency}</span>
                 )}
                 {isRecurring && price > 0 && (
                   <div className="text-sm text-muted-foreground">{interval === 'YEAR' ? 'płatność co rok' : 'płatność co miesiąc'}</div>
                 )}
               </div>
               <div className="flex items-center gap-x-2 mt-4">
-                <button
+                <Button
                   type="button"
-                  className="w-40 sm:w-48 bg-gray-200 text-black py-2 px-4 rounded-md font-semibold shadow hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 flex items-center justify-center transition"
+                  variant="outline"
+                  className="w-40 sm:w-48"
                   onClick={prevStep}
                   disabled={isSubmitting}
                 >
                   Wstecz
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  className="w-40 sm:w-48 bg-orange-600 text-white py-2 px-4 rounded-md font-semibold shadow hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 flex items-center justify-center transition"
+                  className="w-40 sm:w-48"
                   disabled={isSubmitting || !title}
                 >
                   {isSubmitting ? (
                     <Loader2 className="animate-spin mr-2" size={20} />
                   ) : null}
                   Utwórz
-                </button>
+                </Button>
               </div>
             </div>
           )}
         </form>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
+  </div>
+</div>
   );
 };
 

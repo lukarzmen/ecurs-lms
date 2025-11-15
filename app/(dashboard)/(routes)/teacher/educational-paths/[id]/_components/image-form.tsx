@@ -5,6 +5,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Pencil, PlusCircle, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FormCard, FormActions, FormSection } from "@/components/ui/form-card";
 import toast from "react-hot-toast";
 import Image from "next/image";
 
@@ -61,75 +62,86 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId, educationalPathId, onIma
   };
 
   return (
-  <div className="mt-6 border bg-orange-100 rounded-md p-4 select-none h-full flex flex-col justify-between">
-      <div className="font-medium flex items-center justify-between pb-2">
-  Miniatura 
-        <Button onClick={toggleEdit} variant="ghost">
-          {isEditing && <>Anuluj</>}
-          {!isEditing && imageId && (
-            <>
-              <Pencil className="h-4 w-4 mr-2"></Pencil>
-              Edytuj
-            </>
-          )}
-          {!isEditing && !imageId && (
-            <>
-              <PlusCircle className="h-4 w-4 mr-2"></PlusCircle>
-              Dodaj
-            </>
-          )}
-        </Button>
-      </div>
-      {!isEditing && !imageId ? (
-        <div className="flex items-center justify-center h-40 bg-slate-200 rounded-md">
-          <ImageIcon className="h-10 w-10 text-slate-500" />
+    <div className="mt-6">
+      <FormCard
+        title="Miniatura"
+        icon={ImageIcon}
+        status={{
+          label: imageId ? "Obraz dodany" : "Brak obrazu",
+          variant: imageId ? "default" : "outline",
+          className: imageId ? "bg-green-500" : ""
+        }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm text-muted-foreground">Obraz wyświetlany jako miniatura ścieżki edukacyjnej</span>
+          <Button onClick={toggleEdit} variant="ghost" size="sm">
+            {isEditing ? (
+              "Anuluj"
+            ) : imageId ? (
+              <>
+                <Pencil className="h-4 w-4 mr-2" />
+                Edytuj
+              </>
+            ) : (
+              <>
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Dodaj
+              </>
+            )}
+          </Button>
         </div>
-      ) : (
-        <div className="flex items-center justify-center h-40 bg-orange-100 rounded-md overflow-hidden">
-          {imageId ? (
-            <Image
-              src={imageUrl}
-              alt="Educational Path Image"
-              width={400}
-              height={160}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-contain rounded-md h-full w-full"
-              style={{ objectFit: "contain", width: "100%", height: "100%" }}
-            />
-          ) : image ? (
-            <div className="flex items-center justify-center h-full w-full text-orange-600 mt-4">
-              {image.name}
-            </div>
+        {!isEditing ? (
+          !imageId ? (
+            <FormSection variant="warning">
+              <p>
+                <strong>Brak miniatury</strong><br />
+                Dodaj obraz, aby zwiększyć atrakcyjność ścieżki edukacyjnej
+              </p>
+            </FormSection>
           ) : (
-            <div className="flex items-center justify-center h-full w-full text-orange-600 mt-4">
-              Nie wybrano obrazka
+            <div className="flex items-center justify-center h-40 bg-muted/50 rounded-md overflow-hidden border">
+              <Image
+                src={imageUrl}
+                alt="Educational Path Image"
+                width={400}
+                height={160}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="object-contain rounded-md h-full w-full"
+                style={{ objectFit: "contain", width: "100%", height: "100%" }}
+              />
             </div>
-          )}
-        </div>
-      )}
-      {isEditing && (
-        <form onSubmit={handleSubmit} className="mt-4 flex items-center justify-between">
-          <input
-            type="file"
-            onChange={handleFileChange}
-            className="block w-full text-sm text-slate-500
-           file:mr-4 file:py-2 file:px-4
-           file:rounded-full file:border-0
-           file:text-sm file:font-semibold
-           file:bg-orange-50 file:text-orange-600
-           hover:file:bg-orange-100"
-          />
-            <button
-            type="submit"
-            className={`bg-orange-600 text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 ml-4 ${
-              image ? "hover:bg-orange-700" : "opacity-50 cursor-not-allowed"
-            }`}
-            disabled={!image}
-            >
-            Prześlij
-            </button>
-        </form>
-      )}
+          )
+        ) : (
+          <div className="space-y-4">
+            {image && (
+              <div className="flex items-center justify-center p-4 bg-muted rounded-md border">
+                <span className="text-sm text-muted-foreground">{image.name}</span>
+              </div>
+            )}
+            {isEditing && (
+              <form onSubmit={handleSubmit} className="mt-4 flex items-center justify-between">
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  className="block w-full text-sm text-slate-500
+                 file:mr-4 file:py-2 file:px-4
+                 file:rounded-full file:border-0
+                 file:text-sm file:font-semibold
+                 file:bg-slate-50 file:text-slate-700
+                 hover:file:bg-slate-100"
+                />
+                <Button
+                  type="submit"
+                  disabled={!image}
+                  className="ml-4"
+                >
+                  Prześlij
+                </Button>
+              </form>
+            )}
+          </div>
+        )}
+      </FormCard>
     </div>
   );
 };

@@ -15,8 +15,9 @@ import {
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { FormCard, FormActions, FormSection } from "@/components/ui/form-card";
 import { z } from "zod";
-import { Loader2, Pencil, PlusCircle, X, Wand2 } from "lucide-react";
+import { Loader2, Pencil, PlusCircle, X, Wand2, BookOpen } from "lucide-react";
 import { useState } from "react";
 import { useFieldArray } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -224,18 +225,21 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
   }
 
   return (
-    <div className="relative mt-6 b10order bg-orange-100 rounded-md p-4">
-      {isUpdating && (
-        <div
-          className="absolute h-full w-full bg-slate-500/200
-                    top-0 right-0 flex items-center justify-center"
-        >
-          <Loader2 className="animate-spin h-6 w-6 text-orange-700"></Loader2>
-        </div>
-      )}
-      <div className="font-medium flex items-center justify-between">
-        Lekcje
-        <div className="flex gap-2">
+    <div className="mt-6">
+      <FormCard
+        title="Lekcje kursu"
+        icon={BookOpen}
+        status={{
+          label: isCreating ? "Dodawanie" : (chapters.length > 0 ? `${chapters.length} lekcji` : "Brak lekcji"),
+          variant: isCreating ? "secondary" : (chapters.length > 0 ? "default" : "outline"),
+          className: isCreating ? "bg-blue-500 text-white" : (chapters.length > 0 ? "bg-green-500" : "")
+        }}
+        isLoading={isUpdating}
+        loadingMessage="Aktualizowanie kolejności..."
+      >
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm text-muted-foreground">Zarządzanie lekcjami kursu</span>
+          <div className="flex gap-2">
           <Dialog open={showAIModal} onOpenChange={setShowAIModal}>
             <DialogTrigger asChild>
               <Button 
@@ -377,14 +381,8 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
             </div>
           </form>
         </Form>
-      ) : (
-        <div>
-          <div
-            className={cn(
-              "text-sm mt-2",
-              !chapters.length && "text-slate-500 italic"
-            )}
-          >
+        ) : (
+          <div>
             {chapters.length > 0 ? (
               <ChaptersList
                 onEdit={onEdit}
@@ -394,14 +392,19 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
                 items={chapters}
               />
             ) : (
-              "Brak lekcji w tym kursie"
+              <FormSection variant="warning">
+                <p>
+                  <strong>Brak lekcji w tym kursie</strong><br />
+                  Dodaj pierwszą lekcję aby rozpocząć budowę kursu
+                </p>
+              </FormSection>
             )}
+            <p className="text-sm text-muted-foreground mt-4">
+              Przeciągnij i upuść, aby zmienić kolejność
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground mt-4">
-            Przeciągnij i upuść, aby zmienić kolejność
-          </p>
-        </div>
-      )}
+        )}
+      </FormCard>
     </div>
   );
 };

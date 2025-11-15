@@ -88,10 +88,6 @@ const CourseIdPage = async ({ params }: { params: Promise<{ courseId: string }> 
         </div>
         <div className="space-y-6 ">
           <div>
-            <div className="flex items-center gap-x-2 gap-6 mt-6">
-              <span className="text-xl">📚</span>
-              <h2 className="text-xl">Lekcje</h2>
-            </div>
             <div>
               <ChaptersForm chapters={course.modules} courseId={courseId} courseTitle={courseTitle} />
             </div>

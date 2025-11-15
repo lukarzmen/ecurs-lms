@@ -4,7 +4,9 @@ import React, { useState, ChangeEvent, FormEvent } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { FormCard, FormActions, FormSection } from "@/components/ui/form-card";
+import { Pencil, FileText } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface DescriptionFormProps {
@@ -42,45 +44,67 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
   };
 
   return (
-    <div className="mt-6 border bg-orange-100 rounded-md p-4">
-      <div className="font-medium flex items-center justify-between">
-        O kursie
-        <Button onClick={toggleEdit} variant="ghost">
-          {isEditing ? (
-            <>Anuluj</>
-          ) : (
-            <>
-              <Pencil className="h-4 w-4 mr-2"></Pencil>
-              Edytuj
-            </>
-          )}
-        </Button>
-      </div>
-      {isEditing ? (
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div>
-            <textarea
-              value={descriptionValue}
-              onChange={handleChange}
-              disabled={isSubmitting}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-            />
-          </div>
-          <div className="flex items-center gap-x-2">
-            <button
-              type="submit"
-              disabled={!descriptionValue || isSubmitting}
-              className="bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-            >
-              Zapisz
-            </button>
-          </div>
-        </form>
-      ) : (
-        <div className={!descriptionValue ? "text-sm mt-2" : ""}>
-          {descriptionValue || "Brak opisu"}
+    <div className="mt-6">
+      <FormCard
+        title="O kursie"
+        icon={FileText}
+        status={{
+          label: isEditing ? "Edycja" : (descriptionValue ? "Zapisano" : "Brak opisu"),
+          variant: isEditing ? "secondary" : (descriptionValue ? "default" : "outline"),
+          className: isEditing ? "bg-blue-500 text-white" : (descriptionValue ? "bg-green-500" : "")
+        }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm text-muted-foreground">Opis kursu</span>
+          <Button onClick={toggleEdit} variant="ghost" size="sm">
+            {isEditing ? (
+              <>Anuluj</>
+            ) : (
+              <>
+                <Pencil className="h-4 w-4 mr-2"></Pencil>
+                Edytuj
+              </>
+            )}
+          </Button>
         </div>
-      )}
+        {isEditing ? (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Textarea
+                value={descriptionValue}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                placeholder="Opisz swój kurs..."
+                rows={4}
+              />
+            </div>
+            <FormActions>
+              <Button
+                type="submit"
+                disabled={!descriptionValue || isSubmitting}
+                className="flex-1"
+              >
+                Zapisz
+              </Button>
+            </FormActions>
+          </form>
+        ) : (
+          <div>
+            {descriptionValue ? (
+              <div className="p-3 bg-muted/50 rounded-md">
+                <p className="text-sm">{descriptionValue}</p>
+              </div>
+            ) : (
+              <FormSection variant="warning">
+                <p>
+                  <strong>Brak opisu kursu</strong><br />
+                  Dodaj opis aby potencjalni uczestnicy wiedzieli czego się spodziewać
+                </p>
+              </FormSection>
+            )}
+          </div>
+        )}
+      </FormCard>
     </div>
   );
 };

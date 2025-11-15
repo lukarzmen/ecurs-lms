@@ -25,12 +25,12 @@ const CoursesPage = async () => {
   return (
     <div className="p-6 space-y-8">
       {/* Header Section */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <BookOpen className="h-8 w-8 text-orange-600" />
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <BookOpen className="h-6 w-6 md:h-8 md:w-8 text-gray-600" />
             <span>Twoje kursy</span>
-            <span className="text-lg font-normal text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+            <span className="text-sm md:text-lg font-normal text-gray-500 bg-gray-100 px-2 py-1 md:px-3 rounded-full">
               {courses.length}
             </span>
           </h1>
@@ -38,10 +38,11 @@ const CoursesPage = async () => {
             Zarządzaj swoimi kursami i śledź postępy studentów
           </p>
         </div>
-        <Link href="/teacher/courses/create">
-          <Button size="lg" className="bg-orange-600 hover:bg-orange-700">
+        <Link href="/teacher/courses/create" className="w-full md:w-auto">
+          <Button size="lg" className="w-full md:w-auto">
             <Plus className="h-5 w-5 mr-2" />
-            Utwórz nowy kurs
+            <span className="hidden sm:inline">Utwórz nowy kurs</span>
+            <span className="sm:hidden">Nowy kurs</span>
           </Button>
         </Link>
       </div>

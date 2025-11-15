@@ -6,6 +6,8 @@ import { toast } from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
 import { ArrowLeft, X } from "lucide-react";
 import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 
 const CreateEducationalPathPage = () => {
@@ -75,7 +77,8 @@ const CreateEducationalPathPage = () => {
         Wróć do listy ścieżek
       </Link>
       <h1 className="text-2xl font-bold mb-6">Utwórz ścieżkę edukacyjną</h1>
-      <div className="mb-8 p-6 rounded bg-orange-50 border border-orange-200">
+      <Card className="mb-8">
+        <CardContent className="p-6">
         <form onSubmit={handleSubmit} className="space-y-8">
           <div>
             <label className="block text-sm font-medium text-gray-700">Tytuł</label>
@@ -108,11 +111,11 @@ const CreateEducationalPathPage = () => {
                     const course = courses.find(c => c.id === courseId);
                     if (!course) return null;
                     return (
-                      <span key={courseId} className="inline-flex items-center bg-orange-100 text-orange-800 px-2 py-1 rounded text-sm">
+                      <span key={courseId} className="inline-flex items-center bg-slate-100 text-slate-800 px-2 py-1 rounded text-sm">
                         {course.title}
                         <button
                           type="button"
-                          className="ml-1 text-orange-500 hover:text-orange-700"
+                          className="ml-1 text-slate-500 hover:text-slate-700"
                           onClick={() => setSelectedCourses(selectedCourses.filter(id => id !== courseId))}
                           aria-label="Usuń kurs"
                         >
@@ -136,15 +139,16 @@ const CreateEducationalPathPage = () => {
               </>
             )}
           </div>
-          <button
+          <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-orange-500 text-white py-2 px-4 rounded-md font-semibold shadow hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition"
+            className="w-full"
           >
-            Utwórz ścieżkę edukacyjną
-          </button>
+            {isSubmitting ? "Tworzenie..." : "Utwórz ścieżkę edukacyjną"}
+          </Button>
         </form>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -171,7 +171,7 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
       <div className="flex flex-col md:flex-row gap-8 mb-6">
         {/* Title card */}
         <div className="md:w-1/2 w-full">
-          <div className="mt-6 border bg-orange-100 rounded-md p-4">
+          <div className="mt-6 bg-card border rounded-md p-4 shadow-sm">
             <div className="font-medium flex items-center justify-between mb-2">
               <span className="flex items-center gap-2"><span className="text-2xl">🛤️</span>Tytuł</span>
               <Button onClick={() => setEditTitle((v) => !v)} variant="ghost">
@@ -192,7 +192,7 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
         </div>
         {/* Description card */}
         <div className="md:w-1/2 w-full">
-          <div className="mt-6 border bg-orange-100 rounded-md p-4">
+          <div className="mt-6 bg-card border rounded-md p-4 shadow-sm">
             <div className="font-medium flex items-center justify-between mb-2">
               <span className="flex items-center gap-2"><span className="text-lg">📝</span>Opis</span>
               <Button onClick={() => setEditDescription((v) => !v)} variant="ghost">
@@ -243,14 +243,14 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
       </div>
     </div>
 
-      <div className="border bg-orange-100 rounded-md p-4 mb-6">
+      <div className="bg-card border rounded-md p-4 mb-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl">📚</span>
           <h2 className="text-xl font-semibold">Kursy w ścieżce</h2>
         </div>
         <ul className="space-y-2 mb-4">
           {courses.map((course, idx) => (
-            <li key={course.courseId ?? idx} className="flex items-center gap-2 bg-orange-50 rounded p-2 border">
+            <li key={course.courseId ?? idx} className="flex items-center gap-2 bg-muted/50 rounded p-2 border">
               <Link href={`/teacher/courses/${course.courseId}`} className="font-medium text-blue-700 hover:underline">
                 {course.title}
               </Link>
