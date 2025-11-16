@@ -1353,14 +1353,14 @@ export default function NewToolbarPlugin({
                   <i className="icon image" />
                   <span className="text">Obraz</span>
                 </DropDownItem>
-                <DropDownItem
+                {/* <DropDownItem
                   onClick={() =>
                     dispatchToolbarCommand(INSERT_EXCALIDRAW_COMMAND)
                   }
                   className="item">
                   <i className="icon diagram-2" />
                   <span className="text">Excalidraw</span>
-                </DropDownItem>
+                </DropDownItem> */}
                 <DropDownItem
                   onClick={() => {
                     showModal('Wstaw audio', (onClose) => (
