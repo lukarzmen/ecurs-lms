@@ -45,9 +45,10 @@ export async function POST(req: Request) {
 
                 const accountLink = await stripe.accountLinks.create({
                     account: user.stripeAccountId,
-                    refresh_url: `${validBaseUrl}/teacher/onboarding/refresh`,
-                    return_url: `${validBaseUrl}/teacher/onboarding/success`,
+                    refresh_url: `${validBaseUrl}/register?refresh=true`,
+                    return_url: `${validBaseUrl}/register?success=stripe`,
                     type: 'account_onboarding',
+                    collect: 'eventually_due',
                 });
 
                 // Update user's status to indicate re-onboarding
@@ -101,14 +102,22 @@ export async function POST(req: Request) {
             capabilities: {
                 card_payments: { requested: true },
                 transfers: { requested: true },
+                // Capabilities dla faktur VAT - dostępne dla wszystkich nauczycieli
+                tax_reporting_us_1099_k: { requested: true },
+                tax_reporting_us_1099_misc: { requested: true },
+            },
+            // Konfiguracja ustawień podatkowych
+            settings: {
+                card_payments: {
+                    statement_descriptor_suffix: 'ECURS',
+                },
+                payouts: {
+                    schedule: {
+                        interval: 'daily'
+                    }
+                }
             },
         };
-
-        // Dla firm dodaj dodatkowe capabilities związane z fakturowaniem VAT
-        if (businessType === 'company' && user.requiresVatInvoices) {
-            accountData.capabilities.tax_reporting_us_1099_misc = { requested: true };
-            accountData.capabilities.tax_reporting_us_1099_k = { requested: true };
-        }
 
         // Only add business_profile with URL for production (non-localhost) environments
         if (!isLocalhost) {
@@ -160,9 +169,10 @@ export async function POST(req: Request) {
 
         const accountLink = await stripe.accountLinks.create({
             account: account.id,
-            refresh_url: `${validBaseUrl}/teacher/onboarding/refresh`,
-            return_url: `${validBaseUrl}/teacher/onboarding/success`,
+            refresh_url: `${validBaseUrl}/register?refresh=true`,
+            return_url: `${validBaseUrl}/register?success=stripe`,
             type: 'account_onboarding',
+            collect: 'eventually_due',
         });
 
         return NextResponse.json({
@@ -214,9 +224,10 @@ export async function POST(req: Request) {
                         const validBaseUrl = new URL(baseUrl).origin;
                         const accountLink = await stripe.accountLinks.create({
                             account: recentAccount.id,
-                            refresh_url: `${validBaseUrl}/teacher/onboarding/refresh`,
-                            return_url: `${validBaseUrl}/teacher/onboarding/success`,
+                            refresh_url: `${validBaseUrl}/register?refresh=true`,
+                            return_url: `${validBaseUrl}/register?success=stripe`,
                             type: 'account_onboarding',
+                            collect: 'eventually_due',
                         });
                         
                         return NextResponse.json({
@@ -436,9 +447,10 @@ export async function PUT(req: Request) {
         try {
             accountLink = await stripe.accountLinks.create({
                 account: user.stripeAccountId,
-                refresh_url: `${validBaseUrl}/teacher/onboarding/refresh`,
-                return_url: `${validBaseUrl}/teacher/onboarding/success`,
+                refresh_url: `${validBaseUrl}/register?refresh=true`,
+                return_url: `${validBaseUrl}/register?success=stripe`,
                 type: 'account_onboarding',
+                collect: 'eventually_due',
             });
             console.log('Successfully created account link:', accountLink.url);
         } catch (stripeError) {

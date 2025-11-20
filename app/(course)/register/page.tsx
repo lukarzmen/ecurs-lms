@@ -54,6 +54,8 @@ const STUDENT_TERMS = (
       <li>Zwroty i reklamacje są rozpatrywane indywidualnie zgodnie z polityką platformy.</li>
       <li><b>Umowa sprzedaży kursu zawierana jest bezpośrednio między uczniem a nauczycielem.</b> Platforma Ecurs pełni wyłącznie rolę pośrednika technicznego umożliwiającego zawarcie umowy.</li>
       <li><b>Płatności za kursy trafiają bezpośrednio na konto nauczyciela.</b> Platforma nie jest stroną umowy sprzedaży i nie ponosi odpowiedzialności za jej wykonanie.</li>
+      <li><b>Obsługa płatności:</b> Wszystkie płatności są obsługiwane przez bezpieczny system Stripe Connect. Z każdej transakcji pobierana jest prowizja zgodnie z <a href="https://stripe.com/en-pl/pricing" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">cennikiem Stripe</a>, która jest automatycznie potrącana przed przekazaniem środków nauczycielowi.</li>
+      <li><b>Faktury VAT:</b> Uczniowie mogą opcjonalnie zaznaczyć podczas zakupu kursu, że wymagają faktury VAT. Faktura zostanie automatycznie wygenerowana przez system Stripe z danych nauczyciela zgodnie z obowiązującymi przepisami podatkowymi.</li>
     </ul>
     <p className="font-semibold text-gray-700 mt-2">§6. Odpowiedzialność za treści kursów</p>
     <ul className="list-disc ml-6 text-gray-700">
@@ -147,10 +149,40 @@ const TEACHER_TERMS = (
         <b>Dane wymagane przez Stripe:</b> Imię i nazwisko, adres, numer telefonu, dane bankowe do otrzymywania płatności oraz informacje niezbędne do wystawiania faktur zgodnie z polskim prawem podatkowym.
       </li>
       <li>
-        <b>Obowiązki fiskalne:</b> Nauczyciel jest odpowiedzialny za rozliczenie podatkowe otrzymanych płatności zgodnie z obowiązującym prawem. Platforma przekazuje dane o transakcjach niezbędne do rozliczeń podatkowych.
+        <b>Obowiązki fiskalne:</b> Nauczyciel jest odpowiedzialny za rozliczenie podatkowe otrzymanych płatności zgodnie z obowiązującym prawem na podstawie dokumentów dostarczanych przez Stripe, w tym faktur VAT. Platforma Ecurs nie jest stroną transakcji i nie ponosi odpowiedzialności za rozliczenia podatkowe.
       </li>
       <li>
         <b>Bezpieczeństwo danych:</b> Wszystkie dane płatności są przetwarzane przez certyfikowany system Stripe zgodnie z najwyższymi standardami bezpieczeństwa (PCI DSS Level 1). Platforma Ecurs nie przechowuje wrażliwych danych płatności.
+      </li>
+    </ul>
+    <p className="font-semibold text-gray-700 mt-2">§5A. Obsługa płatności przez Stripe Connect i prowizje</p>
+    <ul className="list-disc ml-6 text-gray-700">
+      <li>
+        <b>Technologia Stripe Connect:</b> Platforma wykorzystuje system Stripe Connect do obsługi płatności, który umożliwia bezpieczne i automatyczne przekazywanie płatności bezpośrednio na konto nauczyciela po dokonaniu zakupu przez ucznia.
+      </li>
+      <li>
+        <b>Prowizje Stripe:</b> Ze każdej transakcji płatniczej Stripe pobiera prowizję zgodnie z aktualnym cennikiem dostępnym na <a href="https://stripe.com/en-pl/pricing" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">stripe.com/en-pl/pricing</a>. Prowizja ta jest automatycznie potrącana z kwoty płatności przed jej przekazaniem na konto nauczyciela.
+      </li>
+      <li>
+        <b>Brak dodatkowych opłat platformy:</b> Platforma Ecurs nie pobiera dodatkowych prowizji ani opłat od transakcji płatniczych - jedyne koszty to prowizje Stripe oraz opłata za licencję platformy zgodnie z wybranym planem.
+      </li>
+      <li>
+        <b>Automatyczne rozliczenia:</b> Wszystkie płatności są automatycznie rozliczane przez system Stripe, a nauczyciel otrzymuje szczegółowe raporty transakcji w swoim panelu Stripe oraz na platformie Ecurs.
+      </li>
+      <li>
+        <b>Rozliczenia podatkowe:</b> Stripe obsługuje wszystkie rozliczenia podatkowe związane z transakcjami i dostarcza nauczycielowi odpowiednie dokumenty podatkowe, w tym faktury VAT jeśli zostały skonfigurowane. Platforma Ecurs nie jest stroną transakcji i nie ponosi odpowiedzialności za rozliczenia podatkowe.
+      </li>
+      <li>
+        <b>Waluty i kursy wymiany:</b> System obsługuje płatności w różnych walutach zgodnie z możliwościami Stripe, a konwersje walutowe są realizowane według aktualnych kursów Stripe.
+      </li>
+      <li>
+        <b>Zwroty i refundacje:</b> Proces zwrotów środków jest obsługiwany przez system Stripe zgodnie z jego regulaminem i może podlegać dodatkowym opłatom zgodnie z cennikiem Stripe.
+      </li>
+      <li>
+        <b>Automatyczne faktury VAT:</b> System Stripe Connect umożliwia automatyczne generowanie faktur VAT dla transakcji. Nauczyciele mogą skonfigurować w swoim panelu Stripe automatyczne wystawianie faktur VAT zgodnie z polskimi i europejskimi przepisami podatkowymi. Uczniowie mogą opcjonalnie zaznaczyć podczas zakupu, że wymagają faktury VAT.
+      </li>
+      <li>
+        <b>Obsługa VAT w UE:</b> Stripe automatycznie obsługuje procedury VAT dla sprzedaży cyfrowej w krajach Unii Europejskiej, w tym system OSS (One-Stop Shop), co umożliwia nauczycielom compliance z przepisami podatkowymi różnych krajów UE.
       </li>
     </ul>
     <p className="font-semibold text-gray-700 mt-2">§6. Warunki płatności, okresy rozliczeniowe i zmiana licencji</p>
@@ -212,7 +244,10 @@ const TEACHER_TERMS = (
     </ul>
     <p className="font-semibold text-gray-700 mt-2">§9. Zgodność z prawem i obowiązki fiskalne</p>
     <ul className="list-disc ml-6 text-gray-700">
-      <li><b>Obowiązki podatkowe:</b> Nauczyciel ponosi pełną odpowiedzialność za prawidłowe rozliczenie podatkowe wszystkich otrzymanych płatności zgodnie z polskim prawem podatkowym.</li>
+      <li><b>Platforma nie jest stroną transakcji:</b> Platforma Ecurs nie jest stroną umowy sprzedaży między nauczycielem a uczniem i nie rozlicza sprzedaży klientów. Nauczyciel jest formalnie sprzedawcą usług edukacyjnych.</li>
+      <li><b>Rozliczenia podatkowe przez Stripe:</b> Wszystkie rozliczenia podatkowe związane z transakcjami płatniczymi są obsługiwane przez system Stripe zgodnie z obowiązującymi przepisami podatkowymi. Stripe dostarcza nauczycielowi niezbędne dokumenty i raporty do rozliczeń podatkowych.</li>
+      <li><b>Obowiązki podatkowe nauczyciela:</b> Nauczyciel ponosi pełną odpowiedzialność za prawidłowe rozliczenie podatkowe wszystkich otrzymanych płatności zgodnie z polskim prawem podatkowym na podstawie dokumentów dostarczanych przez Stripe.</li>
+      <li><b>Brak odpowiedzialności podatkowej platformy:</b> Platforma Ecurs nie ponosi odpowiedzialności za rozliczenia podatkowe nauczycieli ani za błędy w rozliczeniach podatkowych. Wszelkie kwestie podatkowe nauczyciel rozlicza bezpośrednio ze Stripe lub odpowiednimi organami podatkowymi.</li>
       <li><b>Działalność gospodarcza:</b> Nauczyciel zobowiązuje się do prowadzenia działalności zgodnie z obowiązującymi przepisami prawa, w tym dotyczącymi działalności gospodarczej, jeśli jest wymagana.</li>
       <li><b>Licencje i uprawnienia:</b> Nauczyciel zapewnia, że posiada wszystkie niezbędne licencje, uprawnienia i kwalifikacje do prowadzenia działalności edukacyjnej w zakresie oferowanych kursów.</li>
       <li><b>Prawa autorskie:</b> Nauczyciel gwarantuje, że posiada wszystkie prawa do wykorzystywanych w kursach materiałów lub posiada odpowiednie licencje na ich użycie.</li>
@@ -249,6 +284,8 @@ interface BusinessTypeData {
   companyName?: string;
   taxId?: string;
   requiresVatInvoices?: boolean;
+  acceptStripeTerms?: boolean;
+  acceptDataProcessing?: boolean;
 }
 
 export default function RegisterPage() {
@@ -267,6 +304,25 @@ export default function RegisterPage() {
   const [registrationError, setRegistrationError] = useState<string | null>(null);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const router = useRouter();
+
+  // Handle return from Stripe onboarding
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const refresh = urlParams.get('refresh');
+    
+    if (success === 'stripe') {
+      toast.success('Konto Stripe zostało skonfigurowane!');
+      setCurrentStep("platform-subscription");
+      // Clean URL
+      window.history.replaceState({}, '', '/register');
+    } else if (refresh === 'true') {
+      toast.error('Konfiguracja Stripe została przerwana. Spróbuj ponownie.');
+      setCurrentStep("stripe-setup");
+      // Clean URL
+      window.history.replaceState({}, '', '/register');
+    }
+  }, []);
 
   // Block page navigation during redirect states
   useEffect(() => {
@@ -1161,6 +1217,156 @@ export default function RegisterPage() {
                 </button>
               </div>
             </div>
+          ) : currentStep === "stripe-setup" ? (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="flex items-center gap-2 text-base sm:text-lg font-semibold text-blue-600">
+                  💳 Konfiguracja płatności Stripe
+                </span>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-blue-800 mb-2">Konfiguracja konta płatności</h3>
+                  <p className="text-sm text-blue-700 mb-3">
+                    Aby sprzedawać kursy na platformie, potrzebujesz skonfigurowanego konta płatności Stripe Connect. 
+                    Proces obejmuje:
+                  </p>
+                  <ul className="text-sm text-blue-700 space-y-1 ml-4">
+                    <li>• Weryfikację tożsamości i danych biznesowych</li>
+                    <li>• Podanie danych bankowych do wypłat</li>
+                    <li>• Akceptację regulaminu Stripe Connect</li>
+                    <li>• Ustawienie metod płatności</li>
+                  </ul>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Wymagane informacje</h4>
+                  <p className="text-sm text-yellow-700 mb-2">
+                    Przygotuj następujące dane przed kontynuowaniem:
+                  </p>
+                  <ul className="text-sm text-yellow-700 space-y-1 ml-4">
+                    <li>• Dowód osobisty lub paszport</li>
+                    <li>• Numer rachunku bankowego</li>
+                    <li>• {businessData.businessType === "company" ? "Dane firmy (NIP, REGON, adres)" : "Adres zamieszkania"}</li>
+                    <li>• Numer telefonu</li>
+                  </ul>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="flex items-start space-x-3 cursor-pointer p-3 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    <input
+                      type="checkbox"
+                      checked={businessData.acceptStripeTerms || false}
+                      onChange={(e) => setBusinessData(prev => ({ ...prev, acceptStripeTerms: e.target.checked }))}
+                      className="mt-1 flex-shrink-0"
+                      disabled={isLoading}
+                    />
+                    <div className="text-sm">
+                      <div className="font-medium text-gray-700">
+                        Akceptuję <a href="https://stripe.com/connect-account/legal" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Regulamin Stripe Connect</a>
+                      </div>
+                      <div className="text-gray-600 mt-1">
+                        Wymagane do przetwarzania płatności jako sprzedawca
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start space-x-3 cursor-pointer p-3 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    <input
+                      type="checkbox"
+                      checked={businessData.acceptDataProcessing || false}
+                      onChange={(e) => setBusinessData(prev => ({ ...prev, acceptDataProcessing: e.target.checked }))}
+                      className="mt-1 flex-shrink-0"
+                      disabled={isLoading}
+                    />
+                    <div className="text-sm">
+                      <div className="font-medium text-gray-700">
+                        Wyrażam zgodę na przetwarzanie danych przez Stripe
+                      </div>
+                      <div className="text-gray-600 mt-1">
+                        Stripe będzie przetwarzać dane w celu obsługi płatności zgodnie z <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Polityką Prywatności</a>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+
+                <button
+                  onClick={async () => {
+                    if (!businessData.acceptStripeTerms || !businessData.acceptDataProcessing) {
+                      toast.error("Musisz zaakceptować wszystkie wymagane zgody");
+                      return;
+                    }
+                    
+                    setIsLoading(true);
+                    setLoadingState("creating-stripe-account");
+                    
+                    try {
+                      const stripeResponse = await fetch("/api/stripe/connect", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          acceptedTerms: true,
+                          acceptedDataProcessing: true
+                        })
+                      });
+                      
+                      if (!stripeResponse.ok) {
+                        throw new Error("Nie udało się utworzyć konta płatności");
+                      }
+
+                      const stripeResult = await stripeResponse.json();
+                      
+                      if (stripeResult.onboardingUrl) {
+                        setLoadingState("redirecting-to-stripe");
+                        toast.success("Przekierowujemy Cię do konfiguracji konta płatności...");
+                        
+                        setTimeout(() => {
+                          window.location.href = stripeResult.onboardingUrl;
+                        }, 1500);
+                        return;
+                      } else {
+                        throw new Error("Nie otrzymano linku do konfiguracji konta płatności");
+                      }
+                      
+                    } catch (error) {
+                      console.error("Błąd konfiguracji Stripe:", error);
+                      const errorMessage = error instanceof Error ? error.message : "Błąd podczas konfiguracji konta płatności";
+                      setRegistrationError(errorMessage);
+                      toast.error(errorMessage);
+                      setIsLoading(false);
+                      setLoadingState("idle");
+                    }
+                  }}
+                  disabled={isLoading || !businessData.acceptStripeTerms || !businessData.acceptDataProcessing}
+                  className={`w-full py-3 px-4 rounded-lg font-medium text-white text-sm sm:text-base lg:text-lg transition-all
+                    ${isLoading || !businessData.acceptStripeTerms || !businessData.acceptDataProcessing
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg"
+                    }`}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <Loader2 className="animate-spin" size={18} />
+                      <span className="text-sm">Konfigurowanie konta...</span>
+                    </div>
+                  ) : (
+                    "Przejdź do konfiguracji Stripe"
+                  )}
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCurrentStep("platform-subscription");
+                    setRegistrationError("Konfiguracja płatności została pominięta. Będziesz mógł ją dokończyć później w panelu nauczyciela.");
+                  }}
+                  disabled={isLoading}
+                  className="w-full py-2 px-4 rounded-lg font-medium text-gray-600 text-sm border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Pomiń teraz (dokończ później)
+                </button>
+              </div>
+            </div>
           ) : currentStep === "platform-subscription" ? (
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -1174,6 +1380,15 @@ export default function RegisterPage() {
                 <p className="text-sm text-gray-600">
                   Wybierz plan, który najlepiej odpowiada Twoim potrzebom. Każdy plan zawiera 30-dniowy okres próbny.
                 </p>
+                
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-green-800 font-medium flex items-center gap-2">
+                    ✅ <span>Możesz anulować subskrypcję w każdej chwili</span>
+                  </p>
+                  <p className="text-xs text-green-700 mt-1 ml-6">
+                    Bez dodatkowych kosztów • Zachowujesz dostęp do końca okresu rozliczeniowego
+                  </p>
+                </div>
                 
                 <div className="space-y-3">
                   <button
@@ -1190,7 +1405,8 @@ export default function RegisterPage() {
                         <div className="text-xs text-gray-500 mt-2">
                           • Pełny dostęp do funkcji<br/>
                           • Tworzenie interaktywnych kursów<br/>
-                          • Podstawowe wsparcie techniczne
+                          • Podstawowe wsparcie techniczne<br/>
+                          • <span className="text-green-600 font-medium">Anulowanie w każdej chwili</span>
                         </div>
                       </div>
                       <div className="text-right">
@@ -1215,7 +1431,8 @@ export default function RegisterPage() {
                         <div className="text-xs text-gray-500 mt-2">
                           • Wszystkie funkcjonalności<br/>
                           • Nielimitowani członkowie zespołu<br/>
-                          • Pełne wsparcie techniczne
+                          • Pełne wsparcie techniczne<br/>
+                          • <span className="text-green-600 font-medium">Anulowanie w każdej chwili</span>
                         </div>
                       </div>
                       <div className="text-right">
@@ -1227,10 +1444,12 @@ export default function RegisterPage() {
                   </button>
                 </div>
                 
-                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-xs text-yellow-700">
-                    ℹ️ <strong>Okres próbny:</strong> Wszystkie plany zawierają 30-dniowy bezpłatny okres próbny. 
-                    Możesz anulować subskrypcję w każdym momencie bez dodatkowych kosztów.
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-xs text-blue-700">
+                    ℹ️ <strong>Okres próbny:</strong> Wszystkie plany zawierają 30-dniowy bezpłatny okres próbny.
+                  </p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    🔄 <strong>Elastyczność:</strong> Anuluj lub zmień plan w każdej chwili bez opłat za rezygnację.
                   </p>
                 </div>
 

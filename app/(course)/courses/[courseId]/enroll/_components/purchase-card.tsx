@@ -21,6 +21,7 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: st
     const router = useRouter();
     const [promoError, setPromoError] = useState<string>("");
     const [joinLoading, setJoinLoading] = useState(false);
+    const [requireVatInvoice, setRequireVatInvoice] = useState(false);
 
     // Initialize promoCode from prop or URL parameter
     useEffect(() => {
@@ -125,7 +126,7 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: st
             const res = await fetch(`/api/courses/${courseId}/checkout`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ promoCode }),
+                body: JSON.stringify({ promoCode, vatInvoiceRequested: requireVatInvoice }),
             });
             if (!res.ok) throw new Error("Checkout failed");
             const data = await res.json();
@@ -254,6 +255,25 @@ const PurchaseCard = ({ userId, courseId }: PurchaseCardProps & { promoCode?: st
                 {promoError && (
                     <div className="text-sm text-red-600 mb-2 w-full text-left">{promoError}</div>
                 )}
+                <div className="w-full mb-4">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={requireVatInvoice}
+                            onChange={(e) => setRequireVatInvoice(e.target.checked)}
+                            className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                            disabled={loading}
+                        />
+                        <span className="text-sm text-gray-700">
+                            Chcę otrzymać fakturę VAT
+                        </span>
+                    </label>
+                    {requireVatInvoice && (
+                        <p className="text-xs text-gray-500 mt-1">
+                            Faktura VAT zostanie automatycznie wygenerowana przez Stripe i wysłana na Twój adres e-mail.
+                        </p>
+                    )}
+                </div>
                 <button
                     type="button"
                     className="w-full bg-orange-600 text-white px-6 py-2 rounded hover:bg-orange-700 transition flex items-center justify-center"

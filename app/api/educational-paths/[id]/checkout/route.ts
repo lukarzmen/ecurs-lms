@@ -17,6 +17,7 @@ export async function POST(
 
         const body = await req.json();
         const promoCode = body.promoCode || "";
+        const vatInvoiceRequested = body.vatInvoiceRequested || false; // Czy klient chce fakturę VAT
         const paymentType = "educationalPath";
 
         const currentAuthUser = await currentUser();
@@ -85,10 +86,18 @@ export async function POST(
             apiVersion: "2025-05-28.basil",
         });
 
+        console.log(`Educational path ${educationalPathId} author Stripe setup:`, {
+            stripeAccountId: eduPath.author?.stripeAccountId,
+            stripeOnboardingComplete: eduPath.author?.stripeOnboardingComplete
+        });
+
         // Check if teacher has completed Stripe onboarding
         if (!eduPath.author?.stripeAccountId || !eduPath.author?.stripeOnboardingComplete) {
             console.error(`Teacher payment account not configured for educational path ${educationalPathId}. StripeAccountId: ${eduPath.author?.stripeAccountId}, OnboardingComplete: ${eduPath.author?.stripeOnboardingComplete}`);
-            return new NextResponse("Autor ścieżki edukacyjnej nie ma skonfigurowanego konta płatności. Płatność została anulowana.", { 
+            return new NextResponse(JSON.stringify({ 
+                error: "Autor ścieżki edukacyjnej nie ma skonfigurowanego konta płatności. Skontaktuj się z autorem, aby zakończył konfigurację płatności.",
+                details: "Teacher Stripe account not configured"
+            }), { 
                 status: 400,
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -96,17 +105,25 @@ export async function POST(
 
         // Verify that the Stripe account is still active
         try {
+            console.log(`Verifying Stripe account: ${eduPath.author.stripeAccountId}`);
             const teacherAccount = await stripeClient.accounts.retrieve(eduPath.author.stripeAccountId);
             if (!teacherAccount.charges_enabled || !teacherAccount.payouts_enabled) {
                 console.error(`Teacher Stripe account ${eduPath.author.stripeAccountId} is not fully enabled. Charges: ${teacherAccount.charges_enabled}, Payouts: ${teacherAccount.payouts_enabled}`);
-                return new NextResponse("Konto płatności autora ścieżki edukacyjnej nie jest aktywne. Płatność została anulowana.", { 
+                return new NextResponse(JSON.stringify({ 
+                    error: "Konto płatności autora ścieżki edukacyjnej nie jest aktywne. Płatność została anulowana.",
+                    details: "Teacher Stripe account not fully enabled"
+                }), { 
                     status: 400,
                     headers: { 'Content-Type': 'application/json' }
                 });
             }
+            console.log(`Teacher Stripe account ${eduPath.author.stripeAccountId} is active and enabled`);
         } catch (stripeError) {
             console.error(`Failed to verify teacher Stripe account ${eduPath.author.stripeAccountId}:`, stripeError);
-            return new NextResponse("Nie można zweryfikować konta płatności autora. Płatność została anulowana.", { 
+            return new NextResponse(JSON.stringify({ 
+                error: "Nie można zweryfikować konta płatności autora. Skontaktuj się z autorem ścieżki edukacyjnej.",
+                details: "Cannot verify teacher Stripe account"
+            }), { 
                 status: 400,
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -157,6 +174,26 @@ export async function POST(
         }
 
         let stripeCustomerId = user.stripeCustomers[0]?.stripeCustomerId || null;
+        
+        // Validate existing customer or create new one
+        if (stripeCustomerId) {
+            try {
+                // Verify that the customer still exists in Stripe
+                await stripeClient.customers.retrieve(stripeCustomerId);
+            } catch (stripeError: any) {
+                // Customer doesn't exist in Stripe anymore, remove from our database and create new one
+                console.error(`Stripe customer ${stripeCustomerId} not found, removing from database:`, stripeError?.message);
+                
+                // Remove invalid customer record
+                if (user.stripeCustomers[0]?.id) {
+                    await db.stripeCustomer.delete({
+                        where: { id: user.stripeCustomers[0].id }
+                    });
+                }
+                stripeCustomerId = null;
+            }
+        }
+        
         if (!stripeCustomerId) {
             const customer = await stripeClient.customers.create({
                 email: email,
@@ -167,9 +204,9 @@ export async function POST(
             stripeCustomerId = customer.id;
             await db.stripeCustomer.create({
                 data: {
+                    stripeCustomerId: stripeCustomerId,
                     updatedAt: new Date(),
                     createdAt: new Date(),
-                    stripeCustomerId: stripeCustomerId,
                     userId: user.id,
                 },
             });
@@ -224,9 +261,66 @@ export async function POST(
             } else if (price?.trialPeriodType === "DAYS" && typeof price?.trialPeriodDays === "number" && price.trialPeriodDays > 0) {
                 trialPeriodDays = price.trialPeriodDays;
             }
+            
+            console.log(`Trial period calculation:`, {
+                trialPeriodType: price?.trialPeriodType,
+                trialPeriodDays: price?.trialPeriodDays,
+                trialPeriodEnd: price?.trialPeriodEnd,
+                calculatedTrialDays: trialPeriodDays
+            });
+            
+            // Final validation before creating session
+            if (!stripeCustomerId) {
+                console.error("stripeCustomerId is null before creating subscription checkout session");
+                return new NextResponse("Customer ID is required for checkout", { status: 500 });
+            }
+            
+            console.log(`Creating subscription checkout session on Connect account: ${eduPath.author.stripeAccountId}`);
+            console.log(`Using customer: ${stripeCustomerId}`);
+            
+            // Create customer on Connect account if needed
+            try {
+                await stripeClient.customers.retrieve(stripeCustomerId, {
+                    stripeAccount: eduPath.author.stripeAccountId
+                });
+                console.log(`Customer exists on Connect account: ${stripeCustomerId}`);
+            } catch (connectError: any) {
+                console.log(`Customer doesn't exist on Connect account, creating new one...`);
+                // Customer doesn't exist on Connect account, create it
+                const connectCustomer = await stripeClient.customers.create({
+                    email: email,
+                }, {
+                    stripeAccount: eduPath.author.stripeAccountId
+                });
+                stripeCustomerId = connectCustomer.id;
+                console.log(`Created customer on Connect account: ${stripeCustomerId}`);
+                
+                // Update or create our database record with the Connect account customer ID
+                await db.stripeCustomer.upsert({
+                    where: { userId: user.id },
+                    update: {
+                        stripeCustomerId: stripeCustomerId,
+                        updatedAt: new Date()
+                    },
+                    create: {
+                        stripeCustomerId: stripeCustomerId,
+                        updatedAt: new Date(),
+                        createdAt: new Date(),
+                        userId: user.id,
+                    },
+                });
+                console.log(`Upserted StripeCustomer record for user ${user.id} with customer ${stripeCustomerId}`);
+            }
+            
             session = await stripeClient.checkout.sessions.create({
                 mode: "subscription",
-                customer: stripeCustomerId!,
+                customer: stripeCustomerId,
+                // Automatyczne obliczanie VAT jeśli klient tego żąda
+                automatic_tax: vatInvoiceRequested ? { enabled: true } : undefined,
+                // Automatyczne zapisywanie adresu rozliczeniowego dla obliczania VAT
+                customer_update: vatInvoiceRequested ? {
+                    address: 'auto'
+                } : undefined,
                 line_items: [
                     {
                         price_data: {
@@ -235,6 +329,8 @@ export async function POST(
                                 name: eduPath.title,
                                 description: "Ścieżka edukacyjna",
                                 images: eduPath.imageId ? [`${process.env.NEXT_PUBLIC_APP_URL}/api/images/${eduPath.imageId}`] : [],
+                                // Konfiguracja kodu podatkowego dla usług cyfrowych
+                                tax_code: vatInvoiceRequested ? 'txcd_20030000' : undefined, // Digital products/services
                             },
                             unit_amount: Math.round(finalPrice * 100),
                             recurring: {
@@ -247,6 +343,7 @@ export async function POST(
                 success_url: `${process.env.NEXT_PUBLIC_API_URL}/educational-paths/${educationalPathId}?success=1`,
                 cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/educational-paths/${educationalPathId}?canceled=1`,
                 client_reference_id: String(userEducationalPath.id),
+                // NOTE: invoice_creation is not supported in subscription mode - Stripe creates invoices automatically
                 metadata: {
                     userEducationalPathId: userEducationalPath.id.toString(),
                     educationalPathId: educationalPathId,
@@ -257,12 +354,13 @@ export async function POST(
                     mode: "subscription",
                     type: paymentType,
                     teacherAccountId: eduPath.author.stripeAccountId,
+                    vatInvoiceRequested: vatInvoiceRequested.toString(),
                 },
                 subscription_data: {
-                    trial_period_days: trialPeriodDays,
-                    transfer_data: {
-                        destination: eduPath.author.stripeAccountId,
-                    },
+                    // Only include trial_period_days if it's greater than 0 (Stripe requirement)
+                    ...(trialPeriodDays > 0 ? { trial_period_days: trialPeriodDays } : {}),
+                    // NIE używamy transfer_data gdy operujemy bezpośrednio na Connect account
+                    // Pieniądze automatycznie zostają na koncie nauczyciela
                     metadata: {
                         userEducationalPathId: userEducationalPath.id.toString(),
                         educationalPathId: educationalPathId,
@@ -273,14 +371,68 @@ export async function POST(
                         mode: "subscription",
                         type: paymentType,
                         teacherAccountId: eduPath.author.stripeAccountId,
+                        vatInvoiceRequested: vatInvoiceRequested.toString(),
                     }
                 },
+            }, {
+                // Wykonanie na koncie nauczyciela (Connect Account)
+                stripeAccount: eduPath.author.stripeAccountId,
             });
         } else {
             // One-time payment
+            
+            // Final validation before creating session
+            if (!stripeCustomerId) {
+                console.error("stripeCustomerId is null before creating one-time checkout session");
+                return new NextResponse("Customer ID is required for checkout", { status: 500 });
+            }
+            
+            console.log(`Creating one-time payment checkout session on Connect account: ${eduPath.author.stripeAccountId}`);
+            console.log(`Using customer: ${stripeCustomerId}`);
+            
+            // Create customer on Connect account if needed
+            try {
+                await stripeClient.customers.retrieve(stripeCustomerId, {
+                    stripeAccount: eduPath.author.stripeAccountId
+                });
+                console.log(`Customer exists on Connect account: ${stripeCustomerId}`);
+            } catch (connectError: any) {
+                console.log(`Customer doesn't exist on Connect account, creating new one...`);
+                // Customer doesn't exist on Connect account, create it
+                const connectCustomer = await stripeClient.customers.create({
+                    email: email,
+                }, {
+                    stripeAccount: eduPath.author.stripeAccountId
+                });
+                stripeCustomerId = connectCustomer.id;
+                console.log(`Created customer on Connect account: ${stripeCustomerId}`);
+                
+                // Update or create our database record with the Connect account customer ID
+                await db.stripeCustomer.upsert({
+                    where: { userId: user.id },
+                    update: {
+                        stripeCustomerId: stripeCustomerId,
+                        updatedAt: new Date()
+                    },
+                    create: {
+                        stripeCustomerId: stripeCustomerId,
+                        updatedAt: new Date(),
+                        createdAt: new Date(),
+                        userId: user.id,
+                    },
+                });
+                console.log(`Upserted StripeCustomer record for user ${user.id} with customer ${stripeCustomerId}`);
+            }
+            
             session = await stripeClient.checkout.sessions.create({
                 mode: "payment",
-                customer: stripeCustomerId!,
+                customer: stripeCustomerId,
+                // Automatyczne obliczanie VAT jeśli klient tego żąda
+                automatic_tax: vatInvoiceRequested ? { enabled: true } : undefined,
+                // Automatyczne zapisywanie adresu rozliczeniowego dla obliczania VAT
+                customer_update: vatInvoiceRequested ? {
+                    address: 'auto'
+                } : undefined,
                 line_items: [
                     {
                         price_data: {
@@ -289,6 +441,8 @@ export async function POST(
                                 name: eduPath.title,
                                 description: "Ścieżka edukacyjna",
                                 images: eduPath.imageId ? [`${process.env.NEXT_PUBLIC_APP_URL}/api/images/${eduPath.imageId}`] : [],
+                                // Konfiguracja kodu podatkowego dla usług cyfrowych
+                                tax_code: vatInvoiceRequested ? 'txcd_20030000' : undefined, // Digital products/services
                             },
                             unit_amount: Math.round(finalPrice * 100),
                         },
@@ -298,6 +452,19 @@ export async function POST(
                 success_url: `${process.env.NEXT_PUBLIC_API_URL}/educational-paths/${educationalPathId}?success=1`,
                 cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/educational-paths/${educationalPathId}?canceled=1`,
                 client_reference_id: String(userEducationalPath.id),
+                // Automatyczne faktury jeśli żądane
+                invoice_creation: vatInvoiceRequested ? { 
+                    enabled: true,
+                    invoice_data: {
+                        description: `Ścieżka edukacyjna: ${eduPath.title}`,
+                        custom_fields: [
+                            {
+                                name: 'Typ produktu',
+                                value: 'Ścieżka edukacyjna - usługa cyfrowa'
+                            }
+                        ]
+                    }
+                } : undefined,
                 metadata: {
                     userEducationalPathId: userEducationalPath.id.toString(),
                     educationalPathId: educationalPathId,
@@ -308,11 +475,11 @@ export async function POST(
                     mode: "payment",
                     type: paymentType,
                     teacherAccountId: eduPath.author.stripeAccountId,
+                    vatInvoiceRequested: vatInvoiceRequested.toString(),
                 },
+                // NIE używamy payment_intent_data.transfer_data gdy operujemy bezpośrednio na Connect account
+                // Pieniądze automatycznie zostają na koncie nauczyciela
                 payment_intent_data: {
-                    transfer_data: {
-                        destination: eduPath.author.stripeAccountId,
-                    },
                     metadata: {
                         userEducationalPathId: userEducationalPath.id.toString(),
                         educationalPathId: educationalPathId,
@@ -322,8 +489,12 @@ export async function POST(
                         discount: discount.toString(),
                         type: paymentType,
                         teacherAccountId: eduPath.author.stripeAccountId,
+                        vatInvoiceRequested: vatInvoiceRequested.toString(),
                     }
                 },
+            }, {
+                // Wykonanie na koncie nauczyciela (Connect Account)
+                stripeAccount: eduPath.author.stripeAccountId,
             });
         }
         return NextResponse.json({ message: "Checkout session created successfully", sessionUrl: session.url });

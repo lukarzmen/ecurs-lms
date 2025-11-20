@@ -56,6 +56,26 @@ export async function POST(req: NextRequest) {
 
         // Get or create Stripe customer
         let stripeCustomerId = user.stripeCustomers[0]?.stripeCustomerId || null;
+        
+        // Validate existing customer or create new one
+        if (stripeCustomerId) {
+            try {
+                // Verify that the customer still exists in Stripe
+                await stripeClient.customers.retrieve(stripeCustomerId);
+            } catch (stripeError: any) {
+                // Customer doesn't exist in Stripe anymore, remove from our database and create new one
+                console.error(`Stripe customer ${stripeCustomerId} not found, removing from database:`, stripeError?.message);
+                
+                // Remove invalid customer record
+                if (user.stripeCustomers[0]?.id) {
+                    await db.stripeCustomer.delete({
+                        where: { id: user.stripeCustomers[0].id }
+                    });
+                }
+                stripeCustomerId = null;
+            }
+        }
+        
         if (!stripeCustomerId) {
             const customer = await stripeClient.customers.create({
                 email: email,
