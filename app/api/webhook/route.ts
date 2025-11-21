@@ -10,21 +10,44 @@ export async function POST(req: Request) {
     const signature = headersList.get("stripe-signature");
 
     let event: Stripe.Event;
+    let stripeClient: Stripe;
+    
+    // Sprawdź czy to event z Connect Account
+    const isConnectEvent = headersList.get("stripe-account");
+    
     try {
         event = Stripe.webhooks.constructEvent(
             body,
             signature as string,
             process.env.STRIPE_WEBHOOK_SECRET as string
         );
+        
+        // Utwórz klienta Stripe z uwzględnieniem Connect Account
+        if (isConnectEvent) {
+            stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+                apiVersion: "2025-05-28.basil",
+                stripeAccount: isConnectEvent
+            });
+            console.log(`[WEBHOOK] Processing Connect Account event from: ${isConnectEvent}`);
+        } else {
+            stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+                apiVersion: "2025-05-28.basil"
+            });
+            console.log(`[WEBHOOK] Processing platform event`);
+        }
     } catch (err) {
         console.error("Error constructing Stripe event:", err);
         return new NextResponse("Webhook Error", { status: 400 });
     }
 
     // Helper to fetch subscription metadata
-    async function getSubscriptionMetadata(stripeClient: Stripe, subscriptionId: string) {
+    async function getSubscriptionMetadata(stripeClientLocal: Stripe, subscriptionId: string, connectAccount?: string) {
         try {
-            const subscription = await stripeClient.subscriptions.retrieve(subscriptionId);
+            const options: any = {};
+            if (connectAccount) {
+                options.stripeAccount = connectAccount;
+            }
+            const subscription = await stripeClientLocal.subscriptions.retrieve(subscriptionId, options);
             return subscription.metadata || {};
         } catch (err) {
             console.error("Failed to fetch subscription metadata", err);
@@ -450,6 +473,48 @@ export async function POST(req: Request) {
         await db.educationalPathPurchase.create({
             data: baseData,
         });
+
+        // Also activate all courses in the educational path
+        try {
+            const eduPath = await db.educationalPath.findUnique({
+                where: { id: educationalPathId },
+                include: {
+                    courses: {
+                        select: { courseId: true }
+                    }
+                }
+            });
+            
+            if (eduPath?.courses) {
+                console.log(`[WEBHOOK] Activating ${eduPath.courses.length} courses for educational path ${educationalPathId}`);
+                for (const course of eduPath.courses) {
+                    await db.userCourse.upsert({
+                        where: {
+                            userId_courseId: {
+                                userId: appUserId,
+                                courseId: course.courseId,
+                            }
+                        },
+                        update: { 
+                            state: 1,
+                            updatedAt: new Date()
+                        },
+                        create: {
+                            userId: appUserId,
+                            courseId: course.courseId,
+                            state: 1,
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                        }
+                    });
+                }
+                console.log(`[WEBHOOK] Successfully activated all courses for educational path ${educationalPathId}`);
+            } else {
+                console.log(`[WEBHOOK] No courses found for educational path ${educationalPathId}`);
+            }
+        } catch (courseUpdateError) {
+            console.error(`[WEBHOOK] Error activating courses for educational path ${educationalPathId}:`, courseUpdateError);
+        }
     }
 
     // Enhanced function to create educational path purchase with detailed payment info
@@ -542,6 +607,12 @@ export async function POST(req: Request) {
             livemode: event.livemode,
             objectId: (event.data.object as any).id || 'N/A',
             objectType: event.data.object.object,
+            connectAccount: isConnectEvent || null,
+            metadata: (event.data.object as any).metadata || {},
+            amount: (event.data.object as any).amount || (event.data.object as any).amount_total,
+            currency: (event.data.object as any).currency,
+            customer: (event.data.object as any).customer,
+            subscription: (event.data.object as any).subscription,
         };
         console.log(`[WEBHOOK] Received event ${event.type} (${event.id})`, JSON.stringify(eventSummary, null, 2));
     } catch {
@@ -567,6 +638,38 @@ export async function POST(req: Request) {
                     const educationalPathId = Number(metadata.educationalPathId);
                     const userEducationalPathId = Number(metadata.userEducationalPathId);
                     if (!appUserId || !educationalPathId || !userEducationalPathId) {
+                        // Fallback: try to resolve via charge -> invoice -> subscription metadata for educational path
+                        try {
+                            if (paymentIntent.latest_charge) {
+                                const charge = await stripeClient.charges.retrieve(paymentIntent.latest_charge as string);
+                                const invoiceId = (charge as any).invoice as string | undefined;
+                                if (invoiceId) {
+                                    const invoice = await stripeClient.invoices.retrieve(invoiceId);
+                                    const subscriptionId = (invoice as any).subscription as string | undefined;
+                                    if (subscriptionId) {
+                                        const subMeta = await getSubscriptionMetadata(stripeClient, subscriptionId, isConnectEvent || undefined);
+                                        const sUserId = subMeta.userId;
+                                        const sEducationalPathId = subMeta.educationalPathId;
+                                        const sUserEducationalPathId = subMeta.userEducationalPathId;
+                                        if (sUserId && sEducationalPathId && sUserEducationalPathId) {
+                                            await upsertEduPath(Number(sUserEducationalPathId), Number(sUserId), Number(sEducationalPathId), 1);
+                                            await createEduPathPurchase(Number(sUserId), Number(sEducationalPathId), paymentIntent.id, paymentIntent);
+                                            return NextResponse.json({ success: true }, { status: 200 });
+                                        } else {
+                                            logError("PI_SUCCEEDED_EDUPATH_MISSING_SUB_META", { eventId: event.id, paymentIntentId: paymentIntent.id, subMeta });
+                                        }
+                                    } else {
+                                        logError("PI_SUCCEEDED_EDUPATH_NO_SUBSCRIPTION", { eventId: event.id, paymentIntentId: paymentIntent.id, invoiceId });
+                                    }
+                                } else {
+                                    logError("PI_SUCCEEDED_EDUPATH_NO_INVOICE", { eventId: event.id, paymentIntentId: paymentIntent.id, chargeId: paymentIntent.latest_charge });
+                                }
+                            } else {
+                                logError("PI_SUCCEEDED_EDUPATH_NO_CHARGE", { eventId: event.id, paymentIntentId: paymentIntent.id });
+                            }
+                        } catch (err) {
+                            logError("PI_SUCCEEDED_EDUPATH_FALLBACK_ERROR", { eventId: event.id, error: String(err) });
+                        }
                         return NextResponse.json({ success: false, error: "Missing educational path metadata" }, { status: 200 });
                     }
                     await upsertEduPath(userEducationalPathId, appUserId, educationalPathId, 1);
@@ -584,14 +687,13 @@ export async function POST(req: Request) {
                         // Fallback: try to resolve via charge -> invoice -> subscription metadata
                         try {
                             if (paymentIntent.latest_charge) {
-                                const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2025-05-28.basil" });
                                 const charge = await stripeClient.charges.retrieve(paymentIntent.latest_charge as string);
                                 const invoiceId = (charge as any).invoice as string | undefined;
                                 if (invoiceId) {
                                     const invoice = await stripeClient.invoices.retrieve(invoiceId);
                                     const subscriptionId = (invoice as any).subscription as string | undefined;
                                     if (subscriptionId) {
-                                        const subMeta = await getSubscriptionMetadata(stripeClient, subscriptionId);
+                                        const subMeta = await getSubscriptionMetadata(stripeClient, subscriptionId, isConnectEvent || undefined);
                                         const sUserId = subMeta.userId;
                                         const sCourseId = subMeta.courseId;
                                         const sUserCourseId = subMeta.userCourseId;
@@ -655,8 +757,7 @@ export async function POST(req: Request) {
 
                     try {
                         // Get subscription details from Stripe
-                        const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2025-05-28.basil" });
-                        const subscriptionMetadata = await getSubscriptionMetadata(stripeClient, session.subscription as string);
+                        const subscriptionMetadata = await getSubscriptionMetadata(stripeClient, session.subscription as string, isConnectEvent || undefined);
                         const paymentData = extractPaymentData(session, event.type, { subscription: subscriptionMetadata });
 
                         // Update teacher platform subscription
@@ -748,9 +849,8 @@ export async function POST(req: Request) {
                 } else {
                     // Course subscription logic
                     try {
-                        const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2025-05-28.basil" });
                         // Prefer subscription metadata; if missing, fallback to session.metadata
-                        const subMeta = await getSubscriptionMetadata(stripeClient, session.subscription as string);
+                        const subMeta = await getSubscriptionMetadata(stripeClient, session.subscription as string, isConnectEvent || undefined);
                         const sessMeta = (session.metadata || {}) as any;
                         const appUserId = (subMeta as any).userId || sessMeta.userId;
                         const courseId = (subMeta as any).courseId || sessMeta.courseId;
@@ -762,21 +862,29 @@ export async function POST(req: Request) {
                         await upsertCourse(Number(userCourseId), Number(appUserId), Number(courseId), 1);
                         // Try to attach metadata to the initial PaymentIntent via latest invoice for better traceability
                         try {
-                            const subscription = await stripeClient.subscriptions.retrieve(session.subscription as string, {
+                            const subscriptionOptions: any = {
                                 expand: ["latest_invoice.payment_intent"],
-                            });
+                            };
+                            if (isConnectEvent) {
+                                subscriptionOptions.stripeAccount = isConnectEvent;
+                            }
+                            const subscription = await stripeClient.subscriptions.retrieve(session.subscription as string, subscriptionOptions);
                             const latestInvoiceAny = (subscription as any).latest_invoice as any;
                             const piObjOrId = latestInvoiceAny && latestInvoiceAny.payment_intent;
                             const piId = typeof piObjOrId === "string" ? piObjOrId : piObjOrId?.id;
                             if (piId) {
-                                await stripeClient.paymentIntents.update(piId, {
+                                const updateOptions: any = {
                                     metadata: {
                                         userCourseId: String(userCourseId),
                                         courseId: String(courseId),
                                         userId: String(appUserId),
                                         mode: "subscription",
                                     }
-                                });
+                                };
+                                if (isConnectEvent) {
+                                    updateOptions.stripeAccount = isConnectEvent;
+                                }
+                                await stripeClient.paymentIntents.update(piId, updateOptions);
                             }
                         } catch (err) {
                             logError("CHECKOUT_COMPLETED_PI_META_UPDATE_FAIL", { eventId: event.id, sessionId: session.id, error: String(err) });
@@ -913,8 +1021,7 @@ export async function POST(req: Request) {
             });
             
             if (subscriptionId) {
-                const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2025-05-28.basil" });
-                const metadata = await getSubscriptionMetadata(stripeClient, subscriptionId as string);
+                const metadata = await getSubscriptionMetadata(stripeClient, subscriptionId as string, isConnectEvent || undefined);
                 if (metadata.type === "educationalPath") {
                     const appUserId = Number(metadata.userId);
                     const educationalPathId = Number(metadata.educationalPathId);
@@ -1001,8 +1108,7 @@ export async function POST(req: Request) {
             });
             
             if (subscriptionId) {
-                const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2025-05-28.basil" });
-                const metadata = await getSubscriptionMetadata(stripeClient, subscriptionId as string);
+                const metadata = await getSubscriptionMetadata(stripeClient, subscriptionId as string, isConnectEvent || undefined);
                 if (metadata.type === "educationalPath") {
                     const appUserId = Number(metadata.userId);
                     const educationalPathId = Number(metadata.educationalPathId);
@@ -1089,6 +1195,79 @@ export async function POST(req: Request) {
                     const educationalPathId = Number(metadata.educationalPathId);
                     const userEducationalPathId = Number(metadata.userEducationalPathId);
                     if (!appUserId || !educationalPathId || !userEducationalPathId) {
+                        // Fallback: try to resolve via charge -> invoice -> subscription metadata for educational path
+                        try {
+                            if (paymentIntent.latest_charge) {
+                                const charge = await stripeClient.charges.retrieve(paymentIntent.latest_charge as string);
+                                const invoiceId = (charge as any).invoice as string | undefined;
+                                if (invoiceId) {
+                                    const invoice = await stripeClient.invoices.retrieve(invoiceId);
+                                    const subscriptionId = (invoice as any).subscription as string | undefined;
+                                    if (subscriptionId) {
+                                        const subMeta = await getSubscriptionMetadata(stripeClient, subscriptionId, isConnectEvent || undefined);
+                                        const sUserId = subMeta.userId;
+                                        const sEducationalPathId = subMeta.educationalPathId;
+                                        const sUserEducationalPathId = subMeta.userEducationalPathId;
+                                        if (sUserId && sEducationalPathId && sUserEducationalPathId) {
+                                            await upsertEduPath(Number(sUserEducationalPathId), Number(sUserId), Number(sEducationalPathId), 0);
+                                            // Also deactivate all courses in the educational path
+                                            try {
+                                                const eduPath = await db.educationalPath.findUnique({
+                                                    where: { id: Number(sEducationalPathId) },
+                                                    include: {
+                                                        courses: {
+                                                            select: { courseId: true }
+                                                        }
+                                                    }
+                                                });
+                                                
+                                                if (eduPath?.courses) {
+                                                    for (const course of eduPath.courses) {
+                                                        await db.userCourse.upsert({
+                                                            where: {
+                                                                userId_courseId: {
+                                                                    userId: Number(sUserId),
+                                                                    courseId: course.courseId,
+                                                                }
+                                                            },
+                                                            update: { 
+                                                                state: 0,
+                                                                updatedAt: new Date()
+                                                            },
+                                                            create: {
+                                                                userId: Number(sUserId),
+                                                                courseId: course.courseId,
+                                                                state: 0,
+                                                                createdAt: new Date(),
+                                                                updatedAt: new Date(),
+                                                            }
+                                                        });
+                                                    }
+                                                }
+                                            } catch (courseUpdateError) {
+                                                logError("PAYMENT_INTENT_FAILED_EDUPATH_FALLBACK_COURSE_UPDATE_ERROR", { 
+                                                    eventId: event.id, 
+                                                    paymentIntentId: paymentIntent.id, 
+                                                    educationalPathId: sEducationalPathId, 
+                                                    error: String(courseUpdateError) 
+                                                });
+                                            }
+                                            return NextResponse.json({ success: true }, { status: 200 });
+                                        } else {
+                                            logError("PI_FAILED_EDUPATH_MISSING_SUB_META", { eventId: event.id, paymentIntentId: paymentIntent.id, subMeta });
+                                        }
+                                    } else {
+                                        logError("PI_FAILED_EDUPATH_NO_SUBSCRIPTION", { eventId: event.id, paymentIntentId: paymentIntent.id, invoiceId });
+                                    }
+                                } else {
+                                    logError("PI_FAILED_EDUPATH_NO_INVOICE", { eventId: event.id, paymentIntentId: paymentIntent.id, chargeId: paymentIntent.latest_charge });
+                                }
+                            } else {
+                                logError("PI_FAILED_EDUPATH_NO_CHARGE", { eventId: event.id, paymentIntentId: paymentIntent.id });
+                            }
+                        } catch (err) {
+                            logError("PI_FAILED_EDUPATH_FALLBACK_ERROR", { eventId: event.id, error: String(err) });
+                        }
                         return NextResponse.json({ success: false, error: "Missing educational path metadata" }, { status: 200 });
                     }
                     await upsertEduPath(userEducationalPathId, appUserId, educationalPathId, 0);
@@ -1146,14 +1325,13 @@ export async function POST(req: Request) {
                         // For subscriptions, PI may lack metadata. Try resolving via latest_charge -> invoice -> subscription.
                         try {
                             if (paymentIntent.latest_charge) {
-                                const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2025-05-28.basil" });
                                 const charge = await stripeClient.charges.retrieve(paymentIntent.latest_charge as string);
                                 const invoiceId = (charge as any).invoice as string | undefined;
                                 if (invoiceId) {
                                     const invoice = await stripeClient.invoices.retrieve(invoiceId);
                                     const subscriptionId = (invoice as any).subscription as string | undefined;
                                     if (subscriptionId) {
-                                        const subMeta = await getSubscriptionMetadata(stripeClient, subscriptionId);
+                                        const subMeta = await getSubscriptionMetadata(stripeClient, subscriptionId, isConnectEvent || undefined);
                                         appUserId = (subMeta as any).userId;
                                         courseId = (subMeta as any).courseId;
                                         userCourseId = (subMeta as any).userCourseId;
