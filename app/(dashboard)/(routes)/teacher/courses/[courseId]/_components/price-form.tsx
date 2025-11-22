@@ -19,6 +19,7 @@ type Price = {
   trialPeriodDays?: number;
   trialPeriodEnd?: string;
   trialPeriodType?: string;
+  vatRate?: number;
 };
 
 const intervalOptions = [
@@ -57,6 +58,7 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
     trialPeriodDays: price?.trialPeriodDays ?? 0,
     trialPeriodEnd: toInputDateFormat(price?.trialPeriodEnd),
     trialPeriodType: price?.trialPeriodType ?? (initialTrialMode === "days" ? "DAYS" : "DATE"),
+    vatRate: price?.vatRate ?? 23,
   });
 
   const toggleEdit = () => setIsEditing((v) => !v);
@@ -89,6 +91,7 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
         interval: form.interval,
         isRecurring: form.isRecurring,
         trialPeriodType: trialMode === "days" ? "DAYS" : "DATE",
+        vatRate: form.vatRate,
       };
       if (trialMode === "days" && form.trialPeriodDays && form.trialPeriodDays > 0) {
         payload.trialPeriodDays = form.trialPeriodDays;
@@ -157,6 +160,18 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
               onChange={handleChange}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md"
             />
+          </div>
+          <div className="form-group">
+            <label className="block text-sm font-medium text-gray-700">Stawka VAT</label>
+            <select
+              name="vatRate"
+              value={form.vatRate}
+              onChange={handleChange}
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md"
+            >
+              <option value={0}>0%</option>
+              <option value={23}>23%</option>
+            </select>
           </div>
           <div className="form-group flex items-center gap-2">
             <input

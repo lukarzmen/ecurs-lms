@@ -150,6 +150,12 @@ const EduPathPurchaseCard = ({ userId, educationalPathId }: PurchaseCardProps & 
     const trialPeriodDays = pathData?.price?.trialPeriodDays;
     const trialPeriodEnd = pathData?.price?.trialPeriodEnd;
     const trialPeriodType = pathData?.price?.trialPeriodType;
+    const vatRate = pathData?.price?.vatRate ?? 23;
+    
+    // Calculate gross price (with VAT)
+    const priceGross = priceAmount * (1 + vatRate / 100);
+    const finalPriceGross = finalPrice ? parseFloat(finalPrice) * (1 + vatRate / 100) : priceGross;
+    
     if (priceAmount == 0) {
         // Free educational path appearance with permission check and loading
         const handleJoinFreePath = async () => {
@@ -220,8 +226,10 @@ const EduPathPurchaseCard = ({ userId, educationalPathId }: PurchaseCardProps & 
                 <h2 className="text-xl font-bold mb-2">{pathData.title}</h2>
                 <div className="text-lg font-semibold text-orange-700 mb-2">
                     {discount > 0 && finalPrice
-                        ? <><span className="line-through mr-2 text-gray-500">{priceAmount} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</span><span className="text-green-700">{finalPrice} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</span>{isRecurring && trialPeriodType === 'DAYS' && trialPeriodDays && trialPeriodDays > 0 ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny: {trialPeriodDays} dni</span>) : null}{isRecurring && trialPeriodType === 'DATE' && trialPeriodEnd ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny do {new Date(trialPeriodEnd).toLocaleDateString()}</span>) : null}</>
-                        : <><>{priceAmount} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</>{isRecurring && trialPeriodType === 'DAYS' && trialPeriodDays && trialPeriodDays > 0 ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny: {trialPeriodDays} dni</span>) : null}{isRecurring && trialPeriodType === 'DATE' && trialPeriodEnd ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny do {new Date(trialPeriodEnd).toLocaleDateString()}</span>) : null}</>}
+                        ? <><span className="line-through mr-2 text-gray-500">{priceGross.toFixed(2)} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</span><span className="text-green-700">{finalPriceGross.toFixed(2)} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</span>{isRecurring && trialPeriodType === 'DAYS' && trialPeriodDays && trialPeriodDays > 0 ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny: {trialPeriodDays} dni</span>) : null}{isRecurring && trialPeriodType === 'DATE' && trialPeriodEnd ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny do {new Date(trialPeriodEnd).toLocaleDateString()}</span>) : null}</>
+                        : <><>{priceGross.toFixed(2)} {priceCurrency}{isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}</>{isRecurring && trialPeriodType === 'DAYS' && trialPeriodDays && trialPeriodDays > 0 ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny: {trialPeriodDays} dni</span>) : null}{isRecurring && trialPeriodType === 'DATE' && trialPeriodEnd ? (<span className="block text-xs text-orange-500 font-normal">Okres próbny do {new Date(trialPeriodEnd).toLocaleDateString()}</span>) : null}</>
+                    }
+                    <span className="block text-xs text-gray-500 font-normal mt-1">Cena brutto (w tym VAT {vatRate}%)</span>
                 </div>
                 {finalPrice && discount > 0 && (
                     <div className="text-md font-semibold text-green-700 mb-2">

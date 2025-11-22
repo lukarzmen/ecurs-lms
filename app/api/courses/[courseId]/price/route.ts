@@ -14,6 +14,7 @@ export async function PATCH(
     const currency = (body.currency as string) ?? "PLN"; // assumption: default to PLN when not provided
     const isRecurring = body.isRecurring === undefined ? false : Boolean(body.isRecurring);
     const interval = body.interval as string | undefined;
+    const vatRate = body.vatRate !== undefined ? Number(body.vatRate) : 23;
 
     const { courseId } = await params;
     const courseIdNumber = parseInt(courseId, 10);
@@ -32,6 +33,10 @@ export async function PATCH(
 
     if (interval !== undefined && !allowedIntervals.includes(interval)) {
       return new NextResponse("Invalid interval", { status: 400 });
+    }
+    
+    if (isNaN(vatRate) || vatRate < 0 || vatRate > 100) {
+      return new NextResponse("Invalid VAT rate", { status: 400 });
     }
 
     // Use trialPeriodType to determine which field to set and nullify the other
@@ -62,6 +67,7 @@ export async function PATCH(
       trialPeriodType,
       trialPeriodDays: trialPeriodType === "DAYS" ? trialPeriodDays ?? null : null,
       trialPeriodEnd: trialPeriodType === "DATE" ? trialPeriodEnd ?? null : null,
+      vatRate: new Prisma.Decimal(vatRate),
     };
     if (interval) createData.interval = interval;
 
@@ -72,6 +78,7 @@ export async function PATCH(
       trialPeriodType,
       trialPeriodDays: trialPeriodType === "DAYS" ? trialPeriodDays ?? null : null,
       trialPeriodEnd: trialPeriodType === "DATE" ? trialPeriodEnd ?? null : null,
+      vatRate: new Prisma.Decimal(vatRate),
     };
     if (interval) updateData.interval = interval;
 
@@ -89,6 +96,7 @@ export async function PATCH(
       trialPeriodType: upserted.trialPeriodType ?? null,
       trialPeriodDays: upserted.trialPeriodDays ?? null,
       trialPeriodEnd: upserted.trialPeriodEnd ?? null,
+      vatRate: Number(upserted.vatRate.toString()),
     });
   } catch (error) {
     console.error(error);

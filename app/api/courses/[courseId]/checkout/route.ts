@@ -76,7 +76,8 @@ export async function POST(
                         interval: true,
                         trialPeriodDays: true,
                         trialPeriodEnd: true,
-                        trialPeriodType: true
+                        trialPeriodType: true,
+                        vatRate: true
                     }
                 },
             }
@@ -196,6 +197,7 @@ export async function POST(
         const currency = price?.currency || "pln";
         const isRecurring = price?.isRecurring;
         const interval = price?.interval;
+        const vatRate = Number(price?.vatRate ?? 23);
         if (promoCode) {
             // Find all promo code joins for this course
             const joins = await db.coursePromoCode.findMany({
@@ -216,6 +218,11 @@ export async function POST(
                 }
             }
         }
+        
+        // Apply VAT to final price
+        const priceWithoutVat = finalPrice;
+        const vatAmount = (priceWithoutVat * vatRate) / 100;
+        finalPrice = priceWithoutVat + vatAmount;
 
         let session;
         // Only allow 'month' or 'year' for Stripe recurring interval
@@ -290,15 +297,47 @@ export async function POST(
                 console.log(`Upserted StripeCustomer record for user ${user.id} with customer ${stripeCustomerId}`);
             }
             
+            // Create or retrieve tax rate for the Connect account
+            let taxRates: string[] = [];
+            if (vatRate > 0) {
+                try {
+                    // Try to find existing tax rate
+                    const existingRates = await stripeClient.taxRates.list({
+                        active: true,
+                    }, {
+                        stripeAccount: course.author.stripeAccountId
+                    });
+                    
+                    const matchingRate = existingRates.data.find(rate => 
+                        rate.percentage === vatRate && 
+                        rate.inclusive === false
+                    );
+                    
+                    if (matchingRate) {
+                        taxRates = [matchingRate.id];
+                        console.log(`Using existing tax rate: ${matchingRate.id} (${vatRate}%)`);
+                    } else {
+                        // Create new tax rate
+                        const newTaxRate = await stripeClient.taxRates.create({
+                            display_name: `VAT ${vatRate}%`,
+                            percentage: vatRate,
+                            inclusive: false,
+                            description: `VAT ${vatRate}%`,
+                        }, {
+                            stripeAccount: course.author.stripeAccountId
+                        });
+                        taxRates = [newTaxRate.id];
+                        console.log(`Created new tax rate: ${newTaxRate.id} (${vatRate}%)`);
+                    }
+                } catch (taxError) {
+                    console.error(`Failed to create/retrieve tax rate:`, taxError);
+                    // Continue without tax rate - will show 0% VAT
+                }
+            }
+            
             session = await stripeClient.checkout.sessions.create({
                 mode: "subscription",
                 customer: stripeCustomerId,
-                // Automatyczne obliczanie VAT jeśli klient tego żąda
-                automatic_tax: vatInvoiceRequested ? { enabled: true } : undefined,
-                // Automatyczne zapisywanie adresu rozliczeniowego dla obliczania VAT
-                customer_update: vatInvoiceRequested ? {
-                    address: 'auto'
-                } : undefined,
                 line_items: [
                     {
                         price_data: {
@@ -307,15 +346,15 @@ export async function POST(
                                 name: course.title,
                                 description: "Kurs online",
                                 images: course.imageId ? [`${process.env.NEXT_PUBLIC_APP_URL}/api/images/${course.imageId}`] : [],
-                                // Konfiguracja kodu podatkowego dla usług cyfrowych
-                                tax_code: vatInvoiceRequested ? 'txcd_20030000' : undefined, // Digital products/services
                             },
-                            unit_amount: Math.round(finalPrice * 100),
+                            unit_amount: Math.round(priceWithoutVat * 100), // Price WITHOUT VAT
                             recurring: {
                                 interval: stripeRecurringInterval,
                             },
+                            tax_behavior: 'exclusive', // VAT will be added on top
                         },
                         quantity: 1,
+                        tax_rates: taxRates, // Apply tax rate
                     },
                 ],
                 success_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?success=1`,
@@ -402,15 +441,47 @@ export async function POST(
                 console.log(`Upserted StripeCustomer record for user ${user.id} with customer ${stripeCustomerId}`);
             }
             
+            // Create or retrieve tax rate for the Connect account
+            let taxRates: string[] = [];
+            if (vatRate > 0) {
+                try {
+                    // Try to find existing tax rate
+                    const existingRates = await stripeClient.taxRates.list({
+                        active: true,
+                    }, {
+                        stripeAccount: course.author.stripeAccountId
+                    });
+                    
+                    const matchingRate = existingRates.data.find(rate => 
+                        rate.percentage === vatRate && 
+                        rate.inclusive === false
+                    );
+                    
+                    if (matchingRate) {
+                        taxRates = [matchingRate.id];
+                        console.log(`Using existing tax rate: ${matchingRate.id} (${vatRate}%)`);
+                    } else {
+                        // Create new tax rate
+                        const newTaxRate = await stripeClient.taxRates.create({
+                            display_name: `VAT ${vatRate}%`,
+                            percentage: vatRate,
+                            inclusive: false,
+                            description: `VAT ${vatRate}%`,
+                        }, {
+                            stripeAccount: course.author.stripeAccountId
+                        });
+                        taxRates = [newTaxRate.id];
+                        console.log(`Created new tax rate: ${newTaxRate.id} (${vatRate}%)`);
+                    }
+                } catch (taxError) {
+                    console.error(`Failed to create/retrieve tax rate:`, taxError);
+                    // Continue without tax rate - will show 0% VAT
+                }
+            }
+            
             session = await stripeClient.checkout.sessions.create({
                 mode: "payment",
                 customer: stripeCustomerId,
-                // Automatyczne obliczanie VAT jeśli klient tego żąda
-                automatic_tax: vatInvoiceRequested ? { enabled: true } : undefined,
-                // Automatyczne zapisywanie adresu rozliczeniowego dla obliczania VAT
-                customer_update: vatInvoiceRequested ? {
-                    address: 'auto'
-                } : undefined,
                 line_items: [
                     {
                         price_data: {
@@ -419,12 +490,12 @@ export async function POST(
                                 name: course.title,
                                 description: "Kurs online",
                                 images: course.imageId ? [`${process.env.NEXT_PUBLIC_APP_URL}/api/images/${course.imageId}`] : [],
-                                // Konfiguracja kodu podatkowego dla usług cyfrowych
-                                tax_code: vatInvoiceRequested ? 'txcd_20030000' : undefined, // Digital products/services
                             },
-                            unit_amount: Math.round(finalPrice * 100),
+                            unit_amount: Math.round(priceWithoutVat * 100), // Price WITHOUT VAT
+                            tax_behavior: 'exclusive', // VAT will be added on top
                         },
                         quantity: 1,
+                        tax_rates: taxRates, // Apply tax rate
                     },
                 ],
                 success_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?success=1`,

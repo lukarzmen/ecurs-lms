@@ -19,6 +19,7 @@ export interface MarketplaceCourse {
     currency?: string | null;
     isRecurring?: boolean;
     interval?: string | null;
+    vatRate?: number | null;
 }
 
 export interface MarketplaceCoursesListBaseProps {
@@ -51,6 +52,7 @@ export const MarketplaceCoursesList = ({ items }: MarketplaceCoursesListBaseProp
                     trialPeriodDays: item.trialPeriodDays ?? null,
                     trialPeriodEnd: item.trialPeriodEnd ?? null,
                     trialPeriodType: item.trialPeriodType ?? null,
+                    vatRate: item.vatRate ?? 23,
                 };
                 if (item.enrolled) {
                     return (

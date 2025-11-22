@@ -61,6 +61,7 @@ model CoursePrice {
   trialPeriodDays Int?
   trialPeriodEnd  DateTime?      @db.Timestamp(6)
   trialPeriodType String?        @db.VarChar(255)
+  vatRate         Decimal        @default(23) @db.Decimal(5, 2)
   course          Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
@@ -119,6 +120,7 @@ model EducationalPathPrice {
   trialPeriodDays   Int?
   trialPeriodEnd    DateTime?       @db.Timestamp(6)
   trialPeriodType   String?         @db.VarChar(10)
+  vatRate           Decimal         @default(23) @db.Decimal(5, 2)
   educationalPath   EducationalPath @relation(fields: [educationalPathId], references: [id], onDelete: Cascade)
 }
 

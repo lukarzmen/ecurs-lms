@@ -54,7 +54,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
       include: {
         category: true,
         author: { select: { firstName: true, lastName: true, displayName: true } },
-        price: { select: { amount: true, currency: true, isRecurring: true, interval: true, trialPeriodDays: true, trialPeriodEnd: true, trialPeriodType: true } }
+        price: { select: { amount: true, currency: true, isRecurring: true, interval: true, trialPeriodDays: true, trialPeriodEnd: true, trialPeriodType: true, vatRate: true } }
       },
     });
 
@@ -87,6 +87,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
         trialPeriodDays: course.price?.trialPeriodDays ?? null,
         trialPeriodEnd: course.price?.trialPeriodEnd ?? null,
         trialPeriodType: course.price?.trialPeriodType ?? null,
+        vatRate: course.price?.vatRate ?? 23,
         author: course.author
           ? { ...course.author, displayName: authorDisplay }
           : null,
@@ -145,6 +146,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
           trialPeriodDays: priceObj?.trialPeriodDays ?? null,
           trialPeriodEnd: priceObj?.trialPeriodEnd ?? null,
           trialPeriodType: priceObj?.trialPeriodType ?? null,
+          vatRate: priceObj?.vatRate ?? 23,
           author,
           category,
           type: "educationalPath",

@@ -23,6 +23,7 @@ interface MarketplaceCourseCardProps extends BaseCourseCardProps {
     trialPeriodType?: string | null; // "DAYS" or "DATE"
     enrolled?: boolean;
     type: "educationalPath" | "course" | null;
+    vatRate?: number;
 }
 
 export interface CourseInfoCardProps extends BaseCourseCardProps {
@@ -45,7 +46,8 @@ export function MarketplaceCourseCard({
     trialPeriodEnd,
     trialPeriodType,
     enrolled = true,
-    type
+    type,
+    vatRate = 23
 }: MarketplaceCourseCardProps) {
     const imageUrl = imageId ? `/api/image/${imageId}` : null;
     const placeholderImageUrl = "/logo.png";
@@ -53,6 +55,9 @@ export function MarketplaceCourseCard({
     const linkHref = type === "educationalPath"
         ? `/educational-paths/${id}/enroll`
         : `/courses/${id}/enroll`;
+    
+    // Calculate gross price (with VAT)
+    const priceGross = price && price > 0 ? price * (1 + vatRate / 100) : price;
 
     // Card style differentiation
     const cardBg = "bg-white border-gray-300";
@@ -99,9 +104,10 @@ export function MarketplaceCourseCard({
                                     <span>Darmowy</span>
                                 ) : (
                                     <span>
-                                        {price}
+                                        {priceGross?.toFixed(2)}
                                         {currency ? ` ${currency}` : " PLN"}
                                         {isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}
+                                        <span className="block text-xs text-gray-500 font-normal">brutto (VAT {vatRate}%)</span>
                                         {isRecurring && trialPeriodType === 'DAYS' && trialPeriodDays && trialPeriodDays > 0 ? (
                                             <span className="block text-xs text-orange-500 font-normal">{trialPeriodDays} dni za darmo!</span>
                                         ) : null}
