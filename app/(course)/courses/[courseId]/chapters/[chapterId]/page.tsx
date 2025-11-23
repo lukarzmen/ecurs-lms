@@ -115,8 +115,24 @@ const ChapterIdPage = () => {
 
             if (!res.ok) {
                 const errorData = await res.text();
-                // Use a more specific error message if possible
-                throw new Error(`Nie udało się oznaczyć rozdziału jako ukończony: ${errorData || res.statusText}`);
+                
+                // Handle specific error codes with user-friendly messages
+                if (res.status === 403) {
+                    if (errorData.includes('Module is not active')) {
+                        toast.error("Ten moduł nie jest jeszcze aktywny.");
+                    } else if (errorData.includes('No active access')) {
+                        toast.error("Brak aktywnego dostępu do tego kursu.");
+                    } else {
+                        toast.error("Brak uprawnień do ukończenia tego modułu.");
+                    }
+                } else if (res.status === 400) {
+                    toast.error("Ten moduł nie ma jeszcze treści do ukończenia.");
+                } else if (res.status === 404) {
+                    toast.error("Nie znaleziono modułu lub nie masz do niego dostępu.");
+                } else {
+                    toast.error(`Nie udało się oznaczyć rozdziału jako ukończony: ${errorData || res.statusText}`);
+                }
+                return;
             }
 
             // Success: Update local state and show toast
