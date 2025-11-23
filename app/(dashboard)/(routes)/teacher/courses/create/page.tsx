@@ -31,6 +31,7 @@ const CreatePage = () => {
   const [trialPeriodType, setTrialPeriodType] = useState<string>("DAYS");
   const [trialPeriodDays, setTrialPeriodDays] = useState(0);
   const [trialPeriodEnd, setTrialPeriodEnd] = useState<string>("");
+  const [vatRate, setVatRate] = useState<number>(23);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +45,7 @@ const CreatePage = () => {
           isRecurring,
           interval: isRecurring ? interval : "ONE_TIME",
           trialPeriodType: isRecurring ? trialPeriodType : undefined,
+          vatRate: Number(vatRate),
         };
         if (isRecurring && trialPeriodType === "DAYS" && trialPeriodDays > 0) {
           pricePayload.trialPeriodDays = trialPeriodDays;
@@ -257,6 +259,24 @@ const CreatePage = () => {
                 />
               </div>
 
+              <div className="flex flex-col mt-3">
+                <label htmlFor="vatRate" className="text-sm font-medium text-gray-700">
+                  Stawka VAT
+                </label>
+                <p className="text-xs text-slate-600 mb-1">
+                  Wybierz odpowiednią stawkę VAT dla usługi edukacyjnej
+                </p>
+                <Select value={vatRate.toString()} onValueChange={(value) => setVatRate(Number(value))} disabled={isSubmitting}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="23">23% (standardowa)</SelectItem>
+                    <SelectItem value="0">0% (zwolniona)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="flex flex-col gap-2 mt-3">
                 <label className="flex items-center gap-2">
                   <input
@@ -333,7 +353,10 @@ const CreatePage = () => {
                 {price === 0 ? (
                   <span className="font-semibold text-slate-700">Darmowy</span>
                 ) : (
-                  <span className="font-semibold text-slate-700">{price} {currency}</span>
+                  <>
+                    <span className="font-semibold text-slate-700">{price} {currency} netto</span>
+                    <span className="text-slate-600 ml-2">({(price * (1 + vatRate / 100)).toFixed(2)} {currency} brutto, VAT {vatRate}%)</span>
+                  </>
                 )}
                 {isRecurring && price > 0 && (
                   <div className="text-sm text-muted-foreground">{interval === 'YEAR' ? 'płatność co rok' : 'płatność co miesiąc'}</div>
