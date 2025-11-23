@@ -1077,8 +1077,10 @@ export async function POST(req: Request) {
         }
         case "invoice.paid": {
             const invoice = event.data.object as Stripe.Invoice;
-            const subscriptionId = (invoice as any)['subscription'];
-            const paymentIntentId = (invoice as any)['payment_intent'];
+            const subscriptionId = (invoice as any).subscription;
+            const paymentIntentId = (invoice as any).payment_intent;
+            
+            console.log(`[WEBHOOK] Invoice.paid - subscriptionId: ${subscriptionId}, paymentIntentId: ${paymentIntentId}, total: ${invoice.total}, billing_reason: ${invoice.billing_reason}`);
             
             // Log detailed invoice information
             logEventData("INVOICE_PAID", invoice, {
@@ -1095,7 +1097,34 @@ export async function POST(req: Request) {
             
             if (subscriptionId) {
                 // Subscription-based invoice
-                const metadata = await getSubscriptionMetadata(stripeClient, subscriptionId as string, isConnectEvent || undefined);
+                // First check if invoice has metadata directly, then check line items, finally get from subscription
+                let metadata = invoice.metadata || {};
+                
+                // If no metadata on invoice, try to get from line items
+                if (!metadata.type || Object.keys(metadata).length === 0) {
+                    try {
+                        if (invoice.id) {
+                            const lineItems = await stripeClient.invoices.listLineItems(invoice.id as string, { limit: 10 });
+                            if (lineItems.data && lineItems.data.length > 0) {
+                                const firstLineItem = lineItems.data[0];
+                                if (firstLineItem.metadata && Object.keys(firstLineItem.metadata).length > 0) {
+                                    metadata = firstLineItem.metadata;
+                                    console.log(`[WEBHOOK] Found metadata in line items:`, JSON.stringify(metadata, null, 2));
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        console.error(`[WEBHOOK] Error fetching line items:`, err);
+                    }
+                }
+                
+                // If still no metadata, get from subscription
+                if (!metadata.type || Object.keys(metadata).length === 0) {
+                    metadata = await getSubscriptionMetadata(stripeClient, subscriptionId as string, isConnectEvent || undefined);
+                }
+                
+                console.log(`[WEBHOOK] Invoice.paid final metadata:`, JSON.stringify(metadata, null, 2));
+                
                 if (metadata.type === "educationalPath") {
                     const appUserId = Number(metadata.userId);
                     const educationalPathId = Number(metadata.educationalPathId);
