@@ -1077,8 +1077,14 @@ export async function POST(req: Request) {
         }
         case "invoice.paid": {
             const invoice = event.data.object as Stripe.Invoice;
-            const subscriptionId = (invoice as any).subscription;
-            const paymentIntentId = (invoice as any).payment_intent;
+            // Support both old and new Stripe API structures
+            let subscriptionId = (invoice as any).subscription;
+            let paymentIntentId = (invoice as any).payment_intent;
+            
+            // New Stripe API structure (2025-04-30.basil) - check parent.subscription_details
+            if (!subscriptionId && (invoice as any).parent?.subscription_details?.subscription) {
+                subscriptionId = (invoice as any).parent.subscription_details.subscription;
+            }
             
             console.log(`[WEBHOOK] Invoice.paid - subscriptionId: ${subscriptionId}, paymentIntentId: ${paymentIntentId}, total: ${invoice.total}, billing_reason: ${invoice.billing_reason}`);
             
