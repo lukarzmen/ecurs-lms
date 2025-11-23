@@ -377,8 +377,15 @@ export async function POST(req: Request) {
             console.error("Error fetching course price data:", err);
         }
 
-        await db.userCoursePurchase.create({
-            data: baseData,
+        await db.userCoursePurchase.upsert({
+            where: {
+                userCourseId: userCourseId,
+            },
+            update: {
+                ...baseData,
+                updatedAt: new Date(),
+            },
+            create: baseData,
         });
     }
 
@@ -463,8 +470,15 @@ export async function POST(req: Request) {
             console.error("Error fetching course price data for enhanced purchase:", err);
         }
 
-        await db.userCoursePurchase.create({
-            data: baseData,
+        await db.userCoursePurchase.upsert({
+            where: {
+                userCourseId: userCourseId,
+            },
+            update: {
+                ...baseData,
+                updatedAt: new Date(),
+            },
+            create: baseData,
         });
     }
     async function createEduPathPurchase(appUserId: number, educationalPathId: number, paymentId: string, eventData?: any, eventType?: string) {
@@ -540,8 +554,18 @@ export async function POST(req: Request) {
             console.error("Error fetching educational path price data:", err);
         }
 
-        await db.educationalPathPurchase.create({
-            data: baseData,
+        await db.educationalPathPurchase.upsert({
+            where: {
+                userId_educationalPathId: {
+                    userId: appUserId,
+                    educationalPathId: educationalPathId,
+                }
+            },
+            update: {
+                ...baseData,
+                updatedAt: new Date(),
+            },
+            create: baseData,
         });
 
         // Also activate all courses in the educational path
@@ -663,8 +687,18 @@ export async function POST(req: Request) {
             console.error("Error fetching educational path price data for enhanced purchase:", err);
         }
 
-        await db.educationalPathPurchase.create({
-            data: baseData,
+        await db.educationalPathPurchase.upsert({
+            where: {
+                userId_educationalPathId: {
+                    userId: appUserId,
+                    educationalPathId: educationalPathId,
+                }
+            },
+            update: {
+                ...baseData,
+                updatedAt: new Date(),
+            },
+            create: baseData,
         });
     }
 
