@@ -13,6 +13,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SortingState, ColumnFiltersState } from "@tanstack/react-table";
 const columns = [
     {
+        header: (row: any) => (
+            <input
+                type="checkbox"
+                className="w-4 h-4 cursor-pointer"
+                checked={row.table.options.meta?.selectedStudents?.length === row.table.options.meta?.totalStudents}
+                onChange={() => row.table.options.meta?.toggleAllStudents()}
+            />
+        ),
+        id: "select",
+        cell: (row: any) => (
+            <input
+                type="checkbox"
+                className="w-4 h-4 cursor-pointer"
+                checked={row.table.options.meta?.selectedStudents?.includes(row.row.original.email)}
+                onChange={() => row.table.options.meta?.toggleStudentSelection(row.row.original.email)}
+            />
+        ),
+        size: 50,
+        meta: { style: "w-12" },
+    },
+    {
         header: "Id użytkownika",
         accessorKey: "id",
         cell: (row: any) => <span className="font-mono">{row.getValue()}</span>,
@@ -76,7 +97,6 @@ const columns = [
         id: "action",
         cell: (row: any) => (
             <Button
-                disabled={true}
                 className="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-1 rounded shadow font-semibold transition"
                 onClick={() => row.table.options.meta?.handleContact(row.row.original.email)}
             >
@@ -105,6 +125,12 @@ const StudentsPage: React.FC = () => {
     const [message, setMessage] = useState('');
     const [author, setAuthor] = useState('');
     const [isLoading, setIsLoading] = useState(true);
+    const [isSending, setIsSending] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+    const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+    const [bulkMessage, setBulkMessage] = useState('');
+    const [isSendingBulk, setIsSendingBulk] = useState(false);
 
     useEffect(() => {
         const fetchStudents = async () => {
@@ -148,19 +174,197 @@ const StudentsPage: React.FC = () => {
         setMessage('');
     };
 
-    const sendMessage = () => {
-        fetch('https://ecurs.app.n8n.cloud/webhook/439187fc-4dda-45ab-a78c-f014e6f1c8fc', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: selectedEmail, message, author: author }),
-        })
-            .then((response) => {
-                if (!response.ok) throw new Error('Failed to send message');
-                return response.json();
-            })
-            .then(() => toast.success('Wysłano wiadomość pomyślnie!'))
-            .catch(() => toast.error('Nie udało się wysłać wiadomości. Spróbuj ponownie później.'));
-        closeModal();
+    const toggleStudentSelection = (email: string) => {
+        setSelectedStudents(prev => 
+            prev.includes(email) 
+                ? prev.filter(e => e !== email)
+                : [...prev, email]
+        );
+    };
+
+    const toggleAllStudents = () => {
+        if (selectedStudents.length === students.length) {
+            setSelectedStudents([]);
+        } else {
+            setSelectedStudents(students.map(s => s.email));
+        }
+    };
+
+    const openBulkModal = () => {
+        if (selectedStudents.length === 0) {
+            toast.error('Zaznacz przynajmniej jednego studenta');
+            return;
+        }
+        setIsBulkModalOpen(true);
+    };
+
+    const closeBulkModal = () => {
+        setIsBulkModalOpen(false);
+        setBulkMessage('');
+    };
+
+    const sendBulkMessage = async () => {
+        if (!bulkMessage.trim()) {
+            toast.error('Wpisz treść wiadomości');
+            return;
+        }
+
+        setIsSendingBulk(true);
+        let successCount = 0;
+        let failCount = 0;
+
+        try {
+            for (const email of selectedStudents) {
+                try {
+                    const response = await fetch('/api/notifications/email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            to: email,
+                            subject: `Wiadomość od nauczyciela: ${author}`,
+                            text: `Od: ${author}\n\n${bulkMessage}`,
+                            useSSL: true
+                        }),
+                    });
+
+                    if (response.ok) {
+                        successCount++;
+                    } else {
+                        failCount++;
+                    }
+                } catch (error) {
+                    failCount++;
+                    console.error(`Failed to send to ${email}:`, error);
+                }
+            }
+
+            if (successCount > 0) {
+                toast.success(`Wysłano ${successCount} wiadomości pomyślnie!`);
+            }
+            if (failCount > 0) {
+                toast.error(`Nie udało się wysłać ${failCount} wiadomości`);
+            }
+            
+            closeBulkModal();
+            setSelectedStudents([]);
+        } catch (error) {
+            console.error('Error sending bulk messages:', error);
+            toast.error('Wystąpił błąd podczas wysyłania wiadomości');
+        } finally {
+            setIsSendingBulk(false);
+        }
+    };
+
+    const generateBulkAIMessage = async (type: 'motivation' | 'reminder' | 'feedback') => {
+        setIsGenerating(true);
+        try {
+            const prompts = {
+                motivation: {
+                    systemPrompt: 'Jesteś pomocnym asystentem nauczyciela. Twoim zadaniem jest generowanie motywujących wiadomości dla grupy studentów.',
+                    userPrompt: `Wygeneruj krótką, motywującą wiadomość dla grupy ${selectedStudents.length} studentów. Wiadomość powinna być ciepła, profesjonalna i zachęcająca do dalszej nauki. Długość: 3-4 zdania.`
+                },
+                reminder: {
+                    systemPrompt: 'Jesteś pomocnym asystentem nauczyciela. Twoim zadaniem jest generowanie przypomnień dla grupy studentów.',
+                    userPrompt: `Wygeneruj uprzejmą wiadomość przypominającą grupie ${selectedStudents.length} studentów o kontynuowaniu nauki i wykonaniu zadań. Wiadomość powinna być profesjonalna i zachęcająca. Długość: 3-4 zdania.`
+                },
+                feedback: {
+                    systemPrompt: 'Jesteś pomocnym asystentem nauczyciela. Twoim zadaniem jest generowanie pozytywnego feedbacku dla grupy studentów.',
+                    userPrompt: `Wygeneruj pozytywną wiadomość z feedbackiem dla grupy ${selectedStudents.length} studentów. Wiadomość powinna doceniać postępy i zachęcać do dalszej pracy. Długość: 3-4 zdania.`
+                }
+            };
+
+            const response = await fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(prompts[type]),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate message');
+            }
+
+            const generatedMessage = await response.text();
+            setBulkMessage(generatedMessage);
+            toast.success('Wiadomość wygenerowana przez AI!');
+        } catch (error) {
+            console.error('Error generating AI message:', error);
+            toast.error('Nie udało się wygenerować wiadomości. Spróbuj ponownie.');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const generateAIMessage = async (type: 'motivation' | 'reminder' | 'feedback') => {
+        setIsGenerating(true);
+        try {
+            const prompts = {
+                motivation: {
+                    systemPrompt: 'Jesteś pomocnym asystentem nauczyciela. Twoim zadaniem jest generowanie motywujących wiadomości dla studentów.',
+                    userPrompt: `Wygeneruj krótką, motywującą wiadomość dla studenta (${selectedEmail}). Wiadomość powinna być ciepła, profesjonalna i zachęcająca do dalszej nauki. Długość: 2-3 zdania.`
+                },
+                reminder: {
+                    systemPrompt: 'Jesteś pomocnym asystentem nauczyciela. Twoim zadaniem jest generowanie przypomnień dla studentów.',
+                    userPrompt: `Wygeneruj uprzejmą wiadomość przypominającą studentowi (${selectedEmail}) o kontynuowaniu nauki i wykonaniu zadań. Wiadomość powinna być profesjonalna i zachęcająca. Długość: 2-3 zdania.`
+                },
+                feedback: {
+                    systemPrompt: 'Jesteś pomocnym asystentem nauczyciela. Twoim zadaniem jest generowanie pozytywnego feedbacku dla studentów.',
+                    userPrompt: `Wygeneruj pozytywną wiadomość z feedbackiem dla studenta (${selectedEmail}). Wiadomość powinna doceniać postępy i zachęcać do dalszej pracy. Długość: 2-3 zdania.`
+                }
+            };
+
+            const response = await fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(prompts[type]),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate message');
+            }
+
+            const generatedMessage = await response.text();
+            setMessage(generatedMessage);
+            toast.success('Wiadomość wygenerowana przez AI!');
+        } catch (error) {
+            console.error('Error generating AI message:', error);
+            toast.error('Nie udało się wygenerować wiadomości. Spróbuj ponownie.');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const sendMessage = async () => {
+        if (!message.trim()) {
+            toast.error('Wpisz treść wiadomości');
+            return;
+        }
+
+        setIsSending(true);
+        try {
+            const response = await fetch('/api/notifications/email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: selectedEmail,
+                    subject: `Wiadomość od nauczyciela: ${author}`,
+                    text: `Od: ${author}\n\n${message}`,
+                    useSSL: true
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to send message');
+            }
+
+            toast.success('Wysłano wiadomość pomyślnie!');
+            closeModal();
+        } catch (error) {
+            console.error('Error sending message:', error);
+            toast.error('Nie udało się wysłać wiadomości. Spróbuj ponownie później.');
+        } finally {
+            setIsSending(false);
+        }
     };
 
 
@@ -177,7 +381,13 @@ const StudentsPage: React.FC = () => {
         onSortingChange: setSorting,
         state: { sorting, columnFilters },
         onColumnFiltersChange: setColumnFilters,
-        meta: { handleContact },
+        meta: { 
+            handleContact, 
+            toggleStudentSelection,
+            toggleAllStudents,
+            selectedStudents,
+            totalStudents: students.length
+        },
     });
 
     if (isLoading) {
@@ -204,6 +414,15 @@ const StudentsPage: React.FC = () => {
                         Zarządzaj swoimi studentami i utrzymuj z nimi kontakt
                     </p>
                 </div>
+                {selectedStudents.length > 0 && (
+                    <Button
+                        onClick={openBulkModal}
+                        className="bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2"
+                    >
+                        <Mail className="h-4 w-4" />
+                        Wyślij do zaznaczonych ({selectedStudents.length})
+                    </Button>
+                )}
             </div>
 
             {/* Students Table Card */}
@@ -327,6 +546,77 @@ const StudentsPage: React.FC = () => {
                 </CardContent>
             </Card>
 
+            {/* Bulk Send Modal */}
+            {isBulkModalOpen && (
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="relative w-full max-w-md mx-auto p-6 border shadow-xl rounded-lg bg-white">
+                        <div className="text-center">
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Wyślij wiadomość do wielu studentów</h3>
+                            <p className="text-sm text-gray-500 mb-4">
+                                Wysyłasz do <span className="font-semibold text-orange-600">{selectedStudents.length} studentów</span>
+                            </p>
+                            
+                            {/* AI Buttons */}
+                            <div className="mb-4 flex flex-wrap gap-2 justify-center">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => generateBulkAIMessage('motivation')}
+                                    disabled={isGenerating}
+                                    className="text-xs"
+                                >
+                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '✨'} Motywacja
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => generateBulkAIMessage('reminder')}
+                                    disabled={isGenerating}
+                                    className="text-xs"
+                                >
+                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '🔔'} Przypomnienie
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => generateBulkAIMessage('feedback')}
+                                    disabled={isGenerating}
+                                    className="text-xs"
+                                >
+                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '💬'} Feedback
+                                </Button>
+                            </div>
+
+                            <textarea
+                                className="mt-2 w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                                rows={4}
+                                placeholder="Twoja wiadomość tutaj... lub użyj AI aby wygenerować treść"
+                                value={bulkMessage}
+                                onChange={(e) => setBulkMessage(e.target.value)}
+                                disabled={isGenerating}
+                            />
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    className="flex-1 px-4 py-2 bg-orange-600 text-white font-semibold rounded-md shadow hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    onClick={sendBulkMessage}
+                                    disabled={isSendingBulk || !bulkMessage.trim()}
+                                >
+                                    {isSendingBulk && <Loader2 className="h-4 w-4 animate-spin" />}
+                                    {isSendingBulk ? 'Wysyłanie...' : 'Wyślij wszystkim'}
+                                </button>
+                                <button
+                                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-md shadow hover:bg-gray-300 transition-colors"
+                                    onClick={closeBulkModal}
+                                    disabled={isSendingBulk}
+                                >
+                                    Anuluj
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
@@ -336,19 +626,54 @@ const StudentsPage: React.FC = () => {
                             <p className="text-sm text-gray-500 mb-4">
                                 Napisz wiadomość do <span className="font-semibold text-orange-600">{selectedEmail}</span>:
                             </p>
+                            
+                            {/* AI Buttons */}
+                            <div className="mb-4 flex flex-wrap gap-2 justify-center">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => generateAIMessage('motivation')}
+                                    disabled={isGenerating}
+                                    className="text-xs"
+                                >
+                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '✨'} Motywacja
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => generateAIMessage('reminder')}
+                                    disabled={isGenerating}
+                                    className="text-xs"
+                                >
+                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '🔔'} Przypomnienie
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => generateAIMessage('feedback')}
+                                    disabled={isGenerating}
+                                    className="text-xs"
+                                >
+                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '💬'} Feedback
+                                </Button>
+                            </div>
+
                             <textarea
                                 className="mt-2 w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                                 rows={4}
-                                placeholder="Twoja wiadomość tutaj..."
+                                placeholder="Twoja wiadomość tutaj... lub użyj AI aby wygenerować treść"
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
+                                disabled={isGenerating}
                             />
                             <div className="flex gap-3 mt-6">
                                 <button
-                                    className="flex-1 px-4 py-2 bg-orange-600 text-white font-semibold rounded-md shadow hover:bg-orange-700 transition-colors"
+                                    className="flex-1 px-4 py-2 bg-orange-600 text-white font-semibold rounded-md shadow hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     onClick={sendMessage}
+                                    disabled={isSending || !message.trim()}
                                 >
-                                    Wyślij wiadomość
+                                    {isSending && <Loader2 className="h-4 w-4 animate-spin" />}
+                                    {isSending ? 'Wysyłanie...' : 'Wyślij wiadomość'}
                                 </button>
                                 <button
                                     className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-md shadow hover:bg-gray-300 transition-colors"
