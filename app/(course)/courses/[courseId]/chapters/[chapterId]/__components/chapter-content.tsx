@@ -4,7 +4,6 @@ import LexicalEditor from "@/components/editor/LexicalEditor";
 import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 import { ModuleContextData } from "@/components/editor/context/CourseContext";
 import { SerializedDocument } from "@lexical/file";
-import { set } from "lodash-es";
 import { useEffect, useState } from "react";
 import { Loader2, Hourglass } from "lucide-react";
 
@@ -70,7 +69,7 @@ export default function ChapterContent ({
         ) : loadError ? (
           <div className="flex flex-col items-center justify-center h-full p-8 text-gray-500">
             <Hourglass className="w-12 h-12 mb-4 text-gray-400" />
-            <div className="text-lg font-medium">Kurs w przygotowaniu</div>
+            <div className="text-lg font-medium">Treść w przygotowaniu</div>
           </div>
         ) : (
           <LexicalEditor
