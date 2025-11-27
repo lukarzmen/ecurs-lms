@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { CheckCircle2, XCircle, Eye, EyeOff, HelpCircle } from "lucide-react";
 import ProgressSpinner from "../../plugins/TextGeneratorPlugin/ProgressComponent";
 
 export type QAType = {
@@ -108,110 +109,128 @@ wyjaśnienie: ${explanation || "Brak dodatkowego wyjaśnienia dla poprawnej odpo
   const isDisabled = isCorrect === true;
 
   return (
-    <div className="mb-6 p-6 border border-gray-200 rounded-2xl bg-white/90 backdrop-blur shadow-lg transition-shadow hover:shadow-xl">
-      {/* Label: Pytanie */}
-      <label className="block text-gray-700 font-semibold mb-1 text-base" htmlFor="qa-question">
-        Pytanie:
-      </label>
-      <p id="qa-question" className="text-gray-900 font-bold mb-4 text-xl leading-tight">
-        {question}
-      </p>
+    <div className="question-answer-component max-w-2xl mx-auto mb-6">
+      <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+        {/* Status indicator */}
+        {isCorrect !== null && (
+          <div className={`flex items-center gap-2 mb-4 p-3 rounded-lg ${isCorrect ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+            {isCorrect ? (
+              <>
+                <CheckCircle2 className="h-5 w-5" />
+                <span className="text-sm font-semibold">Świetnie! Twoja odpowiedź jest poprawna!</span>
+              </>
+            ) : (
+              <>
+                <XCircle className="h-5 w-5" />
+                <span className="text-sm font-semibold">Spróbuj ponownie</span>
+              </>
+            )}
+          </div>
+        )}
 
-      {/* Label: Twoja odpowiedź */}
-      <label className="block text-gray-700 font-semibold mb-1 text-base" htmlFor="qa-answer">
-        Twoja odpowiedź:
-      </label>
-      <div className="relative">
-        <input
-          id="qa-answer"
-          type="text"
-          value={userInput}
-          onChange={(e) => {
-            if (isDisabled) return;
-            setUserInput(e.target.value);
-            setIsCorrect(null);
-            setShowAnswer(false);
-            setLlmExplanation(null);
-          }}
-          className={`w-full border rounded-lg p-3 pr-24 text-lg focus:outline-none focus:ring-2 transition-all duration-150
-            ${isDisabled
-              ? "border-green-400 bg-gray-100 cursor-not-allowed text-gray-500"
-              : isCorrect === null
-              ? "border-gray-300 focus:border-orange-400 focus:ring-orange-200"
-              : "border-red-400 focus:border-red-400 focus:ring-red-100"
-            }`}
-          placeholder="Twoja odpowiedź"
-          disabled={isDisabled}
-          autoComplete="off"
-        />
-        {!isDisabled &&
-          (isLoading ? (
-            <div className="absolute right-16 bottom-2">
-              <ProgressSpinner />
-            </div>
-          ) : (
+        {/* Question */}
+        <h3 className="text-xl font-semibold mb-6 leading-relaxed">{question}</h3>
+
+        {/* Answer input */}
+        <div className="relative mb-4">
+          <input
+            id="qa-answer"
+            type="text"
+            value={userInput}
+            onChange={(e) => {
+              if (isDisabled) return;
+              setUserInput(e.target.value);
+              setIsCorrect(null);
+              setShowAnswer(false);
+              setLlmExplanation(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && userInput.trim() && !isDisabled && !isLoading) {
+                handleCheck();
+              }
+            }}
+            className={`w-full border-2 rounded-lg p-4 pr-28 text-base font-medium focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all duration-200
+              ${isDisabled
+                ? "border-emerald-300 bg-emerald-50/50 cursor-not-allowed text-muted-foreground"
+                : isCorrect === null
+                ? "border-border bg-background focus:border-primary"
+                : "border-red-300 bg-red-50/50 focus:border-red-500"
+              }`}
+            placeholder="Wpisz swoją odpowiedź..."
+            disabled={isDisabled}
+            autoComplete="off"
+          />
+          
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            {!isDisabled && (
+              isLoading ? (
+                <div className="p-2">
+                  <ProgressSpinner />
+                </div>
+              ) : (
+                <button
+                  onClick={handleCheck}
+                  disabled={!userInput.trim()}
+                  className={`p-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+                    ${userInput.trim() 
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm active:scale-95" 
+                      : "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+                    }`}
+                  title="Sprawdź swoją odpowiedź"
+                  aria-label="Sprawdź odpowiedź"
+                >
+                  <HelpCircle className="h-5 w-5" />
+                </button>
+              )
+            )}
+
             <button
-              onClick={handleCheck}
-              className="absolute right-16 bottom-2 text-white bg-orange-200 hover:bg-orange-600 rounded-full px-3 py-1.5 shadow transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-orange-300"
-              title="Sprawdź swoją odpowiedź"
-              disabled={!userInput.trim()}
-              aria-label="Sprawdź odpowiedź"
-              tabIndex={0}
+              onClick={() => setShowAnswer(!showAnswer)}
+              className={`p-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+                ${showAnswer
+                  ? "bg-primary/10 text-primary hover:bg-primary/20"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              title={showAnswer ? "Ukryj odpowiedź" : "Pokaż odpowiedź"}
+              aria-label={showAnswer ? "Ukryj odpowiedź" : "Pokaż odpowiedź"}
             >
-              ❓
+              {showAnswer ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
-          ))}
+          </div>
+        </div>
 
-        <button
-          onClick={() => setShowAnswer(!showAnswer)}
-          className={`absolute right-3 top-1/2 -translate-y-1/2 text-xl rounded-full px-2 py-1 transition-colors duration-150
-            ${showAnswer
-              ? "bg-gray-200 text-orange-600 hover:bg-orange-100"
-              : "bg-gray-100 text-gray-600 hover:bg-orange-100"
-            }`}
-          title={showAnswer ? "Ukryj odpowiedź" : "Pokaż odpowiedź"}
-          aria-label={showAnswer ? "Ukryj odpowiedź" : "Pokaż odpowiedź"}
-          tabIndex={0}
-        >
-          {showAnswer ? "🙈" : "👁️"}
-        </button>
+        {/* LLM Explanation for incorrect answer */}
+        {isCorrect === false && llmExplanation && (
+          <div className="mb-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
+            <div className="flex items-start gap-2">
+              <XCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-900 leading-relaxed">
+                <span className="font-semibold">Wskazówka od AI: </span>
+                {llmExplanation}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Correct answer */}
+        {showAnswer && (
+          <div className="p-4 bg-muted/50 rounded-lg border">
+            <div className="flex items-start gap-2 mb-2">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm leading-relaxed">
+                <span className="font-semibold text-foreground">Poprawna odpowiedź: </span>
+                <span className="text-muted-foreground">{answer}</span>
+              </p>
+            </div>
+            {explanation && (
+              <p className="text-sm text-muted-foreground leading-relaxed mt-2 pl-7">
+                <span className="font-semibold text-foreground">Wyjaśnienie: </span>
+                {explanation}
+              </p>
+            )}
+          </div>
+        )}
       </div>
-
-      {/* Informacja zwrotna */}
-      {isCorrect !== null && (
-        <p
-          className={`mt-3 text-base font-semibold transition-colors duration-150
-            ${isCorrect ? "text-green-600" : "text-red-600"}
-          `}
-        >
-          {isCorrect
-            ? "Super! Twoja odpowiedź jest poprawna."
-            : "Niestety, spróbuj jeszcze raz!"}
-        </p>
-      )}
-
-      {/* Wyjaśnienie od LLM */}
-      {isCorrect === false && llmExplanation && (
-        <div className="mt-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-          <p className="text-base text-yellow-800">
-            <strong>Wskazówka od AI:</strong> {llmExplanation}
-          </p>
-        </div>
-      )}
-
-      {/* Poprawna odpowiedź */}
-      {showAnswer && (
-        <div className="mt-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
-          <p className="text-base text-orange-700">
-            <strong>Poprawna odpowiedź:</strong> {answer}
-          </p>
-          {explanation && (
-            <p className="text-base text-gray-700 mt-1">
-              <strong>Wyjaśnienie:</strong> {explanation}
-            </p>
-          )}
-        </div>
-      )}
     </div>
   );
 }

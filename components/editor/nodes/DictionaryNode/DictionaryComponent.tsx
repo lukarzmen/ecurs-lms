@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react"; // Added useMemo
 import { useSwipeable } from "react-swipeable";
 import Confetti from "react-confetti";
+import { ChevronLeft, ChevronRight, Plus, X, Table, Shuffle, BookOpen, Trophy } from "lucide-react";
 
 export interface Dictionary {
   [Key: string]: string;
@@ -32,11 +33,20 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
 
   // Removed handleDictionaryValueChanged - call onDictionaryChanged directly
 
+  const COLOR_STYLES = [
+    { bg: '#eab308', text: '#fff' }, // yellow-500
+    { bg: '#22c55e', text: '#fff' }, // green-500
+    { bg: '#f97316', text: '#fff' }, // orange-500
+    { bg: '#3b82f6', text: '#fff' }, // blue-500
+    { bg: '#a855f7', text: '#fff' }, // purple-500
+    { bg: '#ec4899', text: '#fff' }, // pink-500
+  ];
+
   const TAILWIND_COLORS = [
     "bg-yellow-500",
     "bg-green-500",
     "bg-orange-500",
-    "bg-blue-500", // Changed one orange to blue for variety
+    "bg-blue-500",
     "bg-purple-500",
     "bg-pink-500",
   ];
@@ -107,16 +117,17 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
   // --- Match Game State & Handlers ---
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [selectedValue, setSelectedValue] = useState<string | null>(null);
-  const [matches, setMatches] = useState<{ [key: string]: string }>({});
-  const [tempColor, setTempColor] = useState<{ [key: string]: string }>({});
+  const [matches, setMatches] = useState<{ [key: string]: number }>({});
+  const [tempColor, setTempColor] = useState<{ [key: string]: number | 'error' }>({});
   const [shuffledKeys, setShuffledKeys] = useState<string[]>([]);
   const [shuffledValues, setShuffledValues] = useState<string[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
   const [selectedEntries, setSelectedEntries] = useState<[string, string][]>([]);
 
-  const getRandomColor = () => {
-    const availableColors = TAILWIND_COLORS.filter(color => !Object.values(matches).includes(color));
-    return availableColors.length > 0 ? availableColors[Math.floor(Math.random() * availableColors.length)] : "bg-gray-400";
+  const getRandomColorIndex = () => {
+    const usedIndices = new Set(Object.values(matches).filter(v => typeof v === 'number'));
+    const availableIndices = COLOR_STYLES.map((_, i) => i).filter(i => !usedIndices.has(i));
+    return availableIndices.length > 0 ? availableIndices[Math.floor(Math.random() * availableIndices.length)] : 0;
   };
 
   // Use currentEntries derived from props
@@ -155,13 +166,14 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
     setCurrentIndex(0);
     setCurrentColorIndex(0);
     // No need to update local 'entries' state as it's derived now
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, dictionary]); // Rerun if dictionary data changes externally
 
   // Removed useEffect that synced dictionary prop to local entries state
 
   const handleSelection = (keyOrValue: string, isKey: boolean) => {
     // Prevent interaction if already matched
-    if (matches[keyOrValue]) return;
+    if (matches[keyOrValue] !== undefined) return;
 
     if (isKey) {
       if (selectedKey === keyOrValue) { // Deselect if clicking the same key
@@ -169,7 +181,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
           setTempColor({}); // Clear temp color
       } else if (selectedKey === null) { // Select a key
           setSelectedKey(keyOrValue);
-          setTempColor({ [keyOrValue]: getRandomColor() }); // Assign temp color
+          setTempColor({ [keyOrValue]: getRandomColorIndex() }); // Assign temp color index
       }
       // If a value is already selected, ignore key click
     } else { // It's a value
@@ -177,23 +189,23 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
           setSelectedValue(null);
           setTempColor({}); // Clear temp color
       } else if (selectedValue === null && selectedKey !== null) { // Select a value *only if* a key is selected
-          // setSelectedValue(keyOrValue); // Don't set state here yet, check match first
           const originalEntry = selectedEntries.find(([k, v]) => k === selectedKey);
 
           if (originalEntry && originalEntry[1] === keyOrValue) { // Correct match!
-              const assignedColor = tempColor[selectedKey]; // Use the key's temp color
-              setMatches((prev) => ({ ...prev, [selectedKey]: assignedColor, [keyOrValue]: assignedColor }));
+              const assignedColorIndex = tempColor[selectedKey]; // Use the key's temp color index
+              if (typeof assignedColorIndex === 'number') {
+                setMatches((prev) => ({ ...prev, [selectedKey]: assignedColorIndex, [keyOrValue]: assignedColorIndex }));
+              }
               setTempColor({}); // Clear temp colors
               setSelectedKey(null); // Reset selection
               setSelectedValue(null);
           } else { // Incorrect match
-              setTempColor({ [selectedKey]: "bg-red-500", [keyOrValue]: "bg-red-500" });
+              setTempColor({ [selectedKey]: 'error', [keyOrValue]: 'error' });
               // Reset selection immediately on incorrect match
               setSelectedKey(null);
               setSelectedValue(null);
               setTimeout(() => setTempColor({}), 1000); // Clear temp colors after delay
           }
-          // Removed redundant reset here
       }
       // If a key is not selected, ignore value click
     }
@@ -216,108 +228,194 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
   }, [matches, selectedEntries, view, onComplete, showConfetti]); // Added showConfetti dependency
 
 
+  const matchedPairs = Object.keys(matches).length / 2;
+  const totalPairs = selectedEntries.length;
+  const progressPercentage = totalPairs > 0 ? (matchedPairs / totalPairs) * 100 : 0;
+
   return (
-    <div className="pt-4">
+    <div className="dictionary-component max-w-4xl mx-auto pt-4">
       {showConfetti && <Confetti />}
 
       {/* Match Game View */}
       {view === "matchGameView" && (
-        <div className="pt-4 flex flex-col items-center">
+        <div className="flex flex-col items-center">
           {selectedEntries.length > 0 ? (
-            <>
-              <div className="grid grid-cols-2 gap-4 w-80">
-                {/* Left Side (Shuffled Keys) */}
-                <div className="flex flex-col space-y-2">
-                  {shuffledKeys.map((key) => (
-                    <div
-                      key={key}
-                      className={`p-4 rounded-lg shadow text-center cursor-pointer select-none transition-colors duration-300 ${matches[key] || tempColor[key] || (selectedKey === key ? tempColor[key] : baseColor)}`}
-                      onClick={() => handleSelection(key, true)}
-                    >
-                      {key}
+            <div className="w-full">
+              {/* Header with progress */}
+              <div className="mb-6 rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <Trophy className="h-5 w-5 text-primary" />
                     </div>
-                  ))}
+                    <h3 className="text-xl font-semibold">Gra w dopasowywanie</h3>
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {matchedPairs}/{totalPairs} par
+                  </span>
+                </div>
+                <div className="mb-2">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full transition-all duration-500 ease-out ${
+                        matchedPairs === totalPairs ? 'bg-emerald-500' : 'bg-primary'
+                      }`}
+                      style={{ width: `${progressPercentage}%` }}
+                    />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">Dopasuj słowa po lewej stronie do tłumaczeń po prawej</p>
+              </div>
+
+              {/* Game grid */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                {/* Left Side (Shuffled Keys) */}
+                <div className="flex flex-col space-y-3">
+                  {shuffledKeys.map((key) => {
+                    const isMatched = matches[key] !== undefined;
+                    const isSelected = selectedKey === key;
+                    const colorIndex = matches[key] ?? tempColor[key];
+                    const isError = tempColor[key] === 'error';
+                    
+                    let style = {};
+                    let className = 'p-4 rounded-lg border-2 text-center font-medium cursor-pointer select-none transition-all duration-300';
+                    
+                    if (isMatched && typeof colorIndex === 'number') {
+                      style = { backgroundColor: COLOR_STYLES[colorIndex].bg, color: COLOR_STYLES[colorIndex].text };
+                      className += ' border-transparent';
+                    } else if (isError) {
+                      style = { backgroundColor: '#ef4444', color: '#fff' };
+                      className += ' border-transparent';
+                    } else if (isSelected) {
+                      className += ' bg-primary text-primary-foreground border-primary shadow-lg scale-105';
+                    } else {
+                      className += ' bg-card border-border hover:border-primary/50 hover:shadow-md active:scale-95';
+                    }
+                    
+                    return (
+                      <button
+                        key={key}
+                        className={className}
+                        style={style}
+                        onClick={() => handleSelection(key, true)}
+                        disabled={isMatched}
+                      >
+                        {key}
+                      </button>
+                    );
+                  })}
                 </div>
                 {/* Right Side (Shuffled Values) */}
-                <div className="flex flex-col space-y-2">
-                  {shuffledValues.map((value) => (
-                    <div
-                      key={value}
-                      className={`p-4 rounded-lg shadow text-center cursor-pointer select-none transition-colors duration-300 ${matches[value] || tempColor[value] || (selectedValue === value ? tempColor[value] : baseColor)}`}
-                      onClick={() => handleSelection(value, false)}
-                    >
-                      {value}
-                    </div>
-                  ))}
+                <div className="flex flex-col space-y-3">
+                  {shuffledValues.map((value) => {
+                    const isMatched = matches[value] !== undefined;
+                    const isSelected = selectedValue === value;
+                    const colorIndex = matches[value] ?? tempColor[value];
+                    const isError = tempColor[value] === 'error';
+                    
+                    let style = {};
+                    let className = 'p-4 rounded-lg border-2 text-center font-medium cursor-pointer select-none transition-all duration-300';
+                    
+                    if (isMatched && typeof colorIndex === 'number') {
+                      style = { backgroundColor: COLOR_STYLES[colorIndex].bg, color: COLOR_STYLES[colorIndex].text };
+                      className += ' border-transparent';
+                    } else if (isError) {
+                      style = { backgroundColor: '#ef4444', color: '#fff' };
+                      className += ' border-transparent';
+                    } else if (isSelected) {
+                      className += ' bg-primary text-primary-foreground border-primary shadow-lg scale-105';
+                    } else {
+                      className += ' bg-card border-border hover:border-primary/50 hover:shadow-md active:scale-95';
+                    }
+                    
+                    return (
+                      <button
+                        key={value}
+                        className={className}
+                        style={style}
+                        onClick={() => handleSelection(value, false)}
+                        disabled={isMatched}
+                      >
+                        {value}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-              <span className="text-sm mt-2 text-gray-700 select-none">Dopasuj słowa po lewej stronie do tłumaczeń po prawej stronie</span>
-              <button
-                className="mt-4 px-4 py-2 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-700 select-none"
-                onClick={initializeMatchGame}
-              >
-                Wylosuj ponownie
-              </button>
-            </>
+
+              {/* Shuffle button */}
+              <div className="flex justify-center">
+                <button
+                  className="px-6 py-3 bg-primary text-primary-foreground rounded-lg shadow-sm hover:bg-primary/90 transition-all duration-200 flex items-center gap-2 font-semibold active:scale-95"
+                  onClick={initializeMatchGame}
+                >
+                  <Shuffle className="h-5 w-5" />
+                  Wylosuj ponownie
+                </button>
+              </div>
+            </div>
           ) : (
-              <p className="text-gray-500">Dodaj wpisy w widoku tabeli, aby zagrać.</p>
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-8 text-center">
+              <p className="text-muted-foreground">Dodaj wpisy w widoku tabeli, aby zagrać</p>
+            </div>
           )}
         </div>
       )}
 
       {/* Dictionary View */}
       {view === "dictionaryView" && !isReadonly && (
-        <div>
+        <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Table className="h-5 w-5 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold">Edycja słowniczka</h3>
+            </div>
             <button
-              onClick={() => handleAddRow(true)} // Pass true for adding at top
-              className="mt-4 mb-4 px-4 py-2 bg-orange-500 text-white rounded-full hover:bg-orange-600"
+              onClick={() => handleAddRow(true)}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-200 flex items-center gap-2 shadow-sm active:scale-95"
             >
-              Dodaj wiersz na górze
+              <Plus className="h-4 w-4" />
+              <span className="font-medium">Dodaj na górze</span>
             </button>
-          <table className="table-auto w-full border-collapse border border-gray-300">
-            <thead>
-              <tr>
-                <th className="border border-gray-300 px-4 py-2 text-left" style={{ width: "3rem" }}></th>
-                <th className="border border-gray-300 px-4 py-2 text-left">Słowo kluczowe</th>
-                <th className="border border-gray-300 px-4 py-2 text-left">Definicja</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Use currentEntries derived from props */}
-              {currentEntries.map(([keyword, definition], index) => (
-                <tr key={index}>
-                  <td className="border border-gray-300 px-4 py-2 text-center">
-                    <button
-                      onClick={() => handleRemoveRow(index)}
-                      className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
-                    >
-                      <span className="text-sm">-</span>
-                    </button>
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    <input
-                      type="text"
-                      value={keyword}
-                      onChange={(e) => handleInputChange(index, 'key', e.target.value)}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-orange-200"
-                    />
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    <input
-                      type="text"
-                      value={definition}
-                      onChange={(e) => handleInputChange(index, 'value', e.target.value)}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-orange-200"
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          </div>
+
+          <div className="space-y-3 mb-6">
+            {currentEntries.map(([keyword, definition], index) => (
+              <div key={index} className="flex gap-3 items-start">
+                <button
+                  onClick={() => handleRemoveRow(index)}
+                  className="mt-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 flex-shrink-0 active:scale-95"
+                  title="Usuń wiersz"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <div className="flex-1 grid grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    value={keyword}
+                    onChange={(e) => handleInputChange(index, 'key', e.target.value)}
+                    placeholder="Słowo kluczowe"
+                    className="px-4 py-3 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:border-primary bg-background font-medium transition-all duration-200"
+                  />
+                  <input
+                    type="text"
+                    value={definition}
+                    onChange={(e) => handleInputChange(index, 'value', e.target.value)}
+                    placeholder="Definicja / tłumaczenie"
+                    className="px-4 py-3 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:border-primary bg-background font-medium transition-all duration-200"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
           <button
-            onClick={() => handleAddRow(false)} // Pass false or nothing for adding at bottom
-            className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-full hover:bg-orange-600"
+            onClick={() => handleAddRow(false)}
+            className="w-full py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-200 flex items-center justify-center gap-2 shadow-sm font-semibold active:scale-[0.99]"
           >
+            <Plus className="h-5 w-5" />
             Dodaj wiersz na dole
           </button>
         </div>
@@ -326,39 +424,85 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
       {/* Flashcard View */}
       {view === "flashView" && (
         <div className="flex flex-col items-center" {...swipeHandlers}>
-        {/* Use currentEntries derived from props */}
-        {currentEntries.length > 0 ? (
+          {currentEntries.length > 0 ? (
             <>
+              {/* Card counter */}
+              <div className="mb-4 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <BookOpen className="h-4 w-4" />
+                <span>{currentIndex + 1} / {currentEntries.length}</span>
+              </div>
+
+              {/* Flashcard */}
+              <div className="relative w-full max-w-md">
                 <div
-                  className={`w-80 h-48 rounded-lg shadow-lg p-6 text-center flex flex-col justify-center items-center transition-transform duration-300 ${TAILWIND_COLORS[currentColorIndex % TAILWIND_COLORS.length]} ${isSliding ? (slideDirection === 'right' ? 'translate-x-full opacity-0' : '-translate-x-full opacity-0') : 'opacity-100'}`}
-                  style={{ backfaceVisibility: 'hidden' }} // Helps with smoother transitions
+                  className={`rounded-lg border bg-card shadow-lg p-8 text-center flex flex-col justify-center items-center min-h-[250px] transition-all duration-300 ${isSliding ? (slideDirection === 'right' ? 'translate-x-full opacity-0' : '-translate-x-full opacity-0') : 'opacity-100 scale-100'}`}
+                  style={{ backfaceVisibility: 'hidden' }}
                 >
-                  <div className="text-2xl font-bold select-none">{currentEntries[currentIndex]?.[0] ?? ''}</div>
-                  <div className="text-lg mt-4 select-none">{currentEntries[currentIndex]?.[1] ?? ''}</div>
+                  <div className="text-3xl font-bold text-foreground mb-6 select-none">
+                    {currentEntries[currentIndex]?.[0] ?? ''}
+                  </div>
+                  <div className="h-px w-20 bg-border mb-6"></div>
+                  <div className="text-xl text-muted-foreground select-none">
+                    {currentEntries[currentIndex]?.[1] ?? ''}
+                  </div>
                 </div>
-                <span className="text-sm mt-2 text-gray-700 select-none">Przesuń, aby zmienić słowo ({currentIndex + 1}/{currentEntries.length})</span>
+
+                {/* Navigation buttons */}
+                <button
+                  onClick={handlePrevious}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-14 p-3 bg-card border-2 border-border rounded-full hover:bg-accent hover:border-primary/50 transition-all duration-200 shadow-lg active:scale-95"
+                  title="Poprzednia fiszka"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-14 p-3 bg-card border-2 border-border rounded-full hover:bg-accent hover:border-primary/50 transition-all duration-200 shadow-lg active:scale-95"
+                  title="Następna fiszka"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </div>
+
+              <p className="text-sm text-muted-foreground mt-6 select-none">
+                Przesuń lub użyj strzałek, aby zmienić fiszkę
+              </p>
             </>
-        ) : (
-            <p className="text-gray-500">Brak fiszek do wyświetlenia.</p>
-        )}
-      </div>
+          ) : (
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-8 text-center">
+              <p className="text-muted-foreground">Brak fiszek do wyświetlenia</p>
+            </div>
+          )}
+        </div>
       )}
 
       {/* View Switch Buttons */}
-      <div className="flex justify-center space-x-2 mt-4">
+      <div className="flex justify-center flex-wrap gap-3 mt-8">
           {!isReadonly && view !== "dictionaryView" && (
-              <button onClick={() => setView("dictionaryView")} className="min-w-[160px] bg-blue-500 text-white rounded-full hover:bg-blue-600 px-4 py-2 select-none">
-                  Widok tabeli
+              <button 
+                onClick={() => setView("dictionaryView")} 
+                className="px-6 py-3 bg-card border-2 border-primary text-primary rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-200 flex items-center gap-2 font-semibold shadow-sm active:scale-95"
+              >
+                <Table className="h-5 w-5" />
+                Widok tabeli
               </button>
           )}
           {view !== "flashView" && (
-              <button onClick={() => setView("flashView")} className="min-w-[160px] bg-orange-500 text-white rounded-full hover:bg-orange-600 px-4 py-2 select-none">
-                  Fiszki
+              <button 
+                onClick={() => setView("flashView")} 
+                className="px-6 py-3 bg-card border-2 border-primary text-primary rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-200 flex items-center gap-2 font-semibold shadow-sm active:scale-95"
+              >
+                <BookOpen className="h-5 w-5" />
+                Fiszki
               </button>
           )}
           {view !== "matchGameView" && (
-              <button onClick={() => setView("matchGameView")} className="min-w-[160px] bg-yellow-500 text-black rounded-full hover:bg-yellow-600 px-4 py-2 select-none">
-                  Gra w dopasowywanie
+              <button 
+                onClick={() => setView("matchGameView")} 
+                className="px-6 py-3 bg-card border-2 border-primary text-primary rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-200 flex items-center gap-2 font-semibold shadow-sm active:scale-95"
+              >
+                <Trophy className="h-5 w-5" />
+                Gra w dopasowywanie
               </button>
           )}
       </div>

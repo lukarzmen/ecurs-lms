@@ -12,6 +12,9 @@ export interface UserResponse {
   displayName: string;
   providerId: string;
   roleId: number;
+  stripeAccountId?: string | null;
+  stripeOnboardingComplete?: boolean;
+  hasActiveSubscription?: boolean;
 }
 
 export async function GET(req: Request) {
@@ -36,6 +39,13 @@ export async function GET(req: Request) {
                 lastName: true,
                 displayName: true,
                 roleId: true,
+                stripeAccountId: true,
+                stripeOnboardingComplete: true,
+                teacherPlatformSubscription: {
+                    select: {
+                        subscriptionStatus: true,
+                    },
+                },
             },
         });
 
@@ -52,7 +62,10 @@ export async function GET(req: Request) {
             lastName: user.lastName ?? '',
             displayName: user.displayName ?? '',
             providerId: user.providerId,
-            roleId: user.roleId
+            roleId: user.roleId,
+            stripeAccountId: user.stripeAccountId,
+            stripeOnboardingComplete: user.stripeOnboardingComplete ?? false,
+            hasActiveSubscription: user.teacherPlatformSubscription?.subscriptionStatus === 'active',
         };
         
         return NextResponse.json(userResponse);

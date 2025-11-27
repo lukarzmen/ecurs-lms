@@ -102,15 +102,9 @@ export async function POST(req: Request) {
             capabilities: {
                 card_payments: { requested: true },
                 transfers: { requested: true },
-                // Capabilities dla faktur VAT - dostępne dla wszystkich nauczycieli
-                tax_reporting_us_1099_k: { requested: true },
-                tax_reporting_us_1099_misc: { requested: true },
             },
             // Konfiguracja ustawień podatkowych
             settings: {
-                card_payments: {
-                    statement_descriptor_suffix: 'ECURS',
-                },
                 payouts: {
                     schedule: {
                         interval: 'daily'

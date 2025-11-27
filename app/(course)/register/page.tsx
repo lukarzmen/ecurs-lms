@@ -307,31 +307,102 @@ export default function RegisterPage() {
   });
   const [registrationError, setRegistrationError] = useState<string | null>(null);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [userCheckCompleted, setUserCheckCompleted] = useState(false);
   const router = useRouter();
 
-  // Handle return from Stripe onboarding
+  // Check user registration status and restore appropriate step
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const success = urlParams.get('success');
-    const refresh = urlParams.get('refresh');
-    
-    if (success === 'stripe') {
-      toast.success('Konto Stripe zostało skonfigurowane!');
-      setCurrentStep("platform-subscription");
-      // Clean URL
-      window.history.replaceState({}, '', '/register');
-    } else if (refresh === 'true') {
-      toast.error('Konfiguracja Stripe została przerwana. Spróbuj ponownie.');
-      setCurrentStep("stripe-setup");
-      // Clean URL
-      window.history.replaceState({}, '', '/register');
-    }
-  }, []);
+    const checkUserStatus = async () => {
+      if (!isSignedIn || !userId) {
+        setUserCheckCompleted(true);
+        return;
+      }
 
-  // Block page navigation during redirect states
+      const urlParams = new URLSearchParams(window.location.search);
+      const success = urlParams.get('success');
+      const refresh = urlParams.get('refresh');
+      
+      try {
+        // Fetch user data to check registration status
+        const response = await fetch(`/api/user?userId=${userId}&sessionId=${sessionId}`);
+        
+        if (response.ok) {
+          const userData = await response.json();
+          
+          if (userData.exists) {
+            // User exists in database
+            const isTeacher = userData.roleId === 1;
+            const isStudent = userData.roleId === 0;
+            
+            if (isStudent) {
+              // Student is fully registered
+              setSelectedRole("student");
+              setCurrentStep("completed");
+              toast.success("Jesteś już zarejestrowany jako uczeń!");
+              setTimeout(() => router.push("/"), 2000);
+            } else if (isTeacher) {
+              setSelectedRole("teacher");
+              
+              // Check if returning from Stripe
+              if (success === 'stripe') {
+                toast.success('Konto Stripe zostało skonfigurowane! Teraz wybierz plan subskrypcji platformy.');
+                setCurrentStep("platform-subscription");
+              } else if (success === 'subscription') {
+                toast.success('Płatność za platformę została przetworzona! Rejestracja zakończona.');
+                setCurrentStep("completed");
+                setTimeout(() => router.push("/teacher/courses"), 2000);
+              } else if (refresh === 'true') {
+                toast.error('Konfiguracja Stripe została przerwana. Możesz spróbować ponownie.');
+                setCurrentStep("stripe-setup");
+              } else {
+                // Check what's missing for teacher
+                const hasStripe = userData.stripeAccountId && userData.stripeOnboardingComplete;
+                const hasSubscription = userData.hasActiveSubscription;
+                
+                if (hasSubscription) {
+                  // Fully registered
+                  setCurrentStep("completed");
+                  toast.success("Jesteś już w pełni zarejestrowany!");
+                  setTimeout(() => router.push("/teacher"), 2000);
+                } else if (hasStripe) {
+                  // Has Stripe, needs subscription
+                  setCurrentStep("platform-subscription");
+                  toast("Wybierz plan subskrypcji platformy", { icon: "💳" });
+                } else {
+                  // Needs Stripe setup
+                  setCurrentStep("stripe-setup");
+                  toast("Kontynuuj konfigurację konta płatności", { icon: "👨‍🏫" });
+                }
+              }
+            }
+          } else {
+            // User doesn't exist - start from beginning
+            if (success === 'stripe' || refresh === 'true') {
+              // Returning from Stripe but user doesn't exist - shouldn't happen
+              toast.error("Błąd: Użytkownik nie został utworzony. Rozpocznij rejestrację od początku.");
+              setCurrentStep("role-selection");
+            }
+          }
+        }
+        
+        // Clean URL
+        if (success || refresh) {
+          window.history.replaceState({}, '', '/register');
+        }
+      } catch (error) {
+        console.error("Error checking user status:", error);
+      } finally {
+        setUserCheckCompleted(true);
+      }
+    };
+
+    checkUserStatus();
+  }, [isSignedIn, userId, sessionId, router]);
+
+  // Block page navigation during redirect states (but not for Stripe redirect)
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+      if (loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
         e.preventDefault();
         e.returnValue = "Rejestracja jest w toku. Czy na pewno chcesz opuścić tę stronę?";
         return e.returnValue;
@@ -339,7 +410,7 @@ export default function RegisterPage() {
     };
 
     const handlePopState = (e: PopStateEvent) => {
-      if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+      if (loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
         e.preventDefault();
         // Push the current state back to prevent navigation
         window.history.pushState(null, "", window.location.href);
@@ -347,7 +418,7 @@ export default function RegisterPage() {
       }
     };
 
-    if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+    if (loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
       window.addEventListener("beforeunload", handleBeforeUnload);
       window.addEventListener("popstate", handlePopState);
       
@@ -473,117 +544,69 @@ export default function RegisterPage() {
     
     try {
       setIsLoading(true);
-      setCurrentStep("user-creation");
       setLoadingState("creating-user");
       
-      // Prepare request body with business data for teachers
-      const requestBody: any = { userId, sessionId, roleId };
-      if (selectedRole === "teacher") {
-        requestBody.businessData = businessData;
+      // Check if user already exists
+      const checkResponse = await fetch(`/api/user?userId=${userId}&sessionId=${sessionId}`);
+      let userExists = false;
+      
+      if (checkResponse.ok) {
+        const checkData = await checkResponse.json();
+        userExists = checkData.exists;
       }
       
-      const response = await fetch("/api/user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
-      
-      if (!response.ok) {
-        let errorMessage = "Rejestracja nie powiodła się";
+      if (!userExists) {
+        // Create user only if doesn't exist
+        setCurrentStep("user-creation");
         
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch (parseError) {
+        const requestBody: any = { userId, sessionId, roleId };
+        if (selectedRole === "teacher") {
+          requestBody.businessData = businessData;
+        }
+        
+        const response = await fetch("/api/user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
+        
+        if (!response.ok) {
+          let errorMessage = "Rejestracja nie powiodła się";
+          
           try {
-            const errorText = await response.text();
-            console.error("User API returned non-JSON error:", errorText);
-            errorMessage = `Błąd serwera (${response.status}): ${errorText.slice(0, 100)}...`;
-          } catch {
-            errorMessage = `Błąd serwera (${response.status})`;
-          }
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      const result = await response.json();
-      toast.success("Konto użytkownika utworzone pomyślnie!");
-      
-      if (selectedRole === "teacher" && result.needsStripeOnboarding) {
-        setCurrentStep("stripe-setup");
-        setLoadingState("creating-stripe-account");
-        
-        try {
-          const stripeResponse = await fetch("/api/stripe/connect", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-          });
-          
-          if (!stripeResponse.ok) {
-            let errorMessage = "Nie udało się utworzyć konta płatności";
-            
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch (parseError) {
             try {
-              // Try to parse as JSON first
-              const stripeError = await stripeResponse.json();
-              errorMessage = stripeError.message || errorMessage;
-            } catch (parseError) {
-              // If JSON parsing fails, try to get text content
-              try {
-                const errorText = await stripeResponse.text();
-                console.error("Stripe API returned non-JSON error:", errorText);
-                errorMessage = `Błąd serwera (${stripeResponse.status}): ${errorText.slice(0, 100)}...`;
-              } catch {
-                errorMessage = `Błąd serwera (${stripeResponse.status})`;
-              }
+              const errorText = await response.text();
+              console.error("User API returned non-JSON error:", errorText);
+              errorMessage = `Błąd serwera (${response.status}): ${errorText.slice(0, 100)}...`;
+            } catch {
+              errorMessage = `Błąd serwera (${response.status})`;
             }
-            
-            throw new Error(errorMessage);
           }
+          
+          throw new Error(errorMessage);
+        }
 
-          const stripeResult = await stripeResponse.json();
-          
-          // Redirect to Stripe onboarding regardless of whether account exists or not
-          if (stripeResult.onboardingUrl) {
-            setLoadingState("redirecting-to-stripe");
-            toast.success("Przekierowujemy Cię do konfiguracji konta płatności...");
-            
-            // Add a small delay to show the message
-            setTimeout(() => {
-              window.location.href = stripeResult.onboardingUrl;
-            }, 1500);
-            return;
-          } else {
-            throw new Error("Nie otrzymano linku do konfiguracji konta płatności");
-          }
-          
-        } catch (stripeError) {
-          console.error("Błąd konfiguracji Stripe:", stripeError);
-          
-          const stripeErrorMessage = stripeError instanceof Error 
-            ? stripeError.message 
-            : "Błąd podczas konfiguracji konta płatności";
-            
-          setRegistrationError(`${stripeErrorMessage}. Możesz dokończyć konfigurację później w panelu nauczyciela.`);
-          toast.error(stripeErrorMessage + ". Możesz to zrobić później w panelu nauczyciela.");
-          
-          // For teachers, skip to platform subscription step if Stripe fails
-          setCurrentStep("platform-subscription");
-        }
+        const result = await response.json();
+        toast.success("Konto użytkownika utworzone pomyślnie!");
       } else {
-        // Student registration completes here
-        if (selectedRole === "student") {
-          setCurrentStep("completed");
-          toast.success("Rejestracja zakończona sukcesem!");
-          
-          setTimeout(() => {
-            router.push("/");
-            router.refresh();
-          }, 1000);
-        } else {
-          // Teacher without Stripe onboarding goes to platform subscription
-          setCurrentStep("platform-subscription");
-        }
+        toast("Konto już istnieje, kontynuuję rejestrację...", { icon: "ℹ️" });
+      }
+      
+      // Handle next steps based on role
+      if (selectedRole === "student") {
+        setCurrentStep("completed");
+        toast.success("Rejestracja zakończona sukcesem!");
+        
+        setTimeout(() => {
+          router.push("/");
+          router.refresh();
+        }, 1000);
+      } else if (selectedRole === "teacher") {
+        // Move to Stripe setup
+        setCurrentStep("stripe-setup");
       }
       
     } catch (error) {
@@ -595,8 +618,70 @@ export default function RegisterPage() {
         
       setRegistrationError(errorMessage);
       toast.error(errorMessage);
-      setCurrentStep("terms-acceptance"); // Reset to previous step
+      setCurrentStep("terms-acceptance");
     } finally {
+      setIsLoading(false);
+      setLoadingState("idle");
+    }
+  };
+
+  const handleStripeSetup = async () => {
+    if (!isSignedIn) {
+      toast.error("Musisz być zalogowany");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setLoadingState("creating-stripe-account");
+      
+      const stripeResponse = await fetch("/api/stripe/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      
+      if (!stripeResponse.ok) {
+        let errorMessage = "Nie udało się utworzyć konta płatności";
+        
+        try {
+          const stripeError = await stripeResponse.json();
+          errorMessage = stripeError.message || errorMessage;
+        } catch (parseError) {
+          try {
+            const errorText = await stripeResponse.text();
+            console.error("Stripe API returned non-JSON error:", errorText);
+            errorMessage = `Błąd serwera (${stripeResponse.status}): ${errorText.slice(0, 100)}...`;
+          } catch {
+            errorMessage = `Błąd serwera (${stripeResponse.status})`;
+          }
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      const stripeResult = await stripeResponse.json();
+      
+      if (stripeResult.onboardingUrl) {
+        setLoadingState("redirecting-to-stripe");
+        toast.success("Przekierowujemy Cię do konfiguracji konta płatności...");
+        
+        setTimeout(() => {
+          window.location.href = stripeResult.onboardingUrl;
+        }, 1500);
+        return;
+      } else {
+        throw new Error("Nie otrzymano linku do konfiguracji konta płatności");
+      }
+      
+    } catch (stripeError) {
+      console.error("Błąd konfiguracji Stripe:", stripeError);
+      
+      const stripeErrorMessage = stripeError instanceof Error 
+        ? stripeError.message 
+        : "Błąd podczas konfiguracji konta płatności";
+        
+      setRegistrationError(`${stripeErrorMessage}. Możesz dokończyć konfigurację później w panelu nauczyciela.`);
+      toast.error(stripeErrorMessage);
       setIsLoading(false);
       setLoadingState("idle");
     }
@@ -623,13 +708,16 @@ export default function RegisterPage() {
         const result = await response.json();
         
         if (result.sessionUrl) {
-          toast.success("Przekierowujemy Cię do płatności za dostęp do platformy...");
+          // Redirect to Stripe Checkout
+          toast.success("Przekierowywanie do płatności...");
+          setLoadingState("redirecting-to-stripe");
           
           setTimeout(() => {
             window.location.href = result.sessionUrl;
           }, 1500);
+          return;
         } else {
-          throw new Error("Nie otrzymano linku do płatności");
+          throw new Error("Nie otrzymano linka do płatności");
         }
       } else {
         let errorMessage = "Błąd podczas tworzenia subskrypcji platformy";
@@ -778,6 +866,18 @@ export default function RegisterPage() {
       </div>
     </div>
   );
+
+  // Show loading while checking user status
+  if (!userCheckCompleted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-blue-50">
+        <div className="text-center">
+          <Loader2 className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Sprawdzanie stanu rejestracji...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -1296,51 +1396,12 @@ export default function RegisterPage() {
                 </div>
 
                 <button
-                  onClick={async () => {
+                  onClick={() => {
                     if (!businessData.acceptStripeTerms || !businessData.acceptDataProcessing) {
                       toast.error("Musisz zaakceptować wszystkie wymagane zgody");
                       return;
                     }
-                    
-                    setIsLoading(true);
-                    setLoadingState("creating-stripe-account");
-                    
-                    try {
-                      const stripeResponse = await fetch("/api/stripe/connect", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          acceptedTerms: true,
-                          acceptedDataProcessing: true
-                        })
-                      });
-                      
-                      if (!stripeResponse.ok) {
-                        throw new Error("Nie udało się utworzyć konta płatności");
-                      }
-
-                      const stripeResult = await stripeResponse.json();
-                      
-                      if (stripeResult.onboardingUrl) {
-                        setLoadingState("redirecting-to-stripe");
-                        toast.success("Przekierowujemy Cię do konfiguracji konta płatności...");
-                        
-                        setTimeout(() => {
-                          window.location.href = stripeResult.onboardingUrl;
-                        }, 1500);
-                        return;
-                      } else {
-                        throw new Error("Nie otrzymano linku do konfiguracji konta płatności");
-                      }
-                      
-                    } catch (error) {
-                      console.error("Błąd konfiguracji Stripe:", error);
-                      const errorMessage = error instanceof Error ? error.message : "Błąd podczas konfiguracji konta płatności";
-                      setRegistrationError(errorMessage);
-                      toast.error(errorMessage);
-                      setIsLoading(false);
-                      setLoadingState("idle");
-                    }
+                    handleStripeSetup();
                   }}
                   disabled={isLoading || !businessData.acceptStripeTerms || !businessData.acceptDataProcessing}
                   className={`w-full py-3 px-4 rounded-lg font-medium text-white text-sm sm:text-base lg:text-lg transition-all
@@ -1362,12 +1423,15 @@ export default function RegisterPage() {
                 <button
                   onClick={() => {
                     setCurrentStep("platform-subscription");
-                    setRegistrationError("Konfiguracja płatności została pominięta. Będziesz mógł ją dokończyć później w panelu nauczyciela.");
+                    toast("Pamiętaj: Konto Stripe jest wymagane do przyjmowania płatności od uczniów. Skonfiguruj je później w ustawieniach.", {
+                      icon: "ℹ️",
+                      duration: 5000
+                    });
                   }}
                   disabled={isLoading}
                   className="w-full py-2 px-4 rounded-lg font-medium text-gray-600 text-sm border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
-                  Pomiń teraz (dokończ później)
+                  Przejdź do wyboru planu (Stripe można skonfigurować później)
                 </button>
               </div>
             </div>
@@ -1380,6 +1444,15 @@ export default function RegisterPage() {
               </div>
               
               <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-blue-800 font-medium flex items-center gap-2">
+                    ℹ️ <span>Wymagane: Konto Stripe + Subskrypcja platformy</span>
+                  </p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    Aby prowadzić kursy, musisz mieć zarówno skonfigurowane konto Stripe (do przyjmowania płatności od uczniów), jak i aktywną subskrypcję platformy.
+                  </p>
+                </div>
+                
                 <h3 className="text-md font-semibold text-gray-700">Wybierz plan dostępu do platformy:</h3>
                 <p className="text-sm text-gray-600">
                   Wybierz plan, który najlepiej odpowiada Twoim potrzebom. Każdy plan zawiera 30-dniowy okres próbny.
@@ -1457,6 +1530,12 @@ export default function RegisterPage() {
                   </p>
                 </div>
 
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-xs text-amber-700">
+                    ⚠️ <strong>Ważne:</strong> Subskrypcja platformy jest wymagana, aby móc publikować i sprzedawać kursy.
+                  </p>
+                </div>
+
                 <button
                   onClick={() => {
                     // Block navigation during redirect states
@@ -1467,7 +1546,10 @@ export default function RegisterPage() {
                     setIsLoading(true);
                     setLoadingState("completing-registration");
                     setCurrentStep("completed");
-                    toast.success("Rejestracja zakończona! Przekierowujemy Cię do panelu nauczyciela...");
+                    toast("Rejestracja zakończona! Pamiętaj: Musisz skonfigurować konto Stripe i aktywować subskrypcję, aby sprzedawać kursy.", {
+                      icon: "⚠️",
+                      duration: 6000
+                    });
                     
                     setTimeout(() => {
                       router.push("/teacher/courses");
@@ -1476,7 +1558,7 @@ export default function RegisterPage() {
                   disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                   className={`w-full py-2 px-4 rounded-lg font-medium text-gray-600 text-sm border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 ${(loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none" : ""}`}
                 >
-                  Pomiń teraz (można dodać później w ustawieniach)
+                  Pomiń teraz (dokończę konfigurację później)
                 </button>
               </div>
             </div>

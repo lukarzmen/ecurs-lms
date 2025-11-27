@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { CheckCircle2, XCircle, ChevronRight } from 'lucide-react';
 
 export interface Test {
   question: string;
@@ -42,7 +43,7 @@ export default function QuizComponent({
       setTimeout(() => {
         setShowSummary(true);
         onComplete();
-      }, 800);
+      }, 1000);
     }
   };
 
@@ -60,97 +61,159 @@ export default function QuizComponent({
     const rate = total > 0 ? correctCount / total : 0;
 
     let summaryText = "";
-    let summaryColor = "";
+    let summaryColorClass = "";
+    let emoji = "";
 
     if (rate >= successThreshold) {
-      summaryText = "Wow! Jesteś geniuszem! Może powinieneś uczyć innych? 🎓";
-      summaryColor = "bg-green-600"; // green for success
+      summaryText = "Gratulacje! Wspaniale Ci poszło!";
+      summaryColorClass = "bg-emerald-500";
+      emoji = "🎉";
     } else if (rate >= 0.5) {
-      summaryText = "No prawie, prawie... Jak mawiają - prawie robi wielką różnicę! 😅";
-      summaryColor = "bg-orange-400"; // orange when medium
+      summaryText = "Nieźle! Jeszcze trochę praktyki i będzie perfekcyjnie!";
+      summaryColorClass = "bg-amber-500";
+      emoji = "💪";
     } else {
-      summaryText = "Warto jeszcze poćwiczyć! Następnym razem na pewno pójdzie lepiej! 💪";
-      summaryColor = "bg-red-500"; // red when bad
+      summaryText = "Warto poćwiczyć! Następnym razem pójdzie lepiej!";
+      summaryColorClass = "bg-slate-500";
+      emoji = "📚";
     }
 
     return (
-      <div className={`flex flex-col items-center justify-center min-h-[300px] rounded-2xl shadow-xl text-white p-8 ${summaryColor}`}>
-        <h2 className="text-2xl font-bold mb-4 drop-shadow">{summaryText}</h2>
-        <div className="text-lg font-semibold drop-shadow">
-          Poprawne odpowiedzi {correctCount}/{total}
+      <div className={`flex flex-col items-center justify-center min-h-[300px] rounded-lg shadow-sm text-white p-8 ${summaryColorClass}`}>
+        <div className="text-6xl mb-4">{emoji}</div>
+        <h2 className="text-2xl font-semibold mb-2 text-center">{summaryText}</h2>
+        <div className="text-lg font-medium mt-4 bg-white/20 px-6 py-3 rounded-lg backdrop-blur-sm">
+          Wynik: {correctCount}/{total} ({Math.round(rate * 100)}%)
         </div>
       </div>
     );
   }
 
+  const progressPercentage = ((currentIndex + 1) / tests.length) * 100;
+
   return (
-    <div className="quiz-component p-6 max-w-xl mx-auto border border-orange-200 rounded-2xl shadow-xl bg-orange-50/80 backdrop-blur-sm relative">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-orange-700 font-semibold">
-          Pytanie {currentIndex + 1} z {tests.length}
-        </span>
-        {isSubmitted && (
-          <span className={`text-xs font-bold ${isSelectionCorrect ? "text-green-600" : "text-red-500"}`}>
-            {isSelectionCorrect ? "Poprawna odpowiedź" : "Niepoprawna odpowiedź"}
+    <div className="quiz-component max-w-2xl mx-auto">
+      {/* Progress bar */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-muted-foreground">
+            Pytanie {currentIndex + 1} z {tests.length}
           </span>
+          <span className="text-sm font-medium text-muted-foreground">
+            {Math.round(progressPercentage)}%
+          </span>
+        </div>
+        <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-primary transition-all duration-300 ease-out"
+            style={{ width: `${progressPercentage}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Quiz card */}
+      <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+        {/* Status indicator */}
+        {isSubmitted && (
+          <div className={`flex items-center gap-2 mb-4 p-3 rounded-lg ${isSelectionCorrect ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+            {isSelectionCorrect ? (
+              <>
+                <CheckCircle2 className="h-5 w-5" />
+                <span className="text-sm font-semibold">Poprawna odpowiedź!</span>
+              </>
+            ) : (
+              <>
+                <XCircle className="h-5 w-5" />
+                <span className="text-sm font-semibold">Niepoprawna odpowiedź</span>
+              </>
+            )}
+          </div>
         )}
-      </div>
-      <h3 className="text-xl font-bold mb-6 text-center text-orange-900">{currentTest.question}</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
-        {currentTest.answers.map((answer, index) => (
-          <button
-            key={index}
-            onClick={() => handleAnswerSelect(index)}
-            disabled={isSubmitted}
-            className={`p-3 border-2 rounded-xl text-center font-medium transition-all duration-200 shadow-sm focus:outline-none
-              ${
-                isSubmitted
-                  ? index === currentTest.correctAnswerIndex
-                    ? 'bg-orange-500 border-orange-700 text-white animate-pulse'
-                    : selectedAnswer === index
-                    ? 'bg-red-400 border-red-600 text-white'
-                    : 'bg-orange-100 border-orange-200 text-orange-400'
-                  : selectedAnswer === index
-                  ? 'bg-orange-400 border-orange-600 text-white ring-2 ring-orange-300'
-                  : 'bg-white border-orange-200 text-orange-900 hover:bg-orange-100 hover:border-orange-400'
-              }`}
-          >
-            {answer}
-          </button>
-        ))}
-      </div>
-      {isSubmitted && (
-        <div className="mt-4 text-center">
-          {!isSelectionCorrect && (
-            <p className="font-semibold text-red-600 mb-2">Spróbuj jeszcze raz!</p>
-          )}
-          {currentTest.correctAnswerDescription && (
-            <p className="mt-2 text-orange-800 italic">{currentTest.correctAnswerDescription}</p>
-          )}
-          {currentIndex < tests.length - 1 && (
+
+        {/* Question */}
+        <h3 className="text-xl font-semibold mb-6 leading-relaxed">{currentTest.question}</h3>
+
+        {/* Answers */}
+        <div className="grid grid-cols-1 gap-3 mb-4">
+          {currentTest.answers.map((answer, index) => {
+            const isCorrect = index === currentTest.correctAnswerIndex;
+            const isSelected = selectedAnswer === index;
+            
+            let buttonClass = "p-4 border-2 rounded-lg text-left font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-default";
+            
+            if (isSubmitted) {
+              if (isCorrect) {
+                buttonClass += " bg-emerald-50 border-emerald-500 text-emerald-900 shadow-sm";
+              } else if (isSelected) {
+                buttonClass += " bg-red-50 border-red-500 text-red-900";
+              } else {
+                buttonClass += " bg-muted/50 border-muted text-muted-foreground opacity-50";
+              }
+            } else {
+              if (isSelected) {
+                buttonClass += " bg-primary text-primary-foreground border-primary shadow-sm scale-[1.02]";
+              } else {
+                buttonClass += " bg-card border-border hover:border-primary/50 hover:bg-accent hover:shadow-sm active:scale-[0.98]";
+              }
+            }
+
+            return (
+              <button
+                key={index}
+                onClick={() => handleAnswerSelect(index)}
+                disabled={isSubmitted}
+                className={buttonClass}
+              >
+                <div className="flex items-center justify-between">
+                  <span>{answer}</span>
+                  {isSubmitted && isCorrect && (
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0 ml-2" />
+                  )}
+                  {isSubmitted && isSelected && !isCorrect && (
+                    <XCircle className="h-5 w-5 flex-shrink-0 ml-2" />
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Explanation */}
+        {isSubmitted && currentTest.correctAnswerDescription && (
+          <div className="mt-4 p-4 bg-muted/50 rounded-lg border">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              <span className="font-semibold text-foreground">Wyjaśnienie: </span>
+              {currentTest.correctAnswerDescription}
+            </p>
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div className="mt-6">
+          {isSubmitted && currentIndex < tests.length - 1 ? (
             <button
               onClick={handleNext}
-              className="mt-6 w-full py-2 px-4 rounded-xl text-white font-bold bg-orange-600 hover:bg-orange-700 shadow transition-all duration-200"
+              className="w-full py-3 px-4 rounded-lg text-primary-foreground font-semibold bg-primary hover:bg-primary/90 shadow-sm transition-all duration-200 flex items-center justify-center gap-2"
             >
               Następne pytanie
+              <ChevronRight className="h-5 w-5" />
             </button>
-          )}
+          ) : !isSubmitted ? (
+            <button
+              onClick={handleSubmit}
+              disabled={selectedAnswer === null}
+              className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 shadow-sm
+                ${
+                  selectedAnswer === null
+                    ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
+                    : 'bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98]'
+                }`}
+            >
+              Sprawdź odpowiedź
+            </button>
+          ) : null}
         </div>
-      )}
-      {!isSubmitted && (
-        <button
-          onClick={handleSubmit}
-          disabled={selectedAnswer === null}
-          className={`mt-6 w-full py-2 px-4 rounded-xl font-bold transition-all duration-200 shadow
-            ${
-              selectedAnswer === null
-                ? 'bg-orange-200 text-orange-400 cursor-not-allowed'
-                : 'bg-orange-600 text-white hover:bg-orange-700'
-            }`}
-        >
-          Sprawdź
-        </button>
-      )}
+      </div>
     </div>
   );
 }

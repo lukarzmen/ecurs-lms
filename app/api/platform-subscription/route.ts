@@ -138,8 +138,8 @@ export async function POST(req: NextRequest) {
                     quantity: 1,
                 },
             ],
-            success_url: `${process.env.NEXT_PUBLIC_API_URL}/teacher/settings?platform_subscription=success`,
-            cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/teacher/settings?platform_subscription=cancelled`,
+            success_url: `${process.env.NEXT_PUBLIC_API_URL}/register?success=subscription`,
+            cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/register?cancelled=subscription`,
             client_reference_id: String(teacherSubscription.id),
             metadata: {
                 teacherSubscriptionId: teacherSubscription.id.toString(),
