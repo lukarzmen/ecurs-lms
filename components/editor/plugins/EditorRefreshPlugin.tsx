@@ -11,17 +11,17 @@ export default function EditorRefreshPlugin({ initialStateJSON }: EditorRefreshP
 
   useEffect(() => {
     if (initialStateJSON) {
-      editor.update(() => {
-        try {
-          const parsedState = editor.parseEditorState(initialStateJSON);
-          editor.setEditorState(parsedState);
-        } catch (error) {
-          console.error('Error parsing editor state:', error);
-          // If parsing fails, clear the editor
+      try {
+        const parsedState = editor.parseEditorState(initialStateJSON);
+        editor.setEditorState(parsedState);
+      } catch (error) {
+        console.error('Error parsing editor state:', error);
+        // If parsing fails, clear the editor
+        editor.update(() => {
           const root = $getRoot();
           root.clear();
-        }
-      });
+        });
+      }
     } else {
       // If no initial state, clear the editor
       editor.update(() => {

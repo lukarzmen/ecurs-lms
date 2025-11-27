@@ -99,6 +99,14 @@ export async function GET(
             position: "asc",
           },
         },
+        author: {
+          select: {
+            email: true,
+            displayName: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
       },
     });
 

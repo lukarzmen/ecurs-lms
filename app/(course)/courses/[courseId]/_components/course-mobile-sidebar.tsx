@@ -14,7 +14,13 @@ export interface CourseSidebarProps {
     course: Course & {
         modules: (Module & {
             progressState: ProgressState;
-        })[]
+        })[];
+        author?: {
+            email: string;
+            displayName: string | null;
+            firstName: string | null;
+            lastName: string | null;
+        };
     };
 }
 
