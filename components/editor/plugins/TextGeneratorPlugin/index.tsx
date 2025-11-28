@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 import * as React from 'react';
 import { $createHeadingNode } from '@lexical/rich-text';
 import { useCourseContext } from '../../context/CourseContext';
+import { Sparkles, X, Edit2, Loader2 } from 'lucide-react';
 
 import ProgressSpinner from './ProgressComponent';
 import toast from 'react-hot-toast';
@@ -95,65 +96,88 @@ export function TextGeneratorDialog({
   }, [loading, onClose]);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative">
-        <button
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-          onClick={onClose}
-        >
-          ✕
-        </button>
-        <h2 className="text-xl font-bold mb-4">Generator treść</h2>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Co chcesz wygenerować?
-        </label>
-        <textarea
-          className="w-full p-2 border border-gray-300 rounded-md mb-4"
-          rows={4}
-          placeholder="Edytuj polecenie lub dodaj szczegóły dotyczące treści, którą chcesz wygenerować..."
-          value={userPrompt}
-          onChange={(e) => setUserPrompt(e.target.value)}
-        />
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Informacje systemowe (kontekstowe) dla AI
-        </label>
-        <div className="relative">
-          <textarea
-            className="w-full p-2 border border-gray-300 rounded-md mb-4"
-            rows={3}
-            value={systemPrompt}
-            onChange={(e) => setSystemPrompt(e.target.value)}
-            disabled={!isSystemPromptEditable}
-          />
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-card border border-border rounded-lg shadow-xl max-w-md w-full relative overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-orange-50 to-amber-50 px-6 py-4 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-orange-600" />
+            <h2 className="text-lg font-semibold text-foreground">Generator treści</h2>
+          </div>
           <button
-            className="absolute top-1 right-5 text-gray-500 hover:text-gray-700"
-            onClick={() => setIsSystemPromptEditable(!isSystemPromptEditable)}
+            onClick={onClose}
+            className="p-1 hover:bg-white/50 rounded-md transition-colors text-muted-foreground hover:text-foreground"
           >
-            ✎
+            <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="flex justify-end space-x-2">
-          {loading ? (
-            <div className="flex items-center">
-              <ProgressSpinner />
-            </div>
-          ) : (
-            <>
+
+        {/* Content */}
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Co chcesz wygenerować?
+            </label>
+            <textarea
+              className="w-full px-3 py-2 border-2 border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all resize-none"
+              rows={4}
+              placeholder="Edytuj polecenie lub dodaj szczegóły dotyczące treści, którą chcesz wygenerować..."
+              value={userPrompt}
+              onChange={(e) => setUserPrompt(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+
+          <div>
+            <label className="flex items-center justify-between text-sm font-medium text-foreground mb-2">
+              <span>Informacje systemowe (kontekstowe) dla AI</span>
               <button
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md"
-                onClick={onClose}
+                onClick={() => setIsSystemPromptEditable(!isSystemPromptEditable)}
+                className={`p-1 rounded-md transition-all ${
+                  isSystemPromptEditable
+                    ? 'bg-primary/10 text-primary'
+                    : 'hover:bg-muted text-muted-foreground'
+                }`}
+                disabled={loading}
               >
-                Anuluj
+                <Edit2 className="w-4 h-4" />
               </button>
-              <button
-                className="px-4 py-2 bg-orange-500 text-white rounded-md"
-                onClick={handleSubmit}
-                disabled={userPrompt.trim() === ""}
-              >
-                Generuj
-              </button>
-            </>
-          )}
+            </label>
+            <textarea
+              className="w-full px-3 py-2 border-2 border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+              rows={3}
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+              disabled={!isSystemPromptEditable || loading}
+            />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex justify-end gap-2 pt-2">
+            {loading ? (
+              <div className="flex items-center gap-2 px-4 py-2 text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm font-medium">Generuję...</span>
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 border border-border rounded-md text-foreground hover:bg-muted transition-colors font-medium text-sm"
+                >
+                  Anuluj
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={userPrompt.trim() === ""}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-sm flex items-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Generuj
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
