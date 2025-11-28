@@ -7,7 +7,7 @@ import { Category } from "@prisma/client";
 import toast from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
 import next from "next";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, BookOpen, FolderOpen, FileText, DollarSign, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,305 +91,379 @@ const CreatePage = () => {
   }, []);
 
   return (
-    <div className="max-w-2xl w-full mx-auto flex flex-col h-full p-6">
-      <div className="mb-6">
-        <Link
-          href="/teacher/courses"
-          className="flex items-center text-sm hover:opacity-75 transition pt-4 select-none"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Powrót do listy kursów
-        </Link>
-      </div>
-      <div className="text-2xl w-full mb-6">
-        <h1>
-          {step === 1 && "Nazwij swój kurs"}
-          {step === 2 && "Wybierz kategorię dla swojego kursu"}
-          {step === 3 && "Opisz swój kurs"}
-          {step === 4 && "Ustal cenę kursu"}
-        </h1>
-        <Card className="mt-8">
-          <CardContent className="p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="max-w-3xl w-full mx-auto flex flex-col p-4 sm:p-6 lg:p-8">
+        {/* Header */}
+        <div className="mb-8">
+          <Link
+            href="/teacher/courses"
+            className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition mb-4 select-none gap-1"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Powrót do listy kursów
+          </Link>
+        </div>
+
+        {/* Step Indicator */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            {[1, 2, 3, 4].map((s) => (
+              <div key={s} className="flex items-center">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-all ${
+                    s <= step
+                      ? 'bg-primary text-white'
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  {s < step ? <CheckCircle2 className="w-5 h-5" /> : s}
+                </div>
+                {s < 4 && (
+                  <div
+                    className={`h-0.5 w-12 sm:w-16 mx-2 transition-all ${
+                      s < step ? 'bg-primary' : 'bg-border'
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="text-xs font-medium text-muted-foreground text-center">
+            Krok {step} z 4
+          </p>
+        </div>
+
+        {/* Title */}
+        <div className="mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
+            {step === 1 && "🎓 Nazwij swój kurs"}
+            {step === 2 && "📁 Wybierz kategorię"}
+            {step === 3 && "📝 Opisz swój kurs"}
+            {step === 4 && "💰 Ustal cenę"}
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            {step === 1 && "Stwórz przyciągający tytuł dla swojego kursu"}
+            {step === 2 && "Wybierz kategorię, która najlepiej pasuje"}
+            {step === 3 && "Dodaj szczegółowy opis kursu"}
+            {step === 4 && "Zdecyduj o modelu cenowym"}
+          </p>
+        </div>
+
+        {/* Main Card */}
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-6 sm:p-8">
             <form onSubmit={onSubmit} className="space-y-8">
               {step === 1 && (
-                <div className="mb-4">
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                Tytuł
-              </label>
-              <p className="text-sm text-slate-600">
-                Jak chciałbyś nazwać swój kurs? Nie martw się, możesz to później zmienić.
-              </p>
-              <Input
-                type="text"
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                disabled={isSubmitting}
-                placeholder="np. 'Zaawansowane programowanie aplikacji web'"
-              />
-              <p className="text-sm text-slate-600">Czego będziesz uczyć w tym kursie?</p>
-              <div className="flex items-center gap-x-2 mt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-40 sm:w-48"
-                  onClick={() => router.push("/teacher/courses")}
-                  disabled={isSubmitting}
-                >
-                  Anuluj
-                </Button>
-                <Button
-                  type="button"
-                  className="w-40 sm:w-48"
-                  disabled={!title || isSubmitting}
-                  onClick={nextStep}
-                >
-                  Dalej
-                </Button>
-              </div>
-            </div>
-          )}
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4 p-4 bg-primary/5 rounded-lg border border-primary/10">
+                    <BookOpen className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                    <p className="text-sm text-foreground">
+                      Tytuł powinien być jasny, konkretny i przyciągający. To pierwsza rzecz, którą zobaczą potencjalni uczniowie.
+                    </p>
+                  </div>
+                  <div>
+                    <label htmlFor="title" className="block text-sm font-semibold text-foreground mb-2">
+                      Tytuł kursu
+                    </label>
+                    <Input
+                      type="text"
+                      id="title"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      disabled={isSubmitting}
+                      placeholder="np. 'Zaawansowane programowanie aplikacji web'"
+                      className="border-2 text-base py-2.5"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {title.length}/50 znaków
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-x-2 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => router.push("/teacher/courses")}
+                      disabled={isSubmitting}
+                    >
+                      Anuluj
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={!title || isSubmitting}
+                      onClick={nextStep}
+                    >
+                      Dalej
+                    </Button>
+                  </div>
+                </div>
+              )}
 
-          {step === 2 && (
-            <div className="mb-4">
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                Kategoria
-              </label>
-              <p className="text-sm text-slate-600">
-                Która kategoria najlepiej pasuje do twojego kursu? Możesz wybrać z listy dostępnych kategorii. Nie przejmuj się zbytnio; zawsze możesz to później zmienić.
-              </p>
-              <Select value={category} onValueChange={setCategory} disabled={isSubmitting}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Wybierz kategorię" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id.toString()}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex items-center gap-x-2 mt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-40 sm:w-48"
-                  onClick={prevStep}
-                  disabled={isSubmitting}
-                >
-                  Wstecz
-                </Button>
-                <Button
-                  type="button"
-                  className="w-40 sm:w-48"
-                  disabled={isSubmitting}
-                  onClick={nextStep}
-                >
-                  Dalej
-                </Button>
-              </div>
-            </div>
-          )}
+              {step === 2 && (
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4 p-4 bg-primary/5 rounded-lg border border-primary/10">
+                    <FolderOpen className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                    <p className="text-sm text-foreground">
+                      Kategoria pomaga użytkownikom znaleźć Twój kurs. Wybierz najlepiej pasującą do treści.
+                    </p>
+                  </div>
+                  <div>
+                    <label htmlFor="category" className="block text-sm font-semibold text-foreground mb-2">
+                      Kategoria
+                    </label>
+                    <Select value={category} onValueChange={setCategory} disabled={isSubmitting}>
+                      <SelectTrigger className="border-2">
+                        <SelectValue placeholder="Wybierz kategorię" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id.toString()}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-x-2 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={prevStep}
+                      disabled={isSubmitting}
+                    >
+                      Wstecz
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={nextStep}
+                    >
+                      Dalej
+                    </Button>
+                  </div>
+                </div>
+              )}
 
-          {step === 3 && (
-            <div className="mb-4">
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                Opis
-              </label>
-              <p className="text-sm text-slate-600">
-                Jak opisałbyś swój kurs? Podaj krótki przegląd, który uchwyci istotę tego, czego będziesz uczyć. Możesz dopracować lub rozszerzyć ten opis w miarę postępów.
-              </p>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                disabled={isSubmitting}
-                placeholder="np. 'Ten kurs obejmuje...'"
-              />
-              <div className="flex items-center gap-x-2 mt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-40 sm:w-48"
-                  onClick={prevStep}
-                  disabled={isSubmitting}
-                >
-                  Wstecz
-                </Button>
-                <Button
-                  type="button"
-                  className="w-40 sm:w-48"
-                  disabled={isSubmitting}
-                  onClick={nextStep}
-                >
-                  Dalej
-                </Button>
-              </div>
-            </div>
-          )}
+              {step === 3 && (
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4 p-4 bg-primary/5 rounded-lg border border-primary/10">
+                    <FileText className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                    <p className="text-sm text-foreground">
+                      Opis powinien być zachęcający i pokazywać wartość, którą otrzymają uczniowie.
+                    </p>
+                  </div>
+                  <div>
+                    <label htmlFor="description" className="block text-sm font-semibold text-foreground mb-2">
+                      Opis kursu
+                    </label>
+                    <Textarea
+                      id="description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      disabled={isSubmitting}
+                      placeholder="np. 'Ten kurs obejmuje zaawansowane koncepty programowania web...'"
+                      className="border-2 resize-none min-h-[150px]"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {description.length}/500 znaków
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-x-2 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={prevStep}
+                      disabled={isSubmitting}
+                    >
+                      Wstecz
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={nextStep}
+                    >
+                      Dalej
+                    </Button>
+                  </div>
+                </div>
+              )}
 
-          {step === 4 && (
-            <div className="mb-4">
-              <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                Cena kursu
-              </label>
-              <p className="text-sm text-slate-600">
-                Ustal cenę kursu. Jeśli wpiszesz 0, kurs będzie{" "}
-                <span className="font-semibold text-slate-700">Darmowy</span>.
-              </p>
-              <div className="mt-1 grid grid-cols-2 gap-2">
-                <Input
-                  type="number"
-                  id="price"
-                  min={0}
-                  step={0.01}
-                  value={price.toString()}
-                  onChange={(e) => setPrice(Number(e.target.value))}
-                  disabled={isSubmitting}
-                  placeholder="np. 0 lub 199"
-                />
-                <Input
-                  type="text"
-                  id="currency"
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-                  disabled={isSubmitting}
-                  placeholder="Waluta (np. PLN)"
-                />
-              </div>
+              {step === 4 && (
+                <div className="space-y-6">
+                  <div className="flex items-start gap-4 p-4 bg-primary/5 rounded-lg border border-primary/10">
+                    <DollarSign className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                    <p className="text-sm text-foreground">
+                      Ustaw cenę, która odzwierciedla wartość Twojego kursu. Możesz ją zmienić w dowolnym momencie.
+                    </p>
+                  </div>
 
-              <div className="flex flex-col mt-3">
-                <label htmlFor="vatRate" className="text-sm font-medium text-gray-700">
-                  Stawka VAT
-                </label>
-                <p className="text-xs text-slate-600 mb-1">
-                  Wybierz odpowiednią stawkę VAT dla usługi edukacyjnej
-                </p>
-                <Select value={vatRate.toString()} onValueChange={(value) => setVatRate(Number(value))} disabled={isSubmitting}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="23">23% (standardowa)</SelectItem>
-                    <SelectItem value="0">0% (zwolniona)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex flex-col gap-2 mt-3">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={isRecurring}
-                    onChange={e => {
-                      setIsRecurring(e.target.checked);
-                      if (!e.target.checked) setInterval("ONE_TIME");
-                    }}
-                    disabled={isSubmitting}
-                    className="form-checkbox"
-                  />
-                  <span className="text-sm">Opłata cykliczna (subskrypcja)</span>
-                </label>
-                {isRecurring && (
-                  <>
-                    <div className="flex flex-col mt-1">
-                      <label htmlFor="interval" className="text-sm">Okres rozliczenia</label>
-                      <Select value={interval} onValueChange={(value) => setInterval(value as any)} disabled={isSubmitting}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="MONTH">Miesięcznie</SelectItem>
-                          <SelectItem value="YEAR">Rocznie</SelectItem>
-                        </SelectContent>
-                      </Select>
+                  {/* Price */}
+                  <div className="space-y-3">
+                    <label className="block text-sm font-semibold text-foreground">
+                      Cena kursu
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        type="number"
+                        id="price"
+                        min={0}
+                        step={0.01}
+                        value={price.toString()}
+                        onChange={(e) => setPrice(Number(e.target.value))}
+                        disabled={isSubmitting}
+                        placeholder="0.00"
+                        className="border-2"
+                      />
+                      <Input
+                        type="text"
+                        id="currency"
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                        disabled={isSubmitting}
+                        placeholder="PLN"
+                        className="border-2 uppercase"
+                        maxLength={3}
+                      />
                     </div>
-                    <div className="flex flex-col mt-1">
-                      <label className="text-xs">Tryb okresu próbnego</label>
-                      <div className="flex gap-4 mt-1">
-                        <label className="flex items-center gap-1 text-xs">
-                          <input type="radio" name="trialPeriodType" value="DAYS" checked={trialPeriodType === "DAYS"} onChange={() => setTrialPeriodType("DAYS")} disabled={isSubmitting} />
-                          Dni
-                        </label>
-                        <label className="flex items-center gap-1 text-xs">
-                          <input type="radio" name="trialPeriodType" value="DATE" checked={trialPeriodType === "DATE"} onChange={() => setTrialPeriodType("DATE")} disabled={isSubmitting} />
-                          Data zakończenia
-                        </label>
-                      </div>
-                    </div>
-                    {trialPeriodType === "DAYS" && (
-                      <div className="flex flex-col mt-1">
-                        <label htmlFor="trialPeriodDays" className="text-xs">Okres próbny (dni)</label>
-                        <Input
-                          type="number"
-                          id="trialPeriodDays"
-                          min={0}
-                          step={1}
-                          value={trialPeriodDays.toString()}
-                          onChange={e => setTrialPeriodDays(Number(e.target.value))}
-                          disabled={isSubmitting}
-                          placeholder="np. 7"
-                        />
+                  </div>
+
+                  {/* VAT */}
+                  <div className="space-y-3">
+                    <label className="block text-sm font-semibold text-foreground">
+                      Stawka VAT
+                    </label>
+                    <Select value={vatRate.toString()} onValueChange={(value) => setVatRate(Number(value))} disabled={isSubmitting}>
+                      <SelectTrigger className="border-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="23">23% (standardowa)</SelectItem>
+                        <SelectItem value="0">0% (zwolniona)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Subscription */}
+                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg border border-border">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isRecurring}
+                        onChange={e => {
+                          setIsRecurring(e.target.checked);
+                          if (!e.target.checked) setInterval("ONE_TIME");
+                        }}
+                        disabled={isSubmitting}
+                        className="w-4 h-4 cursor-pointer"
+                      />
+                      <span className="text-sm font-medium text-foreground">Opłata cykliczna (subskrypcja)</span>
+                    </label>
+                    {isRecurring && (
+                      <div className="space-y-3 mt-4 pt-4 border-t border-border">
+                        <div>
+                          <label htmlFor="interval" className="text-sm font-medium text-foreground block mb-2">Okres rozliczenia</label>
+                          <Select value={interval} onValueChange={(value) => setInterval(value as any)} disabled={isSubmitting}>
+                            <SelectTrigger className="border-2">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="MONTH">Miesięcznie</SelectItem>
+                              <SelectItem value="YEAR">Rocznie</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-foreground block">Okres próbny</label>
+                          <div className="flex gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input type="radio" name="trialPeriodType" value="DAYS" checked={trialPeriodType === "DAYS"} onChange={() => setTrialPeriodType("DAYS")} disabled={isSubmitting} className="cursor-pointer" />
+                              <span className="text-sm">Liczba dni</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input type="radio" name="trialPeriodType" value="DATE" checked={trialPeriodType === "DATE"} onChange={() => setTrialPeriodType("DATE")} disabled={isSubmitting} className="cursor-pointer" />
+                              <span className="text-sm">Data zakończenia</span>
+                            </label>
+                          </div>
+                        </div>
+
+                        {trialPeriodType === "DAYS" && (
+                          <div>
+                            <label htmlFor="trialPeriodDays" className="text-sm font-medium text-foreground block mb-2">Ilość dni próbnych</label>
+                            <Input
+                              type="number"
+                              id="trialPeriodDays"
+                              min={0}
+                              step={1}
+                              value={trialPeriodDays.toString()}
+                              onChange={e => setTrialPeriodDays(Number(e.target.value))}
+                              disabled={isSubmitting}
+                              placeholder="np. 7"
+                              className="border-2"
+                            />
+                          </div>
+                        )}
+                        {trialPeriodType === "DATE" && (
+                          <div>
+                            <label htmlFor="trialPeriodEnd" className="text-sm font-medium text-foreground block mb-2">Data zakończenia okresu próbnego</label>
+                            <Input
+                              type="date"
+                              id="trialPeriodEnd"
+                              value={trialPeriodEnd}
+                              onChange={e => setTrialPeriodEnd(e.target.value)}
+                              disabled={isSubmitting}
+                              min={new Date().toISOString().split('T')[0]}
+                              className="border-2"
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
-                    {trialPeriodType === "DATE" && (
-                      <div className="flex flex-col mt-1">
-                        <label htmlFor="trialPeriodEnd" className="text-xs">Data zakończenia okresu próbnego</label>
-                        <Input
-                          type="date"
-                          id="trialPeriodEnd"
-                          value={trialPeriodEnd}
-                          onChange={e => setTrialPeriodEnd(e.target.value)}
-                          disabled={isSubmitting}
-                          min={new Date().toISOString().split('T')[0]}
-                        />
+                  </div>
+
+                  {/* Price Summary */}
+                  <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
+                    <p className="text-sm font-medium text-foreground mb-2">Podsumowanie:</p>
+                    {price === 0 ? (
+                      <p className="text-lg font-bold text-primary">Darmowy 🎁</p>
+                    ) : (
+                      <div className="space-y-1">
+                        <p className="text-sm"><span className="font-semibold text-foreground">{price} {currency}</span> netto</p>
+                        <p className="text-sm text-muted-foreground">({(price * (1 + vatRate / 100)).toFixed(2)} {currency} brutto, VAT {vatRate}%)</p>
+                        {isRecurring && price > 0 && (
+                          <p className="text-sm text-primary font-medium mt-1">
+                            {interval === 'YEAR' ? '📅 Płatność co rok' : '📅 Płatność co miesiąc'}
+                          </p>
+                        )}
                       </div>
                     )}
-                  </>
-                )}
-              </div>
-              <div className="text-sm mt-2">
-                {price === 0 ? (
-                  <span className="font-semibold text-slate-700">Darmowy</span>
-                ) : (
-                  <>
-                    <span className="font-semibold text-slate-700">{price} {currency} netto</span>
-                    <span className="text-slate-600 ml-2">({(price * (1 + vatRate / 100)).toFixed(2)} {currency} brutto, VAT {vatRate}%)</span>
-                  </>
-                )}
-                {isRecurring && price > 0 && (
-                  <div className="text-sm text-muted-foreground">{interval === 'YEAR' ? 'płatność co rok' : 'płatność co miesiąc'}</div>
-                )}
-              </div>
-              <div className="flex items-center gap-x-2 mt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-40 sm:w-48"
-                  onClick={prevStep}
-                  disabled={isSubmitting}
-                >
-                  Wstecz
-                </Button>
-                <Button
-                  type="submit"
-                  className="w-40 sm:w-48"
-                  disabled={isSubmitting || !title}
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="animate-spin mr-2" size={20} />
-                  ) : null}
-                  Utwórz
-                </Button>
-              </div>
-            </div>
-          )}
-        </form>
-      </CardContent>
-    </Card>
-  </div>
-</div>
+                  </div>
+
+                  <div className="flex items-center gap-x-2 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={prevStep}
+                      disabled={isSubmitting}
+                    >
+                      Wstecz
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting || !title}
+                    >
+                      {isSubmitting ? (
+                        <Loader2 className="animate-spin mr-2" size={18} />
+                      ) : null}
+                      {isSubmitting ? 'Tworzenie...' : 'Utwórz kurs'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };
 
