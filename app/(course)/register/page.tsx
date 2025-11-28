@@ -669,6 +669,10 @@ export default function RegisterPage() {
           window.location.href = stripeResult.onboardingUrl;
         }, 1500);
         return;
+      } else if (stripeResult.onboardingComplete || stripeResult.existingAccount) {
+        // Account already configured, proceed to subscription
+        toast.success("Konto płatności już skonfigurowane! Przejdź do wyboru planu.");
+        setCurrentStep("platform-subscription");
       } else {
         throw new Error("Nie otrzymano linku do konfiguracji konta płatności");
       }
