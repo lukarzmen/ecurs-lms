@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(
   req: Request,
-  { params }: { params: { schoolId: string } }
+  { params }: { params: Promise<{ schoolId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -22,7 +22,8 @@ export async function POST(
       );
     }
 
-    const schoolId = parseInt(params.schoolId);
+    const { schoolId: schoolIdStr } = await params;
+    const schoolId = parseInt(schoolIdStr);
 
     // Pobierz użytkownika (właściciela)
     const user = await db.user.findUnique({

@@ -27,11 +27,6 @@ export async function GET() {
         description: true,
         companyName: true,
         ownerId: true,
-        _count: {
-          select: {
-            members: true,
-          },
-        },
       },
     });
 

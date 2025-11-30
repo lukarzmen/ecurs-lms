@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: { schoolId: string } }
+  { params }: { params: Promise<{ schoolId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -13,7 +13,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const schoolId = parseInt(params.schoolId);
+    const { schoolId: schoolIdStr } = await params;
+    const schoolId = parseInt(schoolIdStr);
 
     // Pobierz użytkownika
     const user = await db.user.findUnique({

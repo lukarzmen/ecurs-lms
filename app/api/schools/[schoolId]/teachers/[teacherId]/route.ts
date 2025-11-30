@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { schoolId: string; teacherId: string } }
+  { params }: { params: Promise<{ schoolId: string; teacherId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -13,8 +13,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const schoolId = parseInt(params.schoolId);
-    const teacherId = parseInt(params.teacherId);
+    const { schoolId: schoolIdStr, teacherId: teacherIdStr } = await params;
+    const schoolId = parseInt(schoolIdStr);
+    const teacherId = parseInt(teacherIdStr);
 
     // Pobierz użytkownika (właściciela)
     const user = await db.user.findUnique({

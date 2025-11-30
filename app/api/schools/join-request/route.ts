@@ -63,7 +63,16 @@ export async function POST(req: Request) {
     }
 
     // Sprawdź czy już należy do szkoły
-    if (user.schoolId === schoolId) {
+    const existingMembership = await db.schoolTeacher.findUnique({
+      where: {
+        schoolId_teacherId: {
+          schoolId: schoolId,
+          teacherId: user.id,
+        },
+      },
+    });
+
+    if (existingMembership) {
       return NextResponse.json(
         { error: "You are already a member of this school" },
         { status: 400 }
