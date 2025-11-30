@@ -280,16 +280,30 @@ const TEACHER_TERMS = (
   </div>
 );
 
-type RegistrationStep = "role-selection" | "business-type-selection" | "terms-acceptance" | "user-creation" | "stripe-setup" | "platform-subscription" | "completed";
-type LoadingState = "idle" | "creating-user" | "creating-stripe-account" | "redirecting-to-stripe" | "updating-user" | "creating-platform-subscription" | "completing-registration";
+type RegistrationStep = "role-selection" | "business-type-selection" | "school-choice" | "find-school" | "terms-acceptance" | "user-creation" | "stripe-setup" | "platform-subscription" | "completed";
+type LoadingState = "idle" | "creating-user" | "creating-stripe-account" | "redirecting-to-stripe" | "updating-user" | "creating-platform-subscription" | "completing-registration" | "sending-join-request";
+
+interface School {
+  id: number;
+  name: string;
+  description: string | null;
+  companyName: string;
+  ownerId: number;
+  _count: {
+    members: number;
+  };
+}
 
 interface BusinessTypeData {
   businessType: "individual" | "company";
   companyName?: string;
+  schoolName?: string;
   taxId?: string;
   requiresVatInvoices?: boolean;
   acceptStripeTerms?: boolean;
   acceptDataProcessing?: boolean;
+  joinSchoolMode?: "own-school" | "join-existing-school";
+  selectedSchoolId?: number;
 }
 
 export default function RegisterPage() {
@@ -302,12 +316,16 @@ export default function RegisterPage() {
   const [businessData, setBusinessData] = useState<BusinessTypeData>({
     businessType: "individual",
     companyName: "",
+    schoolName: "",
     taxId: "",
     requiresVatInvoices: false
   });
   const [registrationError, setRegistrationError] = useState<string | null>(null);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [userCheckCompleted, setUserCheckCompleted] = useState(false);
+  const [schools, setSchools] = useState<School[]>([]);
+  const [schoolsLoading, setSchoolsLoading] = useState(false);
+  const [joinRequestStatus, setJoinRequestStatus] = useState<{ [schoolId: number]: "idle" | "pending" | "sent" } >({});
   const router = useRouter();
 
   // Check user registration status and restore appropriate step
@@ -450,11 +468,13 @@ export default function RegisterPage() {
     const stepMap = {
       "role-selection": 1,
       "business-type-selection": 2,
-      "terms-acceptance": 3,
-      "user-creation": 4,
-      "stripe-setup": 5,
-      "platform-subscription": 6,
-      "completed": 7
+      "school-choice": 3,
+      "find-school": 3,
+      "terms-acceptance": 4,
+      "user-creation": 5,
+      "stripe-setup": 6,
+      "platform-subscription": 7,
+      "completed": 8
     };
     return stepMap[step];
   };
@@ -467,7 +487,8 @@ export default function RegisterPage() {
       "redirecting-to-stripe": "Przekierowywanie do Stripe...",
       "updating-user": "Aktualizowanie danych użytkownika...",
       "creating-platform-subscription": "Przygotowywanie subskrypcji platformy...",
-      "completing-registration": "Finalizowanie rejestracji..."
+      "completing-registration": "Finalizowanie rejestracji...",
+      "sending-join-request": "Wysyłanie prośby o dołączenie..."
     };
     return messages[state];
   };
@@ -476,7 +497,7 @@ export default function RegisterPage() {
     if (!selectedRole || currentStep === "role-selection") return null;
     
     const steps = selectedRole === "teacher" 
-      ? ["Wybór roli", "Typ działalności", "Akceptacja regulaminu", "Tworzenie konta", "Konfiguracja płatności", "Subskrypcja platformy", "Zakończone"]
+      ? ["Wybór roli", "Typ działalności", "Wybór szkoły", "Akceptacja regulaminu", "Tworzenie konta", "Konfiguracja płatności", "Subskrypcja platformy", "Zakończone"]
       : ["Wybór roli", "Akceptacja regulaminu", "Tworzenie konta", "Zakończone"];
     
     const currentStepNumber = getStepNumber(currentStep);
@@ -605,8 +626,20 @@ export default function RegisterPage() {
           router.refresh();
         }, 1000);
       } else if (selectedRole === "teacher") {
-        // Move to Stripe setup
-        setCurrentStep("stripe-setup");
+        // Check if teacher joined a school or is creating their own
+        if (businessData.joinSchoolMode === "join-existing-school" && businessData.selectedSchoolId) {
+          // Skip Stripe and subscription, complete registration
+          setCurrentStep("completed");
+          toast.success("Rejestracja zakończona! Prośba o dołączenie do szkoły została wysłana.");
+          
+          setTimeout(() => {
+            router.push("/teacher");
+            router.refresh();
+          }, 1500);
+        } else {
+          // Creating own school - move to Stripe setup
+          setCurrentStep("stripe-setup");
+        }
       }
       
     } catch (error) {
@@ -824,14 +857,81 @@ export default function RegisterPage() {
       return;
     }
 
-    if (businessData.businessType === "company" && (!businessData.companyName || !businessData.taxId)) {
-      setRegistrationError("Dla firmy wymagana jest nazwa firmy i NIP");
+    if (businessData.businessType === "company" && (!businessData.schoolName || !businessData.companyName || !businessData.taxId)) {
+      setRegistrationError("Dla firmy wymagana jest nazwa szkoły, nazwa firmy i NIP");
       return;
     }
 
-    // No API call here - business data will be saved during user creation
-    setCurrentStep("terms-acceptance");
+    // For company type, ask if joining existing school or creating own
+    if (businessData.businessType === "company") {
+      setCurrentStep("school-choice");
+    } else {
+      // For individual, skip to terms
+      setCurrentStep("terms-acceptance");
+    }
     setRegistrationError(null);
+  };
+
+  const handleSchoolChoice = async (choice: "own-school" | "join-existing-school") => {
+    setBusinessData(prev => ({ ...prev, joinSchoolMode: choice }));
+    
+    if (choice === "join-existing-school") {
+      // Load schools list
+      setSchoolsLoading(true);
+      try {
+        const response = await fetch("/api/schools/list");
+        if (response.ok) {
+          const data = await response.json();
+          setSchools(data);
+          setCurrentStep("find-school");
+        } else {
+          toast.error("Nie udało się załadować listy szkół");
+          setCurrentStep("school-choice");
+        }
+      } catch (error) {
+        console.error("Error fetching schools:", error);
+        toast.error("Błąd podczas ładowania listy szkół");
+        setCurrentStep("school-choice");
+      } finally {
+        setSchoolsLoading(false);
+      }
+    } else {
+      // Skip to terms if creating own school
+      setCurrentStep("terms-acceptance");
+    }
+    setRegistrationError(null);
+  };
+
+  const handleJoinSchool = async (schoolId: number) => {
+    if (!userId) return;
+    
+    setJoinRequestStatus(prev => ({ ...prev, [schoolId]: "pending" }));
+    setLoadingState("sending-join-request");
+    
+    try {
+      const response = await fetch("/api/schools/join-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ schoolId }),
+      });
+
+      if (response.ok) {
+        setJoinRequestStatus(prev => ({ ...prev, [schoolId]: "sent" }));
+        setBusinessData(prev => ({ ...prev, selectedSchoolId: schoolId }));
+        toast.success("Prośba o dołączenie wysłana! Przejdź do akceptacji regulaminu.");
+        setTimeout(() => setCurrentStep("terms-acceptance"), 1500);
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Nie udało się wysłać prośby");
+        setJoinRequestStatus(prev => ({ ...prev, [schoolId]: "idle" }));
+      }
+    } catch (error) {
+      console.error("Error sending join request:", error);
+      toast.error("Błąd podczas wysyłania prośby");
+      setJoinRequestStatus(prev => ({ ...prev, [schoolId]: "idle" }));
+    } finally {
+      setLoadingState("idle");
+    }
   };
 
   const handleBackToBusinessType = () => {
@@ -1207,6 +1307,7 @@ export default function RegisterPage() {
                         setBusinessData(prev => ({ 
                           ...prev, 
                           businessType: e.target.value as "individual" | "company",
+                          schoolName: "",
                           companyName: "",
                           taxId: "",
                           requiresVatInvoices: false
@@ -1252,6 +1353,23 @@ export default function RegisterPage() {
                   <div className="mt-3 sm:mt-4 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <h4 className="font-medium text-blue-800 text-sm sm:text-base">Dane firmy:</h4>
                     
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                        Nazwa szkoły/placówki *
+                      </label>
+                      <input
+                        type="text"
+                        value={businessData.schoolName || ""}
+                        onChange={(e) => {
+                          if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") return;
+                          setBusinessData(prev => ({ ...prev, schoolName: e.target.value }))
+                        }}
+                        className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="np. Szkoła Podstawowa nr 1"
+                        disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
+                      />
+                    </div>
+
                     <div>
                       <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                         Nazwa firmy *
@@ -1307,9 +1425,9 @@ export default function RegisterPage() {
 
                 <button
                   onClick={handleBusinessTypeSelection}
-                  disabled={isLoading || (businessData.businessType === "company" && (!businessData.companyName || !businessData.taxId)) || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
+                  disabled={isLoading || (businessData.businessType === "company" && (!businessData.schoolName || !businessData.companyName || !businessData.taxId)) || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                   className={`w-full py-3 px-3 sm:px-4 md:px-8 rounded-lg font-medium text-white text-sm sm:text-base lg:text-lg transition-all
-                    ${isLoading || (businessData.businessType === "company" && (!businessData.companyName || !businessData.taxId)) || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"
+                    ${isLoading || (businessData.businessType === "company" && (!businessData.schoolName || !businessData.companyName || !businessData.taxId)) || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg"
                     }`}
@@ -1323,6 +1441,132 @@ export default function RegisterPage() {
                     "Kontynuuj do akceptacji regulaminu"
                   )}
                 </button>
+              </div>
+            </div>
+          ) : currentStep === "school-choice" ? (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="flex items-center gap-2 text-base sm:text-lg font-semibold text-blue-600">
+                  🏫 Wybierz opcję szkoły
+                </span>
+                <button
+                  onClick={handleBackToBusinessType}
+                  className={`text-xs sm:text-sm text-gray-500 hover:text-gray-700 transition-colors ${(isLoading || loadingState === "redirecting-to-stripe") ? "pointer-events-none opacity-50" : ""}`}
+                  disabled={isLoading}
+                >
+                  ← Wróć
+                </button>
+              </div>
+
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-sm sm:text-md font-semibold text-gray-700">Co chcesz zrobić?</h3>
+                
+                <div className="grid gap-3 sm:gap-4">
+                  <button
+                    onClick={() => handleSchoolChoice("own-school")}
+                    disabled={schoolsLoading || isLoading}
+                    className={`w-full p-4 sm:p-6 border-2 rounded-lg transition-all text-left hover:shadow-lg
+                      ${businessData.joinSchoolMode === "own-school"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-gray-300"
+                      }`}
+                  >
+                    <div className="font-semibold text-gray-800 mb-2">📘 Założę własną szkołę</div>
+                    <div className="text-sm text-gray-600">
+                      Będę rejestrow Stripe i płacić za platformę. Będę mógł zapraszać nauczycieli do mojej szkoły.
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handleSchoolChoice("join-existing-school")}
+                    disabled={schoolsLoading || isLoading}
+                    className={`w-full p-4 sm:p-6 border-2 rounded-lg transition-all text-left hover:shadow-lg
+                      ${businessData.joinSchoolMode === "join-existing-school"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-gray-300"
+                      }`}
+                  >
+                    <div className="font-semibold text-gray-800 mb-2">👥 Dołączę do istniejącej szkoły</div>
+                    <div className="text-sm text-gray-600">
+                      Szkoła zajmuje się rejestracją Stripe i płatnościami. Ja skupiam się na nauczaniu.
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : currentStep === "find-school" ? (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="flex items-center gap-2 text-base sm:text-lg font-semibold text-blue-600">
+                  🔍 Znajdź szkołę
+                </span>
+                <button
+                  onClick={() => setCurrentStep("school-choice")}
+                  className={`text-xs sm:text-sm text-gray-500 hover:text-gray-700 transition-colors ${(isLoading || schoolsLoading) ? "pointer-events-none opacity-50" : ""}`}
+                  disabled={isLoading || schoolsLoading}
+                >
+                  ← Wróć
+                </button>
+              </div>
+
+              <div className="space-y-3 sm:space-y-4">
+                {schoolsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="animate-spin" size={24} />
+                    <span className="ml-2 text-gray-600">Ładowanie list szkoł...</span>
+                  </div>
+                ) : schools.length === 0 ? (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-700">
+                      Brak dostępnych szkół. Spróbuj założyć własną szkołę.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">Wybierz szkołę, do której chcesz dołączyć:</p>
+                    <div className="grid gap-3 max-h-96 overflow-y-auto">
+                      {schools.map((school) => (
+                        <div
+                          key={school.id}
+                          className="p-4 border rounded-lg hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-gray-800">{school.name}</h4>
+                              <p className="text-sm text-gray-600">{school.companyName}</p>
+                            </div>
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                              {school._count.members} nauczycieli
+                            </span>
+                          </div>
+                          {school.description && (
+                            <p className="text-sm text-gray-600 mb-3">{school.description}</p>
+                          )}
+                          <button
+                            onClick={() => handleJoinSchool(school.id)}
+                            disabled={joinRequestStatus[school.id] === "pending" || joinRequestStatus[school.id] === "sent" || isLoading}
+                            className={`w-full py-2 px-3 text-sm rounded transition-colors ${
+                              joinRequestStatus[school.id] === "sent"
+                                ? "bg-green-500 text-white"
+                                : "bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                            }`}
+                          >
+                            {joinRequestStatus[school.id] === "pending" ? (
+                              <div className="flex items-center justify-center gap-1">
+                                <Loader2 className="animate-spin w-4 h-4" />
+                                Wysyłanie...
+                              </div>
+                            ) : joinRequestStatus[school.id] === "sent" ? (
+                              "✓ Prośba wysłana"
+                            ) : (
+                              "Poproś o dołączenie"
+                            )}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ) : currentStep === "stripe-setup" ? (

@@ -1,8 +1,10 @@
 "use client";
 
-import { BarChart, Compass, Layout, List, GroupIcon, Settings } from "lucide-react";
+import { BarChart, Compass, Layout, List, GroupIcon, Settings, Users } from "lucide-react";
 import { SidebarItem } from "./sidebar-item";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 
 const guestRoutes = [
   {
@@ -59,12 +61,50 @@ const teacherRoutes = [
     href: "/teacher/settings",
   },
 ];
+
+interface OwnedSchool {
+  id: number;
+  name: string;
+}
+
 export const SidebarRoutes = () => {
   const pathName = usePathname();
+  const { userId } = useAuth();
+  const [ownedSchools, setOwnedSchools] = useState<OwnedSchool[]>([]);
+
+  useEffect(() => {
+    const fetchUserSchools = async () => {
+      if (!userId) return;
+
+      try {
+        const response = await fetch("/api/user/school");
+        if (response.ok) {
+          const data = await response.json();
+          setOwnedSchools(data.ownedSchools || []);
+        }
+      } catch (error) {
+        console.error("Error fetching user schools:", error);
+      }
+    };
+
+    fetchUserSchools();
+  }, [userId]);
 
   const isTeacherPage = pathName?.startsWith("/teacher");
 
-  const routes = isTeacherPage ? teacherRoutes : guestRoutes;
+  let routes = isTeacherPage ? teacherRoutes : guestRoutes;
+
+  // Dodaj elementy do zarządzania nauczycielami dla każdej szkoły, którą user posiada
+  if (isTeacherPage && ownedSchools.length > 0) {
+    const schoolManagementRoutes = ownedSchools.map((school) => ({
+      icon: Users,
+      label: `Zarządzaj: ${school.name}`,
+      href: `/teacher/school/${school.id}/manage`,
+    }));
+
+    routes = [...routes, ...schoolManagementRoutes];
+  }
+
   return (
     <div className="flex flex-col w-full">
       {routes.map((route) => {
@@ -77,6 +117,6 @@ export const SidebarRoutes = () => {
           ></SidebarItem>
         );
       })}
-    </div>
+</div>
   );
 };

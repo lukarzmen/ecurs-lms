@@ -242,19 +242,78 @@ model User {
   companyName              String?
   requiresVatInvoices      Boolean                   @default(false)
   taxId                    String?
-  userCourses                 UserCourse[]
-  userModules                 UserModule[]
-  role                        Role?                        @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  stripeCustomers             StripeCustomer[]
-  courses                     Course[]
-  educationalPaths            EducationalPath[]
-  userEducationalPaths        UserEducationalPath[]
-  educationalPathPurchases    EducationalPathPurchase[]
+  userCourses              UserCourse[]
+  userModules              UserModule[]
+  role                     Role?                    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  stripeCustomers          StripeCustomer[]
+  courses                  Course[]
+  educationalPaths         EducationalPath[]
+  userEducationalPaths     UserEducationalPath[]
+  educationalPathPurchases EducationalPathPurchase[]
   teacherPlatformSubscription TeacherPlatformSubscription?
-  notificationSchedules       NotificationSchedule[]       @relation("NotificationAuthor")
-  receivedNotifications       NotificationSentLog[]        @relation("NotificationRecipient")
+  notificationSchedules    NotificationSchedule[]   @relation("NotificationAuthor")
+  receivedNotifications    NotificationSentLog[]    @relation("NotificationRecipient")
+  ownedSchools             School[]                 @relation("SchoolOwner")
+  schoolMemberships        SchoolTeacher[]          @relation("TeacherInSchool")
+  joinRequests             TeacherJoinRequest[]     @relation("RequestingTeacher")
 
   @@index([roleId])
+}
+
+model School {
+  id                    Int                    @id @default(autoincrement())
+  name                  String
+  description           String?
+  companyName           String
+  taxId                 String
+  ownerId               Int                    // Właściciel szkoły
+  stripeAccountId       String?                // Szkoła ma jedno konto Stripe dla wszystkich nauczycieli
+  stripeAccountStatus   String?                @default("pending")
+  stripeOnboardingComplete Boolean              @default(false)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  
+  owner                 User                   @relation("SchoolOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  teachers              SchoolTeacher[]        @relation("SchoolMembers")
+  joinRequests          TeacherJoinRequest[]   @relation("SchoolRequests")
+
+  @@index([ownerId])
+  @@index([stripeAccountId])
+  @@map("schools")
+}
+
+model SchoolTeacher {
+  id        Int      @id @default(autoincrement())
+  schoolId  Int
+  teacherId Int
+  addedAt   DateTime @default(now())
+
+  school    School   @relation("SchoolMembers", fields: [schoolId], references: [id], onDelete: Cascade)
+  teacher   User     @relation("TeacherInSchool", fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, teacherId])
+  @@index([schoolId])
+  @@index([teacherId])
+  @@map("school_teachers")
+}
+
+model TeacherJoinRequest {
+  id          Int       @id @default(autoincrement())
+  teacherId   Int
+  schoolId    Int
+  status      String    @default("pending") // "pending", "accepted", "rejected"
+  requestedAt DateTime  @default(now())
+  respondedAt DateTime?
+  rejectionReason String?
+  
+  teacher     User      @relation("RequestingTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  school      School    @relation("SchoolRequests", fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, schoolId])
+  @@index([teacherId])
+  @@index([schoolId])
+  @@index([status])
+  @@map("teacher_join_requests")
 }
 
 model UserCourse {
