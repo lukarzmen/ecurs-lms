@@ -20,10 +20,21 @@ export async function POST(req: Request) {
       return new NextResponse("User not found", { status: 404 });
     }
 
+    // Check if user belongs to a school
+    let schoolId: number | null = null;
+    const schoolTeacher = await db.schoolTeacher.findFirst({
+      where: { teacherId: user.id },
+      include: { school: true }
+    });
+    if (schoolTeacher?.school) {
+      schoolId = schoolTeacher.school.id;
+    }
+
     // Create the course first (without price)
     const course = await db.course.create({
       data: {
         authorId: user.id,
+        schoolId: schoolId,
         title,
         categoryId: categoryId,
         description,
@@ -124,7 +135,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Find courses where the user is associated via UserCourse with roleId 0
+  // Find courses where the user is associated via UserCourse with roleId 0
     const courses = await db.course.findMany({
       where: {
         userCourses: { // Filter based on the related UserCourse records

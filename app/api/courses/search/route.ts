@@ -4,10 +4,12 @@ import { Category, Course } from "@prisma/client";
 
 export type LearningUnit = Course & {
   category: Category | null;
+  school: { name: string } | null;
   author: {
+      id?: number;
       firstName: string | null;
       lastName: string | null;
-      displayName?: string | null; // Add displayName as optional
+      displayName?: string | null;
   } | null;
 }
 
@@ -53,7 +55,8 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
       },
       include: {
         category: true,
-        author: { select: { firstName: true, lastName: true, displayName: true } },
+        school: { select: { name: true } },
+        author: { select: { id: true, firstName: true, lastName: true, displayName: true } },
         price: { select: { amount: true, currency: true, isRecurring: true, interval: true, trialPeriodDays: true, trialPeriodEnd: true, trialPeriodType: true, vatRate: true } }
       },
     });
@@ -74,9 +77,6 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
     // Map courses
     const mappedCourses = courses.map((course: any) => {
       const enrolled = enrolledCourseIds.includes(course.id);
-      const authorDisplay = course.author?.displayName?.trim()
-        ? course.author.displayName
-        : `${course.author?.firstName ?? ""} ${course.author?.lastName ?? ""}`.trim();
       return {
         ...course,
         enrolled,
@@ -88,9 +88,6 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
         trialPeriodEnd: course.price?.trialPeriodEnd ?? null,
         trialPeriodType: course.price?.trialPeriodType ?? null,
         vatRate: course.price?.vatRate ?? 23,
-        author: course.author
-          ? { ...course.author, displayName: authorDisplay }
-          : null,
         type: "course",
         updatedAt: course.updatedAt,
       };
@@ -108,21 +105,16 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
 
     const mappedPaths = await Promise.all(
       educationalPaths.map(async (path: any) => {
-        // Fetch author
-        let author = null;
-        let authorDisplay = "";
-        if (path.authorId) {
-          const authorObj = await db.user.findUnique({
-            where: { id: path.authorId },
-            select: { firstName: true, lastName: true, displayName: true }
+        // Fetch school if schoolId is set
+        let school = null;
+        if (path.schoolId) {
+          const schoolObj = await db.school.findUnique({
+            where: { id: path.schoolId },
+            select: { name: true }
           });
-          if (authorObj) {
-            authorDisplay = authorObj.displayName?.trim()
-              ? authorObj.displayName
-              : `${authorObj.firstName ?? ""} ${authorObj.lastName ?? ""}`.trim();
-            author = { ...authorObj, displayName: authorDisplay };
-          }
+          school = schoolObj;
         }
+        
         // Fetch price
         const priceObj = await db.educationalPathPrice.findUnique({
           where: { educationalPathId: path.id },
@@ -139,6 +131,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
         return {
           ...path,
           enrolled,
+          school,
           price: priceObj?.amount ?? null,
           currency: priceObj?.currency ?? null,
           isRecurring: priceObj?.isRecurring ?? false,
@@ -147,7 +140,6 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
           trialPeriodEnd: priceObj?.trialPeriodEnd ?? null,
           trialPeriodType: priceObj?.trialPeriodType ?? null,
           vatRate: priceObj?.vatRate ?? 23,
-          author,
           category,
           type: "educationalPath",
           updatedAt: path.updatedAt,

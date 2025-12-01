@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import { Trash2, CreditCard, Settings, User, Building, GraduationCap, ArrowRight } from "lucide-react";
+import { Trash2, CreditCard, Settings, User, Building } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -70,12 +70,6 @@ interface PlatformSubscription {
   trialEnd?: string;
 }
 
-interface UpgradeToSchoolData {
-  schoolName: string;
-  companyName: string;
-  taxId: string;
-}
-
 const TeacherSettingsPage = () => {
   const { userId, sessionId } = useAuth();
   const [userCourses, setUserCourses] = useState<UserCourse[]>([]);
@@ -84,13 +78,6 @@ const TeacherSettingsPage = () => {
   const [platformSubscription, setPlatformSubscription] = useState<PlatformSubscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [isUpgrading, setIsUpgrading] = useState(false);
-  const [upgradeData, setUpgradeData] = useState<UpgradeToSchoolData>({
-    schoolName: '',
-    companyName: '',
-    taxId: '',
-  });
 
   useEffect(() => {
     fetchData();
@@ -261,117 +248,6 @@ const TeacherSettingsPage = () => {
     }
   };
 
-  const upgradeToSchool = async () => {
-    if (!upgradeData.schoolName || !upgradeData.companyName || !upgradeData.taxId) {
-      toast.error('Wypełnij wszystkie pola');
-      return;
-    }
-
-    try {
-      setIsUpgrading(true);
-      
-      // First, update user profile to company type
-      const profileUpdateResponse = await fetch('/api/user/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          businessType: 'company',
-          companyName: upgradeData.companyName,
-          taxId: upgradeData.taxId,
-        }),
-      });
-
-      if (!profileUpdateResponse.ok) {
-        toast.error('Błąd podczas aktualizacji profilu');
-        return;
-      }
-
-      // Update Stripe account type to school
-      const stripeUpdateResponse = await fetch('/api/stripe/update-account-type', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          accountType: 'school',
-        }),
-      });
-
-      if (!stripeUpdateResponse.ok) {
-        toast.error('Błąd podczas aktualizacji konta Stripe');
-        return;
-      }
-
-      // Then create the school
-      const schoolResponse = await fetch('/api/schools/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: upgradeData.schoolName,
-          companyName: upgradeData.companyName,
-          taxId: upgradeData.taxId,
-          description: '',
-        }),
-      });
-
-      if (schoolResponse.ok) {
-        const schoolData = await schoolResponse.json();
-        
-        // Subscribe to school platform plan with higher payment amount
-        const subscriptionResponse = await fetch('/api/platform-subscription', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            subscriptionType: 'school',
-          }),
-        });
-
-        if (subscriptionResponse.ok) {
-          const result = await subscriptionResponse.json();
-          if (result.sessionUrl) {
-            toast.success('Udało się! Przekierowywanie do płatności za plan szkolny...');
-            setShowUpgradeModal(false);
-            setUpgradeData({
-              schoolName: '',
-              companyName: '',
-              taxId: '',
-            });
-            
-            // Redirect to Stripe checkout after short delay
-            setTimeout(() => {
-              window.location.href = result.sessionUrl;
-            }, 1500);
-            return;
-          }
-        } else {
-          // School created but subscription failed - allow user to continue
-          toast.success('Szkoła została utworzona! Możesz skonfigurować plan subskrypcji później.');
-          setShowUpgradeModal(false);
-          setUpgradeData({
-            schoolName: '',
-            companyName: '',
-            taxId: '',
-          });
-          fetchData();
-        }
-      } else {
-        const error = await schoolResponse.json();
-        toast.error(error.error || 'Błąd podczas tworzenia szkoły');
-      }
-    } catch (error) {
-      console.error('Error upgrading to school:', error);
-      toast.error('Błąd podczas aktualizacji do szkoły');
-    } finally {
-      setIsUpgrading(false);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="p-6">
@@ -394,87 +270,7 @@ const TeacherSettingsPage = () => {
         <p className="text-muted-foreground">Zarządzaj swoimi ustawieniami konta, subskrypcjami i preferencjami</p>
       </div>
 
-      {/* Upgrade to School - Show if individual teacher */}
-      {userProfile && userProfile.businessType === 'individual' && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-blue-900">
-              <GraduationCap className="h-5 w-5" />
-              Przejdź na nauczyciela szkoły
-            </CardTitle>
-            <CardDescription className="text-blue-800">
-              Uaktualnij swoje konto, aby założyć lub dołączyć do szkoły
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm mb-4">
-              Jako nauczyciel szkoły będziesz mógł zapraszać innych nauczycieli, zarządzać ich kursami i prowadzić wspólne szkolenia.
-            </p>
-            <Button 
-              onClick={() => setShowUpgradeModal(true)}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <ArrowRight className="h-4 w-4 mr-2" />
-              Uaktualnij do szkoły
-            </Button>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Upgrade Modal */}
-      <AlertDialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
-        <AlertDialogContent className="sm:max-w-[425px]">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Przejdź na nauczyciela szkoły</AlertDialogTitle>
-            <AlertDialogDescription>
-              Podaj dane dotyczące Twojej szkoły/firmy
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div>
-              <Label htmlFor="upgrade-school-name">Nazwa szkoły</Label>
-              <Input
-                id="upgrade-school-name"
-                placeholder="np. Szkoła Online XYZ"
-                value={upgradeData.schoolName}
-                onChange={(e) => setUpgradeData({...upgradeData, schoolName: e.target.value})}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="upgrade-company-name">Nazwa firmy</Label>
-              <Input
-                id="upgrade-company-name"
-                placeholder="np. XYZ Sp. z o.o."
-                value={upgradeData.companyName}
-                onChange={(e) => setUpgradeData({...upgradeData, companyName: e.target.value})}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="upgrade-tax-id">NIP</Label>
-              <Input
-                id="upgrade-tax-id"
-                placeholder="np. 1234567890"
-                value={upgradeData.taxId}
-                onChange={(e) => setUpgradeData({...upgradeData, taxId: e.target.value})}
-              />
-            </div>
-          </div>
-          
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isUpgrading}>Anuluj</AlertDialogCancel>
-            <Button
-              onClick={upgradeToSchool}
-              disabled={isUpgrading}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {isUpgrading ? 'Uaktualnianie...' : 'Uaktualnij'}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Profile Settings */}
       {userProfile && (
@@ -529,26 +325,7 @@ const TeacherSettingsPage = () => {
               </div>
             </div>
 
-            {userProfile.businessType === 'company' && (
-              <>
-                <div>
-                  <Label htmlFor="companyName">Nazwa firmy</Label>
-                  <Input
-                    id="companyName"
-                    value={userProfile.companyName || ''}
-                    onChange={(e) => setUserProfile({...userProfile, companyName: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="taxId">NIP</Label>
-                  <Input
-                    id="taxId"
-                    value={userProfile.taxId || ''}
-                    onChange={(e) => setUserProfile({...userProfile, taxId: e.target.value})}
-                  />
-                </div>
-              </>
-            )}
+
 
             <div className="flex items-center space-x-2">
               <Checkbox

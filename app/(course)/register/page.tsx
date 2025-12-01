@@ -237,7 +237,17 @@ const TEACHER_TERMS = (
       <li><b>Zwolnienie platformy:</b> Nauczyciel zobowiązuje się zwolnić platformę Ecurs z wszelkich roszczeń, odpowiedzialności oraz kosztów prawnych związanych z treściami kursów i świadczonymi usługami edukacyjnymi.</li>
       <li><b>Ubezpieczenie:</b> Nauczyciel zobowiązuje się do posiadania odpowiedniego ubezpieczenia odpowiedzialności cywilnej związanej z prowadzoną działalnością edukacyjną.</li>
     </ul>
-    <p className="font-semibold text-gray-700 mt-2">§8. Ograniczenie odpowiedzialności platformy</p>
+    <p className="font-semibold text-gray-700 mt-2">§7A. Prawa intelektualne i majątkowe nauczyciela dołączającego do szkoły</p>
+    <ul className="list-disc ml-6 text-gray-700">
+      <li><b>Dołączenie do szkoły:</b> Nauczyciel, który dołącza do istniejącej szkoły jako członek zespołu, akceptuje zasady dotyczące praw własności do kursów i ścieżek edukacyjnych utworzonych w kontekście szkoły.</li>
+      <li><b>Własność majątkowa kursów:</b> Kursy i ścieżki edukacyjne tworzone przez nauczyciela będącego członkiem szkoły stanowią własność majątkową szkoły. Szkoła jest uprawniona do zbierania płatności za te kursy i ścieżki.</li>
+      <li><b>Autorstwo intelektualne:</b> Nauczyciel pozostaje autorem intelektualnym (twórcą) treści kursów. Prawo autorskie do treści merytorycznych utworzonych przez nauczyciela przysługuje nauczycielowi.</li>
+      <li><b>Licencja dla szkoły:</b> Nauczyciel udziela szkole niewyłącznej, nieodpłatnej licencji na publikowanie, dystrybucję i sprzedaż kursów oraz ścieżek edukacyjnych na platformie Ecurs. Licencja ta jest udzielana na okres trwania członkostwa nauczyciela w szkole i powiązanych umów.</li>
+      <li><b>Wynagrodzenie nauczyciela:</b> Zasady wynagrodzania nauczyciela za utworzone kursy i uzyskane przychody ustalane są w umowie między nauczycielem a szkołą i nie są regulowane przez platformę Ecurs.</li>
+      <li><b>Rozwiązanie sporów:</b> Wszelkie spory dotyczące praw intelektualnych i majątkowych między nauczycielem a szkołą rozstrzygane są bezpośrednio między stronami zgodnie z ich umową oraz obowiązującym prawem. Platforma Ecurs nie uczestniczy w rozwiązywaniu takich sporów.</li>
+      <li><b>Rezygnacja z członkostwa:</b> W przypadku rezygnacji nauczyciela z członkostwa w szkole, prawa majątkowe do utworzonych przez nauczyciela kursów i ścieżek pozostają własnością szkoły. Nauczyciel zachowuje prawa autorskie do treści merytorycznych, jednak szkoła zachowuje prawo do dalszego oferowania kursów zgodnie z licencją udzieloną przez nauczyciela.</li>
+    </ul>
+    <p className="font-semibold text-gray-700 mt-2">§9. Ograniczenie odpowiedzialności platformy</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li><b>Charakter usługi:</b> Platforma świadczy wyłącznie usługi techniczne umożliwiające publikację i sprzedaż kursów. Nie jest dostawcą treści edukacyjnych ani stroną umów zawieranych między nauczycielami a uczniami.</li>
       <li><b>Wyłączenie odpowiedzialności:</b> Platforma wyłącza swoją odpowiedzialność za jakość, poprawność, skuteczność kursów oraz wszelkie szkody wynikające z ich wykorzystania.</li>
@@ -245,7 +255,7 @@ const TEACHER_TERMS = (
       <li><b>Siła wyższa:</b> Platforma nie ponosi odpowiedzialności za szkody wynikające z działania siły wyższej, awarii systemów, ataków hakerskich lub innych zdarzeń pozostających poza jej kontrolą.</li>
       <li><b>Maksymalna odpowiedzialność:</b> W przypadkach gdzie wyłączenie odpowiedzialności prawnie nie jest możliwe, odpowiedzialność platformy ograniczona jest do wysokości miesięcznej opłaty za licencję nauczyciela.</li>
     </ul>
-    <p className="font-semibold text-gray-700 mt-2">§9. Zgodność z prawem i obowiązki fiskalne</p>
+    <p className="font-semibold text-gray-700 mt-2">§10. Zgodność z prawem i obowiązki fiskalne</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li><b>Platforma nie jest stroną transakcji:</b> Platforma Ecurs nie jest stroną umowy sprzedaży między nauczycielem a uczniem i nie rozlicza sprzedaży klientów. Nauczyciel jest formalnie sprzedawcą usług edukacyjnych.</li>
       <li><b>Rozliczenia podatkowe przez Stripe:</b> Wszystkie rozliczenia podatkowe związane z transakcjami płatniczymi są obsługiwane przez system Stripe zgodnie z obowiązującymi przepisami podatkowymi. Stripe dostarcza nauczycielowi niezbędne dokumenty i raporty do rozliczeń podatkowych.</li>
@@ -260,13 +270,13 @@ const TEACHER_TERMS = (
       <li><b>Prawa autorskie:</b> Nauczyciel gwarantuje, że posiada wszystkie prawa do wykorzystywanych w kursach materiałów lub posiada odpowiednie licencje na ich użycie.</li>
       <li><b>Odpowiedzialność karna:</b> Nauczyciel ponosi wyłączną odpowiedzialność karną za wszelkie czyny zabronione związane z prowadzoną działalnością edukacyjną.</li>
     </ul>
-    <p className="font-semibold text-gray-700 mt-2">§10. Pliki cookies</p>
+    <p className="font-semibold text-gray-700 mt-2">§11. Pliki cookies</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li>
         Serwis wykorzystuje pliki cookies w celu zapewnienia prawidłowego działania, personalizacji treści oraz analizy ruchu. Korzystając z serwisu, użytkownik wyraża zgodę na używanie plików cookies zgodnie z Polityką Prywatności. Użytkownik może zmienić ustawienia dotyczące cookies w swojej przeglądarce internetowej.
       </li>
     </ul>
-    <p className="font-semibold text-gray-700 mt-2">§11. Postanowienia końcowe</p>
+    <p className="font-semibold text-gray-700 mt-2">§12. Postanowienia końcowe</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li>Administrator zastrzega sobie prawo do zmiany regulaminu, informując o tym nauczycieli.</li>
       <li>Wszelkie spory wynikające z korzystania z platformy będą rozstrzygane zgodnie z prawem polskim.</li>
@@ -377,14 +387,14 @@ export default function RegisterPage() {
                 setCurrentStep("stripe-setup");
               } else {
                 // Check what's missing for teacher
-                const hasStripe = userData.stripeAccountId && userData.stripeOnboardingComplete;
+              const hasStripe = userData.stripeAccountId && userData.stripeOnboardingComplete;
                 const hasSubscription = userData.hasActiveSubscription;
                 
                 if (hasSubscription) {
                   // Fully registered
                   setCurrentStep("completed");
                   toast.success("Jesteś już w pełni zarejestrowany!");
-                  setTimeout(() => router.push("/teacher"), 2000);
+                  setTimeout(() => router.push("/teacher/courses"), 2000);
                 } else if (hasStripe) {
                   // Has Stripe, needs subscription
                   setCurrentStep("platform-subscription");
@@ -636,7 +646,7 @@ export default function RegisterPage() {
           toast.success("Rejestracja zakończona! Prośba o dołączenie do szkoły została wysłana.");
           
           setTimeout(() => {
-            router.push("/teacher");
+            router.push("/teacher/courses");
             router.refresh();
           }, 1500);
         } else {
@@ -1736,7 +1746,7 @@ export default function RegisterPage() {
                         });
                         
                         setTimeout(() => {
-                          router.push("/teacher");
+                          router.push("/teacher/courses");
                         }, 2000);
                       }}
                       disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
@@ -1857,7 +1867,7 @@ export default function RegisterPage() {
                           });
                           
                           setTimeout(() => {
-                            router.push("/teacher");
+                            router.push("/teacher/courses");
                           }, 2000);
                         }}
                         disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
