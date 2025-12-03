@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import Stripe from "stripe";
+import { Decimal } from "@prisma/client/runtime/library";
 
 import { db } from "@/lib/db";
 
@@ -13,6 +14,9 @@ export async function POST(req: NextRequest) {
 
         const currentAuthUser = await currentUser();
         const email = currentAuthUser?.emailAddresses[0]?.emailAddress;
+        
+        console.log("Platform subscription POST - Email:", email, "SubscriptionType:", subscriptionType);
+        
         if (!email) {
             return new NextResponse("User email not found", { status: 401 });
         }
@@ -25,6 +29,8 @@ export async function POST(req: NextRequest) {
             }
         });
         
+        console.log("User found:", user?.email, "RoleId:", user?.roleId, "Subscription status:", user?.teacherPlatformSubscription?.subscriptionStatus);
+        
         if (!user) {
             console.error("User not found for email:", email);
             return new NextResponse("User not found", { status: 404 });
@@ -35,19 +41,53 @@ export async function POST(req: NextRequest) {
             return new NextResponse("Access denied. Only teachers can subscribe to platform.", { status: 403 });
         }
 
-        // Check if user already has an active subscription
-        if (user.teacherPlatformSubscription && 
-            user.teacherPlatformSubscription.subscriptionStatus === 'active') {
-            return new NextResponse("User already has an active platform subscription", { status: 400 });
+        // Check if user already has a subscription - return existing subscription data if so
+        if (user.teacherPlatformSubscription) {
+            console.log("User already has a subscription:", user.teacherPlatformSubscription);
+            
+            // If subscription is already active, don't create a new one
+            if (user.teacherPlatformSubscription.subscriptionStatus === 'active') {
+                return NextResponse.json(
+                    { 
+                        error: "User already has an active platform subscription",
+                        existing: true,
+                        subscription: user.teacherPlatformSubscription
+                    },
+                    { status: 400 }
+                );
+            }
+            
+            // If subscription is pending or trialing, allow to continue (will update via upsert)
+            console.log("Existing subscription status:", user.teacherPlatformSubscription.subscriptionStatus, "- allowing to continue");
         }
 
         // Get platform fee configuration
-        const feeConfig = await db.platformFeeConfig.findFirst({
+        let feeConfig = await db.platformFeeConfig.findFirst({
             where: { isActive: true }
         });
         
+        console.log("Platform fee config found:", !!feeConfig, "Config:", feeConfig);
+        
+        // If no config found in DB, use defaults
         if (!feeConfig) {
-            return new NextResponse("Platform fee configuration not found", { status: 500 });
+            console.log("No platform fee config found, using defaults");
+            feeConfig = {
+                id: 0,
+                name: 'Default',
+                description: 'Default configuration',
+                individualMonthlyFee: new Decimal(39.00),
+                schoolYearlyFee: new Decimal(1499.00),
+                currency: 'PLN',
+                trialPeriodDays: 30,
+                isActive: true,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            };
+        }
+        
+        // Ensure feeConfig is not null from this point on
+        if (!feeConfig) {
+            throw new Error("Could not initialize platform fee configuration");
         }
 
         const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
@@ -167,7 +207,24 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         console.error("Platform subscription error:", error);
-        return new NextResponse("Internal server error", { status: 500 });
+        
+        let errorMessage = "Internal server error";
+        let errorDetails = {};
+        
+        if (error instanceof Error) {
+            errorMessage = error.message;
+            errorDetails = {
+                name: error.name,
+                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            };
+        }
+        
+        console.error("Error details:", { errorMessage, errorDetails });
+        
+        return NextResponse.json(
+            { error: errorMessage, details: errorDetails },
+            { status: 500 }
+        );
     }
 }
 

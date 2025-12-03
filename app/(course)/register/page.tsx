@@ -376,6 +376,7 @@ export default function RegisterPage() {
               
               // Check if returning from Stripe
               if (success === 'stripe') {
+                console.log("Returning from Stripe with success=stripe. userData:", userData);
                 toast.success('Konto Stripe zostało skonfigurowane! Teraz wybierz plan subskrypcji platformy.');
                 setCurrentStep("platform-subscription");
               } else if (success === 'subscription') {
@@ -424,6 +425,8 @@ export default function RegisterPage() {
         console.error("Error checking user status:", error);
       } finally {
         setUserCheckCompleted(true);
+        setIsLoading(false);
+        setLoadingState("idle");
       }
     };
 
@@ -624,6 +627,11 @@ export default function RegisterPage() {
         }
 
         const result = await response.json();
+        console.log('[handleRegister] User creation response:', { 
+          created: result.created, 
+          schoolId: result.schoolId,
+          businessMode: businessData.joinSchoolMode 
+        });
         toast.success("Konto użytkownika utworzone pomyślnie!");
       } else {
         toast("Konto już istnieje, kontynuuję rejestrację...", { icon: "ℹ️" });
@@ -649,8 +657,12 @@ export default function RegisterPage() {
             router.push("/teacher/courses");
             router.refresh();
           }, 1500);
-        } else {
+        } else if (businessData.joinSchoolMode === "own-school") {
           // Creating own school - move to Stripe setup
+          console.log('[handleRegister] Teacher creating own school, moving to Stripe setup');
+          setCurrentStep("stripe-setup");
+        } else {
+          // Fallback - move to Stripe setup
           setCurrentStep("stripe-setup");
         }
       }
@@ -681,10 +693,16 @@ export default function RegisterPage() {
       setIsLoading(true);
       setLoadingState("creating-stripe-account");
       
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
       const stripeResponse = await fetch("/api/stripe/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeout);
       
       if (!stripeResponse.ok) {
         let errorMessage = "Nie udało się utworzyć konta płatności";
@@ -707,6 +725,8 @@ export default function RegisterPage() {
 
       const stripeResult = await stripeResponse.json();
       
+      console.log("Stripe Connect response:", stripeResult);
+      
       if (stripeResult.onboardingUrl) {
         setLoadingState("redirecting-to-stripe");
         toast.success("Przekierowujemy Cię do konfiguracji konta płatności...");
@@ -717,7 +737,10 @@ export default function RegisterPage() {
         return;
       } else if (stripeResult.onboardingComplete || stripeResult.existingAccount) {
         // Account already configured, proceed to subscription
+        console.log("Account already configured, proceeding to subscription");
         toast.success("Konto płatności już skonfigurowane! Przejdź do wyboru planu.");
+        setIsLoading(false);
+        setLoadingState("idle");
         setCurrentStep("platform-subscription");
       } else {
         throw new Error("Nie otrzymano linku do konfiguracji konta płatności");
@@ -726,9 +749,15 @@ export default function RegisterPage() {
     } catch (stripeError) {
       console.error("Błąd konfiguracji Stripe:", stripeError);
       
-      const stripeErrorMessage = stripeError instanceof Error 
-        ? stripeError.message 
-        : "Błąd podczas konfiguracji konta płatności";
+      let stripeErrorMessage = "Błąd podczas konfiguracji konta płatności";
+      
+      if (stripeError instanceof Error) {
+        if (stripeError.name === 'AbortError') {
+          stripeErrorMessage = "Timeout: Żądanie do konfiguracji Stripe trwało zbyt długo. Spróbuj ponownie.";
+        } else {
+          stripeErrorMessage = stripeError.message;
+        }
+      }
         
       setRegistrationError(`${stripeErrorMessage}. Możesz dokończyć konfigurację później w panelu nauczyciela.`);
       toast.error(stripeErrorMessage);
@@ -744,6 +773,9 @@ export default function RegisterPage() {
       setIsLoading(true);
       setLoadingState("creating-platform-subscription");
       
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
       const response = await fetch("/api/platform-subscription", {
         method: "POST",
         headers: {
@@ -752,8 +784,11 @@ export default function RegisterPage() {
         body: JSON.stringify({
           subscriptionType: subscriptionType
         }),
+        signal: controller.signal,
       });
-
+      
+      clearTimeout(timeout);
+      
       if (response.ok) {
         const result = await response.json();
         
@@ -771,10 +806,22 @@ export default function RegisterPage() {
         }
       } else {
         let errorMessage = "Błąd podczas tworzenia subskrypcji platformy";
+        let errorData = null;
         
         try {
-          const errorData = await response.json();
+          errorData = await response.json();
           errorMessage = errorData.message || errorData.error || errorMessage;
+          
+          // Check if it's because user already has active subscription
+          if (errorData.existing && errorData.error?.includes("already has an active")) {
+            console.log("User already has active subscription");
+            toast.success("Już posiadasz aktywną subskrypcję platformy!");
+            setCurrentStep("completed");
+            setTimeout(() => {
+              router.push("/teacher/courses");
+            }, 2000);
+            return;
+          }
         } catch (parseError) {
           try {
             const errorText = await response.text();
@@ -788,7 +835,16 @@ export default function RegisterPage() {
       }
     } catch (error) {
       console.error("Platform subscription error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Błąd subskrypcji platformy";
+      
+      let errorMessage = "Błąd subskrypcji platformy";
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          errorMessage = "Timeout: Żądanie do systemu płatności trwało zbyt długo. Spróbuj ponownie.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       setRegistrationError(errorMessage + ". Możesz skonfigurować to później w panelu nauczyciela.");
       toast.error(errorMessage + ". Możesz to zrobić później w panelu nauczyciela.");
       
@@ -805,7 +861,7 @@ export default function RegisterPage() {
 
   const touchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleRoleSelection = useCallback((role: "student" | "teacher") => {
+  const handleRoleSelection = useCallback(async (role: "student" | "teacher") => {
     console.log("Role selection clicked:", role); // Debug log for mobile testing
     
     // Prevent any concurrent selections or during redirect states
@@ -819,18 +875,56 @@ export default function RegisterPage() {
     }
     
     setSelectedRole(role);
+    
     if (role === "teacher") {
-      setCurrentStep("business-type-selection");
+      // For teacher, check if user has existing data in database
+      try {
+        const response = await fetch(`/api/user?userId=${userId}&sessionId=${sessionId}`);
+        if (response.ok) {
+          const userData = await response.json();
+          
+          if (userData.exists && userData.businessType) {
+            // User already has business type selected, skip to next step
+            console.log("User already has businessType:", userData.businessType);
+            setBusinessData(prev => ({
+              ...prev,
+              businessType: userData.businessType
+            }));
+            
+            // Check if they have a school
+            if (userData.schoolId) {
+              setBusinessData(prev => ({
+                ...prev,
+                joinSchoolMode: "join-existing-school",
+                selectedSchoolId: userData.schoolId
+              }));
+              setCurrentStep("terms-acceptance");
+            } else {
+              setCurrentStep("school-choice");
+            }
+          } else {
+            // New teacher or no business type yet
+            setCurrentStep("business-type-selection");
+          }
+        } else {
+          // If check fails, start from business type
+          setCurrentStep("business-type-selection");
+        }
+      } catch (error) {
+        console.error("Error checking user data:", error);
+        setCurrentStep("business-type-selection");
+      }
     } else {
       setCurrentStep("terms-acceptance");
     }
+    
     setAcceptTerms(false);
     setRegistrationError(null);
     setLoadingState("idle");
     
     // Provide immediate visual feedback
     toast.success(`Wybrano rolę: ${role === "student" ? "uczeń" : "nauczyciel"}`);
-  }, [isLoading, selectedRole, loadingState]);
+  }, [isLoading, selectedRole, loadingState, userId, sessionId]);
 
   // Mobile-optimized touch handler
   const createTouchHandler = useCallback((role: "student" | "teacher") => {
