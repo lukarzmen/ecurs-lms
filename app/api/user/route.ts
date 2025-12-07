@@ -12,11 +12,9 @@ export interface UserResponse {
   displayName: string;
   providerId: string;
   roleId: number;
-  stripeAccountId?: string | null;
-  stripeOnboardingComplete?: boolean;
   hasActiveSubscription?: boolean;
-  businessType?: string | null;
   schoolId?: number | null;
+  schoolStripeOnboardingComplete?: boolean;
 }
 
 export async function GET(req: Request) {
@@ -41,9 +39,6 @@ export async function GET(req: Request) {
                 lastName: true,
                 displayName: true,
                 roleId: true,
-                businessType: true,
-                stripeAccountId: true,
-                stripeOnboardingComplete: true,
                 teacherPlatformSubscription: {
                     select: {
                         subscriptionStatus: true,
@@ -52,6 +47,7 @@ export async function GET(req: Request) {
                 ownedSchools: {
                     select: {
                         id: true,
+                        stripeOnboardingComplete: true,
                     },
                     take: 1,
                 },
@@ -72,11 +68,9 @@ export async function GET(req: Request) {
             displayName: user.displayName ?? '',
             providerId: user.providerId,
             roleId: user.roleId,
-            businessType: user.businessType,
-            stripeAccountId: user.stripeAccountId,
-            stripeOnboardingComplete: user.stripeOnboardingComplete ?? false,
             hasActiveSubscription: user.teacherPlatformSubscription?.subscriptionStatus === 'active',
             schoolId: user.ownedSchools?.[0]?.id ?? null,
+            schoolStripeOnboardingComplete: user.ownedSchools?.[0]?.stripeOnboardingComplete ?? false,
         };
         
         return NextResponse.json(userResponse);
@@ -109,17 +103,16 @@ export async function POST(req: Request) {
             },
         });
 
-        // Prepare business type data for user creation/update
+        // Prepare business type data for school (removed from user)
+        // Note: After migration, teachers should have schools created. This logic is for edge cases.
         const businessTypeData = businessData ? {
             businessType: businessData.businessType || "individual",
             companyName: businessData.businessType === "company" ? businessData.companyName : null,
             taxId: businessData.businessType === "company" ? businessData.taxId : null,
-            requiresVatInvoices: businessData.businessType === "company" ? (businessData.requiresVatInvoices || false) : false,
         } : {
             businessType: "individual",
             companyName: null,
             taxId: null,
-            requiresVatInvoices: false,
         };
 
         if (!user) {
@@ -133,42 +126,59 @@ export async function POST(req: Request) {
                     updatedAt: new Date(),
                     roleId: roleId,
                     displayName: `${clerkUser.username}` || `${clerkUser.firstName} ${clerkUser.lastName}`,
-                    ...businessTypeData,
                 },
             });
             
-            // If teacher creating own school, create the school record
+            // If teacher role, find or create their personal school
             let schoolId = null;
-            if (roleId === 1 && businessData?.joinSchoolMode === "own-school" && businessData?.businessType === "company") {
-                console.log('[POST /api/user] Creating school for teacher:', {
-                    schoolName: businessData.schoolName,
-                    companyName: businessData.companyName,
-                    taxId: businessData.taxId,
-                    ownerId: user.id
+            if (roleId === 1) {
+                // Check if teacher already has a school from migration
+                const existingSchool = await db.school.findFirst({
+                    where: { ownerId: user.id },
+                    select: { id: true }
                 });
                 
-                try {
-                    const school = await db.school.create({
-                        data: {
-                            name: businessData.schoolName || "New School",
-                            companyName: businessData.companyName || "",
-                            taxId: businessData.taxId || "",
-                            description: "",
-                            ownerId: user.id,
-                            stripeAccountId: null,
-                            stripeAccountStatus: "pending",
-                            stripeOnboardingComplete: false,
+                if (existingSchool) {
+                    schoolId = existingSchool.id;
+                    console.log('[POST /api/user] Found existing school for teacher:', schoolId);
+                } else {
+                    // Create school for teacher if migration didn't happen
+                    console.log('[POST /api/user] Creating school for teacher:', user.id);
+                    
+                    try {
+                        const school = await db.school.create({
+                            data: {
+                                name: businessData?.schoolName || `${user.firstName} ${user.lastName}`.trim() || "Personal School",
+                                companyName: businessTypeData.companyName || user.displayName || "",
+                                taxId: businessTypeData.taxId || `INDIVIDUAL_${user.id}`,
+                                description: "",
+                                ownerId: user.id,
+                                stripeAccountId: null,
+                                stripeOnboardingComplete: false,
+                            }
+                        });
+                        schoolId = school.id;
+                        console.log('[POST /api/user] School created successfully:', schoolId);
+                        
+                        // Add teacher to their own school as member
+                        try {
+                            await db.schoolTeacher.create({
+                                data: {
+                                    schoolId: schoolId,
+                                    teacherId: user.id
+                                }
+                            });
+                            console.log('[POST /api/user] Teacher added to their school as member');
+                        } catch (memberError) {
+                            console.error('[POST /api/user] Error adding teacher to school:', memberError);
                         }
-                    });
-                    schoolId = school.id;
-                    console.log('[POST /api/user] School created successfully:', schoolId);
-                } catch (schoolError) {
-                    console.error('[POST /api/user] Error creating school:', schoolError);
-                    // Don't fail the entire request, but log the error
+                    } catch (schoolError) {
+                        console.error('[POST /api/user] Error creating school:', schoolError);
+                    }
                 }
             }
             
-            // If teacher role, include stripe account setup info
+            // If teacher role, indicate onboarding needed
             if (roleId === 1) {
                 return NextResponse.json({ 
                     created: true, 
@@ -180,69 +190,84 @@ export async function POST(req: Request) {
             
             return NextResponse.json({ created: true, user, schoolId });
         } else {
-            // User exists - update only providerId, role, and business data if provided
+            // User exists - update only providerId and role
             const updateData: any = {
                 providerId: userId,
                 roleId: roleId,
                 updatedAt: new Date(),
             };
-
-            // Update business data if provided
-            if (businessData) {
-                updateData.businessType = businessData.businessType || "individual";
-                updateData.companyName = businessData.businessType === "company" ? businessData.companyName : null;
-                updateData.taxId = businessData.businessType === "company" ? businessData.taxId : null;
-                updateData.requiresVatInvoices = businessData.businessType === "company" ? (businessData.requiresVatInvoices || false) : false;
-            }
-
+            
             user = await db.user.update({
                 where: { id: user.id },
                 data: updateData,
             });
             
-            // If teacher creating own school, create the school record
+            // If teacher role, find or create their school
             let schoolId = null;
-            if (roleId === 1 && businessData?.joinSchoolMode === "own-school" && businessData?.businessType === "company") {
-                console.log('[POST /api/user] Creating school for existing teacher:', {
-                    schoolName: businessData.schoolName,
-                    companyName: businessData.companyName,
-                    taxId: businessData.taxId,
-                    ownerId: user.id
+            if (roleId === 1) {
+                // Check if teacher has a school
+                const existingSchool = await db.school.findFirst({
+                    where: { ownerId: user.id },
+                    select: { id: true }
                 });
                 
-                try {
-                    const school = await db.school.create({
-                        data: {
-                            name: businessData.schoolName || "New School",
-                            companyName: businessData.companyName || "",
-                            taxId: businessData.taxId || "",
-                            description: "",
-                            ownerId: user.id,
-                            stripeAccountId: null,
-                            stripeAccountStatus: "pending",
-                            stripeOnboardingComplete: false,
+                if (existingSchool) {
+                    schoolId = existingSchool.id;
+                    console.log('[POST /api/user] Found existing school for existing teacher:', schoolId);
+                    
+                    // Update school business data if provided
+                    if (businessData) {
+                        try {
+                            await db.school.update({
+                                where: { id: schoolId },
+                                data: {
+                                    companyName: businessData.businessType === "company" ? businessData.companyName : null,
+                                    taxId: businessData.businessType === "company" ? businessData.taxId : null,
+                                }
+                            });
+                            console.log('[POST /api/user] Updated school business data');
+                        } catch (updateError) {
+                            console.error('[POST /api/user] Error updating school:', updateError);
                         }
-                    });
-                    schoolId = school.id;
-                    console.log('[POST /api/user] School created successfully:', schoolId);
-                } catch (schoolError) {
-                    console.error('[POST /api/user] Error creating school:', schoolError);
-                    // Don't fail the entire request, but log the error
+                    }
+                } else {
+                    // Create school if missing
+                    console.log('[POST /api/user] Creating missing school for existing teacher:', user.id);
+                    
+                    try {
+                        const school = await db.school.create({
+                            data: {
+                                name: businessData?.schoolName || `${user.firstName} ${user.lastName}`.trim() || "Personal School",
+                                companyName: businessData?.businessType === "company" ? businessData.companyName : user.displayName || "",
+                                taxId: businessData?.businessType === "company" ? businessData.taxId : `INDIVIDUAL_${user.id}`,
+                                description: "",
+                                ownerId: user.id,
+                                stripeAccountId: null,
+                                stripeOnboardingComplete: false,
+                            }
+                        });
+                        schoolId = school.id;
+                        console.log('[POST /api/user] School created successfully:', schoolId);
+                        
+                        // Add teacher to their own school as member
+                        try {
+                            await db.schoolTeacher.create({
+                                data: {
+                                    schoolId: schoolId,
+                                    teacherId: user.id
+                                }
+                            });
+                            console.log('[POST /api/user] Teacher added to their school as member');
+                        } catch (memberError) {
+                            console.error('[POST /api/user] Error adding teacher to school:', memberError);
+                        }
+                    } catch (schoolError) {
+                        console.error('[POST /api/user] Error creating school:', schoolError);
+                    }
                 }
             }
             
-            // If teacher role and no Stripe account, indicate onboarding needed
-            if (roleId === 1 && (!user.stripeAccountId || !user.stripeOnboardingComplete)) {
-                return NextResponse.json({ 
-                    created: false, 
-                    updated: true, 
-                    user,
-                    schoolId,
-                    needsStripeOnboarding: true 
-                });
-            }
-            
-            return NextResponse.json({ created: false, updated: true, user, schoolId });
+            return NextResponse.json({ user, schoolId });
         }
     } catch (error) {
         console.error('POST /api/user error:', error);
@@ -285,8 +310,19 @@ export async function PATCH(req: Request) {
             });
         }
 
-        const updatedUser = await db.user.update({
-            where: { id: user.id },
+        // Find user's school
+        const school = await db.school.findFirst({
+            where: { ownerId: user.id }
+        });
+
+        if (!school) {
+            return new NextResponse("School not found", {
+                status: 404,
+            });
+        }
+
+        const updatedSchool = await db.school.update({
+            where: { id: school.id },
             data: {
                 stripeAccountId: stripeAccountId,
                 stripeAccountStatus: stripeAccountStatus || 'created',
@@ -297,10 +333,10 @@ export async function PATCH(req: Request) {
 
         return NextResponse.json({ 
             updated: true, 
-            user: updatedUser 
+            school: updatedSchool 
         });
     } catch (error) {
-        console.error("Error updating user with Stripe account:", error);
+        console.error("Error updating school with Stripe account:", error);
         return new NextResponse("Internal error", {
             status: 500,
         });

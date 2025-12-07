@@ -34,7 +34,7 @@ export default function LexicalEditor({
   module,
 }: LexicalEditorProps): JSX.Element {
   const editorConfig = {
-    editorState: initialStateJSON,
+    editorState: null,
     namespace: 'Playground',
     nodes: [...EditorNodes],
     editable: isEditable,

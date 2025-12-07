@@ -55,8 +55,8 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
       },
       include: {
         category: true,
-        school: { select: { name: true } },
-        author: { select: { id: true, firstName: true, lastName: true, displayName: true } },
+        school: { select: { id: true, name: true } },
+        author: { select: { id: true, displayName: true } },
         price: { select: { amount: true, currency: true, isRecurring: true, interval: true, trialPeriodDays: true, trialPeriodEnd: true, trialPeriodType: true, vatRate: true } }
       },
     });
@@ -71,8 +71,17 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
         categoryId: categoryId,
         state: 1,
         mode: 1,
-      }
+      },
+      include: {
+        school: { select: { id: true, name: true } },
+        author: { select: { id: true, displayName: true } },
+        category: true,
+        price: { select: { amount: true, currency: true, isRecurring: true, interval: true, trialPeriodDays: true, trialPeriodEnd: true, trialPeriodType: true, vatRate: true } }
+      },
     });
+    
+    console.log("[API_SEARCH] Paths count:", educationalPaths.length);
+    console.log("[API_SEARCH] Sample path:", educationalPaths[0] ? { id: educationalPaths[0].id, categoryId: educationalPaths[0].categoryId, category: educationalPaths[0].category } : "none");
 
     // Map courses
     const mappedCourses = courses.map((course: any) => {
@@ -89,6 +98,8 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
         trialPeriodType: course.price?.trialPeriodType ?? null,
         vatRate: course.price?.vatRate ?? 23,
         type: "course",
+        schoolId: course.schoolId ?? null,
+        schoolName: course.school?.name ?? null,
         updatedAt: course.updatedAt,
       };
     });
@@ -103,49 +114,25 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
       enrolledEduPathIds = userEduPaths.map(up => up.educationalPathId);
     }
 
-    const mappedPaths = await Promise.all(
-      educationalPaths.map(async (path: any) => {
-        // Fetch school if schoolId is set
-        let school = null;
-        if (path.schoolId) {
-          const schoolObj = await db.school.findUnique({
-            where: { id: path.schoolId },
-            select: { name: true }
-          });
-          school = schoolObj;
-        }
-        
-        // Fetch price
-        const priceObj = await db.educationalPathPrice.findUnique({
-          where: { educationalPathId: path.id },
-        });
-        // Fetch category
-        let category = null;
-        if (path.categoryId) {
-          category = await db.category.findUnique({
-            where: { id: path.categoryId }
-          });
-        }
-        // Mark as enrolled if path.id is in enrolledEduPathIds
-        const enrolled = enrolledEduPathIds.includes(path.id);
-        return {
-          ...path,
-          enrolled,
-          school,
-          price: priceObj?.amount ?? null,
-          currency: priceObj?.currency ?? null,
-          isRecurring: priceObj?.isRecurring ?? false,
-          interval: priceObj?.interval ?? null,
-          trialPeriodDays: priceObj?.trialPeriodDays ?? null,
-          trialPeriodEnd: priceObj?.trialPeriodEnd ?? null,
-          trialPeriodType: priceObj?.trialPeriodType ?? null,
-          vatRate: priceObj?.vatRate ?? 23,
-          category,
-          type: "educationalPath",
-          updatedAt: path.updatedAt,
-        };
-      })
-    );
+    const mappedPaths = educationalPaths.map((path: any) => {
+      const enrolled = enrolledEduPathIds.includes(path.id);
+      return {
+        ...path,
+        enrolled,
+        price: path.price?.amount ?? null,
+        currency: path.price?.currency ?? null,
+        isRecurring: path.price?.isRecurring ?? false,
+        interval: path.price?.interval ?? null,
+        trialPeriodDays: path.price?.trialPeriodDays ?? null,
+        trialPeriodEnd: path.price?.trialPeriodEnd ?? null,
+        trialPeriodType: path.price?.trialPeriodType ?? null,
+        vatRate: path.price?.vatRate ?? 23,
+        type: "educationalPath",
+        schoolId: path.schoolId ?? null,
+        schoolName: path.school?.name ?? null,
+        updatedAt: path.updatedAt,
+      };
+    });
 
     // Union and sort by updatedAt desc
     const union = [...mappedCourses, ...mappedPaths].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());

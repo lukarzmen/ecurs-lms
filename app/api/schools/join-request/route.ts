@@ -22,16 +22,22 @@ export async function POST(req: Request) {
     // Pobierz użytkownika
     const user = await db.user.findUnique({
       where: { providerId: userId },
+      include: {
+        ownedSchools: {
+          select: { id: true },
+          take: 1
+        }
+      }
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Sprawdź czy nauczyciel jest spółką
-    if (user.businessType !== "company") {
+    // Check if teacher already owns a school
+    if (user.roleId === 1 && user.ownedSchools && user.ownedSchools.length > 0) {
       return NextResponse.json(
-        { error: "Only company teachers can join schools" },
+        { error: "You already own a school. Teachers can only own one school." },
         { status: 400 }
       );
     }

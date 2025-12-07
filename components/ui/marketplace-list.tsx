@@ -20,6 +20,8 @@ export interface MarketplaceCourse {
     isRecurring?: boolean;
     interval?: string | null;
     vatRate?: number | null;
+    schoolId?: number | null;
+    schoolName?: string | null;
 }
 
 export interface MarketplaceCoursesListBaseProps {
@@ -42,7 +44,7 @@ export const MarketplaceCoursesList = ({ items }: MarketplaceCoursesListBaseProp
                     id: item.id,
                     title: item.title,
                     imageId: item.imageId ?? "",
-                    category: item.category?.name!,
+                    category: item.category?.name || "Brak kategorii",
                     price: item.price !== undefined && item.price !== null ? Number(item.price) : 0,
                     currency: item.currency,
                     isRecurring: item.isRecurring,
@@ -53,6 +55,8 @@ export const MarketplaceCoursesList = ({ items }: MarketplaceCoursesListBaseProp
                     trialPeriodEnd: item.trialPeriodEnd ?? null,
                     trialPeriodType: item.trialPeriodType ?? null,
                     vatRate: item.vatRate ?? 23,
+                    schoolId: item.schoolId ?? null,
+                    schoolName: item.schoolName ?? null,
                 };
                 if (item.enrolled) {
                     return (

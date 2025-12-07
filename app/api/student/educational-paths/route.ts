@@ -22,7 +22,8 @@ export async function GET(request: NextRequest) {
     // Get educational path purchases with subscription information
     const educationalPathPurchases = await db.educationalPathPurchase.findMany({
       where: { userId: user.id },
-      include: {
+      select: {
+        id: true,
         educationalPath: {
           select: {
             id: true,
@@ -31,6 +32,13 @@ export async function GET(request: NextRequest) {
             imageId: true,
           },
         },
+        subscriptionId: true,
+        isRecurring: true,
+        subscriptionStatus: true,
+        currentPeriodEnd: true,
+        amount: true,
+        currency: true,
+        purchaseDate: true,
       },
     });
 

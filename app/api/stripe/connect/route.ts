@@ -12,22 +12,43 @@ export async function POST(req: Request) {
     }
 
     try {
-
         const user = await db.user.findUnique({
-            where: { email: email }
+            where: { email: email },
+            include: {
+                ownedSchools: {
+                    select: {
+                        id: true,
+                        stripeAccountId: true,
+                        stripeOnboardingComplete: true,
+                    },
+                    take: 1
+                }
+            }
         });
 
         if (!user) {
             return new NextResponse("User not found", { status: 404 });
         }
 
-        // Check if user already has a Stripe Connect account
-        if (user.stripeAccountId) {
+        // Check if user is a teacher (roleId === 1)
+        if (user.roleId !== 1) {
+            return new NextResponse("Only teachers can onboard with Stripe", { status: 403 });
+        }
+
+        // Teacher should have a school from migration, but check
+        if (!user.ownedSchools || user.ownedSchools.length === 0) {
+            return new NextResponse("Teacher has no school. Please contact admin.", { status: 400 });
+        }
+
+        const school = user.ownedSchools[0];
+
+        // Check if school already has a Stripe Connect account
+        if (school.stripeAccountId) {
             // Get existing account details
-            const account = await stripe.accounts.retrieve(user.stripeAccountId);
+            const account = await stripe.accounts.retrieve(school.stripeAccountId);
             
             // If onboarding is not complete, allow re-onboarding
-            if (!user.stripeOnboardingComplete || !account.charges_enabled || !account.payouts_enabled) {
+            if (!school.stripeOnboardingComplete || !account.charges_enabled || !account.payouts_enabled) {
                 // Create new account link for re-onboarding
                 const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
                 
@@ -44,44 +65,43 @@ export async function POST(req: Request) {
                 }
 
                 const accountLink = await stripe.accountLinks.create({
-                    account: user.stripeAccountId,
+                    account: school.stripeAccountId,
                     refresh_url: `${validBaseUrl}/register?refresh=true`,
                     return_url: `${validBaseUrl}/register?success=stripe`,
                     type: 'account_onboarding',
                     collect: 'eventually_due',
                 });
 
-                // Update user's status to indicate re-onboarding
-                await db.user.update({
-                    where: { email: email },
+                // Update school's status to indicate re-onboarding
+                await db.school.update({
+                    where: { id: school.id },
                     data: {
-                        stripeAccountStatus: 'pending_onboarding',
                         stripeOnboardingComplete: false,
                         updatedAt: new Date(),
                     }
                 });
 
                 return NextResponse.json({
-                    accountId: user.stripeAccountId,
+                    accountId: school.stripeAccountId,
                     onboardingUrl: accountLink.url,
                     onboardingComplete: false,
-                    accountStatus: 'pending_onboarding',
                     existingAccount: true,
-                    requiresOnboarding: true
+                    requiresOnboarding: true,
+                    schoolId: school.id
                 });
             }
             
             // Account is complete, return existing details
             return NextResponse.json({
-                accountId: user.stripeAccountId,
-                onboardingComplete: user.stripeOnboardingComplete,
-                accountStatus: user.stripeAccountStatus,
+                accountId: school.stripeAccountId,
+                onboardingComplete: school.stripeOnboardingComplete,
                 existingAccount: true,
-                details: account
+                details: account,
+                schoolId: school.id
             });
         }
 
-        // Create new Stripe Connect account
+        // Create new Stripe Connect account for school
         const businessUrl = process.env.NEXT_PUBLIC_APP_URL;
         
         if (!businessUrl) {
@@ -91,8 +111,8 @@ export async function POST(req: Request) {
         // For localhost development, don't include business_profile URL as Stripe doesn't accept localhost
         const isLocalhost = businessUrl.includes('localhost') || businessUrl.includes('127.0.0.1');
         
-        // Użyj typu działalności z bazy danych użytkownika
-        const businessType = user.businessType || 'individual';
+        // Business type for Stripe Connect
+        const businessType = 'individual';
         
         const accountData: any = {
             type: 'express',
@@ -103,7 +123,6 @@ export async function POST(req: Request) {
                 card_payments: { requested: true },
                 transfers: { requested: true },
             },
-            // Konfiguracja ustawień podatkowych
             settings: {
                 payouts: {
                     schedule: {
@@ -115,7 +134,6 @@ export async function POST(req: Request) {
 
         // Only add business_profile with URL for production (non-localhost) environments
         if (!isLocalhost) {
-            // Validate URL format for production
             try {
                 new URL(businessUrl);
                 accountData.business_profile = {
@@ -134,12 +152,11 @@ export async function POST(req: Request) {
 
         const account = await stripe.accounts.create(accountData);
 
-        // Update user with Stripe account ID
-        await db.user.update({
-            where: { email: email },
+        // Update school with Stripe account ID
+        await db.school.update({
+            where: { id: school.id },
             data: {
                 stripeAccountId: account.id,
-                stripeAccountStatus: 'created',
                 stripeOnboardingComplete: false,
                 updatedAt: new Date(),
             }
@@ -173,9 +190,9 @@ export async function POST(req: Request) {
             accountId: account.id,
             onboardingUrl: accountLink.url,
             onboardingComplete: false,
-            accountStatus: 'created',
             existingAccount: false,
-            requiresOnboarding: true
+            requiresOnboarding: true,
+            schoolId: school.id
         });
 
     } catch (error) {
@@ -262,27 +279,46 @@ export async function GET(req: Request) {
         }
 
         const user = await db.user.findUnique({
-            where: { email: email }
+            where: { email: email },
+            include: {
+                ownedSchools: {
+                    select: {
+                        id: true,
+                        stripeAccountId: true,
+                        stripeOnboardingComplete: true,
+                    },
+                    take: 1
+                }
+            }
         });
 
-        if (!user || !user.stripeAccountId) {
+        if (!user || !user.ownedSchools || user.ownedSchools.length === 0) {
             return NextResponse.json({
                 hasAccount: false,
                 onboardingComplete: false
             });
         }
 
+        const school = user.ownedSchools[0];
+
+        if (!school.stripeAccountId) {
+            return NextResponse.json({
+                hasAccount: false,
+                onboardingComplete: false,
+                schoolId: school.id
+            });
+        }
+
         // Check account status
-        const account = await stripe.accounts.retrieve(user.stripeAccountId);
+        const account = await stripe.accounts.retrieve(school.stripeAccountId);
         const isComplete = account.details_submitted && account.charges_enabled && account.payouts_enabled;
 
-        // Update user's onboarding status if it has changed
-        if (isComplete !== user.stripeOnboardingComplete) {
-            await db.user.update({
-                where: { id: user.id },
+        // Update school's onboarding status if it has changed
+        if (isComplete !== school.stripeOnboardingComplete) {
+            await db.school.update({
+                where: { id: school.id },
                 data: {
                     stripeOnboardingComplete: isComplete,
-                    stripeAccountStatus: isComplete ? 'active' : 'pending',
                     updatedAt: new Date(),
                 }
             });
@@ -290,10 +326,10 @@ export async function GET(req: Request) {
 
         return NextResponse.json({
             hasAccount: true,
-            accountId: user.stripeAccountId,
+            accountId: school.stripeAccountId,
             onboardingComplete: isComplete,
-            accountStatus: isComplete ? 'active' : 'pending',
-            details: account
+            details: account,
+            schoolId: school.id
         });
 
     } catch (error) {
@@ -382,9 +418,14 @@ export async function PUT(req: Request) {
                 select: {
                     id: true,
                     email: true,
-                    stripeAccountId: true,
-                    stripeOnboardingComplete: true,
-                    stripeAccountStatus: true
+                    ownedSchools: {
+                        select: {
+                            id: true,
+                            stripeAccountId: true,
+                            stripeOnboardingComplete: true,
+                        },
+                        take: 1
+                    }
                 }
             });
             console.log('Database query successful, user found:', !!user);
@@ -404,18 +445,31 @@ export async function PUT(req: Request) {
             );
         }
 
-        if (!user.stripeAccountId) {
-            console.error('User has no Stripe account ID:', email);
+        if (!user.ownedSchools || user.ownedSchools.length === 0) {
+            console.error('User has no school:', email);
             return NextResponse.json(
                 { 
-                    error: "No Stripe account found for user",
+                    error: "No school found for user",
                     timestamp: new Date().toISOString()
                 }, 
                 { status: 404 }
             );
         }
 
-        console.log('User found with Stripe account:', user.stripeAccountId);
+        const school = user.ownedSchools[0];
+
+        if (!school.stripeAccountId) {
+            console.error('School has no Stripe account ID:', email);
+            return NextResponse.json(
+                { 
+                    error: "No Stripe account found for school",
+                    timestamp: new Date().toISOString()
+                }, 
+                { status: 404 }
+            );
+        }
+
+        console.log('School found with Stripe account:', school.stripeAccountId);
 
         // Create new onboarding link regardless of current status
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -436,11 +490,11 @@ export async function PUT(req: Request) {
             throw new Error(`Invalid URL format for NEXT_PUBLIC_APP_URL: ${baseUrl}`);
         }
 
-        console.log('Creating Stripe account link for account:', user.stripeAccountId);
+        console.log('Creating Stripe account link for school account:', school.stripeAccountId);
         let accountLink;
         try {
             accountLink = await stripe.accountLinks.create({
-                account: user.stripeAccountId,
+                account: school.stripeAccountId,
                 refresh_url: `${validBaseUrl}/register?refresh=true`,
                 return_url: `${validBaseUrl}/register?success=stripe`,
                 type: 'account_onboarding',
@@ -459,11 +513,11 @@ export async function PUT(req: Request) {
         }
 
         return NextResponse.json({
-            accountId: user.stripeAccountId,
+            accountId: school.stripeAccountId,
             onboardingUrl: accountLink.url,
             onboardingComplete: false,
-            accountStatus: 'pending_onboarding',
-            forced: true
+            forced: true,
+            schoolId: school.id
         });
 
     } catch (error) {

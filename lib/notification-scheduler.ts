@@ -69,11 +69,11 @@ export function matchesCronTime(cronExpression: string, date: Date = new Date())
 // Replace template variables in message
 export function replaceTemplateVariables(
   message: string,
-  variables: { user: string; course: string }
+  variables: { user: string; school: string }
 ): string {
   return message
     .replace(/{{user}}/g, variables.user)
-    .replace(/{{course}}/g, variables.course);
+    .replace(/{{school}}/g, variables.school);
 }
 
 // Send notification email
@@ -183,31 +183,10 @@ export async function processScheduledNotifications(): Promise<{
         isEnabled: true,
       },
       include: {
-        course: {
-          include: {
-            userCourses: {
-              where: {
-                state: 1, // Only enrolled students
-              },
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    email: true,
-                    firstName: true,
-                    lastName: true,
-                    displayName: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        author: {
+        school: {
           select: {
-            firstName: true,
-            lastName: true,
-            displayName: true,
+            id: true,
+            name: true,
           },
         },
       },
@@ -236,11 +215,51 @@ export async function processScheduledNotifications(): Promise<{
 
       console.log(`Processing schedule ${schedule.id}: ${schedule.title}`);
 
-      // Get enrolled students
-      const enrolledStudents = schedule.course.userCourses;
+      // Get all courses in this school
+      const schoolCourses = await db.course.findMany({
+        where: {
+          schoolId: schedule.schoolId,
+        },
+        include: {
+          userCourses: {
+            where: {
+              state: 1, // Only enrolled students
+            },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  firstName: true,
+                  lastName: true,
+                  displayName: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (schoolCourses.length === 0) {
+        console.log(`No courses found for school ${schedule.school.name}`);
+        continue;
+      }
+
+      // Collect all enrolled students from all courses
+      const enrolledStudentsMap = new Map<number, any>();
+      for (const course of schoolCourses) {
+        for (const userCourse of course.userCourses) {
+          const userId = userCourse.user.id;
+          if (!enrolledStudentsMap.has(userId)) {
+            enrolledStudentsMap.set(userId, userCourse.user);
+          }
+        }
+      }
+
+      const enrolledStudents = Array.from(enrolledStudentsMap.values());
       
       if (enrolledStudents.length === 0) {
-        console.log(`No enrolled students for course ${schedule.course.title}`);
+        console.log(`No enrolled students in any course of school ${schedule.school.name}`);
         continue;
       }
 
@@ -253,7 +272,7 @@ export async function processScheduledNotifications(): Promise<{
           // Replace template variables
           const personalizedMessage = replaceTemplateVariables(schedule.message, {
             user: userName,
-            course: schedule.course.title,
+            school: schedule.school.name,
           });
 
           // Send email

@@ -14,6 +14,8 @@ export interface UserEducationalPathDetails {
 	enrolled: boolean;
 	modulesCount: number;
     type: "educationalPath";
+	schoolId?: number | null;
+	schoolName?: string | null;
 }
 
 export async function GET(req: Request) {
@@ -55,6 +57,14 @@ export async function GET(req: Request) {
 				authorObj = await db.user.findUnique({
 					where: { id: path.authorId },
 					select: { displayName: true, firstName: true, lastName: true }
+				});
+			}
+			// Fetch school
+			let schoolObj = null;
+			if (path.schoolId) {
+				schoolObj = await db.school.findUnique({
+					where: { id: path.schoolId },
+					select: { id: true, name: true }
 				});
 			}
 			// Fetch category
@@ -108,6 +118,8 @@ export async function GET(req: Request) {
 				enrolled: true,
 				modulesCount: coursesCount,
 				type: "educationalPath",
+				schoolId: path.schoolId ?? null,
+				schoolName: schoolObj?.name ?? null,
 			};
 		})
 	);

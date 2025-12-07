@@ -12,6 +12,8 @@ export const CourseInfoCard = ({
     imageId,
     author,
     category,
+    schoolId,
+    schoolName,
     type,
     isCompleted = false,
     modulesCount,
@@ -20,6 +22,9 @@ export const CourseInfoCard = ({
     const placeholderImageUrl = "/logo.png";
     const [isImageLoading, setIsImageLoading] = useState(true);
     const linkHref = type === "educationalPath" ? `/educational-paths/${id}` : `/courses/${id}`;
+    
+    // Wyświetl nazwę szkoły jeśli kurs należy do szkoły, inaczej wyświetl autora
+    const displayAuthor = schoolId && schoolName ? schoolName : author;
     return (
         <Link href={linkHref}>
             <div
@@ -55,7 +60,7 @@ export const CourseInfoCard = ({
                         {category || "Brak kategorii"}
                     </p>
                     <p className="text-xs text-blue-400 min-h-[1rem]">
-                        {author}
+                        {displayAuthor}
                     </p>
                     <div className="my-3 flex items-center justify-center gap-x-2 text-sm">
                         {type === "educationalPath" ? (

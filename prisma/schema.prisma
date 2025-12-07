@@ -37,7 +37,7 @@ model Course {
   schoolId               Int?                    // Szkoła, do której należy ten kurs (właściciel majątkowy)
   mode                   Int                     @default(0)
   state                  Int                     @default(0)
-  author                 User                    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author                 User?                   @relation(fields: [authorId], references: [id], onDelete: Cascade)
   school                 School?                 @relation("SchoolCourses", fields: [schoolId], references: [id], onDelete: Cascade)
   category               Category?               @relation(fields: [categoryId], references: [id])
   price                  CoursePrice?
@@ -45,7 +45,6 @@ model Course {
   userCourses            UserCourse[]
   educationalPathCourses EducationalPathCourse[]
   communicationLinks     CourseCommunication[]
-  notificationSchedules  NotificationSchedule[]
 
   @@index([authorId])
   @@index([categoryId])
@@ -241,13 +240,6 @@ model User {
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime
   roleId                   Int                       @default(0)
-  stripeAccountId          String?
-  stripeAccountStatus      String?                   @default("pending")
-  stripeOnboardingComplete Boolean                   @default(false)
-  businessType             String?                   @default("individual")
-  companyName              String?
-  requiresVatInvoices      Boolean                   @default(false)
-  taxId                    String?
   userCourses              UserCourse[]
   userModules              UserModule[]
   role                     Role?                    @relation(fields: [roleId], references: [id], onDelete: Cascade)
@@ -257,7 +249,6 @@ model User {
   userEducationalPaths     UserEducationalPath[]
   educationalPathPurchases EducationalPathPurchase[]
   teacherPlatformSubscription TeacherPlatformSubscription?
-  notificationSchedules    NotificationSchedule[]   @relation("NotificationAuthor")
   receivedNotifications    NotificationSentLog[]    @relation("NotificationRecipient")
   ownedSchools             School[]                 @relation("SchoolOwner")
   schoolMemberships        SchoolTeacher[]          @relation("TeacherInSchool")
@@ -284,6 +275,7 @@ model School {
   joinRequests          TeacherJoinRequest[]   @relation("SchoolRequests")
   courses               Course[]               @relation("SchoolCourses")
   educationalPaths      EducationalPath[]      @relation("SchoolEducationalPaths")
+  notificationSchedules NotificationSchedule[] @relation("SchoolNotifications")
 
   @@index([ownerId])
   @@index([stripeAccountId])
@@ -503,23 +495,20 @@ enum CommunicationPlatform {
 
 model NotificationSchedule {
   id            Int      @id @default(autoincrement())
-  courseId      Int
-  authorId      Int
+  schoolId      Int
   title         String   @db.VarChar(255)
   message       String   @db.Text
   cronExpression String  @db.VarChar(100)
   isEnabled     Boolean  @default(true)
-  notificationType String @db.VarChar(50) // 'newLesson', 'noActivity', etc.
+  notificationType String @db.VarChar(50) // 'newLesson', 'noActivity', 'payment', etc.
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   lastSentAt    DateTime?
   
-  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  author        User     @relation("NotificationAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  school        School   @relation("SchoolNotifications", fields: [schoolId], references: [id], onDelete: Cascade)
   sentLogs      NotificationSentLog[]
 
-  @@index([courseId])
-  @@index([authorId])
+  @@index([schoolId])
   @@index([isEnabled])
   @@index([cronExpression])
 }

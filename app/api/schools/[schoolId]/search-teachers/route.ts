@@ -40,13 +40,10 @@ export async function GET(
     const url = new URL(req.url);
     const search = url.searchParams.get("search")?.toLowerCase() || "";
 
-    // Pobierz wszystkich nauczycieli z bazy (którzy mają businessType = "company")
+    // Pobierz wszystkich nauczycieli z bazy
     const teachers = await db.user.findMany({
       where: {
         AND: [
-          {
-            businessType: "company",
-          },
           {
             // Wyszukaj po emailu lub displayName
             OR: [
@@ -62,7 +59,6 @@ export async function GET(
         id: true,
         email: true,
         displayName: true,
-        businessType: true,
       },
       take: 20, // Ogranicz wyniki do 20
     });

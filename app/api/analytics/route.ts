@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
             where: { authorId: user.id },
             select: { id: true, title: true },
         });
+        console.log("Author courses found for user", user.id, ":", authorCourses.length);
         const authorCourseIds = authorCourses.map(c => c.id);
 
         // Ścieżki edukacyjne autora

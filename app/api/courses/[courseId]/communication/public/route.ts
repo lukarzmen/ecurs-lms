@@ -38,14 +38,13 @@ export async function GET(
 
     // If user is not enrolled, check if they are the course author
     if (!userCourse) {
-      const course = await db.course.findFirst({
+      const course = await db.course.findUnique({
         where: {
           id: courseIdNumber,
-          authorId: user.id,
         },
       });
 
-      if (!course) {
+      if (!course || course.authorId !== user.id) {
         return new NextResponse("Access denied", { status: 403 });
       }
     }

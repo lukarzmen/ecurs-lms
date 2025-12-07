@@ -122,12 +122,12 @@ export async function GET(req: NextRequest) {
   const userId = searchParams.get("userId"); // This is the providerId
   
   if (!userId) {
-    return new NextResponse("User parameter not passed", { status: 400 }); // Changed status to 400
+    return new NextResponse("User parameter not passed", { status: 400 });
   }
 
   const user = await db.user.findUnique({
     where: { providerId: userId },
-    select: { id: true }, // Only select the id needed for the query
+    select: { id: true },
   });
 
   if (!user) {
@@ -135,29 +135,45 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-  // Find courses where the user is associated via UserCourse with roleId 0
+    // Get all schools where user is a teacher
+    const userSchools = await db.schoolTeacher.findMany({
+      where: { teacherId: user.id },
+      select: { schoolId: true }
+    });
+    const schoolIds = userSchools.map(st => st.schoolId);
+
+    console.log("[COURSES_GET]", { userId, userSchools: userSchools.length, schoolIds });
+
+    // Find courses where:
+    // 1. User is the author OR
+    // 2. Course belongs to one of user's schools
     const courses = await db.course.findMany({
       where: {
-        userCourses: { // Filter based on the related UserCourse records
-          some: {       // Check if at least one UserCourse matches
-            userId: user.id, // Match the user's internal database ID
-            roleId: 1,       // Filter for roleId 0 (as requested)
-          },
-        },
+        OR: [
+          // Courses created by the user (teacher)
+          { authorId: user.id },
+          // Courses belonging to schools where user is a member
+          { schoolId: { in: schoolIds } }
+        ]
       },
       orderBy: {
         createdAt: "desc",
       },
-      // Consider including related data if needed by the client
-      // include: {
-      //   category: true,
-      //   author: { select: { displayName: true } }
-      // }
+      include: {
+        author: {
+          select: { displayName: true, email: true }
+        },
+        school: {
+          select: { id: true, name: true, ownerId: true }
+        }
+      }
     });
+
+    console.log("[COURSES_GET_RESULT]", { count: courses.length });
 
     return NextResponse.json(courses);
   } catch (error) {
-    console.error("[COURSES_GET_TEACHER]", error); // Updated log identifier
+    console.error("[COURSES_GET_TEACHER]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

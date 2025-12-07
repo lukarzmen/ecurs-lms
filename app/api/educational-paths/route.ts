@@ -21,11 +21,35 @@ export async function GET(req: NextRequest) {
     if (!user) {
       return NextResponse.json([], { status: 200 });
     }
+    
+    // Get all schools where user is a teacher
+    const userSchools = await db.schoolTeacher.findMany({
+      where: { teacherId: user.id },
+      select: { schoolId: true }
+    });
+    const schoolIds = userSchools.map(st => st.schoolId);
+    
+    // Find educational paths where:
+    // 1. User is the author OR
+    // 2. Path belongs to one of user's schools
     const paths = await db.educationalPath.findMany({
       where: {
-          authorId: user.id,
+        OR: [
+          // Paths created by the user
+          { authorId: user.id },
+          // Paths belonging to schools where user is a member
+          { schoolId: { in: schoolIds } }
+        ]
       },
       orderBy: { createdAt: "desc" },
+      include: {
+        author: {
+          select: { displayName: true, email: true }
+        },
+        school: {
+          select: { id: true, name: true, ownerId: true }
+        }
+      }
     });
     return NextResponse.json(paths);
   } catch (error) {
@@ -42,17 +66,30 @@ export async function POST(req: Request) {
     // Find user and check if teacher
     const user = await db.user.findUnique({
       where: { providerId: userProviderId },
-      select: { id: true, roleId: true },
+      include: {
+        ownedSchools: {
+          select: { id: true },
+          take: 1,
+        },
+      },
     });
     if (!user || user.roleId !== 1) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
+
+    // Get teacher's school
+    let schoolId = null;
+    if (user.ownedSchools && user.ownedSchools.length > 0) {
+      schoolId = user.ownedSchools[0].id;
+    }
+
     // Create educational path
     const educationalPath = await db.educationalPath.create({
       data: {
         title,
         description: description || null,
         authorId: user.id,
+        schoolId: schoolId,
         ...(courseIds && Array.isArray(courseIds) && courseIds.length > 0 && {
           courses: {
             create: courseIds.map((courseId: number, idx: number) => ({

@@ -70,39 +70,37 @@ interface OwnedSchool {
 export const SidebarRoutes = () => {
   const pathName = usePathname();
   const { userId } = useAuth();
-  const [ownedSchools, setOwnedSchools] = useState<OwnedSchool[]>([]);
+  const [hasSchool, setHasSchool] = useState(false);
 
   useEffect(() => {
-    const fetchUserSchools = async () => {
+    const checkUserSchool = async () => {
       if (!userId) return;
 
       try {
         const response = await fetch("/api/user/school");
         if (response.ok) {
           const data = await response.json();
-          setOwnedSchools(data.ownedSchools || []);
+          setHasSchool((data.ownedSchools || []).length > 0);
         }
       } catch (error) {
         console.error("Error fetching user schools:", error);
       }
     };
 
-    fetchUserSchools();
+    checkUserSchool();
   }, [userId]);
 
   const isTeacherPage = pathName?.startsWith("/teacher");
 
   let routes = isTeacherPage ? teacherRoutes : guestRoutes;
 
-  // Dodaj elementy do zarządzania nauczycielami dla każdej szkoły, którą user posiada
-  if (isTeacherPage && ownedSchools.length > 0) {
-    const schoolManagementRoutes = ownedSchools.map((school) => ({
+  // Dodaj element do zarządzania szkołą jeśli user ją posiada (przed ustawieniami)
+  if (isTeacherPage && hasSchool) {
+    routes = [...routes.slice(0, -1), {
       icon: Users,
-      label: `Zarządzaj: ${school.name}`,
-      href: `/teacher/school/${school.id}/manage`,
-    }));
-
-    routes = [...routes, ...schoolManagementRoutes];
+      label: "Twoja szkoła",
+      href: "/teacher/school/manage",
+    }, routes[routes.length - 1]];
   }
 
   return (

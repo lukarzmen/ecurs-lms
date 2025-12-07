@@ -11,6 +11,8 @@ interface BaseCourseCardProps {
     imageId: string;
     author: string;
     category: string;
+    schoolId?: number | null;
+    schoolName?: string | null;
 }
 
 interface MarketplaceCourseCardProps extends BaseCourseCardProps {

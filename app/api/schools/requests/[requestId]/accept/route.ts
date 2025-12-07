@@ -2,7 +2,10 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
-export async function PATCH(req: Request) {
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ requestId: string }> }
+) {
   try {
     const { userId } = await auth();
 
@@ -10,7 +13,8 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { requestId } = await req.json();
+    const resolvedParams = await params;
+    const requestId = parseInt(resolvedParams.requestId);
 
     if (!requestId) {
       return NextResponse.json(

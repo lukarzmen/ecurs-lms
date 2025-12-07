@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { 
   Users, 
   BookOpen, 
@@ -27,7 +28,8 @@ import {
   UserPlus,
   BarChart3,
   Activity,
-  Trophy
+  Trophy,
+  Building2
 } from "lucide-react";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
@@ -38,9 +40,10 @@ interface CourseDetail {
   usersCount: number;
   modulesCount: number;
   averageCompletionRate: string;
-  mostActiveUser: string;
-  lastActiveUser: string;
+  mostActiveUser?: string;
+  lastActiveUser?: string;
   lastActiveDate?: string;
+  teacher?: string;
 }
 
 interface AnalyticsData {
@@ -68,6 +71,37 @@ interface AnalyticsData {
   newPathUsersLastMonth?: number;
   newPathsLastMonth?: number;
   pathsDetails?: { id: string; title: string; usersCount: number; coursesCount: number; averageCompletionRate: string; }[];
+}
+
+interface SchoolAnalyticsData {
+  // Courses
+  totalStudentsCount: number;
+  totalCoursesCount: number;
+  totalModulesCount: number;
+  averageCompletionRate: string;
+  activeStudentsCount: number;
+  returningStudentsCount: number;
+  mostPopularCourse?: string;
+  leastPopularCourse?: string;
+  newStudentsLastMonth?: number;
+  newCoursesLastMonth?: number;
+  coursesDetails?: CourseDetail[];
+  // Paths
+  pathStudentsCount?: number;
+  totalPathsCount?: number;
+  totalPathCoursesCount?: number;
+  averagePathCompletionRate?: string;
+  mostPopularPath?: string;
+  leastPopularPath?: string;
+  newPathStudentsLastMonth?: number;
+  newPathsLastMonth?: number;
+  pathsDetails?: { id: string; title: string; usersCount: number; coursesCount: number; averageCompletionRate: string; }[];
+  // Teachers & Students
+  teachersCount?: number;
+  mostActiveTeacher?: string;
+  mostActiveStudent?: string;
+  leastActiveStudent?: string;
+  studentMostCourses?: string;
 }
 
 const AnalyticsPage = () => {
@@ -98,31 +132,119 @@ const AnalyticsPage = () => {
   });
   
   const [loading, setLoading] = useState(true);
+  const [schoolAnalyticsData, setSchoolAnalyticsData] = useState<SchoolAnalyticsData | null>(null);
+  const [schoolLoading, setSchoolLoading] = useState(false);
+  const [schoolError, setSchoolError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"teacher" | "school">("school");
+  const [schoolId, setSchoolId] = useState<number | null>(null);
+  const [students, setStudents] = useState<any[]>([]);
+  const [studentsLoading, setStudentsLoading] = useState(false);
   const { userId } = useAuth();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDataSequentially = async () => {
       if (userId) {
         try {
-          const response = await fetch(
+          // First fetch analytics
+          const analyticsResponse = await fetch(
             `${process.env.NEXT_PUBLIC_API_URL}/api/analytics?userId=${userId}`,
             { cache: "no-store" }
           );
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+          if (!analyticsResponse.ok) {
+            throw new Error(`HTTP error! status: ${analyticsResponse.status}`);
           }
-          const data: AnalyticsData = await response.json();
-          setAnalyticsData(data);
+          const analyticsData: AnalyticsData = await analyticsResponse.json();
+          setAnalyticsData(analyticsData);
+
+          // Then fetch school ID
+          const schoolResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/schools/current`,
+            { cache: "no-store" }
+          );
+          if (schoolResponse.ok) {
+            const schoolData = await schoolResponse.json();
+            setSchoolId(schoolData.id);
+          }
         } catch (error) {
-          console.error("Error fetching analytics:", error);
+          console.error("Error fetching data:", error);
         } finally {
           setLoading(false);
         }
       }
     };
 
-    fetchData();
+    fetchDataSequentially();
   }, [userId]);
+
+  // Fetch school analytics when schoolId is available and mode is "school"
+  useEffect(() => {
+    if (viewMode === "school" && schoolId) {
+      const fetchSchoolAnalytics = async () => {
+        setSchoolLoading(true);
+        setSchoolError(null);
+        try {
+          console.log("Fetching school analytics for schoolId:", schoolId);
+          
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+          
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/schools/${schoolId}/analytics`,
+            { 
+              cache: "no-store",
+              signal: controller.signal 
+            }
+          );
+          
+          clearTimeout(timeoutId);
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+          }
+          const data: SchoolAnalyticsData = await response.json();
+          console.log("School analytics data received:", data);
+          setSchoolAnalyticsData(data);
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          console.error("Error fetching school analytics:", errorMsg);
+          setSchoolError(errorMsg);
+        } finally {
+          setSchoolLoading(false);
+        }
+      };
+
+      fetchSchoolAnalytics();
+    }
+  }, [viewMode, schoolId]);
+
+  // Fetch students when in teacher view (disabled to reduce database connections)
+  /*
+  useEffect(() => {
+    if (viewMode === "teacher" && userId) {
+      const fetchStudents = async () => {
+        setStudentsLoading(true);
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/student?userId=${userId}`,
+            { cache: "no-store" }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setStudents(data);
+            console.log("Students loaded:", data.length);
+          }
+        } catch (error) {
+          console.error("Error fetching students:", error);
+        } finally {
+          setStudentsLoading(false);
+        }
+      };
+      
+      fetchStudents();
+    }
+  }, [viewMode, userId]);
+  */
 
   if (loading) {
     return (
@@ -205,21 +327,74 @@ const AnalyticsPage = () => {
   return (
     <div className="p-6 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            📊 Panel analityczny nauczyciela
+            📊 {viewMode === "teacher" ? "Panel analityczny nauczyciela" : "Statystyki szkoły"}
           </h1>
           <p className="text-gray-600 mt-2">
-            Przegląd statystyk Twoich kursów i aktywności studentów
+            {viewMode === "teacher" 
+              ? "Przegląd statystyk Twoich kursów i aktywności studentów"
+              : "Przegląd statystyk całej szkoły i aktywności wszystkich nauczycieli"}
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <TrendingUp className="h-6 w-6 text-green-500" />
-          <span className="text-sm text-gray-600">Dane w czasie rzeczywistym</span>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <TrendingUp className="h-6 w-6 text-green-500" />
+            <span className="text-sm text-gray-600">Dane w czasie rzeczywistym</span>
+          </div>
+          {schoolId && (
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === "teacher" ? "default" : "outline"}
+                onClick={() => setViewMode("teacher")}
+                size="sm"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Moje statystyki
+              </Button>
+              <Button
+                variant={viewMode === "school" ? "default" : "outline"}
+                onClick={() => setViewMode("school")}
+                size="sm"
+              >
+                <Building2 className="w-4 h-4 mr-2" />
+                Szkoła
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
+      {/* Show loading for school analytics */}
+      {schoolLoading && viewMode === "school" && (
+        <div className="p-6 animate-pulse space-y-8">
+          <div className="h-8 bg-gray-200 rounded w-64 mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Show error if school analytics failed */}
+      {schoolError && viewMode === "school" && (
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="p-6 text-center">
+            <div className="text-red-700 font-semibold">Błąd podczas ładowania statystyk szkoły</div>
+            <div className="text-sm text-red-600 mt-2">{schoolError}</div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Show content based on view mode */}
+      {!schoolLoading && viewMode === "school" && schoolAnalyticsData && (
+        <SchoolAnalyticsSection data={schoolAnalyticsData} />
+      )}
+
+      {viewMode === "teacher" && (
+        <>
       {/* Main Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="border-l-4 border-l-blue-500">
@@ -607,7 +782,496 @@ const AnalyticsPage = () => {
           </p>
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
+  );
+};
+
+// School Analytics Section Component
+const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
+  const {
+    totalStudentsCount,
+    totalCoursesCount,
+    totalModulesCount,
+    averageCompletionRate,
+    activeStudentsCount,
+    returningStudentsCount,
+    mostPopularCourse,
+    leastPopularCourse,
+    newStudentsLastMonth,
+    newCoursesLastMonth,
+    coursesDetails = [],
+    pathStudentsCount,
+    totalPathsCount,
+    totalPathCoursesCount,
+    averagePathCompletionRate,
+    mostPopularPath,
+    leastPopularPath,
+    newPathStudentsLastMonth,
+    newPathsLastMonth,
+    pathsDetails = [],
+    teachersCount,
+    mostActiveTeacher,
+    mostActiveStudent,
+    leastActiveStudent,
+    studentMostCourses,
+  } = data;
+
+  // Chart data
+  const barData = {
+    labels: [
+      "Wszyscy studenci",
+      "Aktywni (7 dni)",
+      "Powracający",
+      "Nowi (miesiąc)",
+    ],
+    datasets: [
+      {
+        label: "Studenci",
+        data: [
+          totalStudentsCount,
+          activeStudentsCount,
+          returningStudentsCount,
+          newStudentsLastMonth || 0,
+        ],
+        backgroundColor: [
+          "#f97316",
+          "#fbbf24",
+          "#10b981",
+          "#6366f1",
+        ],
+        borderRadius: 8,
+      },
+    ],
+  };
+
+  const doughnutData = {
+    labels: ["Wszystkie kursy", "Nowe kursy (miesiąc)"],
+    datasets: [
+      {
+        data: [totalCoursesCount, newCoursesLastMonth || 0],
+        backgroundColor: ["#6366f1", "#fbbf24"],
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  return (
+    <>
+      {/* Main Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Łączna liczba kursów
+            </CardTitle>
+            <BookOpen className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{totalCoursesCount}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-green-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Wszyscy studenci
+            </CardTitle>
+            <Users className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{totalStudentsCount}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-purple-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Wszystkie moduły
+            </CardTitle>
+            <GraduationCap className="h-4 w-4 text-purple-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">{totalModulesCount}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-orange-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Średnie ukończenie
+            </CardTitle>
+            <Target className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{averageCompletionRate}</div>
+            <Progress value={parseFloat(averageCompletionRate.replace('%', ''))} className="mt-2" />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Teachers & School Info */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="border-l-4 border-l-indigo-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Nauczyciele
+            </CardTitle>
+            <Award className="h-4 w-4 text-indigo-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-indigo-600">{teachersCount || 0}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-cyan-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Ścieżki edukacyjne
+            </CardTitle>
+            <Target className="h-4 w-4 text-cyan-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-cyan-600">{totalPathsCount || 0}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-pink-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Studenci (ścieżki)
+            </CardTitle>
+            <Users className="h-4 w-4 text-pink-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-pink-600">{pathStudentsCount || 0}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* User Activity Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Aktywni (7 dni)
+            </CardTitle>
+            <Activity className="h-4 w-4 text-emerald-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-emerald-600">{activeStudentsCount}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Powracający studenci
+            </CardTitle>
+            <UserCheck className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{returningStudentsCount}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Nowi studenci (miesiąc)
+            </CardTitle>
+            <UserPlus className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{newStudentsLastMonth || 0}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Nowe kursy (miesiąc)
+            </CardTitle>
+            <BookOpen className="h-4 w-4 text-purple-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">{newCoursesLastMonth || 0}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <BarChart3 className="h-5 w-5" />
+              <span>Aktywność studentów</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Bar data={barData} options={{
+              plugins: { legend: { display: false } },
+              scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Calendar className="h-5 w-5" />
+              <span>Statystyki kursów</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <div className="w-64 h-64">
+              <Doughnut data={doughnutData} options={{
+                plugins: { legend: { position: "bottom" } },
+                maintainAspectRatio: false
+              }} />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top Performers */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {mostPopularCourse && mostPopularCourse !== "No data" && (
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-blue-800">
+                <Star className="h-5 w-5" />
+                <span>Najpopularniejszy kurs</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="font-semibold text-blue-900">{mostPopularCourse}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {mostActiveStudent && mostActiveStudent !== "No data" && (
+          <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-green-800">
+                <Award className="h-5 w-5" />
+                <span>Najbardziej aktywny student</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="font-semibold text-green-900">{mostActiveStudent}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {mostActiveTeacher && mostActiveTeacher !== "No data" && (
+          <Card className="bg-gradient-to-r from-purple-50 to-violet-50 border-purple-200">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-purple-800">
+                <Trophy className="h-5 w-5" />
+                <span>Najbardziej aktywny nauczyciel</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="font-semibold text-purple-900">{mostActiveTeacher}</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Educational Paths Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Target className="h-5 w-5" />
+            <span>Statystyki ścieżek edukacyjnych</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">{totalPathsCount || 0}</div>
+              <div className="text-sm text-blue-800">Ścieżki edukacyjne</div>
+            </div>
+            <div className="text-center p-4 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">{pathStudentsCount || 0}</div>
+              <div className="text-sm text-green-800">Studenci ścieżek</div>
+            </div>
+            <div className="text-center p-4 bg-purple-50 rounded-lg">
+              <div className="text-2xl font-bold text-purple-600">{totalPathCoursesCount || 0}</div>
+              <div className="text-sm text-purple-800">Kursy w ścieżkach</div>
+            </div>
+            <div className="text-center p-4 bg-orange-50 rounded-lg">
+              <div className="text-2xl font-bold text-orange-600">{averagePathCompletionRate || "0%"}</div>
+              <div className="text-sm text-orange-800">Średnie ukończenie</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Detailed Course Statistics */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <BookOpen className="h-5 w-5" />
+            <span>Szczegółowe statystyki kursów (szkoła)</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Nazwa kursu
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Nauczyciel
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Studenci
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Moduły
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Śr. ukończenia
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {coursesDetails.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                      <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p>Brak danych o kursach</p>
+                      <p className="text-sm">Szkoła nie ma jeszcze żadnych kursów</p>
+                    </td>
+                  </tr>
+                ) : (
+                  coursesDetails.map((course) => (
+                    <tr key={course.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{course.title}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-600">{course.teacher}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                          {course.usersCount}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge variant="outline" className="bg-purple-50 text-purple-700">
+                          {course.modulesCount}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-medium">{course.averageCompletionRate}</span>
+                          <div className="w-16">
+                            <Progress 
+                              value={parseFloat(course.averageCompletionRate.replace('%', ''))} 
+                              className="h-2" 
+                            />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Educational Paths Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Target className="h-5 w-5" />
+            <span>Szczegółowe statystyki ścieżek edukacyjnych</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Nazwa ścieżki
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Studenci
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Kursy w ścieżce
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Śr. ukończenia
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {pathsDetails.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center text-gray-400">
+                      <Target className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p>Brak danych o ścieżkach edukacyjnych</p>
+                      <p className="text-sm">Szkoła nie ma jeszcze żadnych ścieżek edukacyjnych</p>
+                    </td>
+                  </tr>
+                ) : (
+                  pathsDetails.map((path) => (
+                    <tr key={path.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{path.title}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge variant="outline" className="bg-green-50 text-green-700">
+                          {path.usersCount}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                          {path.coursesCount}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-medium">{path.averageCompletionRate}</span>
+                          <div className="w-16">
+                            <Progress 
+                              value={parseFloat(path.averageCompletionRate.replace('%', ''))} 
+                              className="h-2" 
+                            />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Footer Tip */}
+      <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
+        <CardContent className="p-6 text-center">
+          <Building2 className="h-8 w-8 mx-auto mb-4 text-blue-500" />
+          <h3 className="text-xl font-semibold mb-2 text-blue-800">Statystyki szkoły</h3>
+          <p className="text-blue-700">
+            Tutaj widzisz łączne statystyki całej szkoły. Dane obejmują wszystkich nauczycieli, studentów i kursy.
+          </p>
+        </CardContent>
+      </Card>
+    </>
   );
 };
 

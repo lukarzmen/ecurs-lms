@@ -32,13 +32,18 @@ export async function GET(
     const schedule = await db.notificationSchedule.findFirst({
       where: {
         id: scheduleId,
-        authorId: user.id,
+        school: {
+          OR: [
+            { ownerId: user.id },
+            { teachers: { some: { teacherId: user.id } } },
+          ],
+        },
       },
       include: {
-        course: {
+        school: {
           select: {
             id: true,
-            title: true,
+            name: true,
           },
         },
         sentLogs: {
@@ -97,6 +102,23 @@ export async function PATCH(
       return new NextResponse('User not found', { status: 404 });
     }
 
+    // Verify the user has access to this schedule (via school membership)
+    const existingSchedule = await db.notificationSchedule.findFirst({
+      where: {
+        id: scheduleId,
+        school: {
+          OR: [
+            { ownerId: user.id },
+            { teachers: { some: { teacherId: user.id } } },
+          ],
+        },
+      },
+    });
+
+    if (!existingSchedule) {
+      return new NextResponse('Notification schedule not found', { status: 404 });
+    }
+
     const body = await req.json();
     const {
       title,
@@ -105,18 +127,6 @@ export async function PATCH(
       isEnabled,
       notificationType,
     } = body;
-
-    // Verify the user owns this schedule
-    const existingSchedule = await db.notificationSchedule.findFirst({
-      where: {
-        id: scheduleId,
-        authorId: user.id,
-      },
-    });
-
-    if (!existingSchedule) {
-      return new NextResponse('Notification schedule not found', { status: 404 });
-    }
 
     // Prepare update data
     const updateData: any = {};
@@ -138,10 +148,10 @@ export async function PATCH(
       where: { id: scheduleId },
       data: updateData,
       include: {
-        course: {
+        school: {
           select: {
             id: true,
-            title: true,
+            name: true,
           },
         },
       },
@@ -181,11 +191,16 @@ export async function DELETE(
       return new NextResponse('User not found', { status: 404 });
     }
 
-    // Verify the user owns this schedule
+    // Verify the user has access to this schedule (via school membership)
     const existingSchedule = await db.notificationSchedule.findFirst({
       where: {
         id: scheduleId,
-        authorId: user.id,
+        school: {
+          OR: [
+            { ownerId: user.id },
+            { teachers: { some: { teacherId: user.id } } },
+          ],
+        },
       },
     });
 

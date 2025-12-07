@@ -1,0 +1,2 @@
+-- Empty migration - schema was already updated via db push
+-- NotificationSchedule now uses schoolId instead of courseId

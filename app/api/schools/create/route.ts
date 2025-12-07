@@ -22,16 +22,33 @@ export async function POST(req: Request) {
     // Get current user
     const user = await db.user.findUnique({
       where: { providerId: userId },
-      select: { id: true, businessType: true },
+      select: { 
+        id: true, 
+        roleId: true,
+        ownedSchools: {
+          select: { id: true },
+          take: 1
+        }
+      },
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (user.businessType !== "company") {
+    // Check if teacher already has a school (they should from migration)
+    if (user.roleId === 1 && user.ownedSchools && user.ownedSchools.length > 0) {
       return NextResponse.json(
-        { error: "Only company users can create schools" },
+        { error: "Teachers can only have one school. Use your existing school or contact admin to manage it." },
+        { status: 403 }
+      );
+    }
+
+    // For now, restrict school creation to ensure data consistency
+    // Teachers should have exactly one school created during registration
+    if (user.roleId === 1) {
+      return NextResponse.json(
+        { error: "Schools are automatically created for teachers. Please contact support if you need help managing your school." },
         { status: 403 }
       );
     }

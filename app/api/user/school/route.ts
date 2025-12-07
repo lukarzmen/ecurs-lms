@@ -10,27 +10,31 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Pobierz użytkownika
+    // Get user ID first
     const user = await db.user.findUnique({
       where: { providerId: userId },
-      select: {
-        id: true,
-      },
+      select: { id: true },
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Pobierz szkoły, do których nauczyciel należy
-    const memberSchools = await db.schoolTeacher.findMany({
-      where: { teacherId: user.id },
-      include: {
-        school: {
-          select: { id: true, name: true, ownerId: true },
-        },
-      },
-    });
+    // Get member schools - use raw queries to handle null schools gracefully
+    const memberSchoolsRaw = await db.$queryRaw<
+      Array<{ id: number; name: string; ownerId: number }>
+    >`
+      SELECT DISTINCT s.id, s.name, s."ownerId"
+      FROM school_teachers st
+      JOIN schools s ON st."schoolId" = s.id
+      WHERE st."teacherId" = ${user.id}
+    `;
+
+    const memberSchools = memberSchoolsRaw.map((s) => ({
+      id: s.id,
+      name: s.name,
+      isOwner: false,
+    }));
 
     // Pobierz szkoły, które nauczyciel posiada
     const ownedSchools = await db.school.findMany({
@@ -38,28 +42,18 @@ export async function GET() {
       select: { id: true, name: true },
     });
 
+    const ownedSchoolsMapped = ownedSchools.map((s) => ({
+      id: s.id,
+      name: s.name,
+      isOwner: true,
+    }));
+
     return NextResponse.json({
-      memberSchools: memberSchools.map((ms) => ({
-        id: ms.school.id,
-        name: ms.school.name,
-        isOwner: false,
-      })),
-      ownedSchools: ownedSchools.map((s) => ({
-        id: s.id,
-        name: s.name,
-        isOwner: true,
-      })),
+      memberSchools: memberSchools,
+      ownedSchools: ownedSchoolsMapped,
       allSchools: [
-        ...memberSchools.map((ms) => ({
-          id: ms.school.id,
-          name: ms.school.name,
-          isOwner: false,
-        })),
-        ...ownedSchools.map((s) => ({
-          id: s.id,
-          name: s.name,
-          isOwner: true,
-        })),
+        ...memberSchools,
+        ...ownedSchoolsMapped,
       ],
     });
   } catch (error) {

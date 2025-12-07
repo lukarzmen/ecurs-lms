@@ -17,13 +17,19 @@ export async function POST(req: Request) {
 
     const { accountType } = await req.json();
 
-    // Get user
+    // Get user and their school
     const user = await db.user.findUnique({
       where: { providerId: userId },
       select: {
         id: true,
-        stripeAccountId: true,
-        businessType: true,
+        roleId: true,
+        ownedSchools: {
+          select: {
+            id: true,
+            stripeAccountId: true,
+          },
+          take: 1,
+        },
       },
     });
 
@@ -31,30 +37,37 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (!user.stripeAccountId) {
+    // Only teachers (roleId === 1) can update their school's account
+    if (user.roleId !== 1) {
       return NextResponse.json(
-        { error: "No Stripe account found" },
+        { error: "Only teachers can update account type" },
+        { status: 403 }
+      );
+    }
+
+    if (!user.ownedSchools || user.ownedSchools.length === 0) {
+      return NextResponse.json(
+        { error: "No school found for this teacher" },
         { status: 404 }
       );
     }
 
-    // Update Stripe account with new business type
+    const school = user.ownedSchools[0];
+
+    if (!school.stripeAccountId) {
+      return NextResponse.json(
+        { error: "School has no Stripe account" },
+        { status: 404 }
+      );
+    }
+
+    // Update Stripe account with account profile
     const updatedAccount = await stripe.accounts.update(
-      user.stripeAccountId,
+      school.stripeAccountId,
       {
-        business_type:
-          accountType === "school"
-            ? ("individual" as const) // School is still individual but with different settings
-            : "individual",
         business_profile: {
-          name:
-            accountType === "school"
-              ? "School Account"
-              : "Individual Teacher Account",
-          url:
-            accountType === "school"
-              ? "https://ecurs.pl/school"
-              : "https://ecurs.pl/teacher",
+          name: "School Account",
+          url: process.env.NEXT_PUBLIC_APP_URL || "https://ecurs.pl",
         },
       } as any
     );
@@ -62,6 +75,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       message: "Account type updated successfully",
       account: updatedAccount,
+      schoolId: school.id,
     });
   } catch (error) {
     console.error("Error updating Stripe account type:", error);

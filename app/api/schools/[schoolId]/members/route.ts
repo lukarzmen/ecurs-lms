@@ -51,8 +51,6 @@ export async function GET(
             id: true,
             displayName: true,
             email: true,
-            companyName: true,
-            businessType: true,
             createdAt: true,
           },
         },

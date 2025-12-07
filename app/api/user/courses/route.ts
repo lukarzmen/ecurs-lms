@@ -8,7 +8,7 @@ export type CourseWithProgress = Course & {
         userModules: UserModule[];
     })[];
     category: Category | null;
-    school: { name: string } | null;
+    school: { id: number; name: string } | null;
     author: {
         firstName: string | null;
         lastName: string | null;
@@ -19,7 +19,7 @@ export type CourseWithProgress = Course & {
 // Type for the final structure of individual courses sent in the API response
 export type CourseDetails = Omit<Course, 'userModules'> & {
     category: Category | null;
-    school: { name: string } | null;
+    school: { id: number; name: string } | null;
     modulesCount: number;
     isCompleted: boolean;
     author: {
@@ -29,6 +29,8 @@ export type CourseDetails = Omit<Course, 'userModules'> & {
     } | null;
     enrolled?: boolean;
     type: "course" | "educationalPath" | null;
+    schoolId?: number | null;
+    schoolName?: string | null;
 };
 
 // Type for the final API response structure, including counts
@@ -63,7 +65,7 @@ const getDashboardCourses = async (userId: string): Promise<CourseWithProgress[]
             },
             include: {
                 category: true,
-                school: { select: { name: true } },
+                school: { select: { id: true, name: true } },
                 modules: {
                     orderBy: {
                         position: 'asc'
@@ -139,6 +141,8 @@ export async function GET(req: Request): Promise<NextResponse<DashboardCoursesRe
                 }
                 : null,
             school: course.school,
+            schoolId: course.schoolId ?? null,
+            schoolName: course.school?.name ?? null,
             category: course.category,
             type: "course",
             modulesCount: totalModules,

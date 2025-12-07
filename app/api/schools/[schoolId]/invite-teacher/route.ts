@@ -91,7 +91,6 @@ export async function POST(
             id: true,
             displayName: true,
             email: true,
-            companyName: true,
           },
         },
       },

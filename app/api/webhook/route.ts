@@ -205,6 +205,35 @@ export async function POST(req: Request) {
             }
         }
 
+        // Add subscription-specific data if the object itself is a subscription
+        if (stripeObject.object === 'subscription') {
+            baseData.subscriptionId = stripeObject.id;
+            baseData.isRecurring = true;
+            baseData.subscriptionStatus = stripeObject.status;
+            baseData.currentPeriodStart = stripeObject.current_period_start 
+                ? new Date(stripeObject.current_period_start * 1000) 
+                : null;
+            baseData.currentPeriodEnd = stripeObject.current_period_end 
+                ? new Date(stripeObject.current_period_end * 1000) 
+                : null;
+            baseData.trialStart = stripeObject.trial_start 
+                ? new Date(stripeObject.trial_start * 1000) 
+                : null;
+            baseData.trialEnd = stripeObject.trial_end 
+                ? new Date(stripeObject.trial_end * 1000) 
+                : null;
+            // For subscription, try to get amount from items
+            if (stripeObject.items?.data?.[0]) {
+                const lineItem = stripeObject.items.data[0];
+                if (lineItem.price?.unit_amount) {
+                    baseData.amount = lineItem.price.unit_amount;
+                }
+                if (lineItem.price?.currency) {
+                    baseData.currency = lineItem.price.currency;
+                }
+            }
+        }
+
         return baseData;
     }
 
@@ -899,6 +928,7 @@ export async function POST(req: Request) {
                     const appUserId = Number(sessMeta.userId);
                     const educationalPathId = Number(sessMeta.educationalPathId);
                     const userEducationalPathId = Number(sessMeta.userEducationalPathId || session.client_reference_id);
+                    const teacherAccountId = sessMeta.teacherAccountId; // Get Connect account ID from metadata
                     if (!appUserId || !educationalPathId || !userEducationalPathId) {
                         logError("CHECKOUT_COMPLETED_EDUPATH_MISSING_META", { eventId: event.id, sessionId: session.id, sessMeta });
                         return new NextResponse("Missing educational path metadata", { status: 400 });
@@ -948,23 +978,57 @@ export async function POST(req: Request) {
                         });
                     }
                     
-                    await createEduPathPurchase(appUserId, educationalPathId, session.id, session, event.type);
-                    return NextResponse.json({ success: true }, { status: 200 });
-                } else {
-                    // Course subscription logic
+                    // Get full subscription details for educational path purchase
                     try {
-                        // Prefer subscription metadata; if missing, fallback to session.metadata
-                        const subMeta = await getSubscriptionMetadata(stripeClient, session.subscription as string, isConnectEvent || undefined);
-                        const sessMeta = (session.metadata || {}) as any;
-                        const appUserId = (subMeta as any).userId || sessMeta.userId;
-                        const courseId = (subMeta as any).courseId || sessMeta.courseId;
-                        const userCourseId = (subMeta as any).userCourseId || sessMeta.userCourseId || session.client_reference_id;
-                        if (!appUserId || !courseId || !userCourseId) {
-                            logError("CHECKOUT_COMPLETED_MISSING_META", { eventId: event.id, sessionId: session.id, subMeta, sessMeta });
-                            return new NextResponse("Missing metadata", { status: 400 });
-                        }
-                        await upsertCourse(Number(userCourseId), Number(appUserId), Number(courseId), 1);
-                        // Try to attach metadata to the initial PaymentIntent via latest invoice for better traceability
+                        // Use teacherAccountId from metadata if not a Connect event
+                        const stripeAccountForSub = isConnectEvent || teacherAccountId;
+                        const fullSubscription = await stripeClient.subscriptions.retrieve(session.subscription as string, {
+                            stripeAccount: stripeAccountForSub || undefined
+                        });
+                        await createEduPathPurchase(appUserId, educationalPathId, session.id, fullSubscription, event.type);
+                    } catch (err) {
+                        logError("CHECKOUT_COMPLETED_EDUPATH_PURCHASE_ERROR", { 
+                            eventId: event.id, 
+                            sessionId: session.id, 
+                            educationalPathId, 
+                            error: String(err) 
+                        });
+                        await createEduPathPurchase(appUserId, educationalPathId, session.id, session, event.type);
+                    }
+                    return NextResponse.json({ success: true }, { status: 200 });
+                    } else {
+                        // Course subscription logic
+                        try {
+                            // Prefer subscription metadata; if missing, fallback to session.metadata
+                            const subMeta = await getSubscriptionMetadata(stripeClient, session.subscription as string, isConnectEvent || undefined);
+                            const sessMeta = (session.metadata || {}) as any;
+                            const appUserId = (subMeta as any).userId || sessMeta.userId;
+                            const courseId = (subMeta as any).courseId || sessMeta.courseId;
+                            const userCourseId = (subMeta as any).userCourseId || sessMeta.userCourseId || session.client_reference_id;
+                            const teacherAccountId = sessMeta.teacherAccountId; // Get Connect account ID from session metadata
+                            if (!appUserId || !courseId || !userCourseId) {
+                                logError("CHECKOUT_COMPLETED_MISSING_META", { eventId: event.id, sessionId: session.id, subMeta, sessMeta });
+                                return new NextResponse("Missing metadata", { status: 400 });
+                            }
+                            await upsertCourse(Number(userCourseId), Number(appUserId), Number(courseId), 1);
+                            
+                            // Get full subscription details and create purchase with full data
+                            try {
+                                // Use teacherAccountId from metadata if not a Connect event
+                                const stripeAccountForSub = isConnectEvent || teacherAccountId;
+                                const fullSubscription = await stripeClient.subscriptions.retrieve(session.subscription as string, {
+                                    stripeAccount: stripeAccountForSub || undefined
+                                });
+                                await createCoursePurchase(Number(userCourseId), session.id, fullSubscription, event.type);
+                            } catch (purchaseErr) {
+                                logError("CHECKOUT_COMPLETED_COURSE_PURCHASE_ERROR", { 
+                                    eventId: event.id, 
+                                    sessionId: session.id, 
+                                    userCourseId, 
+                                    error: String(purchaseErr) 
+                                });
+                                await createCoursePurchase(Number(userCourseId), session.id, session, event.type);
+                            }                        // Try to attach metadata to the initial PaymentIntent via latest invoice for better traceability
                         try {
                             const subscriptionOptions: any = {
                                 expand: ["latest_invoice.payment_intent"],
@@ -993,7 +1057,6 @@ export async function POST(req: Request) {
                         } catch (err) {
                             logError("CHECKOUT_COMPLETED_PI_META_UPDATE_FAIL", { eventId: event.id, sessionId: session.id, error: String(err) });
                         }
-                        await createCoursePurchase(Number(userCourseId), session.id, session, event.type);
                         return NextResponse.json({ success: true }, { status: 200 });
                     } catch (err) {
                         logError("CHECKOUT_COMPLETED_HANDLER_ERROR", { eventId: event.id, error: String(err) });
@@ -1218,7 +1281,21 @@ export async function POST(req: Request) {
                         });
                     }
                     
-                    await createEduPathPurchase(appUserId, educationalPathId, (invoice as any)['payment_intent'] as string, invoice, event.type);
+                    // Get full subscription details for purchase record
+                    try {
+                        const fullSubscription = await stripeClient.subscriptions.retrieve(subscriptionId as string, {
+                            stripeAccount: isConnectEvent || undefined
+                        });
+                        await createEduPathPurchase(appUserId, educationalPathId, paymentIntentId || subscriptionId || invoice.id || 'unknown', fullSubscription, event.type);
+                    } catch (err) {
+                        logError("INVOICE_PAID_EDUPATH_PURCHASE_ERROR", { 
+                            eventId: event.id, 
+                            invoiceId: invoice.id, 
+                            educationalPathId, 
+                            error: String(err) 
+                        });
+                        await createEduPathPurchase(appUserId, educationalPathId, paymentIntentId || subscriptionId || invoice.id || 'unknown', invoice, event.type);
+                    }
                     return NextResponse.json({ success: true }, { status: 200 });
                 } else {
                     // Course subscription logic
@@ -1230,7 +1307,22 @@ export async function POST(req: Request) {
                         return new NextResponse("Missing metadata", { status: 400 });
                     }
                     await upsertCourse(Number(userCourseId), Number(appUserId), Number(courseId), 1);
-                    await createCoursePurchase(Number(userCourseId), (invoice as any)['payment_intent'] as string, invoice, event.type);
+                    
+                    // Get full subscription details for purchase record
+                    try {
+                        const fullSubscription = await stripeClient.subscriptions.retrieve(subscriptionId as string, {
+                            stripeAccount: isConnectEvent || undefined
+                        });
+                        await createCoursePurchase(Number(userCourseId), paymentIntentId || subscriptionId || invoice.id || 'unknown', fullSubscription, event.type);
+                    } catch (err) {
+                        logError("INVOICE_PAID_COURSE_PURCHASE_ERROR", { 
+                            eventId: event.id, 
+                            invoiceId: invoice.id, 
+                            userCourseId, 
+                            error: String(err) 
+                        });
+                        await createCoursePurchase(Number(userCourseId), paymentIntentId || subscriptionId || invoice.id || 'unknown', invoice, event.type);
+                    }
                     return NextResponse.json({ success: true }, { status: 200 });
                 }
             } else if (paymentIntentId) {

@@ -43,7 +43,6 @@ export async function GET(req: Request) {
             id: true,
             displayName: true,
             email: true,
-            companyName: true,
           },
         },
         school: {

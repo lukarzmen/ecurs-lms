@@ -88,14 +88,13 @@ const CategoryForm = ({ categoryId, id, options, onCategoryChange }: CategoryFor
         {isEditing ? (
           <form onSubmit={onSubmit} className="space-y-4">
             <Select
-              value={categoryIdState.toString()}
-              onValueChange={(value) => setCategoryIdState(value === "" ? "" : Number(value))}
+              value={categoryIdState === "" ? "" : categoryIdState.toString()}
+              onValueChange={(value) => setCategoryIdState(Number(value))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Wybierz kategorię..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Wybierz kategorię...</SelectItem>
                 {options.map((option) => (
                   <SelectItem key={option.value} value={option.value.toString()}>
                     {option.label}

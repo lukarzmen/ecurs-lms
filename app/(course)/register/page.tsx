@@ -401,9 +401,15 @@ export default function RegisterPage() {
                   setCurrentStep("platform-subscription");
                   toast("Wybierz plan subskrypcji platformy", { icon: "💳" });
                 } else {
-                  // Needs Stripe setup
-                  setCurrentStep("stripe-setup");
-                  toast("Kontynuuj konfigurację konta płatności", { icon: "👨‍🏫" });
+                  // Check if teacher has school - if yes, skip to terms
+                  if (userData.schoolId) {
+                    setCurrentStep("terms-acceptance");
+                    toast.success("Masz już przypisaną szkołę! Przejdź do akceptacji regulaminu.", { icon: "🏫" });
+                  } else {
+                    // Needs business type selection
+                    setCurrentStep("business-type-selection");
+                    toast("Rozpocznij rejestrację od wyboru typu działalności", { icon: "👨‍🏫" });
+                  }
                 }
               }
             }
@@ -883,27 +889,26 @@ export default function RegisterPage() {
         if (response.ok) {
           const userData = await response.json();
           
-          if (userData.exists && userData.businessType) {
-            // User already has business type selected, skip to next step
-            console.log("User already has businessType:", userData.businessType);
-            setBusinessData(prev => ({
-              ...prev,
-              businessType: userData.businessType
-            }));
-            
-            // Check if they have a school
+          if (userData.exists) {
+            // Check if they have a school - if yes, skip to terms
             if (userData.schoolId) {
+              console.log("User already has school:", userData.schoolId);
+              toast.success("Masz już przypisaną szkołę! Przejdź do akceptacji regulaminu.");
+              setCurrentStep("terms-acceptance");
+            } else if (userData.businessType) {
+              // User already has business type selected, skip to school choice
+              console.log("User already has businessType:", userData.businessType);
               setBusinessData(prev => ({
                 ...prev,
-                joinSchoolMode: "join-existing-school",
-                selectedSchoolId: userData.schoolId
+                businessType: userData.businessType
               }));
-              setCurrentStep("terms-acceptance");
-            } else {
               setCurrentStep("school-choice");
+            } else {
+              // New teacher or no business type yet
+              setCurrentStep("business-type-selection");
             }
           } else {
-            // New teacher or no business type yet
+            // New teacher - start from business type
             setCurrentStep("business-type-selection");
           }
         } else {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 
-// GET /api/notifications/schedules - Get all notification schedules for a user
+// GET /api/notifications/schedules - Get all notification schedules for a user's school
 export async function GET(req: NextRequest) {
   try {
     const { userId } = await auth();
@@ -19,24 +19,32 @@ export async function GET(req: NextRequest) {
       return new NextResponse('User not found', { status: 404 });
     }
 
-    const { searchParams } = new URL(req.url);
-    const courseId = searchParams.get('courseId');
+    // Find user's school (owner or teacher member)
+    const schoolIds = await db.school.findMany({
+      where: {
+        OR: [
+          { ownerId: user.id },
+          { teachers: { some: { teacherId: user.id } } },
+        ],
+      },
+      select: { id: true },
+    });
 
-    let whereClause: any = {
-      authorId: user.id,
-    };
-
-    if (courseId) {
-      whereClause.courseId = parseInt(courseId);
+    if (schoolIds.length === 0) {
+      return NextResponse.json([]);
     }
 
+    const schoolIdList = schoolIds.map(s => s.id);
+
     const schedules = await db.notificationSchedule.findMany({
-      where: whereClause,
+      where: {
+        schoolId: { in: schoolIdList },
+      },
       include: {
-        course: {
+        school: {
           select: {
             id: true,
-            title: true,
+            name: true,
           },
         },
         sentLogs: {
@@ -64,7 +72,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST /api/notifications/schedules - Create a new notification schedule
+// POST /api/notifications/schedules - Create a new notification schedule for a school
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
@@ -83,7 +91,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const {
-      courseId,
+      schoolId,
       title,
       message,
       cronExpression,
@@ -92,20 +100,23 @@ export async function POST(req: NextRequest) {
     } = body;
 
     // Validate required fields
-    if (!courseId || !title || !message || !cronExpression || !notificationType) {
+    if (!schoolId || !title || !message || !cronExpression || !notificationType) {
       return new NextResponse('Missing required fields', { status: 400 });
     }
 
-    // Verify the user owns the course
-    const course = await db.course.findFirst({
+    // Verify the user is owner or teacher member of this school
+    const school = await db.school.findFirst({
       where: {
-        id: parseInt(courseId),
-        authorId: user.id,
+        id: parseInt(schoolId),
+        OR: [
+          { ownerId: user.id },
+          { teachers: { some: { teacherId: user.id } } },
+        ],
       },
     });
 
-    if (!course) {
-      return new NextResponse('Course not found or not authorized', { status: 404 });
+    if (!school) {
+      return new NextResponse('School not found or not authorized', { status: 404 });
     }
 
     // Validate cron expression format (basic validation)
@@ -116,8 +127,7 @@ export async function POST(req: NextRequest) {
 
     const schedule = await db.notificationSchedule.create({
       data: {
-        courseId: parseInt(courseId),
-        authorId: user.id,
+        schoolId: parseInt(schoolId),
         title,
         message,
         cronExpression,
@@ -125,10 +135,10 @@ export async function POST(req: NextRequest) {
         isEnabled,
       },
       include: {
-        course: {
+        school: {
           select: {
             id: true,
-            title: true,
+            name: true,
           },
         },
       },

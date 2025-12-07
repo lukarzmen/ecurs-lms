@@ -37,6 +37,12 @@ export async function GET(
             course: {
               include: {
                 modules: true,
+                school: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                }
               },
             },
           },
@@ -66,6 +72,8 @@ export async function GET(
       description: ec.course.description,
       categoryId: ec.course.categoryId,
       authorId: ec.course.authorId,
+      schoolId: ec.course.schoolId,
+      schoolName: ec.course.school?.name || null,
       modulesCount: ec.course.modules ? ec.course.modules.length : 0,
     }));
     return NextResponse.json({

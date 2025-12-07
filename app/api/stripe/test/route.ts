@@ -57,9 +57,14 @@ export async function GET() {
                     select: {
                         id: true,
                         email: true,
-                        stripeAccountId: true,
-                        stripeOnboardingComplete: true,
-                        stripeAccountStatus: true
+                        ownedSchools: {
+                            select: {
+                                id: true,
+                                stripeAccountId: true,
+                                stripeOnboardingComplete: true,
+                                stripeAccountStatus: true
+                            }
+                        }
                     }
                 });
             } catch (userError) {

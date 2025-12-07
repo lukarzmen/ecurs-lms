@@ -108,6 +108,8 @@ export default async function EducationalPathPage({
                         title={course.title}
                         imageId={course.imageId ?? ""}
                         author={data.authorName || "Nieznany autor"}
+                        schoolId={course.schoolId}
+                        schoolName={course.schoolName}
                         modulesCount={course.modulesCount}
                         category={data.categoryName || "Brak kategorii"}
                         isCompleted={course.isCompleted ?? false}

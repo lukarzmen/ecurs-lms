@@ -1,9 +1,12 @@
 
 import type { CourseDetails } from "@/app/api/user/courses/route";
+import type { UserEducationalPathDetails } from "@/app/api/user/educational-paths/route";
 import CourseInfoCard from "./course-card";
 
+export type EnrolledItem = CourseDetails | UserEducationalPathDetails;
+
 export type EnrolledCoursesListBaseProps = {
-    items: CourseDetails[];
+    items: EnrolledItem[];
 };
 
 
@@ -18,22 +21,25 @@ export const EnrolledEduList = ({ items }: EnrolledCoursesListBaseProps) => {
     return (
         <div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 mt-12">
             {items.map(item => {
-                // Map API CourseDetails to UI CourseInfoCardProps
-                const authorString = item.author?.displayName
+                // Map API details to UI CourseInfoCardProps
+                const displayAuthor = item.schoolId && item.schoolName 
+                    ? item.schoolName 
+                    : (item.author?.displayName
                     || [item.author?.firstName, item.author?.lastName].filter(Boolean).join(" ")
-                    || "Nieznany autor";
+                    || "Nieznany autor");
                 const categoryString = item.category?.name || "Brak kategorii";
+                const isCompleted = 'isCompleted' in item ? item.isCompleted : false;
                 return (
                     <CourseInfoCard
                         key={item.id}
                         id={item.id}
                         title={item.title}
                         imageId={item.imageId ?? ""}
-                        author={authorString}
+                        author={displayAuthor}
                         modulesCount={item.modulesCount}
                         category={categoryString}
                         type={item.type}
-                        isCompleted={item.isCompleted}
+                        isCompleted={isCompleted}
                     />
                 );
             })}

@@ -16,12 +16,12 @@ interface NotificationTemplate {
 	isEnabled: boolean;
 	createdAt: string;
 	updatedAt: string;
-	courseId: number;
+	schoolId: number;
 	notificationType: string;
 	cronExpression: string;
-	course?: {
+	school?: {
 		id: number;
-		title: string;
+		name: string;
 	};
 }
 
@@ -30,14 +30,15 @@ export default function NotificationsPage() {
 	const [showCreateModal, setShowCreateModal] = useState(false);
 	const [editingTemplate, setEditingTemplate] = useState<NotificationTemplate | null>(null);
 	const [loading, setLoading] = useState(false);
-	const [courses, setCourses] = useState<{id: number, title: string}[]>([]);
+	const [userSchool, setUserSchool] = useState<{ id: number; name: string } | null>(null);
+	const [userSchools, setUserSchools] = useState<{ id: number; name: string }[]>([]);
 	
 	// Form state
 	const [templateForm, setTemplateForm] = useState({
 		title: '',
 		message: '',
 		category: 'general',
-		courseId: '',
+		schoolId: '',
 		cronExpression: '0 9 * * 1', // Default: Every Monday at 9 AM
 	});
 
@@ -83,10 +84,36 @@ export default function NotificationsPage() {
 
 	// Fetch templates on component mount
 	useEffect(() => {
-		fetchTemplates();
-		fetchCourses();
+		fetchSchoolAndTemplates();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	const fetchSchoolAndTemplates = async () => {
+		try {
+			setLoading(true);
+			
+			// Fetch user's schools
+			const schoolsRes = await fetch('/api/user/school');
+			if (schoolsRes.ok) {
+				const schools = await schoolsRes.json();
+				setUserSchools(schools);
+				if (schools.length > 0) {
+					setUserSchool(schools[0]);
+					setTemplateForm(prev => ({
+						...prev,
+						schoolId: schools[0].id.toString(),
+					}));
+				}
+			}
+			
+			// Fetch templates
+			await fetchTemplates();
+		} catch (error) {
+			console.error('Error in fetchSchoolAndTemplates:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	const fetchCourses = async () => {
 		if (!userId) return;
@@ -95,7 +122,7 @@ export default function NotificationsPage() {
 			const response = await fetch(`/api/courses?userId=${userId}`);
 			if (response.ok) {
 				const coursesData = await response.json();
-				setCourses(coursesData);
+				console.log('Courses fetched:', coursesData);
 			} else {
 				console.error('Failed to fetch courses');
 			}
@@ -123,10 +150,10 @@ export default function NotificationsPage() {
 					isEnabled: schedule.isEnabled,
 					createdAt: schedule.createdAt,
 					updatedAt: schedule.updatedAt,
-					courseId: schedule.courseId,
+					schoolId: schedule.schoolId,
 					notificationType: schedule.notificationType,
 					cronExpression: schedule.cronExpression,
-					course: schedule.course
+					school: schedule.school
 				}));
 			}
 
@@ -137,7 +164,7 @@ export default function NotificationsPage() {
 				isEnabled: false, // Examples are disabled by default
 				createdAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
-				courseId: 0, // No specific course for examples
+				schoolId: 0, // No specific school for examples
 				notificationType: template.category,
 				cronExpression: '0 9 * * 1', // Default cron
 			}));
@@ -164,7 +191,7 @@ export default function NotificationsPage() {
 			title: '',
 			message: '',
 			category: 'general',
-			courseId: '',
+			schoolId: userSchool?.id.toString() || '',
 			cronExpression: '0 9 * * 1', // Default: Every Monday at 9 AM
 		});
 	};
@@ -181,7 +208,7 @@ export default function NotificationsPage() {
 			title: template.title,
 			message: template.message,
 			category: template.category,
-			courseId: template.courseId.toString(),
+			schoolId: template.schoolId.toString(),
 			cronExpression: template.cronExpression,
 		});
 		setShowCreateModal(true);
@@ -193,8 +220,8 @@ export default function NotificationsPage() {
 			return;
 		}
 
-		if (!editingTemplate && !templateForm.courseId) {
-			toast.error('Wybierz kurs dla nowego szablonu');
+		if (!editingTemplate && !templateForm.schoolId) {
+			toast.error('Wybierz szkołę dla nowego szablonu');
 			return;
 		}
 
@@ -247,7 +274,7 @@ export default function NotificationsPage() {
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({
-						courseId: parseInt(templateForm.courseId),
+						schoolId: parseInt(templateForm.schoolId),
 						title: templateForm.title,
 						message: templateForm.message,
 						notificationType: templateForm.category,
@@ -266,10 +293,10 @@ export default function NotificationsPage() {
 						isEnabled: newSchedule.isEnabled,
 						createdAt: newSchedule.createdAt,
 						updatedAt: newSchedule.updatedAt,
-						courseId: newSchedule.courseId,
+						schoolId: newSchedule.schoolId,
 						notificationType: newSchedule.notificationType,
 						cronExpression: newSchedule.cronExpression,
-						course: newSchedule.course
+						school: newSchedule.school
 					};
 					setTemplates(prev => [newTemplate, ...prev]);
 					toast.success('Szablon został utworzony');
@@ -374,7 +401,7 @@ export default function NotificationsPage() {
 			title: template.title,
 			message: template.message,
 			category: template.category,
-			courseId: '',
+			schoolId: userSchool?.id.toString() || '',
 			cronExpression: '0 9 * * 1', // Default cron
 		});
 		setShowCreateModal(true);
@@ -561,9 +588,9 @@ export default function NotificationsPage() {
 												}`}>
 													{template.id < 0 ? 'Szablon' : (template.isEnabled ? 'Aktywny' : 'Nieaktywny')}
 												</span>
-												{template.course && (
+												{template.school && (
 													<span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-														{template.course.title}
+														{template.school.name}
 													</span>
 												)}
 											</div>
@@ -713,27 +740,22 @@ export default function NotificationsPage() {
 									</select>
 								</div>
 
-								{/* Course selection - only show for new templates */}
-								{!editingTemplate && (
+								{/* School selection - only show for new templates */}
+								{!editingTemplate && userSchools.length > 0 && (
 									<div>
-										<label className="block text-sm font-medium text-gray-700 mb-2">Kurs *</label>
+										<label className="block text-sm font-medium text-gray-700 mb-2">Szkoła *</label>
 										<select
-											value={templateForm.courseId}
-											onChange={(e) => handleTemplateFormChange('courseId', e.target.value)}
+											value={templateForm.schoolId}
+											onChange={(e) => handleTemplateFormChange('schoolId', e.target.value)}
 											className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
 										>
-											<option value="">Wybierz kurs...</option>
-											{courses.map((course) => (
-												<option key={course.id} value={course.id.toString()}>
-													{course.title}
+											<option value="">Wybierz szkołę...</option>
+											{userSchools.map((school) => (
+												<option key={school.id} value={school.id.toString()}>
+													{school.name}
 												</option>
 											))}
 										</select>
-										{courses.length === 0 && (
-											<p className="text-sm text-gray-500 mt-1">
-												Brak dostępnych kursów. Utwórz pierwszy kurs, aby dodać powiadomienia.
-											</p>
-										)}
 									</div>
 								)}
 

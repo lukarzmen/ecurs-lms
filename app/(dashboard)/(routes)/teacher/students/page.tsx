@@ -131,14 +131,42 @@ const StudentsPage: React.FC = () => {
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
     const [bulkMessage, setBulkMessage] = useState('');
     const [isSendingBulk, setIsSendingBulk] = useState(false);
+    const [schoolId, setSchoolId] = useState<number | null>(null);
 
     useEffect(() => {
-        const fetchStudents = async () => {
+        const fetchDataSequentially = async () => {
             setIsLoading(true);
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/student?userId=${userId}`);
-                const data = await response.json();
-                setStudents(data);
+                if (!userId) {
+                    setIsLoading(false);
+                    return;
+                }
+
+                // First fetch school ID
+                const schoolResponse = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/schools/current`,
+                    { cache: "no-store" }
+                );
+                
+                if (!schoolResponse.ok) {
+                    throw new Error("Failed to fetch school");
+                }
+
+                const schoolData = await schoolResponse.json();
+                setSchoolId(schoolData.id);
+
+                // Then fetch school students
+                const studentsResponse = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/schools/${schoolData.id}/students`,
+                    { cache: "no-store" }
+                );
+
+                if (!studentsResponse.ok) {
+                    throw new Error("Failed to fetch students");
+                }
+
+                const studentsData = await studentsResponse.json();
+                setStudents(studentsData);
             } catch (error) {
                 console.error('Błąd podczas pobierania studentów:', error);
                 toast.error('Nie udało się pobrać listy studentów.');
@@ -148,7 +176,7 @@ const StudentsPage: React.FC = () => {
         };
 
         if (userId) {
-            fetchStudents();
+            fetchDataSequentially();
         } else {
             setIsLoading(false);
         }

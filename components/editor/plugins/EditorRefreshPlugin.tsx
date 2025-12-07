@@ -13,7 +13,9 @@ export default function EditorRefreshPlugin({ initialStateJSON }: EditorRefreshP
     if (initialStateJSON) {
       try {
         const parsedState = editor.parseEditorState(initialStateJSON);
-        editor.setEditorState(parsedState);
+        editor.update(() => {
+          editor.setEditorState(parsedState);
+        });
       } catch (error) {
         console.error('Error parsing editor state:', error);
         // If parsing fails, clear the editor
