@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { CommunicationPlatform } from "@prisma/client";
 
@@ -8,30 +8,19 @@ export async function GET(
   { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const clerkUser = await currentUser();
+    const email = clerkUser?.emailAddresses[0]?.emailAddress;
+    if (!email) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
     const { courseId } = await params;
     const courseIdNumber = parseInt(courseId, 10);
 
-    // Find the user by providerId (Clerk ID)
-    const user = await db.user.findUnique({
-      where: {
-        providerId: userId,
-      },
-    });
-
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
-    }
-
     // Verify user owns the course
     const course = await db.course.findFirst({
       where: {
-        id: courseIdNumber,
-        authorId: user.id, // Use the database user ID
+        id: courseIdNumber
       },
     });
 
@@ -61,8 +50,9 @@ export async function POST(
   { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const clerkUser = await currentUser();
+    const email = clerkUser?.emailAddresses[0]?.emailAddress;
+    if (!email) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -80,22 +70,10 @@ export async function POST(
       return new NextResponse("Invalid platform", { status: 400 });
     }
 
-    // Find the user by providerId (Clerk ID)
-    const user = await db.user.findUnique({
-      where: {
-        providerId: userId,
-      },
-    });
-
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
-    }
-
     // Verify user owns the course
     const course = await db.course.findFirst({
       where: {
-        id: courseIdNumber,
-        authorId: user.id, // Use the database user ID
+        id: courseIdNumber
       },
     });
 

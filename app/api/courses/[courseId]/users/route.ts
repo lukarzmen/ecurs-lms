@@ -33,28 +33,55 @@ export async function GET(req: Request, context: { params: Promise<{ courseId: s
             return new NextResponse("Course not found", { status: 404 });
         }
 
-        const userCourses = await db.userCourse.findMany({
-            where: {
-                courseId: courseIdNumber,
-            },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        displayName: true,
-                        email: true,
-                    }
-                },
-                role: {
-                    select: {
-                        id: true,
-                        name: true,
-                    }
-                }
-            },
-        });
+        // Use raw SQL to safely handle nullable user relationships
+        const userCourses = await db.$queryRaw`
+            SELECT 
+                uc.id,
+                uc."userId",
+                uc.state,
+                uc."roleId",
+                u.id as "user_id",
+                u."displayName" as "user_displayName",
+                u.email as "user_email",
+                r.id as "role_id",
+                r.name as "role_name"
+            FROM "UserCourse" uc
+            LEFT JOIN "User" u ON uc."userId" = u.id
+            LEFT JOIN "Role" r ON uc."roleId" = r.id
+            WHERE uc."courseId" = ${courseIdNumber}
+        ` as Array<{
+            id: number;
+            userId: number;
+            state: number;
+            roleId: number | null;
+            user_id: number | null;
+            user_displayName: string | null;
+            user_email: string | null;
+            role_id: number | null;
+            role_name: string | null;
+        }>;
 
-        if (userCourses.length === 0) {
+        // Filter out records where user doesn't exist
+        const validUserCourses = userCourses.filter(uc => uc.user_id !== null);
+
+        // Clean up orphaned UserCourse records (where user doesn't exist)
+        const orphanedUserCourseIds = userCourses
+            .filter(uc => uc.user_id === null)
+            .map(uc => uc.id);
+        
+        if (orphanedUserCourseIds.length > 0) {
+            try {
+                await db.userCourse.deleteMany({
+                    where: { id: { in: orphanedUserCourseIds } }
+                });
+                console.log(`[COURSE_ID_USERS_GET] Cleaned up ${orphanedUserCourseIds.length} orphaned UserCourse records for course ${courseIdNumber}`);
+            } catch (cleanupError) {
+                console.error(`[COURSE_ID_USERS_GET] Failed to clean up orphaned records:`, cleanupError);
+                // Don't fail the request if cleanup fails
+            }
+        }
+
+        if (validUserCourses.length === 0) {
             return NextResponse.json([]);
         }
 
@@ -66,7 +93,7 @@ export async function GET(req: Request, context: { params: Promise<{ courseId: s
         const totalModulesCount = courseModules.length;
         const courseModuleIds = courseModules.map(m => m.id);
 
-        const userIdsInCourse = userCourses.map(uc => uc.userId);
+        const userIdsInCourse = validUserCourses.map(uc => uc.userId);
         const finishedModulesCountMap = new Map<number, number>();
 
         if (totalModulesCount > 0 && userIdsInCourse.length > 0 && courseModuleIds.length > 0) {
@@ -87,20 +114,20 @@ export async function GET(req: Request, context: { params: Promise<{ courseId: s
             });
         }
 
-        const usersResponse: UserCourseResponse[] = userCourses.map(uc => {
+        const usersResponse: UserCourseResponse[] = validUserCourses.map(uc => {
             const finishedUserModulesCount = finishedModulesCountMap.get(uc.userId) || 0;
             const progress = totalModulesCount > 0 
                 ? parseFloat((finishedUserModulesCount / totalModulesCount).toFixed(2)) // Calculate progress, format to 2 decimal places
                 : 0;
 
             return {
-                id: uc.user.id,
-                name: uc.user.displayName,
-                email: uc.user.email,
+                id: uc.user_id || 0,
+                name: uc.user_displayName,
+                email: uc.user_email,
                 userCourseId: uc.id,
                 state: uc.state,
-                roleName: uc.role?.name || "No Role",
-                roleId: uc.role?.id || 0,
+                roleName: uc.role_name || "No Role",
+                roleId: uc.role_id || 0,
                 authorId: course.authorId,
                 progress: progress,
             };
