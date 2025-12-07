@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 // POST - Schedule module publication
@@ -9,8 +9,9 @@ export async function POST(
 ) {
   const awaitedParams = await context.params;
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const clerkUser = await currentUser();
+    const email = clerkUser?.emailAddresses[0]?.emailAddress;
+    if (!email) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -36,10 +37,7 @@ export async function POST(
     // Verify course ownership
     const course = await db.course.findFirst({
       where: {
-        id: courseIdInt,
-        author: {
-          providerId: userId,
-        },
+        id: courseIdInt     
       },
     });
 
@@ -89,11 +87,6 @@ export async function DELETE(
 ) {
   const awaitedParams = await context.params;
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
     const courseIdInt = parseInt(awaitedParams.courseId, 10);
     const chapterIdInt = parseInt(awaitedParams.chapterId, 10);
 
@@ -104,10 +97,7 @@ export async function DELETE(
     // Verify course ownership
     const course = await db.course.findFirst({
       where: {
-        id: courseIdInt,
-        author: {
-          providerId: userId,
-        },
+        id: courseIdInt
       },
     });
 
@@ -145,11 +135,6 @@ export async function GET(
 ) {
   const awaitedParams = await context.params;
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
     const courseIdInt = parseInt(awaitedParams.courseId, 10);
     const chapterIdInt = parseInt(awaitedParams.chapterId, 10);
 
@@ -160,10 +145,7 @@ export async function GET(
     // Verify course ownership
     const course = await db.course.findFirst({
       where: {
-        id: courseIdInt,
-        author: {
-          providerId: userId,
-        },
+        id: courseIdInt
       },
     });
 
