@@ -44,6 +44,7 @@ export async function PUT(req: Request) {
                 data: {
                     companyName: businessType === 'company' ? companyName : null,
                     taxId: businessType === 'company' ? taxId : null,
+                    requiresVatInvoices: requiresVatInvoices || false,
                     updatedAt: new Date(),
                 }
             });
@@ -53,6 +54,7 @@ export async function PUT(req: Request) {
                 businessType: businessType,
                 companyName: updatedSchool.companyName,
                 taxId: updatedSchool.taxId,
+                requiresVatInvoices: updatedSchool.requiresVatInvoices,
                 updatedAt: updatedSchool.updatedAt,
             });
         }

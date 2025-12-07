@@ -155,6 +155,7 @@ export async function POST(req: Request) {
                                 ownerId: user.id,
                                 stripeAccountId: null,
                                 stripeOnboardingComplete: false,
+                                requiresVatInvoices: businessData?.requiresVatInvoices || false,
                             }
                         });
                         schoolId = school.id;

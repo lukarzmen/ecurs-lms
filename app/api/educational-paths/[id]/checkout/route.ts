@@ -74,7 +74,8 @@ export async function POST(
                         id: true,
                         stripeAccountId: true,
                         stripeOnboardingComplete: true,
-                        ownerId: true
+                        ownerId: true,
+                        requiresVatInvoices: true
                     }
                 },
                 courses: {
@@ -170,6 +171,15 @@ export async function POST(
         // Fetch price from EducationalPathPrice
         const price = await db.educationalPathPrice.findUnique({
             where: { educationalPathId: Number(educationalPathId) },
+        });
+
+        // Determine if invoice should be created: school requires VAT OR customer requested it
+        const shouldCreateInvoice = eduPath.school?.requiresVatInvoices || vatInvoiceRequested;
+        
+        console.log(`Invoice decision for educational path ${educationalPathId}:`, {
+            schoolRequiresVat: eduPath.school?.requiresVatInvoices,
+            customerRequested: vatInvoiceRequested,
+            shouldCreate: shouldCreateInvoice
         });
 
         // Create or update UserCourse for all courses in the path with state 0 initially
@@ -560,8 +570,8 @@ export async function POST(
                 success_url: `${process.env.NEXT_PUBLIC_API_URL}/educational-paths/${educationalPathId}?success=1`,
                 cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/educational-paths/${educationalPathId}?canceled=1`,
                 client_reference_id: String(userEducationalPath.id),
-                // Automatyczne faktury jeśli żądane
-                invoice_creation: vatInvoiceRequested ? { 
+                // Automatyczne faktury jeśli szkoła wymaga lub klient zażądał
+                invoice_creation: shouldCreateInvoice ? { 
                     enabled: true,
                     invoice_data: {
                         description: `Ścieżka edukacyjna: ${eduPath.title}`,

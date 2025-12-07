@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
             companyName: true,
             taxId: true,
             stripeOnboardingComplete: true,
+            requiresVatInvoices: true,
           },
           take: 1,
         },
@@ -41,6 +42,7 @@ export async function GET(request: NextRequest) {
       companyName: schoolData?.companyName || null,
       taxId: schoolData?.taxId || null,
       stripeOnboardingComplete: schoolData?.stripeOnboardingComplete || false,
+      requiresVatInvoices: schoolData?.requiresVatInvoices || false,
     });
 
   } catch (error) {
@@ -101,6 +103,7 @@ export async function PUT(request: NextRequest) {
             companyName: true,
             taxId: true,
             stripeOnboardingComplete: true,
+            requiresVatInvoices: true,
           },
           take: 1,
         },
@@ -115,6 +118,7 @@ export async function PUT(request: NextRequest) {
         data: {
           companyName,
           taxId,
+          requiresVatInvoices: requiresVatInvoices !== undefined ? requiresVatInvoices : undefined,
         },
       });
     }
@@ -130,6 +134,7 @@ export async function PUT(request: NextRequest) {
       companyName: schoolData?.companyName || null,
       taxId: schoolData?.taxId || null,
       stripeOnboardingComplete: schoolData?.stripeOnboardingComplete || false,
+      requiresVatInvoices: schoolData?.requiresVatInvoices || false,
     });
 
   } catch (error) {

@@ -11,6 +11,17 @@ export async function POST(req: Request) {
         return new NextResponse("User email not found", { status: 401 });
     }
 
+    // Extract business type from request body
+    let businessTypeFromRequest = "individual";
+    try {
+        const body = await req.json();
+        if (body.businessType === "company" || body.businessType === "individual") {
+            businessTypeFromRequest = body.businessType;
+        }
+    } catch (parseError) {
+        // If no body or parsing fails, default to individual
+    }
+
     try {
         const user = await db.user.findUnique({
             where: { email: email },
@@ -111,8 +122,8 @@ export async function POST(req: Request) {
         // For localhost development, don't include business_profile URL as Stripe doesn't accept localhost
         const isLocalhost = businessUrl.includes('localhost') || businessUrl.includes('127.0.0.1');
         
-        // Business type for Stripe Connect
-        const businessType = 'individual';
+        // Business type for Stripe Connect: individual (solo teacher) or company (school)
+        const businessType = businessTypeFromRequest;
         
         const accountData: any = {
             type: 'express',

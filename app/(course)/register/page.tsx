@@ -705,6 +705,9 @@ export default function RegisterPage() {
       const stripeResponse = await fetch("/api/stripe/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessType: businessData.businessType
+        }),
         signal: controller.signal,
       });
       

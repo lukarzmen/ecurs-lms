@@ -267,6 +267,7 @@ model School {
   stripeAccountId       String?                // Szkoła ma jedno konto Stripe dla wszystkich nauczycieli
   stripeAccountStatus   String?                @default("pending")
   stripeOnboardingComplete Boolean              @default(false)
+  requiresVatInvoices   Boolean                @default(false)
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   

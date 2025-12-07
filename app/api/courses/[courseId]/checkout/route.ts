@@ -72,7 +72,8 @@ export async function POST(
                         id: true,
                         stripeAccountId: true,
                         stripeOnboardingComplete: true,
-                        ownerId: true
+                        ownerId: true,
+                        requiresVatInvoices: true
                     }
                 },
                 price: {
@@ -89,11 +90,18 @@ export async function POST(
                 },
             }
         });
+        
         const price = course?.price;
+        
+        // Determine if invoice should be created: school requires VAT OR customer requested it
+        const shouldCreateInvoice = course?.school?.requiresVatInvoices || vatInvoiceRequested;
         
         console.log(`Course data for courseId ${courseId}:`, {
             courseExists: !!course,
-            priceData: course?.price
+            priceData: course?.price,
+            schoolRequiresVat: course?.school?.requiresVatInvoices,
+            customerRequested: vatInvoiceRequested,
+            shouldCreateInvoice: shouldCreateInvoice
         });
         
         if (!course) {
@@ -541,8 +549,8 @@ export async function POST(
                 success_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?success=1`,
                 cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?canceled=1`,
                 client_reference_id: String(userCourse.id),
-                // Automatyczne faktury jeśli żądane
-                invoice_creation: vatInvoiceRequested ? { 
+                // Automatyczne faktury jeśli szkoła wymaga lub klient zażądał
+                invoice_creation: shouldCreateInvoice ? { 
                     enabled: true,
                     invoice_data: {
                         description: `Kurs online: ${course.title}`,
