@@ -891,7 +891,13 @@ export async function POST(req: Request) {
                     try {
                         // Get subscription details from Stripe
                         const subscriptionMetadata = await getSubscriptionMetadata(stripeClient, session.subscription as string, isConnectEvent || undefined);
-                        const paymentData = extractPaymentData(session, event.type, { subscription: subscriptionMetadata });
+                        const subscriptionDetails = await stripeClient.subscriptions.retrieve(session.subscription as string, {
+                            stripeAccount: isConnectEvent || undefined
+                        });
+                        const paymentData = extractPaymentData(session, event.type, { 
+                            subscription: subscriptionMetadata,
+                            amount: session.amount_total || subscriptionDetails.items.data[0]?.price?.unit_amount || 0
+                        });
 
                         // Update teacher platform subscription
                         // Note: This will work after running Prisma migration

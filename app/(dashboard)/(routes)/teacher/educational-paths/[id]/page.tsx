@@ -35,6 +35,8 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
       try {
         const res = await fetch(`/api/educational-paths/${pathId}?userId=${userId}`);
         const data = await res.json();
+        console.log("Educational path data:", data);
+        console.log("Courses structure:", data.courses);
         setPath(data);
         setTitle(data.title);
         setDescription(data.description ?? "");
@@ -93,10 +95,12 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
 
   const handleCourseRemove = async (courseId: number) => {
     try {
+      const payload = { remove: Number(courseId) };
+      console.log("Sending payload:", payload);
       const res = await fetch(`/api/educational-paths/${pathId}/courses`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ remove: courseId }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error();
       setCourses(courses.filter((c) => c.courseId !== courseId));
@@ -114,7 +118,11 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
         body: JSON.stringify({ add: courseId }),
       });
       if (!res.ok) throw new Error();
-      setCourses([...courses, allCourses.find((c) => c.id === courseId)]);
+      const courseToAdd = allCourses.find((c) => c.id === courseId);
+      if (courseToAdd) {
+        // Add with correct structure matching the API response format
+        setCourses([...courses, { courseId: courseToAdd.id, title: courseToAdd.title, position: courses.length + 1 }]);
+      }
       toast.success("Dodano kurs do ścieżki");
     } catch {
       toast.error("Nie udało się dodać kursu");

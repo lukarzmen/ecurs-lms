@@ -96,6 +96,7 @@ export default function NotificationsPage() {
 			const schoolsRes = await fetch('/api/user/school');
 			if (schoolsRes.ok) {
 				const schools = await schoolsRes.json();
+				console.log('Schools fetched:', schools);
 				setUserSchools(schools);
 				if (schools.length > 0) {
 					setUserSchool(schools[0]);
@@ -103,13 +104,20 @@ export default function NotificationsPage() {
 						...prev,
 						schoolId: schools[0].id.toString(),
 					}));
+				} else {
+					console.warn('No schools returned from API');
 				}
+			} else {
+				const errorText = await schoolsRes.text();
+				console.error('Failed to fetch schools:', schoolsRes.status, errorText);
+				toast.error('Nie udało się pobrać danych szkoły');
 			}
 			
 			// Fetch templates
 			await fetchTemplates();
 		} catch (error) {
 			console.error('Error in fetchSchoolAndTemplates:', error);
+			toast.error('Błąd podczas pobierania danych');
 		} finally {
 			setLoading(false);
 		}
@@ -396,12 +404,16 @@ export default function NotificationsPage() {
 	};
 
 	const createTemplateFromExample = (template: NotificationTemplate) => {
+		if (!userSchool) {
+			toast.error('Nie udało się pobrać danych szkoły');
+			return;
+		}
 		setEditingTemplate(null);
 		setTemplateForm({
 			title: template.title,
 			message: template.message,
 			category: template.category,
-			schoolId: userSchool?.id.toString() || '',
+			schoolId: userSchool.id.toString(),
 			cronExpression: '0 9 * * 1', // Default cron
 		});
 		setShowCreateModal(true);

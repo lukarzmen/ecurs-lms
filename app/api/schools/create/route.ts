@@ -36,22 +36,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check if teacher already has a school (they should from migration)
+    // Check if teacher already has a school (they should from registration)
+    // Teachers can only have one school
     if (user.roleId === 1 && user.ownedSchools && user.ownedSchools.length > 0) {
       return NextResponse.json(
-        { error: "Teachers can only have one school. Use your existing school or contact admin to manage it." },
+        { error: "Nauczyciele mogą posiadać tylko jedną szkołę. Skontaktuj się z administratorem, aby zarządzać swoją szkołą." },
         { status: 403 }
       );
     }
 
-    // For now, restrict school creation to ensure data consistency
-    // Teachers should have exactly one school created during registration
-    if (user.roleId === 1) {
-      return NextResponse.json(
-        { error: "Schools are automatically created for teachers. Please contact support if you need help managing your school." },
-        { status: 403 }
-      );
-    }
+    // Teachers must have a school from registration, but allow creation if missing
+    // This is for backward compatibility or edge cases
 
     // Create the school
     const school = await db.school.create({

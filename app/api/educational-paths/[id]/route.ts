@@ -87,6 +87,10 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       return NextResponse.json({ error: "Invalid pathId" }, { status: 400 });
     }
     
+    // Delete associated UserEducationalPath records first
+    await db.userEducationalPath.deleteMany({ where: { educationalPathId: pathId } });
+    
+    // Then delete the educational path
     await db.educationalPath.delete({ where: { id: pathId } });
     return NextResponse.json({ success: true });
   } catch (error) {

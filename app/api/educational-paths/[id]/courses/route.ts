@@ -5,10 +5,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const {id} = await params;
     const pathId = Number(id);
+    console.log("PATCH /api/educational-paths/[id]/courses:", { id, pathId, isNaN: isNaN(pathId) });
     if (!pathId || isNaN(pathId)) {
       return NextResponse.json({ error: "Invalid pathId" }, { status: 400 });
     }
+    console.log("Request headers:", req.headers);
     const body = await req.json();
+    console.log("Request body:", body, "Body type:", typeof body, "Keys:", Object.keys(body || {}));
+    
+    // If body is empty or doesn't have any action, return error
+    if (!body || (typeof body === 'object' && Object.keys(body).length === 0)) {
+      console.error("Empty body received, expected remove, add, or order");
+      return NextResponse.json({ error: "Request body cannot be empty" }, { status: 400 });
+    }
     // Remove course
     if (body.remove) {
       await db.educationalPathCourse.delete({
