@@ -308,7 +308,7 @@ interface School {
 }
 
 interface BusinessTypeData {
-  businessType: "individual" | "company";
+  businessType: "individual" | "company" | "join-school";
   companyName?: string;
   schoolName?: string;
   taxId?: string;
@@ -977,8 +977,27 @@ export default function RegisterPage() {
       return;
     }
 
-    // For company type, ask if joining existing school or creating own
-    if (businessData.businessType === "company") {
+    // Handle different business types
+    if (businessData.businessType === "join-school") {
+      // Load schools list for joining
+      setSchoolsLoading(true);
+      try {
+        const response = await fetch("/api/schools/list");
+        if (response.ok) {
+          const data = await response.json();
+          setSchools(data);
+          setCurrentStep("find-school");
+        } else {
+          toast.error("Nie udało się załadować listy szkół");
+        }
+      } catch (error) {
+        console.error("Error fetching schools:", error);
+        toast.error("Błąd podczas ładowania listy szkół");
+      } finally {
+        setSchoolsLoading(false);
+      }
+    } else if (businessData.businessType === "company") {
+      // For company, ask if joining existing school or creating own
       setCurrentStep("school-choice");
     } else {
       // For individual, skip to terms
@@ -1432,9 +1451,9 @@ export default function RegisterPage() {
                       disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-700 text-sm sm:text-base">🧑‍💼 Osoba fizyczna (JDG)</div>
+                      <div className="font-medium text-gray-700 text-sm sm:text-base">🧑‍💼 Indywidualny nauczyciel</div>
                       <div className="text-xs sm:text-sm text-gray-600 mt-1 leading-tight">
-                        Prowadzisz kursy jako osoba fizyczna prowadząca działalność gospodarczą
+                        Tworz kursy jako osoba fizyczna - płacisz za dostęp do platformy
                       </div>
                     </div>
                   </label>
@@ -1456,9 +1475,37 @@ export default function RegisterPage() {
                       disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-700 text-sm sm:text-base">🏢 Firma (spółka)</div>
+                      <div className="font-medium text-gray-700 text-sm sm:text-base">🏢 Nowa szkoła/placówka</div>
                       <div className="text-xs sm:text-sm text-gray-600 mt-1 leading-tight">
-                        Prowadzisz kursy jako firma (sp. z o.o., S.A., itp.) - wymagane faktury VAT
+                        Tworzysz nową szkołę z którą będą pracować inni nauczyciele - szkoła płaci za platformę
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 md:p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input
+                      type="radio"
+                      name="businessType"
+                      value="join-school"
+                      checked={businessData.businessType === "join-school"}
+                      onChange={(e) => {
+                        if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") return;
+                        setBusinessData(prev => ({ 
+                          ...prev, 
+                          businessType: "join-school",
+                          schoolName: "",
+                          companyName: "",
+                          taxId: "",
+                          requiresVatInvoices: false
+                        }))
+                      }}
+                      className="mt-1 flex-shrink-0"
+                      disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-700 text-sm sm:text-base">🔗 Dołącz do szkoły</div>
+                      <div className="text-xs sm:text-sm text-gray-600 mt-1 leading-tight">
+                        Chcesz pracować w istniejącej szkole - szkoła opłaca dostęp dla wszystkich nauczycieli
                       </div>
                     </div>
                   </label>
