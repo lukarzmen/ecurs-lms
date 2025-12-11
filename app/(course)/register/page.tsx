@@ -338,6 +338,8 @@ export default function RegisterPage() {
   const [userCheckCompleted, setUserCheckCompleted] = useState(false);
   const [schools, setSchools] = useState<School[]>([]);
   const [schoolsLoading, setSchoolsLoading] = useState(false);
+  const [schoolSearchTerm, setSchoolSearchTerm] = useState("");
+  const [selectedSchoolId, setSelectedSchoolId] = useState<number | null>(null);
   const [joinRequestStatus, setJoinRequestStatus] = useState<{ [schoolId: number]: "idle" | "pending" | "sent" } >({});
   const router = useRouter();
 
@@ -655,9 +657,28 @@ export default function RegisterPage() {
       } else if (selectedRole === "teacher") {
         // Check if teacher joined a school or is creating their own
         if (businessData.joinSchoolMode === "join-existing-school" && businessData.selectedSchoolId) {
-          // Skip Stripe and subscription, complete registration
+          // Send join request first, then complete registration
+          setLoadingState("sending-join-request");
+          try {
+            const joinResponse = await fetch("/api/schools/join-request", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ schoolId: businessData.selectedSchoolId }),
+            });
+
+            if (!joinResponse.ok) {
+              const joinError = await joinResponse.json();
+              throw new Error(joinError.error || "Nie udało się wysłać prośby o dołączenie");
+            }
+
+            toast.success("Prośba o dołączenie do szkoły została wysłana!");
+          } catch (joinError) {
+            console.error("Error sending join request:", joinError);
+            const errorMsg = joinError instanceof Error ? joinError.message : "Błąd przy wysyłaniu prośby";
+            toast.error(errorMsg);
+          }
+
           setCurrentStep("completed");
-          toast.success("Rejestracja zakończona! Prośba o dołączenie do szkoły została wysłana.");
           
           setTimeout(() => {
             router.push("/teacher/courses");
@@ -981,6 +1002,7 @@ export default function RegisterPage() {
     if (businessData.businessType === "join-school") {
       // Load schools list for joining
       setSchoolsLoading(true);
+      setBusinessData(prev => ({ ...prev, joinSchoolMode: "join-existing-school" }));
       try {
         const response = await fetch("/api/schools/list");
         if (response.ok) {
@@ -1037,35 +1059,9 @@ export default function RegisterPage() {
   };
 
   const handleJoinSchool = async (schoolId: number) => {
-    if (!userId) return;
-    
-    setJoinRequestStatus(prev => ({ ...prev, [schoolId]: "pending" }));
-    setLoadingState("sending-join-request");
-    
-    try {
-      const response = await fetch("/api/schools/join-request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ schoolId }),
-      });
-
-      if (response.ok) {
-        setJoinRequestStatus(prev => ({ ...prev, [schoolId]: "sent" }));
-        setBusinessData(prev => ({ ...prev, selectedSchoolId: schoolId }));
-        toast.success("Prośba o dołączenie wysłana! Przejdź do akceptacji regulaminu.");
-        setTimeout(() => setCurrentStep("terms-acceptance"), 1500);
-      } else {
-        const error = await response.json();
-        toast.error(error.error || "Nie udało się wysłać prośby");
-        setJoinRequestStatus(prev => ({ ...prev, [schoolId]: "idle" }));
-      }
-    } catch (error) {
-      console.error("Error sending join request:", error);
-      toast.error("Błąd podczas wysyłania prośby");
-      setJoinRequestStatus(prev => ({ ...prev, [schoolId]: "idle" }));
-    } finally {
-      setLoadingState("idle");
-    }
+    // Just save the selected school and proceed to terms acceptance
+    setBusinessData(prev => ({ ...prev, selectedSchoolId: schoolId }));
+    setCurrentStep("terms-acceptance");
   };
 
   const handleBackToBusinessType = () => {
@@ -1685,48 +1681,81 @@ export default function RegisterPage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <p className="text-sm text-gray-600">Wybierz szkołę, do której chcesz dołączyć:</p>
-                    <div className="grid gap-3 max-h-96 overflow-y-auto">
-                      {schools.map((school) => (
-                        <div
-                          key={school.id}
-                          className="p-4 border rounded-lg hover:shadow-md transition-shadow"
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h4 className="font-semibold text-gray-800">{school.name}</h4>
-                              <p className="text-sm text-gray-600">{school.companyName}</p>
-                            </div>
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                              {school._count.members} nauczycieli
-                            </span>
-                          </div>
-                          {school.description && (
-                            <p className="text-sm text-gray-600 mb-3">{school.description}</p>
-                          )}
-                          <button
-                            onClick={() => handleJoinSchool(school.id)}
-                            disabled={joinRequestStatus[school.id] === "pending" || joinRequestStatus[school.id] === "sent" || isLoading}
-                            className={`w-full py-2 px-3 text-sm rounded transition-colors ${
-                              joinRequestStatus[school.id] === "sent"
-                                ? "bg-green-500 text-white"
-                                : "bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
-                            }`}
-                          >
-                            {joinRequestStatus[school.id] === "pending" ? (
-                              <div className="flex items-center justify-center gap-1">
-                                <Loader2 className="animate-spin w-4 h-4" />
-                                Wysyłanie...
-                              </div>
-                            ) : joinRequestStatus[school.id] === "sent" ? (
-                              "✓ Prośba wysłana"
-                            ) : (
-                              "Poproś o dołączenie"
-                            )}
-                          </button>
-                        </div>
-                      ))}
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Wyszukaj szkołę po nazwie..."
+                        value={schoolSearchTerm}
+                        onChange={(e) => setSchoolSearchTerm(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                      <span className="absolute right-3 top-2.5 text-gray-400">🔎</span>
                     </div>
+                    {schoolSearchTerm && (
+                      <>
+                        <p className="text-sm text-gray-600">Wybierz szkołę, do której chcesz dołączyć:</p>
+                        <div className="grid gap-3 max-h-96 overflow-y-auto">
+                          {schools
+                            .filter((school) =>
+                              school.name.toLowerCase().includes(schoolSearchTerm.toLowerCase()) ||
+                              school.companyName.toLowerCase().includes(schoolSearchTerm.toLowerCase()) ||
+                              (school.description?.toLowerCase().includes(schoolSearchTerm.toLowerCase()) ?? false)
+                            )
+                            .map((school) => (
+                            <div
+                              key={school.id}
+                              onClick={() => setSelectedSchoolId(school.id)}
+                              className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                                selectedSchoolId === school.id
+                                  ? "border-blue-500 bg-blue-50 shadow-md"
+                                  : "hover:shadow-md border-gray-200"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <h4 className="font-semibold text-gray-800">{school.name}</h4>
+                                  <p className="text-sm text-gray-600">{school.companyName}</p>
+                                </div>
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                  {school._count.members} nauczycieli
+                                </span>
+                              </div>
+                              {school.description && (
+                                <p className="text-sm text-gray-600 mb-3">{school.description}</p>
+                              )}
+                            </div>
+                          ))}
+                          {schools.filter((school) =>
+                            school.name.toLowerCase().includes(schoolSearchTerm.toLowerCase()) ||
+                            school.companyName.toLowerCase().includes(schoolSearchTerm.toLowerCase()) ||
+                            (school.description?.toLowerCase().includes(schoolSearchTerm.toLowerCase()) ?? false)
+                          ).length === 0 && (
+                            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                              <p className="text-sm text-gray-600">
+                                Nie znaleziono szkoły zawierającej &quot;{schoolSearchTerm}&quot;.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                    {selectedSchoolId && (
+                      <div className="space-y-3">
+                        {schools.find(s => s.id === selectedSchoolId) && (
+                          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-xs text-blue-600 font-medium mb-1">✓ Wybrana szkoła:</p>
+                            <p className="text-sm font-semibold text-blue-900">{schools.find(s => s.id === selectedSchoolId)?.name}</p>
+                          </div>
+                        )}
+                        <button
+                          onClick={() => handleJoinSchool(selectedSchoolId)}
+                          disabled={isLoading}
+                          className="w-full py-2 px-4 text-sm font-semibold rounded transition-colors bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Wybierz tę szkołę i przejdź dalej
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

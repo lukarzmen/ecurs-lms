@@ -63,8 +63,8 @@ export async function POST(req: Request) {
 
     if (existingRequest) {
       return NextResponse.json(
-        { error: "You have already requested to join this school" },
-        { status: 400 }
+        { message: "You have already requested to join this school", joinRequest: existingRequest },
+        { status: 200 }
       );
     }
 

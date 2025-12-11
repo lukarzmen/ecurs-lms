@@ -48,9 +48,11 @@ export async function GET() {
       isOwner: true,
     }));
 
-    return NextResponse.json(
-      memberSchools.length > 0 ? memberSchools : ownedSchoolsMapped.length > 0 ? ownedSchoolsMapped : []
-    );
+    return NextResponse.json({
+      ownedSchools: ownedSchoolsMapped,
+      memberSchools: memberSchools,
+      schools: (ownedSchoolsMapped.length > 0 ? ownedSchoolsMapped : memberSchools)
+    });
   } catch (error) {
     console.error("Error fetching user schools:", error);
     return NextResponse.json(
