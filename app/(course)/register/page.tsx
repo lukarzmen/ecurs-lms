@@ -591,7 +591,44 @@ export default function RegisterPage() {
       setIsLoading(true);
       setLoadingState("creating-user");
       
-      // Check if user already exists
+      // First, try to update providerId for existing user with complete profile
+      const updateProviderResponse = await fetch("/api/user/update-provider-id", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (updateProviderResponse.ok) {
+        // User exists and has all fields - complete registration and redirect
+        const updateData = await updateProviderResponse.json();
+        console.log('[handleSignUp] ProviderId updated for existing user:', updateData.user.id);
+        
+        toast.success("Konto znalezione! Witaj ponownie!");
+        setCurrentStep("completed");
+        
+        setTimeout(() => {
+          router.push("/");
+          router.refresh();
+        }, 1000);
+        
+        return;
+      }
+
+      // Check response status to see if it's incomplete profile or not found
+      if (updateProviderResponse.status === 400) {
+        // User exists but has incomplete profile - allow them to continue registration
+        const incompleteData = await updateProviderResponse.json();
+        console.log('[handleSignUp] User exists with incomplete profile:', incompleteData.user.id);
+        
+        toast("Konto znalezione! Proszę uzupełnić pozostałe dane.", { icon: "ℹ️" });
+        
+        // Continue with normal registration flow to complete profile
+        // The user will update their providerId when they complete registration
+      } else if (updateProviderResponse.status === 404) {
+        // User not found - will create new one
+        console.log('[handleSignUp] User not found, will create new one');
+      }
+
+      // If update failed (user doesn't exist or has incomplete profile), proceed with normal registration
       const checkResponse = await fetch(`/api/user?userId=${userId}&sessionId=${sessionId}`);
       let userExists = false;
       

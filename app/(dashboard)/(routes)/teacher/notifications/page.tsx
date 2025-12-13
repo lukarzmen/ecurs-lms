@@ -95,14 +95,21 @@ export default function NotificationsPage() {
 			// Fetch user's schools
 			const schoolsRes = await fetch('/api/user/school');
 			if (schoolsRes.ok) {
-				const schools = await schoolsRes.json();
-				console.log('Schools fetched:', schools);
-				setUserSchools(schools);
-				if (schools.length > 0) {
-					setUserSchool(schools[0]);
+				const data = await schoolsRes.json();
+				console.log('Schools fetched:', data);
+				
+				// Combine owned and member schools
+				const allSchools = [
+					...(data.ownedSchools || []),
+					...(data.memberSchools || [])
+				];
+				
+				setUserSchools(allSchools);
+				if (allSchools.length > 0) {
+					setUserSchool(allSchools[0]);
 					setTemplateForm(prev => ({
 						...prev,
-						schoolId: schools[0].id.toString(),
+						schoolId: allSchools[0].id.toString(),
 					}));
 				} else {
 					console.warn('No schools returned from API');
