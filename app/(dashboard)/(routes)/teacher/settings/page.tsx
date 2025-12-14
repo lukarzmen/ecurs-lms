@@ -57,6 +57,8 @@ interface UserProfile {
   requiresVatInvoices: boolean;
   stripeAccountStatus?: string;
   stripeOnboardingComplete: boolean;
+  isMemberOfSchool?: boolean;
+  memberSchool?: { id: number; name: string } | null;
 }
 
 interface PlatformSubscription {
@@ -377,7 +379,8 @@ const TeacherSettingsPage = () => {
         </Card>
       )}
 
-      {/* Platform Subscription Management */}
+      {/* Platform Subscription Management - Only show if teacher is NOT member of school */}
+      {!userProfile?.isMemberOfSchool && (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -481,6 +484,31 @@ const TeacherSettingsPage = () => {
           )}
         </CardContent>
       </Card>
+      )}
+
+      {/* School Membership Info - Show if teacher is member of school */}
+      {userProfile?.isMemberOfSchool && userProfile?.memberSchool && (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building className="h-5 w-5" />
+            Subskrypcja szkoły
+          </CardTitle>
+          <CardDescription>
+            Dostęp do platformy opłacany przez szkołę
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
+            <div>
+              <p className="font-medium text-blue-900">Jesteś członkiem szkoły</p>
+              <p className="text-sm text-blue-700 mt-1">{userProfile.memberSchool.name}</p>
+              <p className="text-xs text-blue-600 mt-2">Subskrypcja platformy jest opłacana przez Twoją szkołę. Nie musisz płacić osobno.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      )}
     </div>
   );
 };

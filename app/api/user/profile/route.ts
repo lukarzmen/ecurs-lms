@@ -24,6 +24,18 @@ export async function GET(request: NextRequest) {
           },
           take: 1,
         },
+        schoolMemberships: {
+          select: {
+            schoolId: true,
+            school: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          take: 1,
+        },
       },
     });
 
@@ -33,6 +45,9 @@ export async function GET(request: NextRequest) {
 
     // Return user data with school business info if teacher
     const schoolData = user.ownedSchools && user.ownedSchools.length > 0 ? user.ownedSchools[0] : null;
+    const isMemberOfSchool = user.schoolMemberships && user.schoolMemberships.length > 0;
+    const memberSchool = isMemberOfSchool ? user.schoolMemberships[0].school : null;
+    
     return NextResponse.json({
       id: user.id,
       firstName: user.firstName,
@@ -43,6 +58,8 @@ export async function GET(request: NextRequest) {
       taxId: schoolData?.taxId || null,
       stripeOnboardingComplete: schoolData?.stripeOnboardingComplete || false,
       requiresVatInvoices: schoolData?.requiresVatInvoices || false,
+      isMemberOfSchool,
+      memberSchool: memberSchool ? { id: memberSchool.id, name: memberSchool.name } : null,
     });
 
   } catch (error) {
