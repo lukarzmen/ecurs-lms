@@ -21,14 +21,37 @@ interface StripeAccountDetails {
   };
 }
 
+interface TeacherSchoolStatus {
+  isSchoolMember: boolean;
+  isSchoolOwner: boolean;
+}
+
 export function StripeStatusBanner({ className = "" }: StripeStatusProps) {
   const [status, setStatus] = useState<StripeStatus>("loading");
   const [accountDetails, setAccountDetails] = useState<StripeAccountDetails | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [schoolStatus, setSchoolStatus] = useState<TeacherSchoolStatus | null>(null);
 
   useEffect(() => {
+    checkTeacherSchoolStatus();
     checkStripeStatus();
   }, []);
+
+  const checkTeacherSchoolStatus = async () => {
+    try {
+      const response = await fetch("/api/teacher/school-status", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.ok) {
+        const result: TeacherSchoolStatus = await response.json();
+        setSchoolStatus(result);
+      }
+    } catch (error) {
+      console.error("Error checking teacher school status:", error);
+    }
+  };
 
   const checkStripeStatus = async () => {
     try {
@@ -91,6 +114,11 @@ export function StripeStatusBanner({ className = "" }: StripeStatusProps) {
 
   // Don't show anything if complete
   if (status === "complete") {
+    return null;
+  }
+
+  // Don't show anything if teacher is a school member (not owner) - school owner handles payments
+  if (schoolStatus?.isSchoolMember && !schoolStatus?.isSchoolOwner) {
     return null;
   }
 

@@ -105,14 +105,15 @@ export async function POST(req: Request) {
 
         // Prepare business type data for school (removed from user)
         // Note: After migration, teachers should have schools created. This logic is for edge cases.
+        // companyName and taxId are required fields in School schema and must never be null
         const businessTypeData = businessData ? {
             businessType: businessData.businessType || "individual",
-            companyName: businessData.businessType === "company" ? businessData.companyName : null,
-            taxId: businessData.businessType === "company" ? businessData.taxId : null,
+            companyName: businessData.businessType === "company" ? (businessData.companyName || "") : "",
+            taxId: businessData.businessType === "company" ? (businessData.taxId || "") : `INDIVIDUAL_${userId}`,
         } : {
             businessType: "individual",
-            companyName: null,
-            taxId: null,
+            companyName: "",
+            taxId: `INDIVIDUAL_${userId}`,
         };
 
         if (!user) {
@@ -217,13 +218,13 @@ export async function POST(req: Request) {
                     console.log('[POST /api/user] Found existing school for existing teacher:', schoolId);
                     
                     // Update school business data if provided
-                    if (businessData) {
+                    if (businessData && businessData.businessType === "company") {
                         try {
                             await db.school.update({
                                 where: { id: schoolId },
                                 data: {
-                                    companyName: businessData.businessType === "company" ? businessData.companyName : null,
-                                    taxId: businessData.businessType === "company" ? businessData.taxId : null,
+                                    companyName: businessData.companyName || "",
+                                    taxId: businessData.taxId || "",
                                 }
                             });
                             console.log('[POST /api/user] Updated school business data');

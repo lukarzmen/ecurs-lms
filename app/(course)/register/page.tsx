@@ -639,6 +639,8 @@ export default function RegisterPage() {
       
       if (!userExists) {
         // Create user only if doesn't exist
+        // For teachers, user should already be created in handleRoleSelection
+        // For students, create now
         setCurrentStep("user-creation");
         
         const requestBody: any = { userId, sessionId, roleId };
@@ -680,6 +682,26 @@ export default function RegisterPage() {
         toast.success("Konto użytkownika utworzone pomyślnie!");
       } else {
         toast("Konto już istnieje, kontynuuję rejestrację...", { icon: "ℹ️" });
+        
+        // For teachers, update businessData if needed
+        if (selectedRole === "teacher") {
+          try {
+            const updateResponse = await fetch("/api/user/update-business-data", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                businessData: businessData
+              }),
+            });
+            
+            if (!updateResponse.ok) {
+              console.warn("Could not update business data, continuing anyway");
+            }
+          } catch (error) {
+            console.warn("Error updating business data:", error);
+            // Continue anyway - business data might already be set
+          }
+        }
       }
       
       // Handle next steps based on role
@@ -946,12 +968,15 @@ export default function RegisterPage() {
     if (role === "teacher") {
       // For teacher, check if user has existing data in database
       try {
+        setIsLoading(true);
+        setLoadingState("creating-user");
+        
         const response = await fetch(`/api/user?userId=${userId}&sessionId=${sessionId}`);
         if (response.ok) {
           const userData = await response.json();
           
           if (userData.exists) {
-            // Check if they have a school - if yes, skip to terms
+            // User exists - check registration status
             if (userData.schoolId) {
               console.log("User already has school:", userData.schoolId);
               toast.success("Masz już przypisaną szkołę! Przejdź do akceptacji regulaminu.");
@@ -965,31 +990,65 @@ export default function RegisterPage() {
               }));
               setCurrentStep("school-choice");
             } else {
-              // New teacher or no business type yet
+              // User exists but no business type yet
               setCurrentStep("business-type-selection");
             }
           } else {
-            // New teacher - start from business type
+            // User doesn't exist - create them as teacher first
+            console.log("User doesn't exist - creating new teacher user");
+            const createResponse = await fetch("/api/user", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId,
+                sessionId,
+                roleId: 1, // Teacher role
+                businessData: {
+                  businessType: "individual",
+                  companyName: "",
+                  schoolName: "",
+                  taxId: "",
+                  requiresVatInvoices: false
+                }
+              }),
+            });
+
+            if (!createResponse.ok) {
+              let errorMessage = "Nie udało się utworzyć konta";
+              try {
+                const errorData = await createResponse.json();
+                errorMessage = errorData.message || errorMessage;
+              } catch {
+                errorMessage = `Błąd serwera (${createResponse.status})`;
+              }
+              throw new Error(errorMessage);
+            }
+
+            const createData = await createResponse.json();
+            console.log("Teacher user created successfully:", createData);
+            toast.success("Konto utworzone! Teraz wybierz typ działalności.");
             setCurrentStep("business-type-selection");
           }
         } else {
-          // If check fails, start from business type
-          setCurrentStep("business-type-selection");
+          throw new Error("Nie udało się sprawdzić status użytkownika");
         }
       } catch (error) {
-        console.error("Error checking user data:", error);
-        setCurrentStep("business-type-selection");
+        console.error("Error in role selection:", error);
+        const errorMessage = error instanceof Error ? error.message : "Błąd podczas wyboru roli";
+        setRegistrationError(errorMessage);
+        toast.error(errorMessage);
+        setSelectedRole(null);
+      } finally {
+        setIsLoading(false);
+        setLoadingState("idle");
       }
     } else {
       setCurrentStep("terms-acceptance");
+      setAcceptTerms(false);
+      setRegistrationError(null);
+      setLoadingState("idle");
+      toast.success(`Wybrano rolę: uczeń`);
     }
-    
-    setAcceptTerms(false);
-    setRegistrationError(null);
-    setLoadingState("idle");
-    
-    // Provide immediate visual feedback
-    toast.success(`Wybrano rolę: ${role === "student" ? "uczeń" : "nauczyciel"}`);
   }, [isLoading, selectedRole, loadingState, userId, sessionId]);
 
   // Mobile-optimized touch handler

@@ -69,6 +69,7 @@ import DraggableBlockPlugin from './plugins/DraggableBlockPlugin';
 import CodeActionMenuPlugin from './plugins/CodeActionMenuPlugin';
 import CourseInfoPlugin from './plugins/CourseInfoPlugin';
 import EditorRefreshPlugin from './plugins/EditorRefreshPlugin';
+import ShortcutsPlugin from './plugins/ShortcutsPlugin';
 
 
 // Helper function to recursively find nodes with __isCompleted property
@@ -223,6 +224,10 @@ export default function Editor( {
         className={`editor-container plain-text`}>
         {isMaxLength && <MaxLengthPlugin maxLength={30} />}
         <DragDropPaste />
+        <ShortcutsPlugin
+          editor={activeEditor}
+          setIsLinkEditMode={setIsLinkEditMode}
+        />
         <AutoFocusPlugin />
         <ClearEditorPlugin />
         <EditorRefreshPlugin initialStateJSON={initialStateJSON} />
