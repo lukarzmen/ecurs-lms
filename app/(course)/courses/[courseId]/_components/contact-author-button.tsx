@@ -42,7 +42,7 @@ export const ContactAuthorButton = ({
       const response = await fetch(`/api/user?userId=${userId}`);
       if (response.ok) {
         const data = await response.json();
-        setStudentName(data.displayName || data.email);
+        setStudentName(data.email);
       }
     } catch (error) {
       console.error("Error fetching student name:", error);
