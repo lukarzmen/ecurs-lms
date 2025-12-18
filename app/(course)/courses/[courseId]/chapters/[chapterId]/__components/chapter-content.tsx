@@ -71,7 +71,7 @@ export default function ChapterContent ({
             <Hourglass className="w-12 h-12 mb-4 text-gray-400" />
             <div className="text-lg font-medium">Treść w przygotowaniu</div>
           </div>
-        ) : (
+        ) : serializedEditorStateString ? (
           <LexicalEditor
             initialStateJSON={serializedEditorStateString}
             isEditable={false}
@@ -90,6 +90,11 @@ export default function ChapterContent ({
             }}
             module={module}
           />
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full p-8 text-gray-500">
+            <Hourglass className="w-12 h-12 mb-4 text-gray-400" />
+            <div className="text-lg font-medium">Brak treści</div>
+          </div>
         )}
       </div>
     );
