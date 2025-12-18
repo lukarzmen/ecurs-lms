@@ -73,23 +73,31 @@ import ShortcutsPlugin from './plugins/ShortcutsPlugin';
 
 
 // Helper function to recursively find nodes with __isCompleted property
-function $findNodesWithIsCompleted(
-    node: LexicalNode,
-    result: LexicalNode[]
-): void {
-    // Check if the node has the __isCompleted property using 'in' operator
-    // This is safer than direct access if the property might not exist.
-    if ('__isCompleted' in node) {
-        result.push(node);
-    }
+// Returns an object with completableNodes and allNodes arrays
+function $findNodesWithIsCompleted(node: LexicalNode): { completableNodes: LexicalNode[]; allNodes: LexicalNode[] } {
+    const completableNodes: LexicalNode[] = [];
+    const allNodes: LexicalNode[] = [];
 
-    // If the node is an element node, recurse through its children
-    if ($isElementNode(node)) {
-        const children = node.getChildren();
-        for (const child of children) {
-            $findNodesWithIsCompleted(child, result);
+    function traverse(currentNode: LexicalNode): void {
+        // Add to all nodes list
+        allNodes.push(currentNode);
+
+        // Check if the node has the __isCompleted property
+        if ('__isCompleted' in currentNode) {
+            completableNodes.push(currentNode);
+        }
+
+        // If the node is an element node, recurse through its children
+        if ($isElementNode(currentNode)) {
+            const children = currentNode.getChildren();
+            for (const child of children) {
+                traverse(child);
+            }
         }
     }
+
+    traverse(node);
+    return { completableNodes, allNodes };
 }
 
 
@@ -166,9 +174,18 @@ export default function Editor( {
           console.debug("Editor is empty");
           return;
         }
-        const completableNodes: LexicalNode[] = [];
-        $findNodesWithIsCompleted(root, completableNodes);
+
+        // Check if editor has meaningful content (not just initial empty state)
+        const allChildren = root.getChildren();
+        if (allChildren.length === 0) {
+          console.debug("Editor has no children yet - still loading");
+          return;
+        }
+
+        const { completableNodes, allNodes } = $findNodesWithIsCompleted(root);
+        console.debug('Total nodes:', allNodes.length);
         console.debug('Nodes with __isCompleted:', completableNodes);
+        console.debug('All nodes:', allNodes);
 
         const callOnCompletedWithDelay = () => {
           if (!completedCalled.current) {
@@ -179,6 +196,14 @@ export default function Editor( {
           }
         };
 
+        // Only call completion if there are meaningful content nodes (more than just root and paragraph)
+        const hasMeaningfulContent = allNodes.length > 2; // More than just root and a single paragraph
+        
+        if (!hasMeaningfulContent) {
+          console.debug("Editor has no meaningful content yet");
+          return;
+        }
+
         if (completableNodes.length > 0) {
           const allCompleted = completableNodes.every((node) => (node as any).__isCompleted === true);
           if (allCompleted) {
@@ -187,8 +212,10 @@ export default function Editor( {
           }
           console.debug(`All completable nodes completed: ${allCompleted}`);
         } else {
+          // No completable nodes found, but editor has meaningful content
+          // This means content is fully complete or doesn't have completable items
           callOnCompletedWithDelay();
-          console.debug('No nodes with __isCompleted found.');
+          console.debug('No nodes with __isCompleted found - marking as completed.');
         }
       });
 
