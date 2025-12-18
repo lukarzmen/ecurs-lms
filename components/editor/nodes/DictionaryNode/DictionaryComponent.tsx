@@ -115,12 +115,12 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
   });
 
   // --- Match Game State & Handlers ---
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [selectedValue, setSelectedValue] = useState<string | null>(null);
-  const [matches, setMatches] = useState<{ [key: string]: number }>({});
-  const [tempColor, setTempColor] = useState<{ [key: string]: number | 'error' }>({});
-  const [shuffledKeys, setShuffledKeys] = useState<string[]>([]);
-  const [shuffledValues, setShuffledValues] = useState<string[]>([]);
+  const [selectedKeyIndex, setSelectedKeyIndex] = useState<number | null>(null);
+  const [selectedValueIndex, setSelectedValueIndex] = useState<number | null>(null);
+  const [matches, setMatches] = useState<{ [entryIndex: number]: number }>({});
+  const [tempColor, setTempColor] = useState<{ keyIndex?: number | 'error'; valueIndex?: number | 'error' }>({});
+  const [shuffledKeys, setShuffledKeys] = useState<[string, number][]>([]); // [key, originalIndex]
+  const [shuffledValues, setShuffledValues] = useState<[string, number][]>([]); // [value, originalIndex]
   const [showConfetti, setShowConfetti] = useState(false);
   const [selectedEntries, setSelectedEntries] = useState<[string, string][]>([]);
 
@@ -139,21 +139,23 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
 
   const initializeMatchGame = () => {
     const newSubset = getRandomSubset();
-    if (newSubset.length === 0) { // Handle case with no valid entries
+    if (newSubset.length === 0) { 
         setSelectedEntries([]);
         setShuffledKeys([]);
         setShuffledValues([]);
     } else {
         setSelectedEntries(newSubset);
-        setShuffledKeys([...newSubset.map(([key]) => key)].sort(() => Math.random() - 0.5));
-        setShuffledValues([...newSubset.map(([_, value]) => value)].sort(() => Math.random() - 0.5));
+        // Create shuffled arrays with original indices
+        const keysWithIndex: [string, number][] = newSubset.map(([key], index) => [key, index]);
+        const valuesWithIndex: [string, number][] = newSubset.map(([_, value], index) => [value, index]);
+        setShuffledKeys(keysWithIndex.sort(() => Math.random() - 0.5));
+        setShuffledValues(valuesWithIndex.sort(() => Math.random() - 0.5));
     }
     setMatches({});
     setTempColor({});
-    setSelectedKey(null);
-    setSelectedValue(null);
-    setShowConfetti(false); // Ensure confetti is off on reset
-    // Reset node completion state when game restarts
+    setSelectedKeyIndex(null);
+    setSelectedValueIndex(null);
+    setShowConfetti(false);
     onComplete(false);
   };
 
@@ -171,43 +173,38 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
 
   // Removed useEffect that synced dictionary prop to local entries state
 
-  const handleSelection = (keyOrValue: string, isKey: boolean) => {
+  const handleSelection = (entryIndex: number, isKey: boolean) => {
     // Prevent interaction if already matched
-    if (matches[keyOrValue] !== undefined) return;
+    if (matches[entryIndex] !== undefined) return;
 
     if (isKey) {
-      if (selectedKey === keyOrValue) { // Deselect if clicking the same key
-          setSelectedKey(null);
-          setTempColor({}); // Clear temp color
-      } else if (selectedKey === null) { // Select a key
-          setSelectedKey(keyOrValue);
-          setTempColor({ [keyOrValue]: getRandomColorIndex() }); // Assign temp color index
+      if (selectedKeyIndex === entryIndex) { // Deselect if clicking the same key
+          setSelectedKeyIndex(null);
+          setTempColor({});
+      } else if (selectedKeyIndex === null) { // Select a key
+          setSelectedKeyIndex(entryIndex);
+          setTempColor({ keyIndex: getRandomColorIndex() });
       }
-      // If a value is already selected, ignore key click
     } else { // It's a value
-      if (selectedValue === keyOrValue) { // Deselect if clicking the same value
-          setSelectedValue(null);
-          setTempColor({}); // Clear temp color
-      } else if (selectedValue === null && selectedKey !== null) { // Select a value *only if* a key is selected
-          const originalEntry = selectedEntries.find(([k, v]) => k === selectedKey);
-
-          if (originalEntry && originalEntry[1] === keyOrValue) { // Correct match!
-              const assignedColorIndex = tempColor[selectedKey]; // Use the key's temp color index
+      if (selectedValueIndex === entryIndex) { // Deselect if clicking the same value
+          setSelectedValueIndex(null);
+          setTempColor({});
+      } else if (selectedValueIndex === null && selectedKeyIndex !== null) { // Select a value only if a key is selected
+          if (selectedKeyIndex === entryIndex) { // Correct match!
+              const assignedColorIndex = tempColor.keyIndex;
               if (typeof assignedColorIndex === 'number') {
-                setMatches((prev) => ({ ...prev, [selectedKey]: assignedColorIndex, [keyOrValue]: assignedColorIndex }));
+                setMatches((prev) => ({ ...prev, [entryIndex]: assignedColorIndex }));
               }
-              setTempColor({}); // Clear temp colors
-              setSelectedKey(null); // Reset selection
-              setSelectedValue(null);
+              setTempColor({});
+              setSelectedKeyIndex(null);
+              setSelectedValueIndex(null);
           } else { // Incorrect match
-              setTempColor({ [selectedKey]: 'error', [keyOrValue]: 'error' });
-              // Reset selection immediately on incorrect match
-              setSelectedKey(null);
-              setSelectedValue(null);
-              setTimeout(() => setTempColor({}), 1000); // Clear temp colors after delay
+              setTempColor({ keyIndex: 'error', valueIndex: 'error' });
+              setSelectedKeyIndex(null);
+              setSelectedValueIndex(null);
+              setTimeout(() => setTempColor({}), 1000);
           }
       }
-      // If a key is not selected, ignore value click
     }
   };
 
@@ -216,7 +213,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
   // Check for game completion
   useEffect(() => {
     // Check if all selected entries are matched and there are entries to match
-    const allMatched = selectedEntries.length > 0 && Object.keys(matches).length === selectedEntries.length * 2;
+    const allMatched = selectedEntries.length > 0 && Object.keys(matches).length === selectedEntries.length;
     if (allMatched && view === "matchGameView") {
       // Only trigger confetti and completion if not already completed in this render cycle
       if (!showConfetti) {
@@ -228,7 +225,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
   }, [matches, selectedEntries, view, onComplete, showConfetti]); // Added showConfetti dependency
 
 
-  const matchedPairs = Object.keys(matches).length / 2;
+  const matchedPairs = Object.keys(matches).length;
   const totalPairs = selectedEntries.length;
   const progressPercentage = totalPairs > 0 ? (matchedPairs / totalPairs) * 100 : 0;
 
@@ -271,11 +268,11 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
               <div className="grid grid-cols-2 gap-4 mb-6">
                 {/* Left Side (Shuffled Keys) */}
                 <div className="flex flex-col space-y-3">
-                  {shuffledKeys.map((key) => {
-                    const isMatched = matches[key] !== undefined;
-                    const isSelected = selectedKey === key;
-                    const colorIndex = matches[key] ?? tempColor[key];
-                    const isError = tempColor[key] === 'error';
+                  {shuffledKeys.map(([key, entryIndex]) => {
+                    const isMatched = matches[entryIndex] !== undefined;
+                    const isSelected = selectedKeyIndex === entryIndex;
+                    const colorIndex = matches[entryIndex] ?? tempColor.keyIndex;
+                    const isError = tempColor.keyIndex === 'error';
                     
                     let style = {};
                     let className = 'p-4 rounded-lg border-2 text-center font-medium cursor-pointer select-none transition-all duration-300';
@@ -294,10 +291,10 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
                     
                     return (
                       <button
-                        key={key}
+                        key={`key-${entryIndex}`}
                         className={className}
                         style={style}
-                        onClick={() => handleSelection(key, true)}
+                        onClick={() => handleSelection(entryIndex, true)}
                         disabled={isMatched}
                       >
                         {key}
@@ -307,11 +304,11 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
                 </div>
                 {/* Right Side (Shuffled Values) */}
                 <div className="flex flex-col space-y-3">
-                  {shuffledValues.map((value) => {
-                    const isMatched = matches[value] !== undefined;
-                    const isSelected = selectedValue === value;
-                    const colorIndex = matches[value] ?? tempColor[value];
-                    const isError = tempColor[value] === 'error';
+                  {shuffledValues.map(([value, entryIndex]) => {
+                    const isMatched = matches[entryIndex] !== undefined;
+                    const isSelected = selectedValueIndex === entryIndex;
+                    const colorIndex = matches[entryIndex] ?? tempColor.valueIndex;
+                    const isError = tempColor.valueIndex === 'error';
                     
                     let style = {};
                     let className = 'p-4 rounded-lg border-2 text-center font-medium cursor-pointer select-none transition-all duration-300';
@@ -330,10 +327,10 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
                     
                     return (
                       <button
-                        key={value}
+                        key={`value-${entryIndex}`}
                         className={className}
                         style={style}
-                        onClick={() => handleSelection(value, false)}
+                        onClick={() => handleSelection(entryIndex, false)}
                         disabled={isMatched}
                       >
                         {value}
