@@ -196,14 +196,6 @@ export default function Editor( {
           }
         };
 
-        // Only call completion if there are meaningful content nodes (more than just root and paragraph)
-        const hasMeaningfulContent = allNodes.length > 2; // More than just root and a single paragraph
-        
-        if (!hasMeaningfulContent) {
-          console.debug("Editor has no meaningful content yet");
-          return;
-        }
-
         if (completableNodes.length > 0) {
           const allCompleted = completableNodes.every((node) => (node as any).__isCompleted === true);
           if (allCompleted) {
