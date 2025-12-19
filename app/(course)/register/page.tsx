@@ -356,7 +356,89 @@ export default function RegisterPage() {
       const refresh = urlParams.get('refresh');
       
       try {
-        // Fetch user data to check registration status
+        // First, try to find existing user by email (handles provider changes)
+        // This will update providerId if user exists with complete profile
+        const updateProviderResponse = await fetch("/api/user/update-provider-id", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (updateProviderResponse.ok) {
+          // User exists with complete profile - providerId was updated
+          const updateData = await updateProviderResponse.json();
+          console.log('[checkUserStatus] User found with complete profile, providerId updated:', updateData.user.id);
+          
+          const isTeacher = updateData.user.roleId === 1;
+          const isStudent = updateData.user.roleId === 0;
+          
+          if (isStudent) {
+            // Student is fully registered
+            setSelectedRole("student");
+            setCurrentStep("completed");
+            toast.success("Jesteś już zarejestrowany jako uczeń!");
+            setTimeout(() => router.push("/"), 2000);
+          } else if (isTeacher) {
+            setSelectedRole("teacher");
+            
+            // Check if returning from Stripe
+            if (success === 'stripe') {
+              console.log("Returning from Stripe with success=stripe");
+              toast.success('Konto Stripe zostało skonfigurowane! Teraz wybierz plan subskrypcji platformy.');
+              setCurrentStep("platform-subscription");
+            } else if (success === 'subscription') {
+              toast.success('Płatność za platformę została przetworzona! Rejestracja zakończona.');
+              setCurrentStep("completed");
+              setTimeout(() => router.push("/teacher/courses"), 2000);
+            } else {
+              // Check if teacher has completed registration
+              const hasSubscription = updateData.hasActiveSubscription;
+              
+              if (hasSubscription) {
+                // Fully registered
+                setCurrentStep("completed");
+                toast.success("Jesteś już w pełni zarejestrowany!");
+                setTimeout(() => router.push("/teacher/courses"), 2000);
+              } else {
+                // Teacher exists but needs to complete registration
+                setCurrentStep("stripe-setup");
+                toast("Witaj ponownie! Dokończymy rejestrację.", { icon: "👋" });
+              }
+            }
+          }
+          
+          setUserCheckCompleted(true);
+          return;
+        }
+
+        // If status 206: User exists but profile incomplete
+        if (updateProviderResponse.status === 206) {
+          const partialData = await updateProviderResponse.json();
+          console.log('[checkUserStatus] User found with incomplete profile, providerId updated');
+          
+          // Continue normal registration flow to complete profile
+          const roleId = partialData.user?.roleId;
+          if (roleId === 0) {
+            // Student with incomplete profile
+            setSelectedRole("student");
+            setCurrentStep("terms-acceptance");
+            toast("Witaj ponownie! Uzupełnij swoje dane.", { icon: "👋" });
+          } else if (roleId === 1) {
+            // Teacher with incomplete profile
+            setSelectedRole("teacher");
+            setCurrentStep("business-type-selection");
+            toast("Witaj ponownie! Dokończymy rejestrację.", { icon: "👋" });
+          }
+          
+          setUserCheckCompleted(true);
+          return;
+        }
+
+        // If status 404: User not found - proceed with normal check and potentially new registration
+        if (updateProviderResponse.status === 404) {
+          console.log('[checkUserStatus] User not found by email, checking by providerId');
+        }
+
+        // Fallback: Try to find user by providerId (for existing users with same provider)
         const response = await fetch(`/api/user?userId=${userId}&sessionId=${sessionId}`);
         
         if (response.ok) {
@@ -416,12 +498,8 @@ export default function RegisterPage() {
               }
             }
           } else {
-            // User doesn't exist - start from beginning
-            if (success === 'stripe' || refresh === 'true') {
-              // Returning from Stripe but user doesn't exist - shouldn't happen
-              toast.error("Błąd: Użytkownik nie został utworzony. Rozpocznij rejestrację od początku.");
-              setCurrentStep("role-selection");
-            }
+            // User doesn't exist - show role selection
+            setCurrentStep("role-selection");
           }
         }
         
@@ -597,10 +675,11 @@ export default function RegisterPage() {
         headers: { "Content-Type": "application/json" },
       });
 
+      // Status 200: User exists with complete profile - can finish registration
       if (updateProviderResponse.ok) {
         // User exists and has all fields - complete registration and redirect
         const updateData = await updateProviderResponse.json();
-        console.log('[handleSignUp] ProviderId updated for existing user:', updateData.user.id);
+        console.log('[handleSignUp] ProviderId updated for existing user with complete profile:', updateData.user.id);
         
         toast.success("Konto znalezione! Witaj ponownie!");
         setCurrentStep("completed");
@@ -613,18 +692,17 @@ export default function RegisterPage() {
         return;
       }
 
-      // Check response status to see if it's incomplete profile or not found
-      if (updateProviderResponse.status === 400) {
-        // User exists but has incomplete profile - allow them to continue registration
-        const incompleteData = await updateProviderResponse.json();
-        console.log('[handleSignUp] User exists with incomplete profile:', incompleteData.user.id);
+      // Status 206: User exists but profile incomplete - update providerId but continue registration
+      if (updateProviderResponse.status === 206) {
+        const partialData = await updateProviderResponse.json();
+        console.log('[handleSignUp] User exists with incomplete profile, providerId updated:', partialData.user?.id);
         
         toast("Konto znalezione! Proszę uzupełnić pozostałe dane.", { icon: "ℹ️" });
         
-        // Continue with normal registration flow to complete profile
-        // The user will update their providerId when they complete registration
+        // ProviderId is now updated, so skip the normal providerId update step
+        // Continue with profile completion flow
       } else if (updateProviderResponse.status === 404) {
-        // User not found - will create new one
+        // Status 404: User not found - will create new one
         console.log('[handleSignUp] User not found, will create new one');
       }
 

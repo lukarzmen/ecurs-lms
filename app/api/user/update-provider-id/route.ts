@@ -51,69 +51,96 @@ export async function POST(req: Request) {
       existingUser.roleId !== null
     );
 
-    if (!hasAllFields) {
-      return NextResponse.json(
-        { 
-          error: "User exists but missing required fields",
-          user: existingUser,
-          shouldCreateNew: false 
+    // Always update providerId if it's missing or different
+    if (!existingUser.providerId || existingUser.providerId !== clerkUser.id) {
+      const updatedUser = await db.user.update({
+        where: { id: existingUser.id },
+        data: {
+          providerId: clerkUser.id,
+          updatedAt: new Date(),
         },
-        { status: 400 }
-      );
-    }
-
-    // Update providerId
-    const updatedUser = await db.user.update({
-      where: { id: existingUser.id },
-      data: {
-        providerId: clerkUser.id,
-        updatedAt: new Date(),
-      },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        providerId: true,
-        roleId: true,
-        displayName: true,
-        ownedSchools: {
-          select: {
-            id: true,
-            stripeOnboardingComplete: true,
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          providerId: true,
+          roleId: true,
+          displayName: true,
+          ownedSchools: {
+            select: {
+              id: true,
+              stripeOnboardingComplete: true,
+            },
+            take: 1,
           },
-          take: 1,
-        },
-        schoolMemberships: {
-          select: {
-            schoolId: true,
-            school: {
-              select: {
-                id: true,
-                name: true,
+          schoolMemberships: {
+            select: {
+              schoolId: true,
+              school: {
+                select: {
+                  id: true,
+                  name: true,
+                }
               }
-            }
-          },
-          take: 1,
+            },
+            take: 1,
+          }
         }
+      });
+
+      console.log('[POST /api/user/update-provider-id] ProviderId updated for user:', updatedUser.id);
+
+      // Determine next step based on role
+      const isTeacher = updatedUser.roleId === 1;
+      const schoolId = updatedUser.ownedSchools?.[0]?.id ?? updatedUser.schoolMemberships?.[0]?.schoolId ?? null;
+      const stripeOnboardingComplete = updatedUser.ownedSchools?.[0]?.stripeOnboardingComplete ?? false;
+
+      // If profile is incomplete, return 206 (Partial Content) with incomplete flag
+      if (!hasAllFields) {
+        return NextResponse.json({
+          updated: true,
+          profileComplete: false,
+          user: updatedUser,
+          isTeacher,
+          schoolId,
+          stripeOnboardingComplete,
+          message: "ProviderId updated but profile is incomplete - continue registration"
+        }, { status: 206 });
       }
-    });
 
-    console.log('[POST /api/user/update-provider-id] ProviderId updated for user:', updatedUser.id);
+      // If profile is complete, return 200 (OK) - registration can finish
+      return NextResponse.json({
+        updated: true,
+        profileComplete: true,
+        user: updatedUser,
+        isTeacher,
+        schoolId,
+        stripeOnboardingComplete,
+        message: "ProviderId updated successfully and registration can complete"
+      });
+    } else {
+      // ProviderId already exists and is correct
+      if (!hasAllFields) {
+        return NextResponse.json(
+          { 
+            error: "User exists but missing required fields",
+            profileComplete: false,
+            user: existingUser,
+          },
+          { status: 206 }
+        );
+      }
 
-    // Determine next step based on role
-    const isTeacher = updatedUser.roleId === 1;
-    const schoolId = updatedUser.ownedSchools?.[0]?.id ?? updatedUser.schoolMemberships?.[0]?.schoolId ?? null;
-    const stripeOnboardingComplete = updatedUser.ownedSchools?.[0]?.stripeOnboardingComplete ?? false;
-
-    return NextResponse.json({
-      updated: true,
-      user: updatedUser,
-      isTeacher,
-      schoolId,
-      stripeOnboardingComplete,
-      message: "ProviderId updated successfully and registration skipped"
-    });
+      // Already has correct providerId and complete profile
+      return NextResponse.json({
+        updated: false,
+        alreadyUpToDate: true,
+        profileComplete: true,
+        user: existingUser,
+        message: "ProviderId already correct and profile is complete"
+      });
+    }
   } catch (error) {
     console.error('[POST /api/user/update-provider-id] Error:', error);
     return NextResponse.json(

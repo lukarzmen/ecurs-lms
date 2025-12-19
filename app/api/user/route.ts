@@ -29,7 +29,8 @@ export async function GET(req: Request) {
     }
 
     try {
-        const user = await db.user.findUnique({
+        // First try to find user by providerId (current login method)
+        let user = await db.user.findUnique({
             where: { providerId: userId },
             select: {
                 id: true,
@@ -192,11 +193,26 @@ export async function POST(req: Request) {
             
             return NextResponse.json({ created: true, user, schoolId });
         } else {
-            // User exists - update only providerId and role
+            // User exists - update providerId, roleId and business data if needed
+            console.log('[POST /api/user] User already exists, will update data...');
+            
+            // Check if user has all required fields for profile to be considered complete
+            const hasCompleteProfile = !!(
+              user.email &&
+              user.firstName &&
+              user.lastName &&
+              user.roleId !== null
+            );
+
+            if (!hasCompleteProfile) {
+              console.log('[POST /api/user] User profile is incomplete, will complete it');
+              // Profile is incomplete - allow to update everything including fields
+            }
+            
             const updateData: any = {
-                providerId: userId,
-                roleId: roleId,
-                updatedAt: new Date(),
+              providerId: userId, // Always update to current provider
+              roleId: roleId,
+              updatedAt: new Date(),
             };
             
             user = await db.user.update({
