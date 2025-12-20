@@ -33,6 +33,40 @@ export async function POST(req: Request) {
         providerId: true,
         roleId: true,
         displayName: true,
+        ownedSchools: {
+          select: {
+            id: true,
+            name: true,
+            companyName: true,
+            taxId: true,
+            schoolType: true,
+            requiresVatInvoices: true,
+            stripeOnboardingComplete: true,
+          },
+          take: 1,
+        },
+        schoolMemberships: {
+          select: {
+            schoolId: true,
+            school: {
+              select: {
+                id: true,
+                name: true,
+                companyName: true,
+                taxId: true,
+                schoolType: true,
+                requiresVatInvoices: true,
+                stripeOnboardingComplete: true,
+              }
+            }
+          },
+          take: 1,
+        },
+        teacherPlatformSubscription: {
+          select: {
+            subscriptionStatus: true,
+          }
+        }
       }
     });
 
@@ -70,6 +104,11 @@ export async function POST(req: Request) {
           ownedSchools: {
             select: {
               id: true,
+              name: true,
+              companyName: true,
+              taxId: true,
+              schoolType: true,
+              requiresVatInvoices: true,
               stripeOnboardingComplete: true,
             },
             take: 1,
@@ -81,6 +120,11 @@ export async function POST(req: Request) {
                 select: {
                   id: true,
                   name: true,
+                  companyName: true,
+                  taxId: true,
+                  schoolType: true,
+                  requiresVatInvoices: true,
+                  stripeOnboardingComplete: true,
                 }
               }
             },
@@ -105,6 +149,8 @@ export async function POST(req: Request) {
           isTeacher,
           schoolId,
           stripeOnboardingComplete,
+          ownedSchools: updatedUser.ownedSchools,
+          schoolMemberships: updatedUser.schoolMemberships,
           message: "ProviderId updated but profile is incomplete - continue registration"
         }, { status: 206 });
       }
@@ -117,27 +163,47 @@ export async function POST(req: Request) {
         isTeacher,
         schoolId,
         stripeOnboardingComplete,
+        ownedSchools: updatedUser.ownedSchools,
+        schoolMemberships: updatedUser.schoolMemberships,
         message: "ProviderId updated successfully and registration can complete"
       });
     } else {
       // ProviderId already exists and is correct
       if (!hasAllFields) {
+        const isTeacher = existingUser.roleId === 1;
+        const schoolId = existingUser.ownedSchools?.[0]?.id ?? existingUser.schoolMemberships?.[0]?.schoolId ?? null;
+        const stripeOnboardingComplete = existingUser.ownedSchools?.[0]?.stripeOnboardingComplete ?? false;
+        
         return NextResponse.json(
           { 
             error: "User exists but missing required fields",
             profileComplete: false,
             user: existingUser,
+            isTeacher,
+            schoolId,
+            stripeOnboardingComplete,
+            ownedSchools: existingUser.ownedSchools,
+            schoolMemberships: existingUser.schoolMemberships,
           },
           { status: 206 }
         );
       }
 
       // Already has correct providerId and complete profile
+      const isTeacher = existingUser.roleId === 1;
+      const schoolId = existingUser.ownedSchools?.[0]?.id ?? existingUser.schoolMemberships?.[0]?.schoolId ?? null;
+      const stripeOnboardingComplete = existingUser.ownedSchools?.[0]?.stripeOnboardingComplete ?? false;
+      
       return NextResponse.json({
         updated: false,
         alreadyUpToDate: true,
         profileComplete: true,
         user: existingUser,
+        isTeacher,
+        schoolId,
+        stripeOnboardingComplete,
+        ownedSchools: existingUser.ownedSchools,
+        schoolMemberships: existingUser.schoolMemberships,
         message: "ProviderId already correct and profile is complete"
       });
     }

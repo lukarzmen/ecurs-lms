@@ -331,8 +331,37 @@ export default function RegisterPage() {
     companyName: "",
     schoolName: "",
     taxId: "",
-    requiresVatInvoices: false
+    requiresVatInvoices: false,
+    joinSchoolMode: undefined,
+    selectedSchoolId: undefined
   });
+  
+  // Debug log for businessData changes
+  useEffect(() => {
+    if (currentStep === "platform-subscription") {
+      console.log('[PLATFORM-SUBSCRIPTION] Current businessData:', businessData);
+      console.log('[PLATFORM-SUBSCRIPTION] businessType is:', businessData.businessType);
+      console.log('[PLATFORM-SUBSCRIPTION] joinSchoolMode is:', businessData.joinSchoolMode);
+    }
+  }, [currentStep, businessData]);
+  
+  // State to track if we need to go to platform-subscription after setting businessData
+  const [needsPlatformSubscription, setNeedsPlatformSubscription] = useState(false);
+  const [pendingBusinessData, setPendingBusinessData] = useState<BusinessTypeData | null>(null);
+  const [currentSchoolType, setCurrentSchoolType] = useState<"individual" | "business" | null>(null);
+  
+  useEffect(() => {
+    if (needsPlatformSubscription && pendingBusinessData) {
+      console.log('[useEffect] Updating businessData and going to platform-subscription:', pendingBusinessData);
+      console.log('[useEffect] needsPlatformSubscription:', needsPlatformSubscription);
+      console.log('[useEffect] pendingBusinessData:', pendingBusinessData);
+      setBusinessData(pendingBusinessData);
+      setCurrentStep("platform-subscription");
+      setNeedsPlatformSubscription(false);
+      setPendingBusinessData(null);
+    }
+  }, [needsPlatformSubscription, pendingBusinessData]);
+  
   const [registrationError, setRegistrationError] = useState<string | null>(null);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [userCheckCompleted, setUserCheckCompleted] = useState(false);
@@ -379,6 +408,23 @@ export default function RegisterPage() {
             setTimeout(() => router.push("/"), 2000);
           } else if (isTeacher) {
             setSelectedRole("teacher");
+            
+            // Always populate businessData with school information if teacher has a school
+            if (updateData.schoolId && updateData.ownedSchools?.[0]) {
+              const school = updateData.ownedSchools[0];
+              const businessType = (school.schoolType === "business" ? "company" : "individual") as "individual" | "company";
+              setBusinessData({
+                businessType: businessType,
+                companyName: school.companyName || "",
+                schoolName: school.name || "",
+                taxId: school.taxId || "",
+                requiresVatInvoices: school.requiresVatInvoices || false,
+                joinSchoolMode: "own-school",
+                selectedSchoolId: school.id
+              });
+              setCurrentSchoolType(school.schoolType as "individual" | "business");
+              console.log('[checkUserStatus] School data populated from update-provider-id response:', school);
+            }
             
             // Check if returning from Stripe
             if (success === 'stripe') {
@@ -444,6 +490,13 @@ export default function RegisterPage() {
         if (response.ok) {
           const userData = await response.json();
           
+          console.log('[checkUserStatus] User data received:', {
+            exists: userData.exists,
+            roleId: userData.roleId,
+            schoolId: userData.schoolId,
+            school: userData.school
+          });
+          
           if (userData.exists) {
             // User exists in database
             const isTeacher = userData.roleId === 1;
@@ -485,8 +538,43 @@ export default function RegisterPage() {
                   setCurrentStep("platform-subscription");
                   toast("Wybierz plan subskrypcji platformy", { icon: "💳" });
                 } else {
-                  // Check if teacher has school - if yes, skip to terms
-                  if (userData.schoolId) {
+                  // Check if teacher has school - if yes, populate business data and skip to terms
+                  console.log('[checkUserStatus] Checking for school:', {
+                    hasSchoolId: !!userData.schoolId,
+                    hasSchool: !!userData.school,
+                    schoolId: userData.schoolId,
+                    school: userData.school
+                  });
+                  
+                  if (userData.schoolId && userData.school) {
+                    // Populate businessData with school information from API response
+                    const businessType = (userData.school.schoolType === "business" ? "company" : "individual") as "individual" | "company";
+                    const newBusinessData: BusinessTypeData = {
+                      businessType: businessType,
+                      companyName: userData.school.companyName || "",
+                      schoolName: userData.school.name || "",
+                      taxId: userData.school.taxId || "",
+                      requiresVatInvoices: userData.school.requiresVatInvoices || false,
+                      joinSchoolMode: "own-school",
+                      selectedSchoolId: userData.school.id
+                    };
+                    
+                    console.log('[checkUserStatus] Setting business data:', newBusinessData);
+                    setBusinessData(newBusinessData);
+                    setCurrentSchoolType(userData.school.schoolType as "individual" | "business");
+                    
+                    console.log('[checkUserStatus] School data loaded:', {
+                      schoolType: userData.school.schoolType,
+                      companyName: userData.school.companyName,
+                      schoolName: userData.school.name,
+                      taxId: userData.school.taxId
+                    });
+                    
+                    setCurrentStep("terms-acceptance");
+                    toast.success("Masz już przypisaną szkołę! Przejdź do akceptacji regulaminu.", { icon: "🏫" });
+                  } else if (userData.schoolId) {
+                    // Has schoolId but school data not fetched - still proceed to terms
+                    console.log('[checkUserStatus] Has schoolId but no school data');
                     setCurrentStep("terms-acceptance");
                     toast.success("Masz już przypisaną szkołę! Przejdź do akceptacji regulaminu.", { icon: "🏫" });
                   } else {
@@ -675,17 +763,82 @@ export default function RegisterPage() {
         headers: { "Content-Type": "application/json" },
       });
 
-      // Status 200: User exists with complete profile - can finish registration
-      if (updateProviderResponse.ok) {
-        // User exists and has all fields - complete registration and redirect
+      // Status 200: User exists with complete profile - update providerId and redirect
+      if (updateProviderResponse.status === 200) {
         const updateData = await updateProviderResponse.json();
-        console.log('[handleSignUp] ProviderId updated for existing user with complete profile:', updateData.user.id);
+        console.log('[handleSignUp] Status:', updateProviderResponse.status);
+        console.log('[handleSignUp] Response headers:', {
+          'content-type': updateProviderResponse.headers.get('content-type'),
+          'status': updateProviderResponse.status,
+          'statusText': updateProviderResponse.statusText
+        });
+        console.log('[handleSignUp] Full response body:', updateData);
+        console.log('[handleSignUp] Response keys:', Object.keys(updateData));
+        console.log('[handleSignUp] updateData.user:', updateData.user);
+        console.log('[handleSignUp] isTeacher?', updateData.isTeacher);
+        console.log('[handleSignUp] schoolId?', updateData.schoolId);
+        console.log('[handleSignUp] ownedSchools:', updateData.ownedSchools);
+        console.log('[handleSignUp] schoolMemberships:', updateData.schoolMemberships);
+        console.log('[handleSignUp] Detailed check - isTeacher:', updateData.isTeacher, 'schoolId:', updateData.schoolId, 'condition result:', !!(updateData.isTeacher && updateData.schoolId));
+        
+        // If teacher with school, set businessData based on schoolType
+        if (updateData.isTeacher && updateData.schoolId) {
+          console.log('[handleSignUp] ENTERING teacher with school block');
+          const school = updateData.ownedSchools?.[0] || updateData.schoolMemberships?.[0]?.school;
+          console.log('[handleSignUp] school object:', school);
+          const schoolType = school?.schoolType || "individual";
+          
+          console.log('[handleSignUp] Setting businessData based on school type:', schoolType);
+          const newBusinessType = schoolType === "business" ? "company" : "individual";
+          console.log('[handleSignUp] New businessType will be:', newBusinessType);
+          
+          // Set schoolType state for platform-subscription step
+          setCurrentSchoolType(schoolType as "individual" | "business");
+          
+          // Check if teacher has active platform subscription
+          const hasActiveSubscription = updateData.user.teacherPlatformSubscription?.subscriptionStatus === 'active';
+          
+          if (!hasActiveSubscription) {
+            // Teacher needs to subscribe to platform
+            console.log('[handleSignUp] Teacher needs platform subscription, preparing business data');
+            const newData: BusinessTypeData = {
+              businessType: newBusinessType as "individual" | "company",
+              companyName: school?.companyName || "",
+              schoolName: school?.name || "",
+              taxId: school?.taxId || "",
+              requiresVatInvoices: school?.requiresVatInvoices || false,
+              joinSchoolMode: "own-school",
+              selectedSchoolId: school?.id
+            };
+            console.log('[handleSignUp] Prepared data:', newData);
+            console.log('[handleSignUp] About to set pendingBusinessData with:', newData);
+            setPendingBusinessData(newData);
+            console.log('[handleSignUp] About to set needsPlatformSubscription to true');
+            setNeedsPlatformSubscription(true);
+            setIsLoading(false);
+            setLoadingState("idle");
+            console.log('[handleSignUp] Returning early, pending state updates');
+            return;
+          } else {
+            // Already has subscription, just update businessData for future use
+            setBusinessData(prev => ({
+              ...prev,
+              businessType: newBusinessType,
+              joinSchoolMode: "own-school"
+            }));
+          }
+        }
         
         toast.success("Konto znalezione! Witaj ponownie!");
         setCurrentStep("completed");
         
         setTimeout(() => {
-          router.push("/");
+          // Redirect based on role
+          if (selectedRole === "teacher") {
+            router.push("/teacher/courses");
+          } else {
+            router.push("/");
+          }
           router.refresh();
         }, 1000);
         
@@ -821,12 +974,9 @@ export default function RegisterPage() {
             router.push("/teacher/courses");
             router.refresh();
           }, 1500);
-        } else if (businessData.joinSchoolMode === "own-school") {
-          // Creating own school - move to Stripe setup
-          console.log('[handleRegister] Teacher creating own school, moving to Stripe setup');
-          setCurrentStep("stripe-setup");
         } else {
-          // Fallback - move to Stripe setup
+          // All other teachers (individual or own-school) need to set up Stripe
+          console.log('[handleRegister] Teacher needs Stripe setup');
           setCurrentStep("stripe-setup");
         }
       }
@@ -1044,90 +1194,20 @@ export default function RegisterPage() {
     setSelectedRole(role);
     
     if (role === "teacher") {
-      // For teacher, check if user has existing data in database
-      try {
-        setIsLoading(true);
-        setLoadingState("creating-user");
-        
-        const response = await fetch(`/api/user?userId=${userId}&sessionId=${sessionId}`);
-        if (response.ok) {
-          const userData = await response.json();
-          
-          if (userData.exists) {
-            // User exists - check registration status
-            if (userData.schoolId) {
-              console.log("User already has school:", userData.schoolId);
-              toast.success("Masz już przypisaną szkołę! Przejdź do akceptacji regulaminu.");
-              setCurrentStep("terms-acceptance");
-            } else if (userData.businessType) {
-              // User already has business type selected, skip to school choice
-              console.log("User already has businessType:", userData.businessType);
-              setBusinessData(prev => ({
-                ...prev,
-                businessType: userData.businessType
-              }));
-              setCurrentStep("school-choice");
-            } else {
-              // User exists but no business type yet
-              setCurrentStep("business-type-selection");
-            }
-          } else {
-            // User doesn't exist - create them as teacher first
-            console.log("User doesn't exist - creating new teacher user");
-            const createResponse = await fetch("/api/user", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                userId,
-                sessionId,
-                roleId: 1, // Teacher role
-                businessData: {
-                  businessType: "individual",
-                  companyName: "",
-                  schoolName: "",
-                  taxId: "",
-                  requiresVatInvoices: false
-                }
-              }),
-            });
-
-            if (!createResponse.ok) {
-              let errorMessage = "Nie udało się utworzyć konta";
-              try {
-                const errorData = await createResponse.json();
-                errorMessage = errorData.message || errorMessage;
-              } catch {
-                errorMessage = `Błąd serwera (${createResponse.status})`;
-              }
-              throw new Error(errorMessage);
-            }
-
-            const createData = await createResponse.json();
-            console.log("Teacher user created successfully:", createData);
-            toast.success("Konto utworzone! Teraz wybierz typ działalności.");
-            setCurrentStep("business-type-selection");
-          }
-        } else {
-          throw new Error("Nie udało się sprawdzić status użytkownika");
-        }
-      } catch (error) {
-        console.error("Error in role selection:", error);
-        const errorMessage = error instanceof Error ? error.message : "Błąd podczas wyboru roli";
-        setRegistrationError(errorMessage);
-        toast.error(errorMessage);
-        setSelectedRole(null);
-      } finally {
-        setIsLoading(false);
-        setLoadingState("idle");
-      }
+      // For teacher, simply move to business type selection
+      // User will be created in handleSignUp
+      setCurrentStep("business-type-selection");
+      setRegistrationError(null);
+      setLoadingState("idle");
+      toast.success("Wybrano rolę: nauczyciel. Teraz wybierz typ działalności.");
     } else {
       setCurrentStep("terms-acceptance");
       setAcceptTerms(false);
       setRegistrationError(null);
       setLoadingState("idle");
-      toast.success(`Wybrano rolę: uczeń`);
+      toast.success("Wybrano rolę: uczeń");
     }
-  }, [isLoading, selectedRole, loadingState, userId, sessionId]);
+  }, [isLoading, selectedRole, loadingState]);
 
   // Mobile-optimized touch handler
   const createTouchHandler = useCallback((role: "student" | "teacher") => {
@@ -1193,7 +1273,7 @@ export default function RegisterPage() {
         setSchoolsLoading(false);
       }
     } else if (businessData.businessType === "company") {
-      // For company (new school), mark as own-school and skip directly to terms
+      // For company (new school), mark as own-school but stay at business type to confirm
       setBusinessData(prev => ({ ...prev, joinSchoolMode: "own-school" }));
       setCurrentStep("terms-acceptance");
     } else {
@@ -2067,7 +2147,6 @@ export default function RegisterPage() {
                   </p>
                 </div>
                 
-                {/* Determine which subscription type to show */}
                 {businessData.joinSchoolMode === "join-existing-school" ? (
                   // User is joining existing school - no subscription needed
                   <div className="text-center space-y-4">
@@ -2108,8 +2187,8 @@ export default function RegisterPage() {
                       Ukończ rejestrację
                     </button>
                   </div>
-                ) : businessData.businessType === "individual" ? (
-                  // Show only Individual Plan (for individual teachers)
+                ) : (currentSchoolType === "individual" && (businessData.joinSchoolMode === "own-school" || businessData.joinSchoolMode === undefined)) ? (
+                  // Show only Individual Plan (for individual teachers not owning a school)
                   <div>
                     <h3 className="text-md font-semibold text-gray-700 mb-3">Twój plan dostępu:</h3>
                     
@@ -2169,8 +2248,8 @@ export default function RegisterPage() {
                       </button>
                     </div>
                   </div>
-                ) : businessData.joinSchoolMode === "own-school" ? (
-                  // Show only School Plan (for "own-school" mode)
+                ) : (currentSchoolType === "business" || businessData.joinSchoolMode === "own-school") ? (
+                  // Show only School Plan (for business school type or "own-school" mode)
                   <div>
                     <h3 className="text-md font-semibold text-gray-700 mb-3">Twój plan dostępu:</h3>
                     
@@ -2230,7 +2309,15 @@ export default function RegisterPage() {
                       </button>
                     </div>
                   </div>
-                ) : null}
+                ) : (
+                  // Debug: Show what's happening
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-700 font-bold">⚠️ Debug: Żaden plan nie pasuje do warunków</p>
+                    <p className="text-sm text-red-600 mt-2">currentSchoolType: {currentSchoolType}</p>
+                    <p className="text-sm text-red-600">joinSchoolMode: {businessData.joinSchoolMode}</p>
+                    <p className="text-sm text-red-600">businessType: {businessData.businessType}</p>
+                  </div>
+                )}
                 
                 <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-xs text-blue-700">

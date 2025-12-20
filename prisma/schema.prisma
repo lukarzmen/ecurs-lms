@@ -268,6 +268,7 @@ model School {
   stripeAccountStatus   String?                @default("pending")
   stripeOnboardingComplete Boolean              @default(false)
   requiresVatInvoices   Boolean                @default(false)
+  schoolType            String                 @default("individual") // "individual" = szkoła dla 1 nauczyciela, "business" = szkoła komercyjna dla wielu nauczycieli
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   
@@ -280,6 +281,7 @@ model School {
 
   @@index([ownerId])
   @@index([stripeAccountId])
+  @@index([schoolType])
   @@map("schools")
 }
 
@@ -287,6 +289,7 @@ model SchoolTeacher {
   id        Int      @id @default(autoincrement())
   schoolId  Int
   teacherId Int
+  role      String   @default("member") // "owner" = właściciel szkoły, "member" = zwykły członek zespołu
   addedAt   DateTime @default(now())
 
   school    School   @relation("SchoolMembers", fields: [schoolId], references: [id], onDelete: Cascade)
@@ -295,6 +298,7 @@ model SchoolTeacher {
   @@unique([schoolId, teacherId])
   @@index([schoolId])
   @@index([teacherId])
+  @@index([role])
   @@map("school_teachers")
 }
 
