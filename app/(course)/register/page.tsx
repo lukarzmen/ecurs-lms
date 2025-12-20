@@ -1193,8 +1193,9 @@ export default function RegisterPage() {
         setSchoolsLoading(false);
       }
     } else if (businessData.businessType === "company") {
-      // For company, ask if joining existing school or creating own
-      setCurrentStep("school-choice");
+      // For company (new school), mark as own-school and skip directly to terms
+      setBusinessData(prev => ({ ...prev, joinSchoolMode: "own-school" }));
+      setCurrentStep("terms-acceptance");
     } else {
       // For individual, skip to terms
       setCurrentStep("terms-acceptance");
