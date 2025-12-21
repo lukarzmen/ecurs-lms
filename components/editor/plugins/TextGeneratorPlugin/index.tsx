@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from 'react';
 import * as React from 'react';
 import { $createHeadingNode } from '@lexical/rich-text';
+import { $createCodeNode } from '@lexical/code';
 import { useCourseContext } from '../../context/CourseContext';
 import { Sparkles, X, Edit2, Loader2 } from 'lucide-react';
 
@@ -206,8 +207,35 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
               // Split response into lines
               const cleanedResponse = response.replace(/^#####\s*/gm, "");
               const lines = cleanedResponse.split('\n').filter(line => line.trim() !== "---");
+              
+              let inCodeBlock = false;
+              let codeBlockContent = '';
+              
               lines.forEach((line) => {
-                // Heading 3: ### or ####
+                // Handle code blocks (```)
+                if (line.trim().startsWith("```")) {
+                  if (inCodeBlock) {
+                    // End of code block - create proper CodeNode
+                    inCodeBlock = false;
+                    const codeNode = $createCodeNode();
+                    codeNode.append($createTextNode(codeBlockContent.trim()));
+                    root.append(codeNode);
+                    codeBlockContent = '';
+                  } else {
+                    // Start of code block
+                    inCodeBlock = true;
+                    codeBlockContent = '';
+                  }
+                  return;
+                }
+                
+                // If we're in a code block, accumulate content
+                if (inCodeBlock) {
+                  codeBlockContent += (codeBlockContent ? '\n' : '') + line;
+                  return;
+                }
+                
+                // Heading 4: ####
                 if (line.trim().startsWith("#### ")) {
                   const headingText = line.replace(/^####\s*/, "");
                   const headingNode = $createHeadingNode('h3');
@@ -223,7 +251,7 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
                   root.append(headingNode);
                   return;
                 }
-                  if (line.trim().startsWith("## ")) {
+                if (line.trim().startsWith("## ")) {
                   const headingText = line.replace(/^##\s*/, "");
                   const headingNode = $createHeadingNode('h2');
                   headingNode.append($createTextNode(headingText));
@@ -239,11 +267,17 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
                   return;
                 }
                 const paragraphNode = $createParagraphNode();
-                // Regex to match **bold** fragments
-                const parts = line.split(/(\*\*[^*]+\*\*)/g);
+                // Regex to match inline code (`text`) and **bold** fragments
+                const parts = line.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
                 parts.forEach((part) => {
-                  if (part.startsWith('**') && part.endsWith('**')) {
-                    // Remove ** and create bold node
+                  if (part.startsWith('`') && part.endsWith('`')) {
+                    // Inline code - remove backticks and create code formatted node
+                    const codeText = part.slice(1, -1);
+                    const textNode = $createTextNode(codeText);
+                    textNode.setFormat('code');
+                    paragraphNode.append(textNode);
+                  } else if (part.startsWith('**') && part.endsWith('**')) {
+                    // Bold text
                     const boldText = part.slice(2, -2);
                     const textNode = $createTextNode(boldText);
                     textNode.setFormat('bold');
