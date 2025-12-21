@@ -57,7 +57,10 @@ export async function GET(req: Request) {
       },
     });
 
-    return NextResponse.json({ requests });
+    // Filtruj requests gdzie teacher istnieje (aby uniknąć null errors)
+    const validRequests = requests.filter(req => req.teacher !== null);
+
+    return NextResponse.json({ requests: validRequests });
   } catch (error) {
     console.error("Error fetching pending requests:", error);
     return NextResponse.json(
