@@ -85,6 +85,11 @@ const TeacherSettingsPage = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    console.log('User Profile:', userProfile);
+    console.log('Platform Subscription:', platformSubscription);
+  }, [userProfile, platformSubscription]);
+
   const fetchData = async () => {
     try {
       setIsLoading(true);
@@ -209,7 +214,10 @@ const TeacherSettingsPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ subscriptionType }),
+        body: JSON.stringify({ 
+          subscriptionType,
+          returnUrl: '/teacher/settings'
+        }),
       });
 
       if (response.ok) {
@@ -347,8 +355,8 @@ const TeacherSettingsPage = () => {
         </Card>
       )}
 
-      {/* Stripe Account Status */}
-      {userProfile && (
+      {/* Stripe Account Status - Show if teacher is individual OR is school owner (businessType = company) */}
+      {userProfile && (!userProfile.isMemberOfSchool || userProfile.businessType === 'company' || userProfile.businessType === 'business') && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -367,7 +375,7 @@ const TeacherSettingsPage = () => {
                   Onboarding: {userProfile.stripeOnboardingComplete ? 'Zakończony' : 'W trakcie'}
                 </p>
               </div>
-              {!userProfile.stripeOnboardingComplete && (
+              {!userProfile.stripeOnboardingComplete && userProfile.stripeAccountStatus && (
                 <Button asChild>
                   <a href="/api/stripe/create-account-link" target="_blank">
                     Dokończ konfigurację
@@ -379,8 +387,8 @@ const TeacherSettingsPage = () => {
         </Card>
       )}
 
-      {/* Platform Subscription Management - Only show if teacher is NOT member of school */}
-      {!userProfile?.isMemberOfSchool && (
+      {/* Platform Subscription Management - Show if teacher is individual OR is school owner (businessType = company) */}
+      {(!userProfile?.isMemberOfSchool || userProfile?.businessType === 'company' || userProfile?.businessType === 'business') && (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -461,24 +469,28 @@ const TeacherSettingsPage = () => {
                 Nie masz aktywnej subskrypcji platformy. Wybierz plan aby uzyskać pełny dostęp do funkcji nauczycielskich.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <h4 className="font-semibold">Plan Indywidualny</h4>
-                  <p className="text-sm text-muted-foreground mb-2">Do 20 uczniów</p>
-                  <p className="text-2xl font-bold mb-2">39 zł<span className="text-sm font-normal">/miesiąc</span></p>
-                  <p className="text-xs text-green-600 mb-3">30 dni gratis</p>
-                  <Button onClick={() => subscribeToPlatform('individual')} className="w-full">
-                    Wybierz plan
-                  </Button>
-                </div>
-                <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <h4 className="font-semibold">Plan Szkolny</h4>
-                  <p className="text-sm text-muted-foreground mb-2">Powyżej 20 uczniów</p>
-                  <p className="text-2xl font-bold mb-2">1499 zł<span className="text-sm font-normal">/rok</span></p>
-                  <p className="text-xs text-green-600 mb-3">30 dni gratis</p>
-                  <Button onClick={() => subscribeToPlatform('school')} className="w-full">
-                    Wybierz plan
-                  </Button>
-                </div>
+                {(userProfile?.businessType === 'individual' || !userProfile?.businessType) && (
+                  <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <h4 className="font-semibold">Plan Indywidualny</h4>
+                    <p className="text-sm text-muted-foreground mb-2">Do 20 uczniów</p>
+                    <p className="text-2xl font-bold mb-2">39 zł<span className="text-sm font-normal">/miesiąc</span></p>
+                    <p className="text-xs text-green-600 mb-3">30 dni gratis</p>
+                    <Button onClick={() => subscribeToPlatform('individual')} className="w-full">
+                      Wybierz plan
+                    </Button>
+                  </div>
+                )}
+                {(userProfile?.businessType === 'company' || userProfile?.businessType === 'business') && (
+                  <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <h4 className="font-semibold">Plan Szkolny</h4>
+                    <p className="text-sm text-muted-foreground mb-2">Powyżej 20 uczniów</p>
+                    <p className="text-2xl font-bold mb-2">1499 zł<span className="text-sm font-normal">/rok</span></p>
+                    <p className="text-xs text-green-600 mb-3">30 dni gratis</p>
+                    <Button onClick={() => subscribeToPlatform('school')} className="w-full">
+                      Wybierz plan
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -486,8 +498,8 @@ const TeacherSettingsPage = () => {
       </Card>
       )}
 
-      {/* School Membership Info - Show if teacher is member of school */}
-      {userProfile?.isMemberOfSchool && userProfile?.memberSchool && (
+      {/* School Membership Info - Show if teacher is member of school (but NOT school owner) */}
+      {userProfile?.isMemberOfSchool && userProfile?.memberSchool && userProfile?.businessType !== 'company' && userProfile?.businessType !== 'business' && (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -499,13 +511,63 @@ const TeacherSettingsPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
-            <div>
-              <p className="font-medium text-blue-900">Jesteś członkiem szkoły</p>
-              <p className="text-sm text-blue-700 mt-1">{userProfile.memberSchool.name}</p>
-              <p className="text-xs text-blue-600 mt-2">Subskrypcja platformy jest opłacana przez Twoją szkołę. Nie musisz płacić osobno.</p>
+          {platformSubscription ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
+                <div>
+                  <p className="font-medium text-blue-900">Jesteś członkiem szkoły</p>
+                  <p className="text-sm text-blue-700 mt-1">{userProfile.memberSchool.name}</p>
+                  <p className="text-xs text-blue-600 mt-2">Subskrypcja platformy jest opłacana przez Twoją szkołę. Nie musisz płacić osobno.</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <p className="font-medium">
+                    Plan: {platformSubscription.subscriptionType === 'individual' ? 'Indywidualny' : 'Szkolny'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Status: {platformSubscription.subscriptionStatus === 'active' ? 'Aktywny' : 
+                             platformSubscription.subscriptionStatus === 'cancel_at_period_end' ? 'Zostanie anulowany' :
+                             platformSubscription.subscriptionStatus || 'Nieznany'}
+                  </p>
+                  {platformSubscription.currentPeriodEnd && (
+                    <p className="text-sm text-muted-foreground">
+                      {platformSubscription.subscriptionStatus === 'cancel_at_period_end' 
+                        ? 'Anulowanie: ' 
+                        : 'Następna płatność: '}
+                      {new Date(platformSubscription.currentPeriodEnd).toLocaleDateString('pl-PL')}
+                    </p>
+                  )}
+                  {platformSubscription.trialEnd && new Date(platformSubscription.trialEnd) > new Date() && (
+                    <p className="text-sm text-green-600">
+                      Okres próbny do: {new Date(platformSubscription.trialEnd).toLocaleDateString('pl-PL')}
+                    </p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-lg">
+                    {platformSubscription.amount ? `${platformSubscription.amount} ${platformSubscription.currency || 'PLN'}` : 'N/A'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {platformSubscription.subscriptionType === 'individual' ? 'miesięcznie' : 'rocznie'}
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
+                <div>
+                  <p className="font-medium text-blue-900">Jesteś członkiem szkoły</p>
+                  <p className="text-sm text-blue-700 mt-1">{userProfile.memberSchool.name}</p>
+                  <p className="text-xs text-blue-600 mt-2">Subskrypcja platformy jest opłacana przez Twoją szkołę.</p>
+                </div>
+              </div>
+              <p className="text-muted-foreground text-center">
+                Szkoła nie ma jeszcze aktywnej subskrypcji platformy. Poproś właściciela szkoły aby ją skonfigurował.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
       )}

@@ -48,12 +48,23 @@ export async function GET(request: NextRequest) {
     const isMemberOfSchool = user.schoolMemberships && user.schoolMemberships.length > 0;
     const memberSchool = isMemberOfSchool ? user.schoolMemberships[0].school : null;
     
+    // Determine businessType based on role and school membership
+    let businessType = 'individual';
+    if (user.roleId === 1) { // teacher
+      if (schoolData) {
+        businessType = 'company'; // Teacher who owns a school
+      } else if (isMemberOfSchool) {
+        businessType = 'individual'; // Member of school (not owner)
+      }
+    }
+    
     return NextResponse.json({
       id: user.id,
       firstName: user.firstName,
       lastName: user.lastName,
       displayName: user.displayName,
       email: user.email,
+      businessType,
       companyName: schoolData?.companyName || null,
       taxId: schoolData?.taxId || null,
       stripeOnboardingComplete: schoolData?.stripeOnboardingComplete || false,
@@ -142,12 +153,17 @@ export async function PUT(request: NextRequest) {
 
     // Return combined response
     const schoolData = updatedUser.ownedSchools && updatedUser.ownedSchools.length > 0 ? updatedUser.ownedSchools[0] : null;
+    
+    // Determine businessType based on role and school ownership
+    const calculatedBusinessType = updatedUser.roleId === 1 && schoolData ? 'company' : 'individual';
+    
     return NextResponse.json({
       id: updatedUser.id,
       firstName: updatedUser.firstName,
       lastName: updatedUser.lastName,
       displayName: updatedUser.displayName,
       email: updatedUser.email,
+      businessType: calculatedBusinessType,
       companyName: schoolData?.companyName || null,
       taxId: schoolData?.taxId || null,
       stripeOnboardingComplete: schoolData?.stripeOnboardingComplete || false,

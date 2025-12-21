@@ -10,7 +10,7 @@ import { db } from "@/lib/db";
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { subscriptionType } = body; // "individual" or "school"
+        const { subscriptionType, returnUrl } = body; // "individual" or "school", optional returnUrl
 
         const currentAuthUser = await currentUser();
         const email = currentAuthUser?.emailAddresses[0]?.emailAddress;
@@ -178,8 +178,8 @@ export async function POST(req: NextRequest) {
                     quantity: 1,
                 },
             ],
-            success_url: `${process.env.NEXT_PUBLIC_API_URL}/register?success=subscription`,
-            cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/register?cancelled=subscription`,
+            success_url: `${process.env.NEXT_PUBLIC_API_URL}${returnUrl || '/register'}?success=subscription`,
+            cancel_url: `${process.env.NEXT_PUBLIC_API_URL}${returnUrl || '/register'}?cancelled=subscription`,
             client_reference_id: String(teacherSubscription.id),
             metadata: {
                 teacherSubscriptionId: teacherSubscription.id.toString(),

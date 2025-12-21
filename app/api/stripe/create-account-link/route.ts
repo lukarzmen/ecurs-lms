@@ -36,11 +36,6 @@ export async function GET(req: Request) {
 
         const school = user.ownedSchools[0];
 
-        // Check if school has a Stripe Connect account
-        if (!school.stripeAccountId) {
-            return new NextResponse("Stripe account not found. Please complete registration first.", { status: 400 });
-        }
-
         // Get the base URL for redirects
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
         
@@ -56,20 +51,52 @@ export async function GET(req: Request) {
             throw new Error(`Invalid URL format for NEXT_PUBLIC_APP_URL: ${baseUrl}`);
         }
 
+        let stripeAccountId = school.stripeAccountId;
+
+        // If school doesn't have a Stripe account yet, create one
+        if (!stripeAccountId) {
+            // For localhost development, don't include business_profile URL as Stripe doesn't accept localhost
+            const isLocalhost = validBaseUrl.includes('localhost') || validBaseUrl.includes('127.0.0.1');
+            
+            const accountData: any = {
+                type: 'express',
+                country: 'PL', // Poland
+                email: email,
+                business_type: 'individual',
+            };
+
+            // Only add business_profile URL if not localhost
+            if (!isLocalhost) {
+                accountData.business_profile = {
+                    url: validBaseUrl,
+                };
+            }
+
+            const connectedAccount = await stripe.accounts.create(accountData);
+
+            stripeAccountId = connectedAccount.id;
+
+            // Update the school with the new Stripe account ID and status
+            await db.school.update({
+                where: { id: school.id },
+                data: { 
+                    stripeAccountId,
+                    stripeAccountStatus: 'active'
+                },
+            });
+        }
+
         // Create account link for onboarding/re-onboarding
         const accountLink = await stripe.accountLinks.create({
-            account: school.stripeAccountId,
+            account: stripeAccountId,
             refresh_url: `${validBaseUrl}/teacher/settings?refresh=true`,
             return_url: `${validBaseUrl}/teacher/settings?success=stripe`,
             type: 'account_onboarding',
             collect: 'eventually_due',
         });
 
-        // Return the account link URL
-        return NextResponse.json({
-            url: accountLink.url,
-            schoolId: school.id,
-        });
+        // Redirect to the account link URL
+        return NextResponse.redirect(accountLink.url);
 
     } catch (error) {
         console.error('[STRIPE_CREATE_ACCOUNT_LINK]', error);
