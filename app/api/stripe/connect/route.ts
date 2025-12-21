@@ -33,6 +33,19 @@ export async function POST(req: Request) {
                         stripeOnboardingComplete: true,
                     },
                     take: 1
+                },
+                schoolMemberships: {
+                    select: {
+                        schoolId: true,
+                        school: {
+                            select: {
+                                id: true,
+                                stripeAccountId: true,
+                                stripeOnboardingComplete: true,
+                            }
+                        }
+                    },
+                    take: 1
                 }
             }
         });
@@ -46,12 +59,16 @@ export async function POST(req: Request) {
             return new NextResponse("Only teachers can onboard with Stripe", { status: 403 });
         }
 
-        // Teacher should have a school from migration, but check
-        if (!user.ownedSchools || user.ownedSchools.length === 0) {
-            return new NextResponse("Teacher has no school. Please contact admin.", { status: 400 });
+        // Get the school - either owned or as member
+        let school = user.ownedSchools?.[0];
+        if (!school && user.schoolMemberships?.[0]) {
+            school = user.schoolMemberships[0].school;
         }
 
-        const school = user.ownedSchools[0];
+        // Teacher should have a school from migration, but check
+        if (!school) {
+            return new NextResponse("Teacher has no school. Please contact admin.", { status: 400 });
+        }
 
         // Check if school already has a Stripe Connect account
         if (school.stripeAccountId) {
@@ -299,18 +316,42 @@ export async function GET(req: Request) {
                         stripeOnboardingComplete: true,
                     },
                     take: 1
+                },
+                schoolMemberships: {
+                    select: {
+                        schoolId: true,
+                        school: {
+                            select: {
+                                id: true,
+                                stripeAccountId: true,
+                                stripeOnboardingComplete: true,
+                            }
+                        }
+                    },
+                    take: 1
                 }
             }
         });
 
-        if (!user || !user.ownedSchools || user.ownedSchools.length === 0) {
+        if (!user) {
             return NextResponse.json({
                 hasAccount: false,
                 onboardingComplete: false
             });
         }
 
-        const school = user.ownedSchools[0];
+        // Get the school - either owned or as member
+        let school = user.ownedSchools?.[0];
+        if (!school && user.schoolMemberships?.[0]) {
+            school = user.schoolMemberships[0].school;
+        }
+
+        if (!school) {
+            return NextResponse.json({
+                hasAccount: false,
+                onboardingComplete: false
+            });
+        }
 
         if (!school.stripeAccountId) {
             return NextResponse.json({
@@ -436,6 +477,19 @@ export async function PUT(req: Request) {
                             stripeOnboardingComplete: true,
                         },
                         take: 1
+                    },
+                    schoolMemberships: {
+                        select: {
+                            schoolId: true,
+                            school: {
+                                select: {
+                                    id: true,
+                                    stripeAccountId: true,
+                                    stripeOnboardingComplete: true,
+                                }
+                            }
+                        },
+                        take: 1
                     }
                 }
             });
@@ -456,7 +510,13 @@ export async function PUT(req: Request) {
             );
         }
 
-        if (!user.ownedSchools || user.ownedSchools.length === 0) {
+        // Get the school - either owned or as member
+        let school = user.ownedSchools?.[0];
+        if (!school && user.schoolMemberships?.[0]) {
+            school = user.schoolMemberships[0].school;
+        }
+
+        if (!school) {
             console.error('User has no school:', email);
             return NextResponse.json(
                 { 
@@ -467,7 +527,7 @@ export async function PUT(req: Request) {
             );
         }
 
-        const school = user.ownedSchools[0];
+        console.log('School found:', school.id, 'Has Stripe Account:', !!school.stripeAccountId);
 
         if (!school.stripeAccountId) {
             console.error('School has no Stripe account ID:', email);

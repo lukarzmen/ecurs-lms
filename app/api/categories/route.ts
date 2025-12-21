@@ -5,7 +5,7 @@ export async function GET(req: Request) {
   try {
     const categories = await db.category.findMany({
       orderBy: {
-        name: "asc",
+    name: "asc",
       },
     });
    

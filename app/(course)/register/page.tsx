@@ -392,8 +392,8 @@ export default function RegisterPage() {
           headers: { "Content-Type": "application/json" },
         });
 
-        if (updateProviderResponse.ok) {
-          // User exists with complete profile - providerId was updated
+        // Status 200: User exists with complete profile - check Stripe and subscription
+        if (updateProviderResponse.status === 200) {
           const updateData = await updateProviderResponse.json();
           console.log('[checkUserStatus] User found with complete profile, providerId updated:', updateData.user.id);
           
@@ -437,15 +437,22 @@ export default function RegisterPage() {
               setTimeout(() => router.push("/teacher/courses"), 2000);
             } else {
               // Check if teacher has completed registration
+              const hasStripe = updateData.stripeOnboardingComplete;
               const hasSubscription = updateData.hasActiveSubscription;
               
-              if (hasSubscription) {
-                // Fully registered
+              console.log('[checkUserStatus] Teacher status - hasStripe:', hasStripe, 'hasSubscription:', hasSubscription);
+              
+              if (hasStripe && hasSubscription) {
+                // Fully registered with everything
                 setCurrentStep("completed");
                 toast.success("Jesteś już w pełni zarejestrowany!");
                 setTimeout(() => router.push("/teacher/courses"), 2000);
+              } else if (hasStripe && !hasSubscription) {
+                // Has Stripe, needs subscription
+                setCurrentStep("platform-subscription");
+                toast("Wybierz plan subskrypcji platformy", { icon: "💳" });
               } else {
-                // Teacher exists but needs to complete registration
+                // Needs Stripe setup
                 setCurrentStep("stripe-setup");
                 toast("Witaj ponownie! Dokończymy rejestrację.", { icon: "👋" });
               }
@@ -456,7 +463,7 @@ export default function RegisterPage() {
           return;
         }
 
-        // If status 206: User exists but profile incomplete
+        // Status 206: User exists but profile incomplete
         if (updateProviderResponse.status === 206) {
           const partialData = await updateProviderResponse.json();
           console.log('[checkUserStatus] User found with incomplete profile, providerId updated');
@@ -795,12 +802,15 @@ export default function RegisterPage() {
           // Set schoolType state for platform-subscription step
           setCurrentSchoolType(schoolType as "individual" | "business");
           
-          // Check if teacher has active platform subscription
-          const hasActiveSubscription = updateData.user.teacherPlatformSubscription?.subscriptionStatus === 'active';
+          // Check if teacher has active platform subscription (from API response)
+          const hasActiveSubscription = updateData.hasActiveSubscription;
+          const stripeOnboardingComplete = updateData.stripeOnboardingComplete;
           
-          if (!hasActiveSubscription) {
-            // Teacher needs to subscribe to platform
-            console.log('[handleSignUp] Teacher needs platform subscription, preparing business data');
+          console.log('[handleSignUp] hasActiveSubscription:', hasActiveSubscription, 'stripeOnboardingComplete:', stripeOnboardingComplete);
+          
+          if (!stripeOnboardingComplete || !hasActiveSubscription) {
+            // Teacher needs to complete Stripe setup or subscribe to platform
+            console.log('[handleSignUp] Teacher needs Stripe/subscription, stripeOnboardingComplete:', stripeOnboardingComplete, 'hasActiveSubscription:', hasActiveSubscription);
             const newData: BusinessTypeData = {
               businessType: newBusinessType as "individual" | "company",
               companyName: school?.companyName || "",
@@ -813,14 +823,24 @@ export default function RegisterPage() {
             console.log('[handleSignUp] Prepared data:', newData);
             console.log('[handleSignUp] About to set pendingBusinessData with:', newData);
             setPendingBusinessData(newData);
-            console.log('[handleSignUp] About to set needsPlatformSubscription to true');
-            setNeedsPlatformSubscription(true);
+            
+            // Set to appropriate next step based on what's missing
+            if (!stripeOnboardingComplete) {
+              console.log('[handleSignUp] Stripe not complete, setting currentStep to stripe-setup');
+              setBusinessData(newData);
+              setCurrentStep("stripe-setup");
+            } else {
+              console.log('[handleSignUp] Stripe complete but no subscription, will go to platform-subscription');
+              setNeedsPlatformSubscription(true);
+            }
+            
             setIsLoading(false);
             setLoadingState("idle");
-            console.log('[handleSignUp] Returning early, pending state updates');
+            console.log('[handleSignUp] Returning early, state will be updated');
             return;
           } else {
-            // Already has subscription, just update businessData for future use
+            // Already has both Stripe and subscription, just update businessData for future use
+            console.log('[handleSignUp] Teacher has everything, logging in directly');
             setBusinessData(prev => ({
               ...prev,
               businessType: newBusinessType,

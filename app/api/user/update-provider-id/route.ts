@@ -129,6 +129,11 @@ export async function POST(req: Request) {
               }
             },
             take: 1,
+          },
+          teacherPlatformSubscription: {
+            select: {
+              subscriptionStatus: true,
+            }
           }
         }
       });
@@ -138,7 +143,8 @@ export async function POST(req: Request) {
       // Determine next step based on role
       const isTeacher = updatedUser.roleId === 1;
       const schoolId = updatedUser.ownedSchools?.[0]?.id ?? updatedUser.schoolMemberships?.[0]?.schoolId ?? null;
-      const stripeOnboardingComplete = updatedUser.ownedSchools?.[0]?.stripeOnboardingComplete ?? false;
+      const stripeOnboardingComplete = updatedUser.ownedSchools?.[0]?.stripeOnboardingComplete ?? updatedUser.schoolMemberships?.[0]?.school?.stripeOnboardingComplete ?? false;
+      const hasActiveSubscription = updatedUser.teacherPlatformSubscription?.subscriptionStatus === 'active';
 
       // If profile is incomplete, return 206 (Partial Content) with incomplete flag
       if (!hasAllFields) {
@@ -149,6 +155,7 @@ export async function POST(req: Request) {
           isTeacher,
           schoolId,
           stripeOnboardingComplete,
+          hasActiveSubscription,
           ownedSchools: updatedUser.ownedSchools,
           schoolMemberships: updatedUser.schoolMemberships,
           message: "ProviderId updated but profile is incomplete - continue registration"
@@ -163,6 +170,7 @@ export async function POST(req: Request) {
         isTeacher,
         schoolId,
         stripeOnboardingComplete,
+        hasActiveSubscription,
         ownedSchools: updatedUser.ownedSchools,
         schoolMemberships: updatedUser.schoolMemberships,
         message: "ProviderId updated successfully and registration can complete"
@@ -172,7 +180,8 @@ export async function POST(req: Request) {
       if (!hasAllFields) {
         const isTeacher = existingUser.roleId === 1;
         const schoolId = existingUser.ownedSchools?.[0]?.id ?? existingUser.schoolMemberships?.[0]?.schoolId ?? null;
-        const stripeOnboardingComplete = existingUser.ownedSchools?.[0]?.stripeOnboardingComplete ?? false;
+        const stripeOnboardingComplete = existingUser.ownedSchools?.[0]?.stripeOnboardingComplete ?? existingUser.schoolMemberships?.[0]?.school?.stripeOnboardingComplete ?? false;
+        const hasActiveSubscription = existingUser.teacherPlatformSubscription?.subscriptionStatus === 'active';
         
         return NextResponse.json(
           { 
@@ -182,6 +191,7 @@ export async function POST(req: Request) {
             isTeacher,
             schoolId,
             stripeOnboardingComplete,
+            hasActiveSubscription,
             ownedSchools: existingUser.ownedSchools,
             schoolMemberships: existingUser.schoolMemberships,
           },
@@ -192,7 +202,8 @@ export async function POST(req: Request) {
       // Already has correct providerId and complete profile
       const isTeacher = existingUser.roleId === 1;
       const schoolId = existingUser.ownedSchools?.[0]?.id ?? existingUser.schoolMemberships?.[0]?.schoolId ?? null;
-      const stripeOnboardingComplete = existingUser.ownedSchools?.[0]?.stripeOnboardingComplete ?? false;
+      const stripeOnboardingComplete = existingUser.ownedSchools?.[0]?.stripeOnboardingComplete ?? existingUser.schoolMemberships?.[0]?.school?.stripeOnboardingComplete ?? false;
+      const hasActiveSubscription = existingUser.teacherPlatformSubscription?.subscriptionStatus === 'active';
       
       return NextResponse.json({
         updated: false,
@@ -202,6 +213,7 @@ export async function POST(req: Request) {
         isTeacher,
         schoolId,
         stripeOnboardingComplete,
+        hasActiveSubscription,
         ownedSchools: existingUser.ownedSchools,
         schoolMemberships: existingUser.schoolMemberships,
         message: "ProviderId already correct and profile is complete"
