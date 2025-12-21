@@ -94,13 +94,24 @@ export const SidebarRoutes = () => {
 
   let routes = isTeacherPage ? teacherRoutes : guestRoutes;
 
-  // Dodaj element do zarządzania szkołą jeśli user ją posiada (przed ustawieniami)
-  if (isTeacherPage && hasSchool) {
-    routes = [...routes.slice(0, -1), {
-      icon: Users,
-      label: "Twoja szkoła",
-      href: "/teacher/school/manage",
-    }, routes[routes.length - 1]];
+  // Filter teacher routes based on school ownership
+  if (isTeacherPage) {
+    // Remove notifications for teachers who don't own a school
+    routes = routes.filter(route => {
+      if (route.label === "Powiadomienia" && !hasSchool) {
+        return false; // Hide notifications if not school owner
+      }
+      return true;
+    });
+    
+    // Add "Twoja szkoła" before settings if user owns a school
+    if (hasSchool) {
+      routes = [...routes.slice(0, -1), {
+        icon: Users,
+        label: "Twoja szkoła",
+        href: "/teacher/school/manage",
+      }, routes[routes.length - 1]];
+    }
   }
 
   return (

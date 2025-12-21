@@ -410,20 +410,23 @@ export default function RegisterPage() {
             setSelectedRole("teacher");
             
             // Always populate businessData with school information if teacher has a school
-            if (updateData.schoolId && updateData.ownedSchools?.[0]) {
-              const school = updateData.ownedSchools[0];
-              const businessType = (school.schoolType === "business" ? "company" : "individual") as "individual" | "company";
+            const isMemberOfSchool = !!updateData.schoolMemberships?.[0];
+            const schoolForData = updateData.ownedSchools?.[0] || updateData.schoolMemberships?.[0]?.school;
+            
+            if (updateData.schoolId && schoolForData) {
+              const businessType = (schoolForData.schoolType === "business" ? "company" : "individual") as "individual" | "company";
+              const joinMode = isMemberOfSchool ? "join-existing-school" : "own-school";
               setBusinessData({
                 businessType: businessType,
-                companyName: school.companyName || "",
-                schoolName: school.name || "",
-                taxId: school.taxId || "",
-                requiresVatInvoices: school.requiresVatInvoices || false,
-                joinSchoolMode: "own-school",
-                selectedSchoolId: school.id
+                companyName: schoolForData.companyName || "",
+                schoolName: schoolForData.name || "",
+                taxId: schoolForData.taxId || "",
+                requiresVatInvoices: schoolForData.requiresVatInvoices || false,
+                joinSchoolMode: joinMode,
+                selectedSchoolId: schoolForData.id
               });
-              setCurrentSchoolType(school.schoolType as "individual" | "business");
-              console.log('[checkUserStatus] School data populated from update-provider-id response:', school);
+              setCurrentSchoolType(schoolForData.schoolType as "individual" | "business");
+              console.log('[checkUserStatus] School data populated from update-provider-id response:', schoolForData, 'isMemberOfSchool:', isMemberOfSchool);
             }
             
             // Check if returning from Stripe
@@ -439,10 +442,16 @@ export default function RegisterPage() {
               // Check if teacher has completed registration
               const hasStripe = updateData.stripeOnboardingComplete;
               const hasSubscription = updateData.hasActiveSubscription;
+              const isMember = !!updateData.schoolMemberships?.[0];
               
-              console.log('[checkUserStatus] Teacher status - hasStripe:', hasStripe, 'hasSubscription:', hasSubscription);
+              console.log('[checkUserStatus] Teacher status - hasStripe:', hasStripe, 'hasSubscription:', hasSubscription, 'isMemberOfSchool:', isMember);
               
-              if (hasStripe && hasSubscription) {
+              // If teacher is a member of a school, they don't need to pay - school owner covers
+              if (isMember) {
+                setCurrentStep("completed");
+                toast.success("Jesteś już w pełni zarejestrowany jako członek szkoły!");
+                setTimeout(() => router.push("/teacher/courses"), 2000);
+              } else if (hasStripe && hasSubscription) {
                 // Fully registered with everything
                 setCurrentStep("completed");
                 toast.success("Jesteś już w pełni zarejestrowany!");
@@ -792,7 +801,8 @@ export default function RegisterPage() {
         if (updateData.isTeacher && updateData.schoolId) {
           console.log('[handleSignUp] ENTERING teacher with school block');
           const school = updateData.ownedSchools?.[0] || updateData.schoolMemberships?.[0]?.school;
-          console.log('[handleSignUp] school object:', school);
+          const isMemberOfSchool = !!updateData.schoolMemberships?.[0];
+          console.log('[handleSignUp] school object:', school, 'isMemberOfSchool:', isMemberOfSchool);
           const schoolType = school?.schoolType || "individual";
           
           console.log('[handleSignUp] Setting businessData based on school type:', schoolType);
@@ -806,9 +816,18 @@ export default function RegisterPage() {
           const hasActiveSubscription = updateData.hasActiveSubscription;
           const stripeOnboardingComplete = updateData.stripeOnboardingComplete;
           
-          console.log('[handleSignUp] hasActiveSubscription:', hasActiveSubscription, 'stripeOnboardingComplete:', stripeOnboardingComplete);
+          console.log('[handleSignUp] hasActiveSubscription:', hasActiveSubscription, 'stripeOnboardingComplete:', stripeOnboardingComplete, 'isMemberOfSchool:', isMemberOfSchool);
           
-          if (!stripeOnboardingComplete || !hasActiveSubscription) {
+          // If teacher is a member of school, they don't pay individually - school owner's subscription covers them
+          if (isMemberOfSchool) {
+            console.log('[handleSignUp] Teacher is member of school - no need to pay, logging in directly');
+            setBusinessData(prev => ({
+              ...prev,
+              businessType: newBusinessType,
+              joinSchoolMode: "join-existing-school",
+              selectedSchoolId: school?.id
+            }));
+          } else if (!stripeOnboardingComplete || !hasActiveSubscription) {
             // Teacher needs to complete Stripe setup or subscribe to platform
             console.log('[handleSignUp] Teacher needs Stripe/subscription, stripeOnboardingComplete:', stripeOnboardingComplete, 'hasActiveSubscription:', hasActiveSubscription);
             const newData: BusinessTypeData = {
@@ -967,6 +986,7 @@ export default function RegisterPage() {
       } else if (selectedRole === "teacher") {
         // Check if teacher joined a school or is creating their own
         if (businessData.joinSchoolMode === "join-existing-school" && businessData.selectedSchoolId) {
+          // Teacher joining a school - they don't need to pay, school owner covers subscription
           // Send join request first, then complete registration
           setLoadingState("sending-join-request");
           try {
@@ -981,7 +1001,7 @@ export default function RegisterPage() {
               throw new Error(joinError.error || "Nie udało się wysłać prośby o dołączenie");
             }
 
-            toast.success("Prośba o dołączenie do szkoły została wysłana!");
+            toast.success("Prośba o dołączenie do szkoły została wysłana! Szkoła zajmuje się płatnościami.");
           } catch (joinError) {
             console.error("Error sending join request:", joinError);
             const errorMsg = joinError instanceof Error ? joinError.message : "Błąd przy wysyłaniu prośby";
@@ -2399,10 +2419,16 @@ export default function RegisterPage() {
               {selectedRole === "teacher" && (
                 <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-xs sm:text-sm text-blue-700 font-medium">ℹ️ Następny krok:</p>
-                  <p className="text-xs text-blue-600 mt-1 leading-tight">
-                    Po kliknięciu &quot;Kontynuuj&quot; zostaniesz przekierowany na bezpieczną stronę Stripe w celu konfiguracji konta płatności. 
-                    Po zakończeniu procesu automatycznie wrócisz na platformę Ecurs.
-                  </p>
+                  {businessData.joinSchoolMode === "join-existing-school" ? (
+                    <p className="text-xs text-blue-600 mt-1 leading-tight">
+                      Po kliknięciu &quot;Przejdź do platformy&quot; zostaniesz zalogowany. Szkoła zajmuje się wszystkimi płatnościami.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-blue-600 mt-1 leading-tight">
+                      Po kliknięciu &quot;Kontynuuj&quot; zostaniesz przekierowany na bezpieczną stronę Stripe w celu konfiguracji konta płatności. 
+                      Po zakończeniu procesu automatycznie wrócisz na platformę Ecurs.
+                    </p>
+                  )}
                 </div>
               )}
               
@@ -2432,6 +2458,8 @@ export default function RegisterPage() {
                   </div>
                 ) : selectedRole === "student" ? (
                   "Zarejestruj się jako uczeń"
+                ) : businessData.joinSchoolMode === "join-existing-school" ? (
+                  "Przejdź do platformy"
                 ) : (
                   "Kontynuuj (następny krok: konfiguracja płatności)"
                 )}

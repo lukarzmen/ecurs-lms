@@ -117,8 +117,9 @@ export function StripeStatusBanner({ className = "" }: StripeStatusProps) {
     return null;
   }
 
-  // Don't show anything if teacher is a school member (not owner) - school owner handles payments
-  if (schoolStatus?.isSchoolMember && !schoolStatus?.isSchoolOwner) {
+  // Don't show banner if teacher is not the school owner
+  // Only school owners need to configure Stripe - members don't pay
+  if (schoolStatus && !schoolStatus.isSchoolOwner) {
     return null;
   }
 
