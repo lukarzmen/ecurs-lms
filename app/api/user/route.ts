@@ -427,7 +427,7 @@ export async function PATCH(req: Request) {
             where: { id: school.id },
             data: {
                 stripeAccountId: stripeAccountId,
-                stripeAccountStatus: stripeAccountStatus || 'created',
+                stripeAccountStatus: stripeAccountStatus || 'active',
                 stripeOnboardingComplete: false,
                 updatedAt: new Date(),
             },
