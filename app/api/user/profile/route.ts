@@ -21,16 +21,19 @@ export async function GET(request: NextRequest) {
             taxId: true,
             stripeOnboardingComplete: true,
             requiresVatInvoices: true,
+            schoolType: true,
           },
           take: 1,
         },
         schoolMemberships: {
           select: {
             schoolId: true,
+            role: true,
             school: {
               select: {
                 id: true,
                 name: true,
+                schoolType: true,
               },
             },
           },
@@ -45,14 +48,16 @@ export async function GET(request: NextRequest) {
 
     // Return user data with school business info if teacher
     const schoolData = user.ownedSchools && user.ownedSchools.length > 0 ? user.ownedSchools[0] : null;
-    const isMemberOfSchool = user.schoolMemberships && user.schoolMemberships.length > 0;
-    const memberSchool = isMemberOfSchool ? user.schoolMemberships[0].school : null;
+    const isSchoolOwner = !!schoolData;
+    const membership = user.schoolMemberships && user.schoolMemberships.length > 0 ? user.schoolMemberships[0] : null;
+    const isMemberOfSchool = !isSchoolOwner && !!membership;
+    const memberSchool = membership ? membership.school : null;
     
     // Determine businessType based on role and school membership
     let businessType = 'individual';
     if (user.roleId === 1) { // teacher
-      if (schoolData) {
-        businessType = 'company'; // Teacher who owns a school
+      if (isSchoolOwner) {
+        businessType = schoolData.schoolType === 'business' ? 'company' : 'individual';
       } else if (isMemberOfSchool) {
         businessType = 'individual'; // Member of school (not owner)
       }
@@ -69,8 +74,10 @@ export async function GET(request: NextRequest) {
       taxId: schoolData?.taxId || null,
       stripeOnboardingComplete: schoolData?.stripeOnboardingComplete || false,
       requiresVatInvoices: schoolData?.requiresVatInvoices || false,
+      ownerSchoolType: schoolData?.schoolType || null,
+      isSchoolOwner,
       isMemberOfSchool,
-      memberSchool: memberSchool ? { id: memberSchool.id, name: memberSchool.name } : null,
+      memberSchool: memberSchool ? { id: memberSchool.id, name: memberSchool.name, schoolType: memberSchool.schoolType } : null,
     });
 
   } catch (error) {
@@ -106,7 +113,7 @@ export async function PUT(request: NextRequest) {
       where: { providerId: userId },
       include: {
         ownedSchools: {
-          select: { id: true },
+          select: { id: true, schoolType: true },
           take: 1,
         },
       },
@@ -132,6 +139,7 @@ export async function PUT(request: NextRequest) {
             taxId: true,
             stripeOnboardingComplete: true,
             requiresVatInvoices: true,
+            schoolType: true,
           },
           take: 1,
         },
@@ -153,9 +161,8 @@ export async function PUT(request: NextRequest) {
 
     // Return combined response
     const schoolData = updatedUser.ownedSchools && updatedUser.ownedSchools.length > 0 ? updatedUser.ownedSchools[0] : null;
-    
-    // Determine businessType based on role and school ownership
-    const calculatedBusinessType = updatedUser.roleId === 1 && schoolData ? 'company' : 'individual';
+    const isSchoolOwner = !!schoolData;
+    const calculatedBusinessType = updatedUser.roleId === 1 && schoolData ? (schoolData.schoolType === 'business' ? 'company' : 'individual') : 'individual';
     
     return NextResponse.json({
       id: updatedUser.id,
@@ -168,6 +175,10 @@ export async function PUT(request: NextRequest) {
       taxId: schoolData?.taxId || null,
       stripeOnboardingComplete: schoolData?.stripeOnboardingComplete || false,
       requiresVatInvoices: schoolData?.requiresVatInvoices || false,
+      ownerSchoolType: schoolData?.schoolType || null,
+      isSchoolOwner,
+      isMemberOfSchool: false,
+      memberSchool: null,
     });
 
   } catch (error) {

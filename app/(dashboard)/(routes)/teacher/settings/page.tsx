@@ -57,8 +57,10 @@ interface UserProfile {
   requiresVatInvoices: boolean;
   stripeAccountStatus?: string;
   stripeOnboardingComplete: boolean;
+  ownerSchoolType?: "individual" | "business" | null;
+  isSchoolOwner?: boolean;
   isMemberOfSchool?: boolean;
-  memberSchool?: { id: number; name: string } | null;
+  memberSchool?: { id: number; name: string; schoolType?: "individual" | "business" } | null;
 }
 
 interface PlatformSubscription {
@@ -355,8 +357,8 @@ const TeacherSettingsPage = () => {
         </Card>
       )}
 
-      {/* Stripe Account Status - Show if teacher is individual OR is school owner (businessType = company) */}
-      {userProfile && (!userProfile.isMemberOfSchool || userProfile.businessType === 'company' || userProfile.businessType === 'business') && (
+      {/* Stripe Account Status - hide for school members (non-owners) */}
+      {userProfile && (!userProfile.isMemberOfSchool || userProfile.isSchoolOwner) && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -387,8 +389,8 @@ const TeacherSettingsPage = () => {
         </Card>
       )}
 
-      {/* Platform Subscription Management - Show if teacher is individual OR is school owner (businessType = company) */}
-      {(!userProfile?.isMemberOfSchool || userProfile?.businessType === 'company' || userProfile?.businessType === 'business') && (
+      {/* Platform Subscription Management - hide for school members (non-owners) */}
+      {(!userProfile?.isMemberOfSchool || userProfile?.isSchoolOwner) && (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -468,8 +470,8 @@ const TeacherSettingsPage = () => {
               <p className="text-muted-foreground">
                 Nie masz aktywnej subskrypcji platformy. Wybierz plan aby uzyskać pełny dostęp do funkcji nauczycielskich.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {(userProfile?.businessType === 'individual' || !userProfile?.businessType) && (
+              <div className="space-y-4">
+                {(userProfile?.businessType === 'individual' || !userProfile?.businessType) && !userProfile?.isSchoolOwner && (
                   <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                     <h4 className="font-semibold">Plan Indywidualny</h4>
                     <p className="text-sm text-muted-foreground mb-2">Do 20 uczniów</p>
@@ -480,7 +482,7 @@ const TeacherSettingsPage = () => {
                     </Button>
                   </div>
                 )}
-                {(userProfile?.businessType === 'company' || userProfile?.businessType === 'business') && (
+                {((userProfile?.businessType === 'company' || userProfile?.businessType === 'business' || userProfile?.ownerSchoolType === 'business')) && (
                   <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                     <h4 className="font-semibold">Plan Szkolny</h4>
                     <p className="text-sm text-muted-foreground mb-2">Powyżej 20 uczniów</p>
@@ -498,8 +500,8 @@ const TeacherSettingsPage = () => {
       </Card>
       )}
 
-      {/* School Membership Info - Show if teacher is member of school (but NOT school owner) */}
-      {userProfile?.isMemberOfSchool && userProfile?.memberSchool && userProfile?.businessType !== 'company' && userProfile?.businessType !== 'business' && (
+      {/* School Membership Info - show for school members who are not owners */}
+      {userProfile?.isMemberOfSchool && !userProfile?.isSchoolOwner && userProfile?.memberSchool && (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -511,7 +513,7 @@ const TeacherSettingsPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {platformSubscription ? (
+          {platformSubscription && platformSubscription.subscriptionStatus === 'active' ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
                 <div>
@@ -560,11 +562,11 @@ const TeacherSettingsPage = () => {
                 <div>
                   <p className="font-medium text-blue-900">Jesteś członkiem szkoły</p>
                   <p className="text-sm text-blue-700 mt-1">{userProfile.memberSchool.name}</p>
-                  <p className="text-xs text-blue-600 mt-2">Subskrypcja platformy jest opłacana przez Twoją szkołę.</p>
+                  <p className="text-xs text-blue-600 mt-2">Szkoła nie ma jeszcze aktywnej subskrypcji platformy.</p>
                 </div>
               </div>
               <p className="text-muted-foreground text-center">
-                Szkoła nie ma jeszcze aktywnej subskrypcji platformy. Poproś właściciela szkoły aby ją skonfigurował.
+                Poproś właściciela szkoły, aby skonfigurował subskrypcję platformy.
               </p>
             </div>
           )}

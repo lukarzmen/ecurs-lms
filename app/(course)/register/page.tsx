@@ -361,6 +361,31 @@ export default function RegisterPage() {
       setPendingBusinessData(null);
     }
   }, [needsPlatformSubscription, pendingBusinessData]);
+
+  // Fallback: ensure platform-subscription step has sensible defaults even if school data wasn't hydrated
+  useEffect(() => {
+    if (selectedRole !== "teacher" || currentStep !== "platform-subscription") return;
+
+    let patchedData: BusinessTypeData | null = null;
+
+    if (!businessData.joinSchoolMode) {
+      patchedData = { ...(patchedData ?? businessData), joinSchoolMode: "own-school" };
+    }
+
+    if (!businessData.businessType) {
+      const fallbackType = currentSchoolType === "business" ? "company" : "individual";
+      patchedData = { ...(patchedData ?? businessData), businessType: fallbackType };
+    }
+
+    if (patchedData) {
+      setBusinessData(patchedData);
+    }
+
+    if (!currentSchoolType) {
+      const effectiveType = (patchedData?.businessType ?? businessData.businessType) === "company" ? "business" : "individual";
+      setCurrentSchoolType(effectiveType);
+    }
+  }, [selectedRole, currentStep, businessData.joinSchoolMode, businessData.businessType, currentSchoolType, businessData]);
   
   const [registrationError, setRegistrationError] = useState<string | null>(null);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
@@ -410,14 +435,16 @@ export default function RegisterPage() {
             setSelectedRole("teacher");
             
             // Always populate businessData with school information if teacher has a school
-            const isMemberOfSchool = !!updateData.schoolMemberships?.[0];
-            const schoolForData = updateData.ownedSchools?.[0] || updateData.schoolMemberships?.[0]?.school;
+            const ownsSchool = !!updateData.ownedSchools?.[0];
+            const membershipSchool = updateData.schoolMemberships?.[0];
+            const isMemberOfOtherSchool = !!(membershipSchool && (!ownsSchool || membershipSchool.schoolId !== updateData.ownedSchools?.[0]?.id));
+            const schoolForData = updateData.ownedSchools?.[0] || membershipSchool?.school;
             
-            if (updateData.schoolId && schoolForData) {
+            if (schoolForData) {
               const businessType = (schoolForData.schoolType === "business" ? "company" : "individual") as "individual" | "company";
-              const joinMode = isMemberOfSchool ? "join-existing-school" : "own-school";
+              const joinMode = isMemberOfOtherSchool ? "join-existing-school" : "own-school";
               setBusinessData({
-                businessType: businessType,
+                businessType,
                 companyName: schoolForData.companyName || "",
                 schoolName: schoolForData.name || "",
                 taxId: schoolForData.taxId || "",
@@ -426,13 +453,34 @@ export default function RegisterPage() {
                 selectedSchoolId: schoolForData.id
               });
               setCurrentSchoolType(schoolForData.schoolType as "individual" | "business");
-              console.log('[checkUserStatus] School data populated from update-provider-id response:', schoolForData, 'isMemberOfSchool:', isMemberOfSchool);
+              console.log('[checkUserStatus] School data populated from update-provider-id response:', schoolForData, 'isMemberOfOtherSchool:', isMemberOfOtherSchool, 'ownsSchool:', ownsSchool);
             }
             
             // Check if returning from Stripe
             if (success === 'stripe') {
               console.log("Returning from Stripe with success=stripe");
               toast.success('Konto Stripe zostało skonfigurowane! Teraz wybierz plan subskrypcji platformy.');
+
+              const effectiveSchoolType = currentSchoolType
+                || (schoolForData?.schoolType as "individual" | "business" | undefined)
+                || (businessData.businessType === 'company' ? 'business' : 'individual');
+              setCurrentSchoolType(effectiveSchoolType);
+
+              setBusinessData(prev => {
+                const prevBusinessType = prev.businessType || businessData.businessType;
+                const businessTypeFromSchool = effectiveSchoolType === 'business' ? 'company' : 'individual';
+                return {
+                  ...prev,
+                  businessType: prevBusinessType === 'company' ? 'company' : businessTypeFromSchool,
+                  joinSchoolMode: prev.joinSchoolMode || 'own-school',
+                  companyName: prev.companyName || schoolForData?.companyName || "",
+                  schoolName: prev.schoolName || schoolForData?.name || "",
+                  taxId: prev.taxId || schoolForData?.taxId || "",
+                  requiresVatInvoices: typeof prev.requiresVatInvoices === 'boolean' ? prev.requiresVatInvoices : (schoolForData?.requiresVatInvoices || false),
+                  selectedSchoolId: prev.selectedSchoolId || schoolForData?.id,
+                };
+              });
+
               setCurrentStep("platform-subscription");
             } else if (success === 'subscription') {
               toast.success('Płatność za platformę została przetworzona! Rejestracja zakończona.');
@@ -442,11 +490,11 @@ export default function RegisterPage() {
               // Check if teacher has completed registration
               const hasStripe = updateData.stripeOnboardingComplete;
               const hasSubscription = updateData.hasActiveSubscription;
-              const isMember = !!updateData.schoolMemberships?.[0];
+              const isMember = isMemberOfOtherSchool;
               
-              console.log('[checkUserStatus] Teacher status - hasStripe:', hasStripe, 'hasSubscription:', hasSubscription, 'isMemberOfSchool:', isMember);
+              console.log('[checkUserStatus] Teacher status - hasStripe:', hasStripe, 'hasSubscription:', hasSubscription, 'isMemberOfOtherSchool:', isMember, 'ownsSchool:', ownsSchool);
               
-              // If teacher is a member of a school, they don't need to pay - school owner covers
+              // If teacher is a member of a school (not owner), they don't need to pay - school owner covers
               if (isMember) {
                 setCurrentStep("completed");
                 toast.success("Jesteś już w pełni zarejestrowany jako członek szkoły!");
@@ -487,8 +535,35 @@ export default function RegisterPage() {
           } else if (roleId === 1) {
             // Teacher with incomplete profile
             setSelectedRole("teacher");
-            setCurrentStep("business-type-selection");
-            toast("Witaj ponownie! Dokończymy rejestrację.", { icon: "👋" });
+            if (success === 'stripe') {
+              // Wracamy ze Stripe — skieruj od razu do subskrypcji platformy z danymi szkoły
+              const schoolForData = partialData.ownedSchools?.[0] || partialData.schoolMemberships?.[0]?.school;
+              const effectiveSchoolType = (schoolForData?.schoolType as "individual" | "business" | undefined) || currentSchoolType || (businessData.businessType === 'company' ? 'business' : 'individual');
+              const businessTypeFromSchool = effectiveSchoolType === 'business' ? 'company' : 'individual';
+
+              setCurrentSchoolType(effectiveSchoolType);
+
+              setBusinessData(prev => ({
+                ...prev,
+                businessType: prev.businessType && prev.businessType !== 'join-school' ? prev.businessType : businessTypeFromSchool,
+                joinSchoolMode: prev.joinSchoolMode || 'own-school',
+                companyName: prev.companyName || schoolForData?.companyName || "",
+                schoolName: prev.schoolName || schoolForData?.name || "",
+                taxId: prev.taxId || schoolForData?.taxId || "",
+                requiresVatInvoices: typeof prev.requiresVatInvoices === 'boolean' ? prev.requiresVatInvoices : (schoolForData?.requiresVatInvoices || false),
+                selectedSchoolId: prev.selectedSchoolId || schoolForData?.id,
+              }));
+
+              setCurrentStep("platform-subscription");
+              toast.success('Konto Stripe skonfigurowane. Wybierz plan platformy.');
+            } else if (success === 'subscription') {
+              toast.success('Płatność za platformę została przetworzona! Rejestracja zakończona.');
+              setCurrentStep("completed");
+              setTimeout(() => router.push("/teacher/courses"), 1500);
+            } else {
+              setCurrentStep("business-type-selection");
+              toast("Witaj ponownie! Dokończymy rejestrację.", { icon: "👋" });
+            }
           }
           
           setUserCheckCompleted(true);
@@ -531,6 +606,15 @@ export default function RegisterPage() {
               if (success === 'stripe') {
                 console.log("Returning from Stripe with success=stripe. userData:", userData);
                 toast.success('Konto Stripe zostało skonfigurowane! Teraz wybierz plan subskrypcji platformy.');
+                setBusinessData(prev => ({
+                  ...prev,
+                  businessType: prev.businessType || (currentSchoolType === 'business' ? 'company' : 'individual'),
+                  joinSchoolMode: prev.joinSchoolMode || 'own-school'
+                }));
+                if (!currentSchoolType) {
+                  const fallbackType = businessData.businessType === 'company' ? 'business' : 'individual';
+                  setCurrentSchoolType(fallbackType);
+                }
                 setCurrentStep("platform-subscription");
               } else if (success === 'subscription') {
                 toast.success('Płatność za platformę została przetworzona! Rejestracja zakończona.');
@@ -800,9 +884,11 @@ export default function RegisterPage() {
         // If teacher with school, set businessData based on schoolType
         if (updateData.isTeacher && updateData.schoolId) {
           console.log('[handleSignUp] ENTERING teacher with school block');
-          const school = updateData.ownedSchools?.[0] || updateData.schoolMemberships?.[0]?.school;
-          const isMemberOfSchool = !!updateData.schoolMemberships?.[0];
-          console.log('[handleSignUp] school object:', school, 'isMemberOfSchool:', isMemberOfSchool);
+          const ownsSchool = !!updateData.ownedSchools?.[0];
+          const membershipSchool = updateData.schoolMemberships?.[0];
+          const isMemberOfOtherSchool = !!(membershipSchool && (!ownsSchool || membershipSchool.schoolId !== updateData.ownedSchools?.[0]?.id));
+          const school = updateData.ownedSchools?.[0] || membershipSchool?.school;
+          console.log('[handleSignUp] school object:', school, 'isMemberOfOtherSchool:', isMemberOfOtherSchool, 'ownsSchool:', ownsSchool);
           const schoolType = school?.schoolType || "individual";
           
           console.log('[handleSignUp] Setting businessData based on school type:', schoolType);
@@ -816,10 +902,10 @@ export default function RegisterPage() {
           const hasActiveSubscription = updateData.hasActiveSubscription;
           const stripeOnboardingComplete = updateData.stripeOnboardingComplete;
           
-          console.log('[handleSignUp] hasActiveSubscription:', hasActiveSubscription, 'stripeOnboardingComplete:', stripeOnboardingComplete, 'isMemberOfSchool:', isMemberOfSchool);
+          console.log('[handleSignUp] hasActiveSubscription:', hasActiveSubscription, 'stripeOnboardingComplete:', stripeOnboardingComplete, 'isMemberOfOtherSchool:', isMemberOfOtherSchool, 'ownsSchool:', ownsSchool);
           
-          // If teacher is a member of school, they don't pay individually - school owner's subscription covers them
-          if (isMemberOfSchool) {
+          // If teacher is a member of another school, they don't pay individually - school owner's subscription covers them
+          if (isMemberOfOtherSchool) {
             console.log('[handleSignUp] Teacher is member of school - no need to pay, logging in directly');
             setBusinessData(prev => ({
               ...prev,

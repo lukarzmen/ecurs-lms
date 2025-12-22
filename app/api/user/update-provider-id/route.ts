@@ -144,11 +144,13 @@ export async function POST(req: Request) {
       const isTeacher = updatedUser.roleId === 1;
       const schoolId = updatedUser.ownedSchools?.[0]?.id ?? updatedUser.schoolMemberships?.[0]?.schoolId ?? null;
       const stripeOnboardingComplete = updatedUser.ownedSchools?.[0]?.stripeOnboardingComplete ?? updatedUser.schoolMemberships?.[0]?.school?.stripeOnboardingComplete ?? false;
+      const ownsSchool = !!updatedUser.ownedSchools?.[0];
+      const membershipSchoolId = updatedUser.schoolMemberships?.[0]?.schoolId;
+      const isMemberOfOtherSchool = !!(membershipSchoolId && (!ownsSchool || membershipSchoolId !== updatedUser.ownedSchools?.[0]?.id));
       // Teacher has active subscription if:
-      // 1. They own a school (own subscription), OR
-      // 2. They are a member of a school (school owner's subscription covers them)
-      const isMemberOfSchool = !!updatedUser.schoolMemberships?.[0];
-      const hasActiveSubscription = isMemberOfSchool || updatedUser.teacherPlatformSubscription?.subscriptionStatus === 'active';
+      // 1. They have an active personal platform subscription, OR
+      // 2. They belong to a different school (owner covers subscription)
+      const hasActiveSubscription = isMemberOfOtherSchool || updatedUser.teacherPlatformSubscription?.subscriptionStatus === 'active';
 
       // If profile is incomplete, return 206 (Partial Content) with incomplete flag
       if (!hasAllFields) {
@@ -185,11 +187,11 @@ export async function POST(req: Request) {
         const isTeacher = existingUser.roleId === 1;
         const schoolId = existingUser.ownedSchools?.[0]?.id ?? existingUser.schoolMemberships?.[0]?.schoolId ?? null;
         const stripeOnboardingComplete = existingUser.ownedSchools?.[0]?.stripeOnboardingComplete ?? existingUser.schoolMemberships?.[0]?.school?.stripeOnboardingComplete ?? false;
-        // Teacher has active subscription if:
-        // 1. They own a school (own subscription), OR
-        // 2. They are a member of a school (school owner's subscription covers them)
-        const isMemberOfSchool = !!existingUser.schoolMemberships?.[0];
-        const hasActiveSubscription = isMemberOfSchool || existingUser.teacherPlatformSubscription?.subscriptionStatus === 'active';
+        const ownsSchool = !!existingUser.ownedSchools?.[0];
+        const membershipSchoolId = existingUser.schoolMemberships?.[0]?.schoolId;
+        const isMemberOfOtherSchool = !!(membershipSchoolId && (!ownsSchool || membershipSchoolId !== existingUser.ownedSchools?.[0]?.id));
+        // Teacher has active subscription if they pay themselves or belong to a different school
+        const hasActiveSubscription = isMemberOfOtherSchool || existingUser.teacherPlatformSubscription?.subscriptionStatus === 'active';
         
         return NextResponse.json(
           { 
@@ -211,11 +213,11 @@ export async function POST(req: Request) {
       const isTeacher = existingUser.roleId === 1;
       const schoolId = existingUser.ownedSchools?.[0]?.id ?? existingUser.schoolMemberships?.[0]?.schoolId ?? null;
       const stripeOnboardingComplete = existingUser.ownedSchools?.[0]?.stripeOnboardingComplete ?? existingUser.schoolMemberships?.[0]?.school?.stripeOnboardingComplete ?? false;
-      // Teacher has active subscription if:
-      // 1. They own a school (own subscription), OR
-      // 2. They are a member of a school (school owner's subscription covers them)
-      const isMemberOfSchool = !!existingUser.schoolMemberships?.[0];
-      const hasActiveSubscription = isMemberOfSchool || existingUser.teacherPlatformSubscription?.subscriptionStatus === 'active';
+      const ownsSchool = !!existingUser.ownedSchools?.[0];
+      const membershipSchoolId = existingUser.schoolMemberships?.[0]?.schoolId;
+      const isMemberOfOtherSchool = !!(membershipSchoolId && (!ownsSchool || membershipSchoolId !== existingUser.ownedSchools?.[0]?.id));
+      // Teacher has active subscription if they pay themselves or belong to a different school
+      const hasActiveSubscription = isMemberOfOtherSchool || existingUser.teacherPlatformSubscription?.subscriptionStatus === 'active';
       
       return NextResponse.json({
         updated: false,
