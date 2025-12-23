@@ -513,7 +513,7 @@ const TeacherSettingsPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {platformSubscription && platformSubscription.subscriptionStatus === 'active' ? (
+          {platformSubscription && (platformSubscription.subscriptionStatus === 'active' || platformSubscription.subscriptionStatus === 'cancel_at_period_end') ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
                 <div>
