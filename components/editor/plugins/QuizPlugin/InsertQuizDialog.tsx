@@ -33,6 +33,8 @@ export function InsertQuizDialog({
     current.answers.every((answer) => answer.trim() !== "") &&
     current.correctAnswerIndex !== null;
 
+  const canFinish = tests.length > 0 || isFormValid;
+
   const handleAddQuestion = () => {
     if (!isFormValid) return;
     setTests((prev) => [...prev, { ...current, question: current.question.trim(), answers: current.answers.map(a => a.trim()), correctAnswerDescription: current.correctAnswerDescription?.trim() || null }]);
@@ -138,9 +140,9 @@ export function InsertQuizDialog({
         </button>
         <button
           onClick={handleFinish}
-          // Utwórz quiz dostępny tylko gdy formularz aktualnego pytania jest wypełniony
-          disabled={!isFormValid}
-          className={`px-4 py-2 rounded-md text-white ${isFormValid ? "bg-green-600 hover:bg-green-700" : "bg-gray-400"
+          // Utwórz quiz dostępny, gdy istnieje przynajmniej jedno kompletne pytanie
+          disabled={!canFinish}
+          className={`px-4 py-2 rounded-md text-white ${canFinish ? "bg-green-600 hover:bg-green-700" : "bg-gray-400"
             }`}
         >
           Zakończ dodawanie i utwórz quiz

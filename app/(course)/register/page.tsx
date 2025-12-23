@@ -11,8 +11,8 @@ const TERMS_LAST_UPDATE = "18.10.2025";
 
 const STUDENT_TERMS = (
   <div className="text-left max-h-40 sm:max-h-48 md:max-h-64 overflow-y-auto px-2 sm:px-3 py-2 sm:py-3 bg-orange-50 rounded-lg border border-orange-200 shadow-inner text-xs sm:text-sm leading-relaxed space-y-1 sm:space-y-2">
-    <h2 className="text-sm sm:text-lg font-bold text-orange-700 mb-1 sm:mb-2 sticky top-0 bg-orange-50 py-1">📜 Warunki uczestnictwa użytkownika w platformie Ecurs</h2>
-    <p className="text-xs text-gray-500 mb-1 sm:mb-2 sticky top-8 sm:top-10 bg-orange-50 py-1">
+    <h2 className="text-sm sm:text-lg font-bold text-orange-700 mb-1 sm:mb-2">📜 Warunki uczestnictwa użytkownika w platformie Ecurs</h2>
+    <p className="text-xs text-gray-500 mb-1 sm:mb-2">
       Obowiązuje od: {TERMS_EFFECTIVE_DATE} &nbsp;|&nbsp; Ostatnia aktualizacja: {TERMS_LAST_UPDATE}
     </p>
     <p className="font-semibold text-gray-700">§1. Postanowienia ogólne</p>
@@ -101,8 +101,8 @@ const STUDENT_TERMS = (
 
 const TEACHER_TERMS = (
   <div className="text-left max-h-40 sm:max-h-48 md:max-h-64 overflow-y-auto px-2 sm:px-3 py-2 sm:py-3 bg-blue-50 rounded-lg border border-blue-200 shadow-inner text-xs sm:text-sm leading-relaxed space-y-1 sm:space-y-2">
-    <h2 className="text-sm sm:text-lg font-bold text-blue-700 mb-1 sm:mb-2 sticky top-0 bg-blue-50 py-1">📜 Warunki uczestnictwa nauczyciela w platformie Ecurs</h2>
-    <p className="text-xs text-gray-500 mb-1 sm:mb-2 sticky top-8 sm:top-10 bg-blue-50 py-1">
+    <h2 className="text-sm sm:text-lg font-bold text-blue-700 mb-1 sm:mb-2">📜 Warunki uczestnictwa nauczyciela w platformie Ecurs</h2>
+    <p className="text-xs text-gray-500 mb-1 sm:mb-2">
       Obowiązuje od: {TERMS_EFFECTIVE_DATE} &nbsp;|&nbsp; Ostatnia aktualizacja: {TERMS_LAST_UPDATE}
     </p>
     <p className="font-semibold text-gray-700">§1. Postanowienia ogólne</p>
@@ -143,7 +143,7 @@ const TEACHER_TERMS = (
         <b>Obowiązkowa rejestracja konta płatności:</b> Każdy nauczyciel musi zarejestrować się w systemie płatności Stripe w celu otrzymywania płatności od uczniów. Jest to wymagane prawnie do przetwarzania transakcji.
       </li>
       <li>
-        <b>Proces rejestracji:</b> Po akceptacji regulaminu zostaniesz automatycznie przekierowany na bezpieczną stronę Stripe, gdzie podasz swoje dane do celów płatności i fiskalnych. Po zakończeniu procesu zostaniesz przekierowany z powrotem na platformę Ecurs.
+        <b>Proces rejestracji:</b> W dalszych krokach rejestracji poprosimy Cię o konfigurację konta płatności w Stripe, gdzie podasz swoje dane do celów płatności i fiskalnych.
       </li>
       <li>
         <b>Dane wymagane przez Stripe:</b> Imię i nazwisko, adres, numer telefonu, dane bankowe do otrzymywania płatności oraz informacje niezbędne do wystawiania faktur zgodnie z polskim prawem podatkowym.
@@ -293,7 +293,7 @@ const TEACHER_TERMS = (
   </div>
 );
 
-type RegistrationStep = "role-selection" | "business-type-selection" | "school-choice" | "find-school" | "terms-acceptance" | "user-creation" | "stripe-setup" | "platform-subscription" | "completed";
+type RegistrationStep = "role-selection" | "terms-consent" | "business-type-selection" | "school-choice" | "find-school" | "terms-acceptance" | "user-creation" | "stripe-setup" | "platform-subscription" | "completed";
 type LoadingState = "idle" | "creating-user" | "creating-stripe-account" | "redirecting-to-stripe" | "updating-user" | "creating-platform-subscription" | "completing-registration" | "sending-join-request";
 
 interface School {
@@ -349,6 +349,18 @@ export default function RegisterPage() {
   const [needsPlatformSubscription, setNeedsPlatformSubscription] = useState(false);
   const [pendingBusinessData, setPendingBusinessData] = useState<BusinessTypeData | null>(null);
   const [currentSchoolType, setCurrentSchoolType] = useState<"individual" | "business" | null>(null);
+
+  // Keep latest values for useEffect-driven flows without expanding dependency arrays
+  const businessDataRef = useRef<BusinessTypeData>(businessData);
+  const currentSchoolTypeRef = useRef<"individual" | "business" | null>(currentSchoolType);
+
+  useEffect(() => {
+    businessDataRef.current = businessData;
+  }, [businessData]);
+
+  useEffect(() => {
+    currentSchoolTypeRef.current = currentSchoolType;
+  }, [currentSchoolType]);
   
   useEffect(() => {
     if (needsPlatformSubscription && pendingBusinessData) {
@@ -461,13 +473,13 @@ export default function RegisterPage() {
               console.log("Returning from Stripe with success=stripe");
               toast.success('Konto Stripe zostało skonfigurowane! Teraz wybierz plan subskrypcji platformy.');
 
-              const effectiveSchoolType = currentSchoolType
+              const effectiveSchoolType = currentSchoolTypeRef.current
                 || (schoolForData?.schoolType as "individual" | "business" | undefined)
-                || (businessData.businessType === 'company' ? 'business' : 'individual');
+                || (businessDataRef.current.businessType === 'company' ? 'business' : 'individual');
               setCurrentSchoolType(effectiveSchoolType);
 
               setBusinessData(prev => {
-                const prevBusinessType = prev.businessType || businessData.businessType;
+                const prevBusinessType = prev.businessType || businessDataRef.current.businessType;
                 const businessTypeFromSchool = effectiveSchoolType === 'business' ? 'company' : 'individual';
                 return {
                   ...prev,
@@ -530,7 +542,7 @@ export default function RegisterPage() {
           if (roleId === 0) {
             // Student with incomplete profile
             setSelectedRole("student");
-            setCurrentStep("terms-acceptance");
+            setCurrentStep("terms-consent");
             toast("Witaj ponownie! Uzupełnij swoje dane.", { icon: "👋" });
           } else if (roleId === 1) {
             // Teacher with incomplete profile
@@ -538,7 +550,9 @@ export default function RegisterPage() {
             if (success === 'stripe') {
               // Wracamy ze Stripe — skieruj od razu do subskrypcji platformy z danymi szkoły
               const schoolForData = partialData.ownedSchools?.[0] || partialData.schoolMemberships?.[0]?.school;
-              const effectiveSchoolType = (schoolForData?.schoolType as "individual" | "business" | undefined) || currentSchoolType || (businessData.businessType === 'company' ? 'business' : 'individual');
+              const effectiveSchoolType = (schoolForData?.schoolType as "individual" | "business" | undefined)
+                || currentSchoolTypeRef.current
+                || (businessDataRef.current.businessType === 'company' ? 'business' : 'individual');
               const businessTypeFromSchool = effectiveSchoolType === 'business' ? 'company' : 'individual';
 
               setCurrentSchoolType(effectiveSchoolType);
@@ -608,11 +622,12 @@ export default function RegisterPage() {
                 toast.success('Konto Stripe zostało skonfigurowane! Teraz wybierz plan subskrypcji platformy.');
                 setBusinessData(prev => ({
                   ...prev,
-                  businessType: prev.businessType || (currentSchoolType === 'business' ? 'company' : 'individual'),
+                  businessType: prev.businessType || (currentSchoolTypeRef.current === 'business' ? 'company' : 'individual'),
                   joinSchoolMode: prev.joinSchoolMode || 'own-school'
                 }));
-                if (!currentSchoolType) {
-                  const fallbackType = businessData.businessType === 'company' ? 'business' : 'individual';
+                if (!currentSchoolTypeRef.current) {
+                  const chosenBusinessType = businessDataRef.current.businessType || (currentSchoolTypeRef.current === 'business' ? 'company' : 'individual');
+                  const fallbackType = chosenBusinessType === 'company' ? 'business' : 'individual';
                   setCurrentSchoolType(fallbackType);
                 }
                 setCurrentStep("platform-subscription");
@@ -670,13 +685,13 @@ export default function RegisterPage() {
                       taxId: userData.school.taxId
                     });
                     
-                    setCurrentStep("terms-acceptance");
-                    toast.success("Masz już przypisaną szkołę! Przejdź do akceptacji regulaminu.", { icon: "🏫" });
+                    setCurrentStep("terms-consent");
+                    toast.success("Masz już przypisaną szkołę! Zaakceptuj regulamin, aby kontynuować.", { icon: "🏫" });
                   } else if (userData.schoolId) {
                     // Has schoolId but school data not fetched - still proceed to terms
                     console.log('[checkUserStatus] Has schoolId but no school data');
-                    setCurrentStep("terms-acceptance");
-                    toast.success("Masz już przypisaną szkołę! Przejdź do akceptacji regulaminu.", { icon: "🏫" });
+                    setCurrentStep("terms-consent");
+                    toast.success("Masz już przypisaną szkołę! Zaakceptuj regulamin, aby kontynuować.", { icon: "🏫" });
                   } else {
                     // Needs business type selection
                     setCurrentStep("business-type-selection");
@@ -754,21 +769,6 @@ export default function RegisterPage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const getStepNumber = (step: RegistrationStep): number => {
-    const stepMap = {
-      "role-selection": 1,
-      "business-type-selection": 2,
-      "school-choice": 3,
-      "find-school": 3,
-      "terms-acceptance": 4,
-      "user-creation": 5,
-      "stripe-setup": 6,
-      "platform-subscription": 7,
-      "completed": 8
-    };
-    return stepMap[step];
-  };
-
   const getLoadingMessage = (state: LoadingState): string => {
     const messages = {
       "idle": "",
@@ -787,10 +787,30 @@ export default function RegisterPage() {
     if (!selectedRole || currentStep === "role-selection") return null;
     
     const steps = selectedRole === "teacher" 
-      ? ["Wybór roli", "Typ działalności", "Wybór szkoły", "Akceptacja regulaminu", "Tworzenie konta", "Konfiguracja płatności", "Subskrypcja platformy", "Zakończone"]
-      : ["Wybór roli", "Akceptacja regulaminu", "Tworzenie konta", "Zakończone"];
+      ? ["Wybór roli", "Regulamin", "Typ działalności", "Wybór szkoły", "Tworzenie konta", "Konfiguracja płatności", "Subskrypcja platformy", "Zakończone"]
+      : ["Wybór roli", "Regulamin", "Tworzenie konta", "Zakończone"];
     
-    const currentStepNumber = getStepNumber(currentStep);
+    const normalizeStepForProgress = (step: RegistrationStep): RegistrationStep => {
+      if (step === "find-school") return "school-choice";
+      if (step === "user-creation") return "terms-acceptance";
+      return step;
+    };
+
+    const stepOrder: RegistrationStep[] = selectedRole === "teacher"
+      ? [
+          "role-selection",
+          "terms-consent",
+          "business-type-selection",
+          "school-choice",
+          "terms-acceptance",
+          "stripe-setup",
+          "platform-subscription",
+          "completed",
+        ]
+      : ["role-selection", "terms-consent", "terms-acceptance", "completed"];
+
+    const currentNormalizedStep = normalizeStepForProgress(currentStep);
+    const currentStepNumber = Math.max(1, stepOrder.indexOf(currentNormalizedStep) + 1);
     const totalSteps = steps.length;
     
     return (
@@ -1318,20 +1338,15 @@ export default function RegisterPage() {
     }
     
     setSelectedRole(role);
-    
+    setCurrentStep("terms-consent");
+    setAcceptTerms(false);
+    setRegistrationError(null);
+    setLoadingState("idle");
+
     if (role === "teacher") {
-      // For teacher, simply move to business type selection
-      // User will be created in handleSignUp
-      setCurrentStep("business-type-selection");
-      setRegistrationError(null);
-      setLoadingState("idle");
-      toast.success("Wybrano rolę: nauczyciel. Teraz wybierz typ działalności.");
+      toast.success("Wybrano rolę: nauczyciel. Zaakceptuj regulamin, aby kontynuować.");
     } else {
-      setCurrentStep("terms-acceptance");
-      setAcceptTerms(false);
-      setRegistrationError(null);
-      setLoadingState("idle");
-      toast.success("Wybrano rolę: uczeń");
+      toast.success("Wybrano rolę: uczeń. Zaakceptuj regulamin, aby kontynuować.");
     }
   }, [isLoading, selectedRole, loadingState]);
 
@@ -1452,7 +1467,16 @@ export default function RegisterPage() {
     }
     
     setCurrentStep("business-type-selection");
-    setAcceptTerms(false);
+    setRegistrationError(null);
+  };
+
+  const handleBackToTermsConsent = () => {
+    // Block navigation during redirect states
+    if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+      return;
+    }
+
+    setCurrentStep("terms-consent");
     setRegistrationError(null);
   };
 
@@ -1977,7 +2001,7 @@ export default function RegisterPage() {
                       <span className="text-sm">Zapisywanie...</span>
                     </div>
                   ) : (
-                    "Kontynuuj do akceptacji regulaminu"
+                    "Kontynuuj"
                   )}
                 </button>
               </div>
@@ -2461,28 +2485,56 @@ export default function RegisterPage() {
                 </div>
               </div>
             </div>
-          ) : (
+          ) : currentStep === "completed" ? (
+            <div className="text-center space-y-4">
+              <div className="bg-green-50 border-2 border-green-300 rounded-lg p-6">
+                <p className="text-lg font-semibold text-green-800 mb-2">✅ Wszystkie kroki zostały wykonane</p>
+                <p className="text-sm text-green-700">
+                  Rejestracja zakończona. Kliknij przycisk poniżej, aby przejść do platformy.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
+                    return;
+                  }
+                  router.push(selectedRole === "teacher" ? "/teacher/courses" : "/");
+                }}
+                disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
+                className={`w-full py-3 px-4 rounded-lg font-medium text-white text-sm sm:text-base lg:text-lg transition-all
+                  ${isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700 hover:shadow-lg"
+                  }`}
+              >
+                Przejdź do platformy
+              </button>
+            </div>
+          ) : currentStep === "terms-consent" ? (
             <div>
               <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <span className={`flex items-center gap-1 sm:gap-2 text-sm sm:text-base lg:text-lg font-semibold ${selectedRole === "student" ? "text-orange-600" : "text-blue-600"}`}>
-                  {selectedRole === "student" ? "👩‍🎓 Rejestracja ucznia" : "👨‍🏫 Rejestracja nauczyciela"}
+                  {selectedRole === "student" ? "👩‍🎓 Regulamin ucznia" : "👨‍🏫 Regulamin nauczyciela"}
                 </span>
                 <button
                   className={`text-xs sm:text-sm text-gray-500 underline hover:text-orange-700 transition disabled:opacity-50 px-1 py-1 ${(isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none opacity-50" : ""}`}
-                  onClick={selectedRole === "teacher" ? handleBackToBusinessType : handleBackToRoleSelection}
+                  onClick={handleBackToRoleSelection}
                   type="button"
                   disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                 >
-                  {selectedRole === "teacher" ? "← Wróć" : "← Wróć"}
+                  ← Zmień rolę
                 </button>
               </div>
+
               {selectedRole === "student" ? STUDENT_TERMS : TEACHER_TERMS}
+
               <label className="flex items-start mt-2 sm:mt-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={acceptTerms}
                   onChange={e => {
-                    // Block checkbox during redirect states
                     if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") {
                       e.preventDefault();
                       return;
@@ -2498,9 +2550,62 @@ export default function RegisterPage() {
                 <span className={`ml-2 text-xs sm:text-sm leading-tight ${isLoading ? "text-gray-400" : "text-gray-700"}`}>
                   {selectedRole === "student"
                     ? "Akceptuję regulamin platformy Ecurs"
-                    : "Akceptuję regulamin, warunki płatności i wyrażam zgodę na rejestrację w systemie płatności Stripe"}
+                    : "Akceptuję regulamin platformy Ecurs"}
                 </span>
               </label>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!acceptTerms) {
+                    setRegistrationError("Aby kontynuować, musisz zaakceptować regulamin");
+                    toast.error("Aby kontynuować, musisz zaakceptować regulamin.");
+                    return;
+                  }
+                  setRegistrationError(null);
+                  setCurrentStep(selectedRole === "teacher" ? "business-type-selection" : "terms-acceptance");
+                }}
+                disabled={isLoading || !acceptTerms || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
+                className={`w-full mt-3 sm:mt-4 py-3 px-3 sm:px-4 md:px-8 rounded-lg font-medium text-white text-sm sm:text-base lg:text-lg transition-all
+                  ${selectedRole === "student"
+                    ? (isLoading || !acceptTerms || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-orange-600 hover:bg-orange-700 hover:shadow-lg")
+                    : (isLoading || !acceptTerms || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg")
+                  }`}
+              >
+                Kontynuuj
+              </button>
+            </div>
+          ) : (
+            <div>
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <span className={`flex items-center gap-1 sm:gap-2 text-sm sm:text-base lg:text-lg font-semibold ${selectedRole === "student" ? "text-orange-600" : "text-blue-600"}`}>
+                  {selectedRole === "student" ? "👩‍🎓 Rejestracja ucznia" : "👨‍🏫 Rejestracja nauczyciela"}
+                </span>
+                <button
+                  className={`text-xs sm:text-sm text-gray-500 underline hover:text-orange-700 transition disabled:opacity-50 px-1 py-1 ${(isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none opacity-50" : ""}`}
+                  onClick={selectedRole === "teacher" ? handleBackToBusinessType : handleBackToTermsConsent}
+                  type="button"
+                  disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
+                >
+                  {selectedRole === "teacher" ? "← Wróć" : "← Wróć"}
+                </button>
+              </div>
+              <div className={`p-3 sm:p-4 rounded-lg border ${selectedRole === "student" ? "bg-orange-50 border-orange-200" : "bg-blue-50 border-blue-200"}`}>
+                <p className={`text-sm font-semibold ${selectedRole === "student" ? "text-orange-800" : "text-blue-800"}`}>
+                  {selectedRole === "teacher" ? "✅ Konto zostało utworzone" : "✅ Wszystkie kroki zostały wykonane"}
+                </p>
+                <p className={`text-xs sm:text-sm mt-1 leading-tight ${selectedRole === "student" ? "text-orange-700" : "text-blue-700"}`}>
+                  {selectedRole === "teacher"
+                    ? (businessData.joinSchoolMode === "join-existing-school"
+                        ? "Możesz przejść do platformy. Szkoła zajmuje się płatnościami."
+                        : "Możesz kontynuować. Pozostała konfiguracja płatności (Stripe).")
+                    : "Rejestracja zakończona. Kliknij przycisk poniżej, aby przejść do platformy."}
+                </p>
+              </div>
               
               {selectedRole === "teacher" && (
                 <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -2511,8 +2616,7 @@ export default function RegisterPage() {
                     </p>
                   ) : (
                     <p className="text-xs text-blue-600 mt-1 leading-tight">
-                      Po kliknięciu &quot;Kontynuuj&quot; zostaniesz przekierowany na bezpieczną stronę Stripe w celu konfiguracji konta płatności. 
-                      Po zakończeniu procesu automatycznie wrócisz na platformę Ecurs.
+                      Po kliknięciu &quot;Kontynuuj&quot; rozpoczniesz konfigurację konta płatności w Stripe.
                     </p>
                   )}
                 </div>
@@ -2543,7 +2647,7 @@ export default function RegisterPage() {
                     </span>
                   </div>
                 ) : selectedRole === "student" ? (
-                  "Zarejestruj się jako uczeń"
+                  "Przejdź do platformy"
                 ) : businessData.joinSchoolMode === "join-existing-school" ? (
                   "Przejdź do platformy"
                 ) : (
