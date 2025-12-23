@@ -88,11 +88,12 @@ export function GenerateDictionaryPlugin() {
           if (Object.keys(dictionaryData).length === 0) {
             selection.getTextContent().split('\n')
             .forEach((line) => {
-                const ponentialKeyValue = line.split('–'); 
-                const key = ponentialKeyValue[0]?.trim() || '';
-                const value = ponentialKeyValue[1]?.trim() || '';
+                // Accept separators: hyphen (-), en dash (–), em dash (—) with spacing to avoid splitting compound words
+                const dashMatch = line.match(/^\s*(.+?)\s*[–—-]\s+(.*)$/);
+                const key = dashMatch?.[1]?.trim() || '';
+                const value = dashMatch?.[2]?.trim() || '';
                 const isNotLongText = key.length < 60 && value.length < 60;
-                if(ponentialKeyValue.length === 2 && key && value && isNotLongText){
+                if(dashMatch && key && value && isNotLongText){
                   dictionaryData[key] = value;
                 }
               });

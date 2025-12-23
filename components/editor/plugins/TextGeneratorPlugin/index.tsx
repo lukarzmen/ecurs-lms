@@ -121,7 +121,7 @@ export function TextGeneratorDialog({
             </label>
             <textarea
               className="w-full px-3 py-2 border-2 border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all resize-none"
-              rows={4}
+              rows={6}
               placeholder="Edytuj polecenie lub dodaj szczegóły dotyczące treści, którą chcesz wygenerować..."
               value={userPrompt}
               onChange={(e) => setUserPrompt(e.target.value)}

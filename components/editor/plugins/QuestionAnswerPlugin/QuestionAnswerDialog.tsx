@@ -26,18 +26,18 @@ export function QuestionAnswerDialog({
         <textarea
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          className="w-full border border-gray-300 rounded-md p-2 resize-y min-h-[60px]" // Added resize-y and min-h
+          className="w-full border border-gray-300 rounded-md p-2 resize-y min-h-[120px]" // Added resize-y and min-h
           placeholder="Wpisz swoje pytanie"
-          rows={3} // Added rows attribute
+          rows={6} // Added rows attribute
         />
         {/* Answer */}
         <label className="text-sm font-medium text-gray-700 text-left pt-2">Odpowiedź:</label> {/* Added pt-2 for alignment */}
         <textarea
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
-          className="w-full border border-gray-300 rounded-md p-2 resize-y min-h-[60px]" // Added resize-y and min-h
+          className="w-full border border-gray-300 rounded-md p-2 resize-y min-h-[120px]" // Added resize-y and min-h
           placeholder="Wpisz poprawną odpowiedź"
-          rows={3} // Added rows attribute
+          rows={6} // Added rows attribute
         />
          {/* Explanation */}
         <label className="text-sm font-medium text-gray-700 text-left pt-2">Wyjaśnienie:</label> {/* Added pt-2 for alignment */}

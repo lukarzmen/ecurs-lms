@@ -46,21 +46,23 @@ export function InsertTodoDialog({
       />
       <div className="mb-2">
         <label className="block text-sm font-medium text-gray-700 mb-1">Dodaj zadanie</label>
-        <div className="flex gap-2">
-          <input
-            type="text"
+        <div className="flex flex-col gap-2">
+          <textarea
             value={newText}
             onChange={(e) => setNewText(e.target.value)}
-            className="flex-1 border border-gray-300 rounded-md p-2"
+            className="w-full border border-gray-300 rounded-md p-2 resize-y"
             placeholder="Nowe zadanie..."
-            onKeyDown={(e) => { if (e.key === "Enter") handleAddItem(); }}
+            rows={4}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAddItem(); } }}
           />
-          <button
-            onClick={handleAddItem}
-            className="px-4 py-2 rounded-md bg-orange-600 text-white font-bold hover:bg-orange-700"
-          >
-            Dodaj
-          </button>
+          <div className="flex justify-end">
+            <button
+              onClick={handleAddItem}
+              className="px-4 py-2 rounded-md bg-orange-600 text-white font-bold hover:bg-orange-700"
+            >
+              Dodaj
+            </button>
+          </div>
         </div>
       </div>
       {items.length > 0 && (

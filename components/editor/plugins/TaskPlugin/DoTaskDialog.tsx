@@ -25,6 +25,7 @@ export function DoTaskDialog({
         <textarea
           value={task}
           onChange={(e) => setQuestion(e.target.value)}
+          rows={6}
           className="w-full border border-gray-300 rounded-md p-2"
           placeholder="Zadanie"
         />

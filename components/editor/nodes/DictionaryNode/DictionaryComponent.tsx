@@ -26,6 +26,11 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
 
   const [view, setView] = useState<"flashView" | "dictionaryView" | "matchGameView" | "readonlyDictionaryView">(isReadonly ? "flashView" : "dictionaryView");
 
+  useEffect(() => {
+    // Keep readonly sessions starting from flashcards; editable defaults to table
+    setView(isReadonly ? "flashView" : "dictionaryView");
+  }, [isReadonly]);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentColorIndex, setCurrentColorIndex] = useState(0);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);

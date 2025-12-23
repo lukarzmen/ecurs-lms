@@ -143,7 +143,7 @@ export function InsertQuizDialog({
           className={`px-4 py-2 rounded-md text-white ${isFormValid ? "bg-green-600 hover:bg-green-700" : "bg-gray-400"
             }`}
         >
-          Utwórz quiz
+          Zakończ dodawanie i utwórz quiz
         </button>
         <button
           onClick={onClose}
