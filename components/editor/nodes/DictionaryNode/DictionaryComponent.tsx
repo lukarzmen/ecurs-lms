@@ -24,7 +24,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
   // Derive entries from the dictionary prop instead of keeping separate state
   const currentEntries = useMemo(() => Object.entries(dictionary), [dictionary]);
 
-  const [view, setView] = useState<"flashView" | "dictionaryView" | "matchGameView">(isReadonly ? "flashView" : "dictionaryView");
+  const [view, setView] = useState<"flashView" | "dictionaryView" | "matchGameView" | "readonlyDictionaryView">(isReadonly ? "flashView" : "dictionaryView");
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentColorIndex, setCurrentColorIndex] = useState(0);
@@ -418,6 +418,41 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
         </div>
       )}
 
+      {/* Readonly Dictionary View */}
+      {view === "readonlyDictionaryView" && isReadonly && (
+        <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Table className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold">Podgląd słowniczka</h3>
+                <p className="text-sm text-muted-foreground">Widok tylko do odczytu</p>
+              </div>
+            </div>
+          </div>
+
+          {currentEntries.length > 0 ? (
+            <div className="space-y-3">
+              {currentEntries.map(([keyword, definition], index) => (
+                <div key={index} className="rounded-lg border border-border bg-muted/40 p-4">
+                  <div className="text-sm font-semibold text-muted-foreground">Hasło</div>
+                  <div className="text-lg font-semibold text-foreground break-words">{keyword || "—"}</div>
+                  <div className="h-px w-full bg-border my-3" />
+                  <div className="text-sm font-semibold text-muted-foreground">Tłumaczenie</div>
+                  <div className="text-base text-foreground break-words">{definition || "—"}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-8 text-center">
+              <p className="text-muted-foreground">Brak wpisów do wyświetlenia</p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Flashcard View */}
       {view === "flashView" && (
         <div className="flex flex-col items-center" {...swipeHandlers}>
@@ -475,6 +510,15 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
 
       {/* View Switch Buttons */}
       <div className="flex justify-center flex-wrap gap-3 mt-8">
+          {isReadonly && view !== "readonlyDictionaryView" && (
+              <button 
+                onClick={() => setView("readonlyDictionaryView")} 
+                className="px-6 py-3 bg-card border-2 border-primary text-primary rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-200 flex items-center gap-2 font-semibold shadow-sm active:scale-95"
+              >
+                <Table className="h-5 w-5" />
+                Widok tabeli
+              </button>
+          )}
           {!isReadonly && view !== "dictionaryView" && (
               <button 
                 onClick={() => setView("dictionaryView")} 
