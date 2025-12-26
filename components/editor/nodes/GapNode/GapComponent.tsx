@@ -50,7 +50,9 @@ export function GapComponent({
             setIsCorrect(null); // Reset local correctness state while typing
             // Optionally reset node state while typing if desired: onComplete(false);
           }}
-          className={`border px-2 py-1 text-sm rounded-md pr-16 focus:outline-none ${ // Increased padding-right
+          className={`border px-2 py-1 text-sm rounded-md focus:outline-none ${
+            !isDisabled ? "pr-16" : "pr-2"
+          } ${
             isDisabled // Style based on disabled state
               ? "border-green-500 bg-gray-100 cursor-not-allowed"
               : isCorrect === null
