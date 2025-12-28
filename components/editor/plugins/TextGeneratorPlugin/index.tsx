@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 import * as React from 'react';
 import { $createHeadingNode } from '@lexical/rich-text';
 import { $createCodeNode } from '@lexical/code';
+import { $createListItemNode, $createListNode, ListType } from '@lexical/list';
 import { useCourseContext } from '../../context/CourseContext';
 import { Sparkles, X, Edit2, Loader2 } from 'lucide-react';
 
@@ -204,12 +205,42 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
             console.log('Received response:', response);
             editor.update(() => {
               const root = $getRoot();
+
+              const appendFormattedText = (
+                container: ReturnType<typeof $createParagraphNode>,
+                text: string,
+              ) => {
+                const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
+                parts.forEach((part) => {
+                  if (part.startsWith('`') && part.endsWith('`')) {
+                    const codeText = part.slice(1, -1);
+                    const textNode = $createTextNode(codeText);
+                    textNode.setFormat('code');
+                    container.append(textNode);
+                  } else if (part.startsWith('**') && part.endsWith('**')) {
+                    const boldText = part.slice(2, -2);
+                    const textNode = $createTextNode(boldText);
+                    textNode.setFormat('bold');
+                    container.append(textNode);
+                  } else {
+                    container.append($createTextNode(part));
+                  }
+                });
+              };
+
               // Split response into lines
               const cleanedResponse = response.replace(/^#####\s*/gm, "");
               const lines = cleanedResponse.split('\n').filter(line => line.trim() !== "---");
               
               let inCodeBlock = false;
               let codeBlockContent = '';
+
+              let activeList:
+                | {
+                    type: ListType;
+                    node: ReturnType<typeof $createListNode>;
+                  }
+                | null = null;
               
               lines.forEach((line) => {
                 // Handle code blocks (```)
@@ -223,6 +254,7 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
                     codeBlockContent = '';
                   } else {
                     // Start of code block
+                    activeList = null;
                     inCodeBlock = true;
                     codeBlockContent = '';
                   }
@@ -234,6 +266,30 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
                   codeBlockContent += (codeBlockContent ? '\n' : '') + line;
                   return;
                 }
+
+                const bulletMatch = line.match(/^\s*[-*+]\s+(.*)$/);
+                const orderedMatch = line.match(/^\s*\d+[.)]\s+(.*)$/);
+
+                if (bulletMatch || orderedMatch) {
+                  const listType: ListType = bulletMatch ? 'bullet' : 'number';
+                  const itemText = (bulletMatch?.[1] ?? orderedMatch?.[1] ?? '').trimEnd();
+
+                  if (!activeList || activeList.type !== listType) {
+                    const listNode = $createListNode(listType);
+                    root.append(listNode);
+                    activeList = { type: listType, node: listNode };
+                  }
+
+                  const listItemNode = $createListItemNode();
+                  const paragraphNode = $createParagraphNode();
+                  appendFormattedText(paragraphNode, itemText);
+                  listItemNode.append(paragraphNode);
+                  activeList.node.append(listItemNode);
+                  return;
+                }
+
+                // Any non-list line ends an active list.
+                activeList = null;
                 
                 // Heading 4: ####
                 if (line.trim().startsWith("#### ")) {
@@ -267,27 +323,7 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
                   return;
                 }
                 const paragraphNode = $createParagraphNode();
-                // Regex to match inline code (`text`) and **bold** fragments
-                const parts = line.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
-                parts.forEach((part) => {
-                  if (part.startsWith('`') && part.endsWith('`')) {
-                    // Inline code - remove backticks and create code formatted node
-                    const codeText = part.slice(1, -1);
-                    const textNode = $createTextNode(codeText);
-                    textNode.setFormat('code');
-                    paragraphNode.append(textNode);
-                  } else if (part.startsWith('**') && part.endsWith('**')) {
-                    // Bold text
-                    const boldText = part.slice(2, -2);
-                    const textNode = $createTextNode(boldText);
-                    textNode.setFormat('bold');
-                    paragraphNode.append(textNode);
-                  } else {
-                    // Normal text
-                    const textNode = $createTextNode(part);
-                    paragraphNode.append(textNode);
-                  }
-                });
+                appendFormattedText(paragraphNode, line);
                 root.append(paragraphNode);
               });
             });
