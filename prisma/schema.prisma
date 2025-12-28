@@ -249,6 +249,7 @@ model User {
   userEducationalPaths     UserEducationalPath[]
   educationalPathPurchases EducationalPathPurchase[]
   teacherPlatformSubscription TeacherPlatformSubscription?
+  legalAcceptances         LegalDocumentAcceptance[]
   receivedNotifications    NotificationSentLog[]    @relation("NotificationRecipient")
   ownedSchools             School[]                 @relation("SchoolOwner")
   schoolMemberships        SchoolTeacher[]          @relation("TeacherInSchool")
@@ -541,4 +542,50 @@ enum NotificationStatus {
   SENT
   FAILED
   SKIPPED
+}
+
+enum LegalDocumentType {
+  TERMS_STUDENT
+  TERMS_TEACHER
+  PRIVACY_POLICY
+}
+
+model LegalDocumentVersion {
+  id            Int              @id @default(autoincrement())
+  type          LegalDocumentType
+  version       String           @db.VarChar(50)
+  effectiveAt   DateTime         @db.Timestamp(6)
+  lastUpdatedAt DateTime?        @db.Timestamp(6)
+  content       String?          @db.Text
+  contentFormat String           @default("text") @db.VarChar(20)
+  contentHash   String?          @db.VarChar(128)
+  createdAt     DateTime         @default(now()) @db.Timestamp(6)
+  isActive      Boolean          @default(true)
+  acceptances   LegalDocumentAcceptance[]
+
+  @@unique([type, version], map: "LegalDocumentVersion_type_version_unique")
+  @@index([type])
+  @@index([isActive])
+  @@map("legal_document_versions")
+}
+
+model LegalDocumentAcceptance {
+  id              Int                 @id @default(autoincrement())
+  userId          Int
+  documentType    LegalDocumentType
+  documentVersionId Int
+  acceptedAt      DateTime            @default(now()) @db.Timestamp(6)
+  locale          String?             @db.VarChar(10)
+  context         String?             @db.VarChar(50)
+  ip              String?             @db.VarChar(45)
+  userAgent       String?             @db.VarChar(255)
+
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentVersion LegalDocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, documentVersionId], map: "LegalDocumentAcceptance_user_version_unique")
+  @@index([userId])
+  @@index([documentType])
+  @@index([documentVersionId])
+  @@map("legal_document_acceptances")
 }

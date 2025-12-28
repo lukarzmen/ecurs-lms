@@ -9,6 +9,17 @@ import { Loader2 } from "lucide-react";
 const TERMS_EFFECTIVE_DATE = "18.10.2025";
 const TERMS_LAST_UPDATE = "18.10.2025";
 
+const TERMS_VERSION = "2025-10-18";
+
+const plDateToIsoDateOnly = (plDate: string) => {
+  const [day, month, year] = plDate.split(".");
+  if (!day || !month || !year) return null;
+  return `${year}-${month}-${day}`;
+};
+
+const TERMS_EFFECTIVE_DATE_ISO = plDateToIsoDateOnly(TERMS_EFFECTIVE_DATE) ?? TERMS_VERSION;
+const TERMS_LAST_UPDATE_ISO = plDateToIsoDateOnly(TERMS_LAST_UPDATE) ?? TERMS_VERSION;
+
 const STUDENT_TERMS = (
   <div className="text-left max-h-40 sm:max-h-48 md:max-h-64 overflow-y-auto px-2 sm:px-3 py-2 sm:py-3 bg-orange-50 rounded-lg border border-orange-200 shadow-inner text-xs sm:text-sm leading-relaxed space-y-1 sm:space-y-2">
     <h2 className="text-sm sm:text-lg font-bold text-orange-700 mb-1 sm:mb-2">📜 Warunki uczestnictwa użytkownika w platformie Ecurs</h2>
@@ -147,6 +158,9 @@ const TEACHER_TERMS = (
       </li>
       <li>
         <b>Dane wymagane przez Stripe:</b> Imię i nazwisko, adres, numer telefonu, dane bankowe do otrzymywania płatności oraz informacje niezbędne do wystawiania faktur zgodnie z polskim prawem podatkowym.
+      </li>
+      <li>
+        <b>Weryfikacja dokumentu tożsamości (Stripe Identity):</b> Korzystamy ze Stripe w celu weryfikacji dokumentu tożsamości. Stripe zbiera obrazy dokumentów tożsamości, obrazy twarzy, numery dokumentów i adresy, a także zaawansowane sygnały antyfraudowe oraz informacje o urządzeniach łączących się z jego usługami. Stripe udostępnia nam te informacje oraz wykorzystuje je do świadczenia i ulepszania swoich usług, w tym do wykrywania oszustw. Możesz również zdecydować, że zezwalasz Stripe na wykorzystanie Twoich danych w celu ulepszania technologii biometrycznej weryfikacji Stripe. Więcej informacji o Stripe oraz jego polityce prywatności znajdziesz na <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">https://stripe.com/privacy</a>.
       </li>
       <li>
         <b>Obowiązki fiskalne:</b> Nauczyciel jest odpowiedzialny za rozliczenie podatkowe otrzymanych płatności zgodnie z obowiązującym prawem na podstawie dokumentów dostarczanych przez Stripe, w tym faktur VAT. Platforma Ecurs nie jest stroną transakcji i nie ponosi odpowiedzialności za rozliczenia podatkowe.
@@ -870,6 +884,32 @@ export default function RegisterPage() {
       return;
     }
 
+    let termsAcceptanceLogged = false;
+    const recordTermsAcceptanceOnce = async () => {
+      if (termsAcceptanceLogged) return;
+      if (!selectedRole) return;
+
+      termsAcceptanceLogged = true;
+      try {
+        const documentType = selectedRole === "student" ? "TERMS_STUDENT" : "TERMS_TEACHER";
+
+        await fetch("/api/legal/accept", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: documentType,
+            version: TERMS_VERSION,
+            effectiveAt: `${TERMS_EFFECTIVE_DATE_ISO}T00:00:00.000Z`,
+            lastUpdatedAt: `${TERMS_LAST_UPDATE_ISO}T00:00:00.000Z`,
+            locale: typeof navigator !== "undefined" ? (navigator.language || "pl").slice(0, 2) : "pl",
+            context: "register",
+          }),
+        });
+      } catch (error) {
+        console.warn("[handleSignUp] Could not record terms acceptance:", error);
+      }
+    };
+
     setRegistrationError(null);
     const roleId = selectedRole === "student" ? 0 : 1;
     
@@ -962,6 +1002,8 @@ export default function RegisterPage() {
             setIsLoading(false);
             setLoadingState("idle");
             console.log('[handleSignUp] Returning early, state will be updated');
+
+            await recordTermsAcceptanceOnce();
             return;
           } else {
             // Already has both Stripe and subscription, just update businessData for future use
@@ -973,6 +1015,8 @@ export default function RegisterPage() {
             }));
           }
         }
+
+        await recordTermsAcceptanceOnce();
         
         toast.success("Konto znalezione! Witaj ponownie!");
         setCurrentStep("completed");
@@ -1056,6 +1100,8 @@ export default function RegisterPage() {
           businessMode: businessData.joinSchoolMode 
         });
         toast.success("Konto użytkownika utworzone pomyślnie!");
+
+        await recordTermsAcceptanceOnce();
       } else {
         toast("Konto już istnieje, kontynuuję rejestrację...", { icon: "ℹ️" });
         
@@ -1078,6 +1124,8 @@ export default function RegisterPage() {
             // Continue anyway - business data might already be set
           }
         }
+
+        await recordTermsAcceptanceOnce();
       }
       
       // Handle next steps based on role
