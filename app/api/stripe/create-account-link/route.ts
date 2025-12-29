@@ -19,6 +19,7 @@ export async function GET(req: Request) {
                     select: {
                         id: true,
                         stripeAccountId: true,
+                        schoolType: true,
                     },
                     take: 1
                 }
@@ -57,12 +58,15 @@ export async function GET(req: Request) {
         if (!stripeAccountId) {
             // For localhost development, don't include business_profile URL as Stripe doesn't accept localhost
             const isLocalhost = validBaseUrl.includes('localhost') || validBaseUrl.includes('127.0.0.1');
+
+            // Allowed values: "individual" | "company". Map from our schoolType.
+            const stripeBusinessType: 'individual' | 'company' = school.schoolType === 'business' ? 'company' : 'individual';
             
             const accountData: any = {
                 type: 'express',
                 country: 'PL', // Poland
                 email: email,
-                business_type: 'individual',
+                business_type: stripeBusinessType,
             };
 
             // Only add business_profile URL if not localhost
