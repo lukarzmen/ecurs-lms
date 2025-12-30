@@ -31,21 +31,95 @@ export function TextGeneratorDialog({
   onClose: () => void;
 }): JSX.Element {
   const { module } = useCourseContext();
+
+  type GenerationPresetId = 'lesson' | 'chapter' | 'content';
+
+  const generationPresets: Array<{ id: GenerationPresetId; label: string }> = [
+    { id: 'lesson', label: 'Lekcja (domyślnie)' },
+    { id: 'chapter', label: 'Rozdział (tylko jeden)' },
+    { id: 'content', label: 'Tekst o treści' },
+  ];
   
   // Create context-aware placeholders and prompts
-  const getDefaultUserPrompt = React.useCallback(() => {
-    if (module?.courseName && module?.moduleName) {
-      return `Wygeneruj treść lekcji "${module.moduleName}" dla kursu "${module.courseName}". Uwzględnij:`;
-    } else if (module?.moduleName) {
-      return `Wygeneruj treść lekcji "${module.moduleName}". Uwzględnij:`;
-    } else if (module?.courseName) {
-      return `Wygeneruj treść lekcji dla kursu "${module.courseName}". Uwzględnij:`;
-    }
-    return "Wygeneruj treść lekcji. Uwzględnij:";
-  }, [module?.courseName, module?.moduleName]);
+  const getDefaultUserPrompt = React.useCallback(
+    (preset: GenerationPresetId) => {
+      const modulePart = module?.moduleName ? `"${module.moduleName}"` : '';
+      const coursePart = module?.courseName ? ` dla kursu "${module.courseName}"` : '';
+
+      if (preset === 'chapter') {
+        if (module?.moduleName) {
+          return [
+            `Wygeneruj tylko jeden rozdział do lekcji ${modulePart}${coursePart}.`,
+            '',
+            'Wymagania (Markdown):',
+            '- zacznij od nagłówka poziomu 2: `## Tytuł rozdziału` (użyj tytułu/tematu z pola „Temat / tytuł”)',
+            '- 3–6 akapitów wyjaśniających temat przystępnie, „do ucznia”',
+            '- 1 lista punktowana lub numerowana (jeśli pasuje)',
+            '- 1 krótki przykład lub ciekawostka',
+            '- na końcu 1 krótkie zadanie/pytanie kontrolne',
+            '',
+            'Zwróć wyłącznie treść tego rozdziału (bez `# Lekcja`, bez spisu treści, bez wstępu o planie).',
+          ].join('\n');
+        }
+        return [
+          'Wygeneruj tylko jeden rozdział (część lekcji).',
+          '',
+          'Wymagania (Markdown):',
+          '- zacznij od nagłówka poziomu 2: `## Tytuł rozdziału` (użyj tytułu/tematu z pola „Temat / tytuł”)',
+          '- 3–6 akapitów wyjaśniających temat przystępnie, „do ucznia”',
+          '- 1 lista punktowana lub numerowana (jeśli pasuje)',
+          '- na końcu 1 krótkie zadanie/pytanie kontrolne',
+          '',
+          'Zwróć wyłącznie treść tego rozdziału (bez `# Lekcja`, bez spisu treści).',
+        ].join('\n');
+      }
+
+      if (preset === 'content') {
+        if (module?.moduleName && module?.courseName) {
+          return [
+            `Napisz spójny, angażujący tekst na temat powiązany z lekcją ${modulePart} w kursie "${module.courseName}".`,
+            '',
+            'Wymagania (Markdown):',
+            '- użyj nagłówków `##` dla 2–4 sekcji',
+            '- dodaj przykłady i krótkie odniesienia do praktyki',
+            '- zakończ krótkim podsumowaniem (3–5 punktów)',
+          ].join('\n');
+        }
+        if (module?.moduleName) {
+          return [
+            `Napisz spójny, angażujący tekst na temat powiązany z lekcją ${modulePart}.`,
+            '',
+            'Wymagania (Markdown):',
+            '- użyj nagłówków `##` dla 2–4 sekcji',
+            '- dodaj przykłady i krótkie odniesienia do praktyki',
+            '- zakończ krótkim podsumowaniem (3–5 punktów)',
+          ].join('\n');
+        }
+        return [
+          'Napisz spójny, angażujący tekst na temat podany w polu „Temat”.',
+          '',
+          'Wymagania (Markdown):',
+          '- użyj nagłówków `##` dla 2–4 sekcji',
+          '- dodaj przykłady',
+          '- zakończ krótkim podsumowaniem (3–5 punktów)',
+        ].join('\n');
+      }
+
+      // lesson (default) — keep current behavior
+      if (module?.courseName && module?.moduleName) {
+        return `Wygeneruj treść lekcji "${module.moduleName}" dla kursu "${module.courseName}". Uwzględnij:`;
+      } else if (module?.moduleName) {
+        return `Wygeneruj treść lekcji "${module.moduleName}". Uwzględnij:`;
+      } else if (module?.courseName) {
+        return `Wygeneruj treść lekcji dla kursu "${module.courseName}". Uwzględnij:`;
+      }
+      return 'Wygeneruj treść lekcji. Uwzględnij:';
+    },
+    [module?.courseName, module?.moduleName],
+  );
   
   const getContextualSystemPrompt = React.useCallback(() => {
-    let basePrompt = "Jesteś kreatywnym asystentem AI, który tworzy angażujące, opisowe i naturalnie brzmiące treści edukacyjne skierowane bezpośrednio do ucznia. Unikaj formalnego, sztywnego stylu oraz konspektów dla nauczycieli. Pisz żywo i przystępnie: używaj obrazowych opisów, przykładów i krótkich zadań lub pytań pobudzających do myślenia. Materiały mają interesować i angażować czytelnika — dodawaj ciekawostki. Odpowiedzi formatuj w czystym Markdown (nagłówki, listy, pogrubienia itp.) i nie dodawaj instrukcji ani meta‑komentarzy. Dodawaj również emoji pasujące do treści, aby zwiększyć zaangażowanie i pomóc w przekazie.";
+    let basePrompt = "Jesteś kreatywnym asystentem AI, który tworzy angażujące, opisowe i naturalnie brzmiące treści edukacyjne skierowane bezpośrednio do ucznia. Pisz do ucznia w 2. osobie (\"Ty\"), w formie opowieści: mów czego się nauczysz i co poznasz, oraz po co to jest przydatne. Unikaj formalnego, sztywnego stylu oraz konspektów dla nauczycieli. Pisz żywo i przystępnie: używaj obrazowych opisów, przykładów i krótkich zadań lub pytań pobudzających do myślenia. Materiały mają interesować i angażować czytelnika — dodawaj ciekawostki. Odpowiedzi formatuj w czystym Markdown (nagłówki, listy, pogrubienia itp.) i nie dodawaj instrukcji ani meta‑komentarzy. Nie kończ tekstu pytaniami do autora/użytkownika typu „Czy chcesz, żebym…”, nie zadawaj takich pytań i nie kończ ofertą dalszej pomocy. Jeśli tworzysz słowniczek, to ma to być CZYSTY TEKST (bez punktorów, bez numerowania, bez emoji, bez dodatkowych informacji typu rodzaj gramatyczny/wymowa/komentarze). Każda pozycja w nowej linii dokładnie w formacie: `definicja - tłumaczenie`. Jeśli generujesz zwroty/zdania z tłumaczeniami, zastosuj identyczny format CZYSTEGO TEKSTU: jedna linia na zwrot, dokładnie `zwrot - tłumaczenie`. Bez punktorów/numerowania i bez separatora „—” (używaj wyłącznie zwykłego myślnika `-`).";
     
     if (module?.courseName && module?.moduleName) {
       basePrompt += ` Tworzysz treści dla modułu "${module.moduleName}" w kursie "${module.courseName}". Dostosuj poziom trudności i styl do tego kontekstu edukacyjnego.`;
@@ -58,25 +132,55 @@ export function TextGeneratorDialog({
     return basePrompt;
   }, [module?.courseName, module?.moduleName]);
 
+  const [generationPreset, setGenerationPreset] = useState<GenerationPresetId>('lesson');
   const [userPrompt, setUserPrompt] = useState("");
+  const [lastAutoUserPrompt, setLastAutoUserPrompt] = useState<string>("");
+  const [topicOrTitle, setTopicOrTitle] = useState<string>("");
   const [systemPrompt, setSystemPrompt] = useState("");
   const [isSystemPromptEditable, setIsSystemPromptEditable] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Update prompts when course context becomes available
   useEffect(() => {
-    setUserPrompt(getDefaultUserPrompt());
+    const nextAutoUserPrompt = getDefaultUserPrompt(generationPreset);
+    setLastAutoUserPrompt(nextAutoUserPrompt);
+    setUserPrompt((prev) => {
+      // Avoid clobbering user edits: only auto-update if user hasn't diverged from the last auto prompt.
+      if (!prev || prev === lastAutoUserPrompt) return nextAutoUserPrompt;
+      return prev;
+    });
     setSystemPrompt(getContextualSystemPrompt());
-  }, [module, getDefaultUserPrompt, getContextualSystemPrompt]);
+  }, [module, generationPreset, getDefaultUserPrompt, getContextualSystemPrompt, lastAutoUserPrompt]);
 
   const handleSubmit = () => {
-    if (userPrompt.trim()) {
-      const payload: LLMPrompt = { userPrompt: userPrompt.trim(), systemPrompt: systemPrompt.trim() };
+    const trimmedUserPrompt = userPrompt.trim();
+    const trimmedTopicOrTitle = topicOrTitle.trim();
+
+    if (!trimmedUserPrompt) {
+      toast.error("Polecenie użytkownika nie może być puste.");
+      return;
+    }
+
+    if ((generationPreset === 'chapter' || generationPreset === 'content') && !trimmedTopicOrTitle) {
+      toast.error(
+        generationPreset === 'chapter'
+          ? 'Podaj temat lub tytuł rozdziału.'
+          : 'Podaj temat, na który mam napisać tekst.',
+      );
+      return;
+    }
+
+    const composedUserPrompt =
+      generationPreset === 'chapter' || generationPreset === 'content'
+        ? [
+            trimmedUserPrompt,
+            `\n\n${generationPreset === 'chapter' ? 'Temat / tytuł rozdziału' : 'Temat'}: ${trimmedTopicOrTitle}`,
+          ].join('')
+        : trimmedUserPrompt;
+
+    const payload: LLMPrompt = { userPrompt: composedUserPrompt, systemPrompt: systemPrompt.trim() };
       setLoading(true);
       activeEditor.dispatchCommand(GENERATE_TEXT_COMMAND, payload);
-    } else {
-      toast.error("Polecenie użytkownika nie może być puste.");
-    }
   };
 
   useEffect(() => {
@@ -116,6 +220,43 @@ export function TextGeneratorDialog({
 
         {/* Content */}
         <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Tryb generowania
+            </label>
+            <select
+              className="w-full px-3 py-2 border-2 border-border rounded-md bg-background text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all"
+              value={generationPreset}
+              onChange={(e) => setGenerationPreset(e.target.value as GenerationPresetId)}
+              disabled={loading}
+            >
+              {generationPresets.map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {preset.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {(generationPreset === 'chapter' || generationPreset === 'content') && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                {generationPreset === 'chapter' ? 'Temat / tytuł' : 'Temat'}
+              </label>
+              <input
+                className="w-full px-3 py-2 border-2 border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all"
+                placeholder={
+                  generationPreset === 'chapter'
+                    ? 'Np. „Wprowadzenie do ułamków”'
+                    : 'Np. „Jak działa fotosynteza?”'
+                }
+                value={topicOrTitle}
+                onChange={(e) => setTopicOrTitle(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
               Co chcesz wygenerować?
@@ -268,11 +409,13 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
                 }
 
                 const bulletMatch = line.match(/^\s*[-*+]\s+(.*)$/);
-                const orderedMatch = line.match(/^\s*\d+[.)]\s+(.*)$/);
 
-                if (bulletMatch || orderedMatch) {
-                  const listType: ListType = bulletMatch ? 'bullet' : 'number';
-                  const itemText = (bulletMatch?.[1] ?? orderedMatch?.[1] ?? '').trimEnd();
+                // IMPORTANT: Do NOT convert ordered lists like "1. 2. 3." into list nodes.
+                // Lexical will renumber from 1 and it can cause node misalignment.
+                // We only convert bullet lists to list nodes.
+                if (bulletMatch) {
+                  const listType: ListType = 'bullet';
+                  const itemText = (bulletMatch?.[1] ?? '').trimEnd();
 
                   if (!activeList || activeList.type !== listType) {
                     const listNode = $createListNode(listType);
