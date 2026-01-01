@@ -1,6 +1,16 @@
 import { Suspense } from "react";
 import QuizComponent, { Test } from "./QuizComponent";
-import { DecoratorNode, NodeKey, SerializedLexicalNode, Spread, LexicalEditor, $getNodeByKey, EditorConfig, $applyNodeReplacement } from "lexical";
+import {
+  $applyNodeReplacement,
+  $getNodeByKey,
+  DecoratorNode,
+  DOMExportOutput,
+  EditorConfig,
+  LexicalEditor,
+  NodeKey,
+  SerializedLexicalNode,
+  Spread,
+} from "lexical";
 import { ToCompleteNode } from "../ToCompleteNode";
 import { withNodeErrorBoundary } from "../Error/BrokenNode";
 
@@ -40,6 +50,67 @@ export class QuizNode extends DecoratorNode<JSX.Element> implements ToCompleteNo
 
   updateDOM(prevNode: QuizNode, dom: HTMLElement, config: EditorConfig): boolean {
     return false;
+  }
+
+  exportDOM(): DOMExportOutput {
+    const container = document.createElement('div');
+    container.setAttribute('data-lexical-quiz', 'true');
+
+    const tests = Array.isArray(this.__tests) ? this.__tests : [];
+    for (let i = 0; i < tests.length; i++) {
+      const test = tests[i];
+      const testWrap = document.createElement('div');
+      testWrap.setAttribute('data-quiz-index', String(i));
+
+      const q = document.createElement('div');
+      q.textContent = test?.question ? String(test.question) : '';
+      testWrap.appendChild(q);
+
+      const answers = Array.isArray(test?.answers) ? test.answers : [];
+      if (answers.length > 0) {
+        const ul = document.createElement('ul');
+        for (const a of answers) {
+          const li = document.createElement('li');
+          li.textContent = String(a);
+          ul.appendChild(li);
+        }
+        testWrap.appendChild(ul);
+      }
+
+      if (test?.correctAnswerIndex !== null && test?.correctAnswerIndex !== undefined) {
+        testWrap.setAttribute('data-correct-index', String(test.correctAnswerIndex));
+      }
+      if (test?.correctAnswerDescription) {
+        testWrap.setAttribute('data-correct-description', String(test.correctAnswerDescription));
+      }
+
+      container.appendChild(testWrap);
+    }
+
+    return {element: container};
+  }
+
+  getTextContent(): string {
+    const tests = Array.isArray(this.__tests) ? this.__tests : [];
+    const lines: string[] = [];
+
+    for (let i = 0; i < tests.length; i++) {
+      const test = tests[i];
+      const question = test?.question ? String(test.question).trim() : '';
+      if (question) {
+        lines.push(question);
+      }
+
+      const answers = Array.isArray(test?.answers) ? test.answers : [];
+      for (const a of answers) {
+        const answer = String(a).trim();
+        if (answer) {
+          lines.push(`- ${answer}`);
+        }
+      }
+    }
+
+    return lines.join('\n');
   }
 
   constructor(

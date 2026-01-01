@@ -1,4 +1,14 @@
-import { DecoratorNode, NodeKey, SerializedLexicalNode, Spread, LexicalEditor, EditorConfig, $getNodeByKey, $applyNodeReplacement } from "lexical";
+import {
+  $applyNodeReplacement,
+  $getNodeByKey,
+  DecoratorNode,
+  DOMExportOutput,
+  EditorConfig,
+  LexicalEditor,
+  NodeKey,
+  SerializedLexicalNode,
+  Spread,
+} from "lexical";
 import React from "react"; // Import React
 import { GapComponent } from "./GapComponent"; // Import the component
 import { ToCompleteNode } from "../ToCompleteNode"; // Import the interface
@@ -62,6 +72,18 @@ export class GapNode extends DecoratorNode<JSX.Element> implements ToCompleteNod
   updateDOM(prevNode: GapNode, dom: HTMLElement, config: EditorConfig): boolean { // Add config
     // Component handles updates
     return false;
+  }
+
+  exportDOM(): DOMExportOutput {
+    const element = document.createElement('span');
+    element.setAttribute('data-lexical-gap', 'true');
+    element.setAttribute('title', this.__hiddenText);
+    element.textContent = '_____';
+    return {element};
+  }
+
+  getTextContent(): string {
+    return '_____';
   }
 
   // Method to update the transient completion state

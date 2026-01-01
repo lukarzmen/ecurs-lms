@@ -1,4 +1,14 @@
-import { $getEditor, DecoratorNode, NodeKey, SerializedLexicalNode, Spread, LexicalEditor, EditorConfig, $getNodeByKey, $applyNodeReplacement } from "lexical"; // Import necessary types
+import {
+  $applyNodeReplacement,
+  $getNodeByKey,
+  DecoratorNode,
+  DOMExportOutput,
+  EditorConfig,
+  LexicalEditor,
+  NodeKey,
+  SerializedLexicalNode,
+  Spread,
+} from "lexical"; // Import necessary types
 import React from "react";
 import { DictionaryComponent } from "./DictionaryComponent";
 import { ToCompleteNode } from "../ToCompleteNode";
@@ -110,6 +120,31 @@ export class DictionaryNode extends DecoratorNode<JSX.Element> implements ToComp
     const className = config.theme.dictionary || 'dictionary-node';
     dom.className = className;
     return dom;
+  }
+
+  exportDOM(): DOMExportOutput {
+    const container = document.createElement('div');
+    container.setAttribute('data-lexical-dictionary', 'true');
+
+    const entries = Object.entries(this.__dictionaryData)
+      .map(([key, value]) => [key.trim(), value.trim()] as const)
+      .filter(([key, value]) => key.length > 0 || value.length > 0);
+
+    for (const [key, value] of entries) {
+      const row = document.createElement('div');
+      row.textContent = `${key} - ${value}`;
+      container.appendChild(row);
+    }
+
+    return {element: container};
+  }
+
+  getTextContent(): string {
+    const entries = Object.entries(this.__dictionaryData)
+      .map(([key, value]) => [key.trim(), value.trim()] as const)
+      .filter(([key, value]) => key.length > 0 || value.length > 0);
+
+    return entries.map(([key, value]) => `${key} - ${value}`).join('\n');
   }
 
   // Method to update the transient completion state

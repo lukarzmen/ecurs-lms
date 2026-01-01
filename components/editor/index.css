@@ -371,6 +371,15 @@ i.palette {
 .icon.ai {
   background-image: url(images/icons/magic.svg);
 }
+.icon.download {
+  background-image: url(images/icons/download.svg);
+}
+.icon.html {
+  background-image: url(images/icons/code.svg);
+}
+.icon.pdf {
+  background-image: url(images/icons/file-earmark-text.svg);
+}
 .icon.task {
   background-image: url(images/icons/task1.svg);
 }

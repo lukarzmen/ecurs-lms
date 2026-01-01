@@ -29,6 +29,7 @@ import {
   $patchStyleText,
 } from '@lexical/selection';
 import {$isTableNode, $isTableSelection} from '@lexical/table';
+import { $generateHtmlFromNodes } from '@lexical/html';
 import {
   $findMatchingParent,
   $getNearestNodeOfType,
@@ -983,6 +984,68 @@ export default function NewToolbarPlugin({
   const canViewerSeeInsertDropdown = !toolbarState.isImageCaption;
   const canViewerSeeInsertCodeButton = !toolbarState.isImageCaption;
 
+  const getHtmlFromEditor = useCallback((): string => {
+    let html = '';
+    activeEditor.getEditorState().read(() => {
+      html = $generateHtmlFromNodes(activeEditor, null);
+    });
+    return html;
+  }, [activeEditor]);
+
+  const exportHtml = useCallback(() => {
+    const bodyHtml = getHtmlFromEditor();
+    const htmlDocument = `<!doctype html><html lang="pl"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>Eksport</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;}img{max-width:100%;height:auto;}</style></head><body>${bodyHtml}</body></html>`;
+
+    const blob = new Blob([htmlDocument], {type: 'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'modul.html';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, [getHtmlFromEditor]);
+
+  const exportPdf = useCallback(() => {
+    const bodyHtml = getHtmlFromEditor();
+    const htmlDocument = `<!doctype html><html lang="pl"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>Eksport PDF</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;}img{max-width:100%;height:auto;}</style></head><body>${bodyHtml}</body></html>`;
+
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.style.visibility = 'hidden';
+
+    const cleanup = () => {
+      try {
+        iframe.remove();
+      } catch {
+        // ignore
+      }
+    };
+
+    iframe.onload = () => {
+      const w = iframe.contentWindow;
+      if (!w) {
+        cleanup();
+        return;
+      }
+
+      w.addEventListener('afterprint', cleanup, {once: true});
+      setTimeout(cleanup, 60_000);
+
+      w.focus();
+      w.print();
+    };
+
+    iframe.srcdoc = htmlDocument;
+    document.body.appendChild(iframe);
+  }, [getHtmlFromEditor]);
+
   return (
     <div className="toolbar">
       <button
@@ -1607,6 +1670,22 @@ export default function NewToolbarPlugin({
           className="item">
           <i className="icon audio" />
           <span className="text">Tekst na mowę</span>
+        </DropDownItem>
+      </DropDown>
+      <Divider />
+      <DropDown
+        disabled={!isEditable}
+        buttonClassName="toolbar-item spaced"
+        buttonLabel="Pobierz"
+        buttonAriaLabel="Pobierz"
+        buttonIconClassName="icon download">
+        <DropDownItem onClick={exportHtml} className="item">
+          <i className="icon html" />
+          <span className="text">HTML</span>
+        </DropDownItem>
+        <DropDownItem onClick={exportPdf} className="item">
+          <i className="icon pdf" />
+          <span className="text">PDF</span>
         </DropDownItem>
       </DropDown>
       <button
