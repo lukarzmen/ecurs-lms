@@ -20,6 +20,10 @@ const CoursesPage = () => {
   const [schoolStatus, setSchoolStatus] = useState<any>(null);
   const [schoolStatusLoading, setSchoolStatusLoading] = useState(true);
 
+  const handleCourseDeleted = (courseId: unknown) => {
+    setCourses((prev) => prev.filter((course) => course?.id !== courseId));
+  };
+
   useEffect(() => {
     if (!isSignedIn) {
       router.push("/sign-in");
@@ -151,7 +155,11 @@ const CoursesPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <DataTable columns={columns} data={courses} />
+              <DataTable
+                columns={columns}
+                data={courses}
+                onCourseDeleted={handleCourseDeleted}
+              />
             </CardContent>
           </Card>
         </>

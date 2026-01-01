@@ -9,19 +9,21 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation"; // Import useRouter
 
-const handleDelete = async (id: string) => {
+const handleDelete = async (id: string): Promise<boolean> => {
   try {
     const response = await fetch(`/api/courses/${id}`, {
       method: "DELETE",
     });
     if (response.ok) {
       toast.success("Kurs został pomyślnie usunięty");
-      // Optionally, refresh the UI or remove the row
+      return true;
     } else {
       toast.error("Nie udało się usunąć kursu");
+      return false;
     }
   } catch (error) {
     toast.error("Wystąpił błąd podczas usuwania kursu");
+    return false;
   }
 };
 
@@ -59,16 +61,19 @@ export const columns: ColumnDef<Course>[] = [
   {
     id: "actions",
     header: "Wykonaj",
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const { id } = row.original;
       const [isModalOpen, setIsModalOpen] = useState(false);
-      const router = useRouter(); // Use router for refresh
+      const onCourseDeleted = table.options.meta?.onCourseDeleted as
+        | ((courseId: unknown) => void)
+        | undefined;
 
       const handleConfirmDelete = async () => {
-        await handleDelete(id.toString());
+        const deleted = await handleDelete(id.toString());
         setIsModalOpen(false);
-        // Use router.refresh() for better UX than full reload
-        router.refresh();
+        if (deleted) {
+          onCourseDeleted?.(id);
+        }
       };
 
       return (

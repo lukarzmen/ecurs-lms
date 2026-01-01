@@ -32,35 +32,65 @@ export async function GET(req: Request) {
     const schoolIds = ownedSchools.map((s) => s.id);
 
     // Pobierz pending requests dla tych szkół
+    // Uwaga: relationMode="prisma" nie wymusza FK w bazie, więc mogą istnieć osierocone rekordy.
+    // Jeśli spróbujemy zrobić include.teacher dla relacji wymaganej, Prisma rzuci błędem, gdy teacher nie istnieje.
     const requests = await db.teacherJoinRequest.findMany({
       where: {
         schoolId: { in: schoolIds },
         status: "pending",
       },
-      include: {
-        teacher: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-          },
-        },
-        school: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+      select: {
+        id: true,
+        teacherId: true,
+        schoolId: true,
+        status: true,
+        requestedAt: true,
+        respondedAt: true,
+        rejectionReason: true,
       },
       orderBy: {
         requestedAt: "desc",
       },
     });
 
-    // Filtruj requests gdzie teacher istnieje (aby uniknąć null errors)
-    const validRequests = requests.filter(req => req.teacher !== null);
+    const teacherIds = Array.from(new Set(requests.map((r) => r.teacherId)));
+    const schoolsInRequests = Array.from(new Set(requests.map((r) => r.schoolId)));
 
-    return NextResponse.json({ requests: validRequests });
+    const [teachers, schools] = await Promise.all([
+      db.user.findMany({
+        where: { id: { in: teacherIds } },
+        select: {
+          id: true,
+          displayName: true,
+          email: true,
+        },
+      }),
+      db.school.findMany({
+        where: { id: { in: schoolsInRequests } },
+        select: {
+          id: true,
+          name: true,
+        },
+      }),
+    ]);
+
+    const teacherById = new Map(teachers.map((t) => [t.id, t] as const));
+    const schoolById = new Map(schools.map((s) => [s.id, s] as const));
+
+    const hydrated = requests
+      .map((r) => {
+        const teacher = teacherById.get(r.teacherId);
+        const school = schoolById.get(r.schoolId);
+        if (!teacher || !school) return null;
+        return {
+          ...r,
+          teacher,
+          school,
+        };
+      })
+      .filter((r): r is NonNullable<typeof r> => r !== null);
+
+    return NextResponse.json({ requests: hydrated });
   } catch (error) {
     console.error("Error fetching pending requests:", error);
     return NextResponse.json(

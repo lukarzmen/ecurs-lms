@@ -45,9 +45,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ scho
         const schoolCourses = await db.course.findMany({
             where: courseWhereClause,
             select: { id: true, title: true, authorId: true, schoolId: true },
-        });
-        console.log("School courses found:", schoolCourses.length, "for schoolId:", schoolId);
-        console.log("Course details:", schoolCourses.map(c => ({ id: c.id, title: c.title, authorId: c.authorId, schoolId: c.schoolId })));
+        });   
         const schoolCourseIds = schoolCourses.map(c => c.id);
 
         // Build where clause for paths - handle empty teacherIds

@@ -29,11 +29,13 @@ import { Search, BookOpen } from "lucide-react"
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
+    onCourseDeleted?: (courseId: unknown) => void
 }
 
 export function DataTable<TData, TValue>({
     columns,
     data,
+    onCourseDeleted,
 }: DataTableProps<TData, TValue>) {
 
     const [sorting, setSorting] = React.useState<SortingState>([])
@@ -42,6 +44,9 @@ export function DataTable<TData, TValue>({
     const table = useReactTable({
         data,
         columns,
+        meta: {
+            onCourseDeleted,
+        },
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
