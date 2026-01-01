@@ -1009,7 +1009,32 @@ export default function NewToolbarPlugin({
 
   const exportPdf = useCallback(() => {
     const bodyHtml = getHtmlFromEditor();
-    const htmlDocument = `<!doctype html><html lang="pl"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>Eksport PDF</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;}img{max-width:100%;height:auto;}</style></head><body>${bodyHtml}</body></html>`;
+    const htmlDocument = `<!doctype html><html lang="pl"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>Eksport PDF</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;}img{max-width:100%;height:auto;}@media print{body{margin:0;}}</style></head><body>${bodyHtml}<script>window.addEventListener('load',()=>{setTimeout(()=>{try{window.focus();window.print();}catch(e){}},0)},{once:true});</script></body></html>`;
+
+    const isProbablyMobile =
+      (typeof window !== 'undefined' &&
+        (window.matchMedia?.('(pointer:coarse)').matches ||
+          navigator.maxTouchPoints > 0)) ||
+      /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    // Mobile browsers often ignore iframe printing and print the whole current page.
+    // Opening a standalone document is more reliable.
+    if (isProbablyMobile) {
+      const blob = new Blob([htmlDocument], {type: 'text/html;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const w = window.open(url, '_blank');
+      if (!w) {
+        window.location.href = url;
+        return;
+      }
+
+      const cleanup = () => {
+        try { URL.revokeObjectURL(url); } catch {}
+      };
+      w.addEventListener('pagehide', cleanup, {once: true});
+      setTimeout(cleanup, 60_000);
+      return;
+    }
 
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';

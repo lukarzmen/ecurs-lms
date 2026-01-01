@@ -1,4 +1,14 @@
-import { DecoratorNode, NodeKey, $getNodeByKey, EditorConfig, LexicalEditor, $applyNodeReplacement, SerializedLexicalNode, Spread } from "lexical";
+import {
+    $applyNodeReplacement,
+    $getNodeByKey,
+    DecoratorNode,
+    DOMExportOutput,
+    EditorConfig,
+    LexicalEditor,
+    NodeKey,
+    SerializedLexicalNode,
+    Spread,
+} from "lexical";
 import React from "react";
 import { SelectAnswerComponent } from "./SelectAnswerComponent";
 import { ToCompleteNode } from "../ToCompleteNode";
@@ -78,6 +88,34 @@ export class SelectAnswerNode extends DecoratorNode<JSX.Element> implements ToCo
     updateDOM(): boolean {
         // Component handles updates
         return false;
+    }
+
+    exportDOM(): DOMExportOutput {
+        const container = document.createElement('div');
+        container.setAttribute('data-lexical-select-answer', 'true');
+        container.setAttribute('data-correct-index', String(this.__correctAnswerIndex));
+        if (this.__selectedAnswer !== null) {
+            container.setAttribute('data-selected', this.__selectedAnswer);
+        }
+
+        const ul = document.createElement('ul');
+        for (const a of this.__answers) {
+            const li = document.createElement('li');
+            li.textContent = String(a);
+            ul.appendChild(li);
+        }
+        container.appendChild(ul);
+
+        return { element: container };
+    }
+
+    getTextContent(): string {
+        const lines: string[] = [];
+        for (const a of this.__answers) {
+            const answer = String(a).trim();
+            if (answer) lines.push(`- ${answer}`);
+        }
+        return lines.join('\n');
     }
 
     // Method to update the node's selected answer state
