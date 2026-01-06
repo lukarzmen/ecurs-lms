@@ -1,5 +1,7 @@
 import type {
   DOMConversionMap,
+  DOMConversionOutput,
+  DOMExportOutput,
   EditorConfig,
   LexicalNode,
   SerializedElementNode,
@@ -8,20 +10,69 @@ import type {
 import {addClassNamesToElement} from '@lexical/utils';
 import {ElementNode, $getEditor} from 'lexical';
 
+export type LayoutItemVariant = 'default' | 'info' | 'warning';
+
 export type SerializedLayoutItemNode = SerializedElementNode & {
   backgroundColor: string;
   isEditable: boolean;
+  variant?: LayoutItemVariant;
+  showFrame?: boolean;
+  extraLabel?: string;
+  customBackgroundColor?: string;
 };
+
+function $convertLayoutItemElement(domNode: HTMLElement): DOMConversionOutput | null {
+  if (!domNode.hasAttribute('data-lexical-layout-item')) {
+    return null;
+  }
+
+  const variantAttr = domNode.getAttribute('data-lexical-layout-item-variant') as LayoutItemVariant | null;
+  const variant: LayoutItemVariant =
+    variantAttr === 'info' || variantAttr === 'warning' ? variantAttr : 'default';
+
+  const bgAttr = domNode.getAttribute('data-lexical-layout-item-bg');
+  const backgroundColor = variant === 'default' ? bgAttr || '#ffffff' : '#ffffff';
+  const customBackgroundColor = variant === 'default' ? '' : bgAttr || '';
+  const frameAttr = domNode.getAttribute('data-lexical-layout-item-frame');
+  const showFrame = frameAttr === null ? true : frameAttr !== 'false';
+  const extraLabel = domNode.getAttribute('data-lexical-layout-item-extra-label') || '';
+
+  const node = $createLayoutItemNode(
+    backgroundColor,
+    false,
+    variant,
+    showFrame,
+    extraLabel,
+    customBackgroundColor,
+  );
+  return {node};
+}
 
 export class LayoutItemNode extends ElementNode {
   __backgroundColor: string;
   __isEditable?: boolean;
+  __variant: LayoutItemVariant;
+  __showFrame: boolean;
+  __extraLabel: string;
+  __customBackgroundColor: string;
   __editor: any;
 
-  constructor(key?: string, backgroundColor: string = '#ffffff', isEditable: boolean = true) {
+  constructor(
+    key?: string,
+    backgroundColor: string = '#ffffff',
+    isEditable: boolean = true,
+    variant: LayoutItemVariant = 'default',
+    showFrame: boolean = true,
+    extraLabel: string = '',
+    customBackgroundColor: string = '',
+  ) {
     super(key);
     this.__backgroundColor = backgroundColor;
     this.__isEditable = isEditable;
+    this.__variant = variant;
+    this.__showFrame = showFrame;
+    this.__extraLabel = extraLabel;
+    this.__customBackgroundColor = customBackgroundColor;
     this.__editor = $getEditor();
   }
 
@@ -30,74 +81,251 @@ export class LayoutItemNode extends ElementNode {
   }
 
   static clone(node: LayoutItemNode): LayoutItemNode {
-    return new LayoutItemNode(node.__key, node.__backgroundColor, node.__isEditable ?? true);
+    return new LayoutItemNode(
+      node.__key,
+      node.__backgroundColor,
+      node.__isEditable ?? true,
+      node.__variant,
+      node.__showFrame,
+      node.__extraLabel,
+      node.__customBackgroundColor,
+    );
   }
 
   createDOM(config: EditorConfig): HTMLElement {
     const dom = document.createElement('div');
     dom.classList.add('layout-item');
 
+    dom.setAttribute('data-lexical-layout-item', 'true');
+    dom.setAttribute('data-lexical-layout-item-variant', this.__variant);
+    dom.setAttribute(
+      'data-lexical-layout-item-frame',
+      this.__showFrame ? 'true' : 'false',
+    );
+
+    const label = document.createElement('div');
+    label.classList.add('layout-item-label');
+    label.textContent = this.__variant === 'warning' ? 'Ważne' : 'Ciekawostka';
+    label.contentEditable = 'false';
+    dom.appendChild(label);
+
+    if (this.__extraLabel) {
+      const extra = document.createElement('div');
+      extra.classList.add('layout-item-extra-label');
+      extra.textContent = this.__extraLabel;
+      extra.contentEditable = 'false';
+      dom.appendChild(extra);
+    }
+
     if (this.__isEditable) {
-      // Create a button for the color palette
-      const colorButton = document.createElement('button');
-      colorButton.classList.add('color-button');
-      colorButton.style.position = 'absolute';
-      colorButton.style.top = '5px';
-      colorButton.style.right = '5px';
-      colorButton.style.width = '20px';
-      colorButton.style.height = '20px';
-      colorButton.style.borderRadius = '50%';
-      colorButton.style.border = 'none';
-      colorButton.style.cursor = 'pointer';
-      colorButton.style.backgroundImage =
-        'url("data:image/svg+xml,%3Csvg fill=\'%23000000\' width=\'800px\' height=\'800px\' viewBox=\'0 0 16 16\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M8 .5C3.58.5 0 3.86 0 8s3.58 7.5 8 7.5c4.69 0 1.04-2.83 2.79-4.55.76-.75 1.63-.87 2.44-.87.37 0 .73.03 1.06.03.99 0 1.72-.23 1.72-2.1C16 3.86 12.42.5 8 .5zm6.65 8.32c-.05.01-.16.02-.37.02-.14 0-.29 0-.45-.01-.19 0-.39-.01-.61-.01-.89 0-2.19.13-3.32 1.23-1.17 1.16-.9 2.6-.74 3.47.03.18.08.44.09.6-.16.05-.52.13-1.26.13-3.72 0-6.75-2.8-6.75-6.25S4.28 1.75 8 1.75s6.75 2.8 6.75 6.25c0 .5-.06.74-.1.82z\'/%3E%3Cpath d=\'M5.9 9.47c-1.03 0-1.86.8-1.86 1.79s.84 1.79 1.86 1.79 1.86-.8 1.86-1.79-.84-1.79-1.86-1.79zm0 2.35c-.35 0-.64-.25-.64-.56s.29-.56.64-.56.64.25.64.56-.29.56-.64.56zm-.2-4.59c0-.99-.84-1.79-1.86-1.79s-1.86.8-1.86 1.79.84 1.79 1.86 1.79 1.86-.8 1.86-1.79zm-1.86.56c-.35 0-.64-.25-.64-.56s.29-.56.64-.56.64.25.64.56-.29.56-.64.56zM7.37 2.5c-1.03 0-1.86.8-1.86 1.79s.84 1.79 1.86 1.79 1.86-.8 1.86-1.79S8.39 2.5 7.37 2.5zm0 2.35c-.35 0-.64-.25-.64-.56s.29-.56.64-.56.64.25.64.56-.29.56-.64.56zm2.47 1.31c0 .99.84 1.79 1.86 1.79s1.86-.8 1.86-1.79-.84-1.79-1.86-1.79-1.86.8-1.86 1.79zm2.5 0c0 .31-.29.56-.64.56s-.64-.25-.64-.56.29-.56.64-.56.64.25.64.56z\'/%3E%3C/svg%3E")';
-      colorButton.style.backgroundSize = 'cover';
+      const motifButton = document.createElement('button');
+      motifButton.type = 'button';
+      motifButton.textContent = 'Motyw';
+      motifButton.setAttribute('data-lexical-layout-item-control', 'true');
+      motifButton.style.position = 'absolute';
+      motifButton.style.top = '6px';
+      motifButton.style.right = '6px';
+      motifButton.style.padding = '2px 6px';
+      motifButton.style.fontSize = '12px';
+      motifButton.style.lineHeight = '16px';
+      motifButton.style.borderRadius = '6px';
+      motifButton.style.border = '1px solid #ddd';
+      motifButton.style.background = '#fff';
+      motifButton.style.cursor = 'pointer';
+      motifButton.contentEditable = 'false';
 
-      // Handle background color change
-      colorButton.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const randomColor = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+      const popover = document.createElement('div');
+      popover.classList.add('layout-item-popover');
+      popover.contentEditable = 'false';
+      popover.style.display = 'none';
 
-        this.__editor.update(() => {
-          const writableNode = this.getWritable();
-          writableNode.__backgroundColor = randomColor;
-          dom.style.backgroundColor = randomColor;
+      const motifRow = document.createElement('div');
+      motifRow.classList.add('layout-item-popover-row');
+
+      const makeMotifChoice = (label: string, value: LayoutItemVariant) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.classList.add('layout-item-popover-btn');
+        btn.textContent = label;
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const editor = this.__editor ?? $getEditor();
+          if (!editor) return;
+          editor.update(() => {
+            const writableNode = this.getWritable();
+            writableNode.__variant = value;
+          });
         });
+        return btn;
+      };
 
-        const colorEvent = new CustomEvent('colorChange', {
-          detail: { color: randomColor },
-        });
-        dom.dispatchEvent(colorEvent);
+      motifRow.appendChild(makeMotifChoice('Ciekawostka', 'default'));
+      motifRow.appendChild(makeMotifChoice('Ważne', 'warning'));
+      popover.appendChild(motifRow);
+
+      const colorRow = document.createElement('div');
+      colorRow.classList.add('layout-item-popover-row');
+
+      const colorLabel = document.createElement('div');
+      colorLabel.classList.add('layout-item-popover-label');
+      colorLabel.textContent = 'Tło';
+      colorRow.appendChild(colorLabel);
+
+      const colorInput = document.createElement('input');
+      colorInput.type = 'color';
+      colorInput.classList.add('layout-item-popover-color');
+      // If "Ważne" uses default style and has no override, start from white.
+      colorInput.value =
+        this.__variant === 'default'
+          ? this.__backgroundColor
+          : this.__customBackgroundColor || '#ffffff';
+
+      // Do NOT update the editor on every color move, otherwise Lexical will
+      // re-create the node DOM and close the popover while the user is picking.
+      let pendingColor = colorInput.value;
+      let clearOverride = false;
+
+      colorInput.addEventListener('input', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        pendingColor = (e.target as HTMLInputElement).value;
+        clearOverride = false;
       });
 
-      dom.style.position = 'relative'; // Needed for absolute positioning of the button
-      dom.appendChild(colorButton);
+      colorRow.appendChild(colorInput);
+
+      const applyBtn = document.createElement('button');
+      applyBtn.type = 'button';
+      applyBtn.classList.add('layout-item-popover-btn');
+      applyBtn.textContent = 'Zastosuj';
+      applyBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const editor = this.__editor ?? $getEditor();
+        if (!editor) return;
+        editor.update(() => {
+          const writableNode = this.getWritable();
+          if (writableNode.__variant === 'default') {
+            writableNode.__backgroundColor = pendingColor;
+          } else {
+            writableNode.__customBackgroundColor = clearOverride
+              ? ''
+              : pendingColor;
+          }
+        });
+      });
+
+      colorRow.appendChild(applyBtn);
+
+      const resetBtn = document.createElement('button');
+      resetBtn.type = 'button';
+      resetBtn.classList.add('layout-item-popover-reset');
+      resetBtn.textContent = 'Domyślne';
+      resetBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Reset is staged; user confirms with "Zastosuj".
+        if (this.__variant === 'default') {
+          pendingColor = '#ffffff';
+          clearOverride = false;
+          colorInput.value = '#ffffff';
+        } else {
+          pendingColor = '#ffffff';
+          clearOverride = true;
+          colorInput.value = '#ffffff';
+        }
+      });
+
+      colorRow.appendChild(resetBtn);
+      popover.appendChild(colorRow);
+
+      motifButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        popover.style.display = popover.style.display === 'none' ? 'block' : 'none';
+      });
+
+      dom.style.position = 'relative';
+      dom.appendChild(motifButton);
+      dom.appendChild(popover);
     }
 
     if (typeof config.theme.layoutItem === 'string') {
       addClassNamesToElement(dom, config.theme.layoutItem);
     }
 
-    dom.style.backgroundColor = this.__backgroundColor; // Apply the background color
+    if (this.__variant === 'default') {
+      dom.style.backgroundColor = this.__backgroundColor;
+    } else if (this.__customBackgroundColor) {
+      dom.style.backgroundColor = this.__customBackgroundColor;
+    } else {
+      dom.style.backgroundColor = '';
+    }
     return dom;
   }
 
   updateDOM(prevNode: LayoutItemNode): boolean {
-    if (this.__backgroundColor !== prevNode.__backgroundColor || this.__isEditable !== prevNode.__isEditable) {
+    if (
+      this.__backgroundColor !== prevNode.__backgroundColor ||
+      this.__isEditable !== prevNode.__isEditable ||
+      this.__variant !== prevNode.__variant ||
+      this.__showFrame !== prevNode.__showFrame ||
+      this.__extraLabel !== prevNode.__extraLabel ||
+      this.__customBackgroundColor !== prevNode.__customBackgroundColor
+    ) {
       return true;
     }
     return false;
   }
 
   static importDOM(): DOMConversionMap | null {
-    return {};
+    return {
+      div: (domNode: HTMLElement) => {
+        if (!domNode.hasAttribute('data-lexical-layout-item')) {
+          return null;
+        }
+        return {
+          conversion: $convertLayoutItemElement,
+          priority: 2,
+        };
+      },
+    };
+  }
+
+  exportDOM(): DOMExportOutput {
+    const element = document.createElement('div');
+    element.setAttribute('data-lexical-layout-item', 'true');
+    element.setAttribute('data-lexical-layout-item-variant', this.__variant);
+    element.setAttribute(
+      'data-lexical-layout-item-frame',
+      this.__showFrame ? 'true' : 'false',
+    );
+    if (this.__extraLabel) {
+      element.setAttribute('data-lexical-layout-item-extra-label', this.__extraLabel);
+    }
+    if (this.__variant === 'default' && this.__backgroundColor) {
+      element.setAttribute('data-lexical-layout-item-bg', this.__backgroundColor);
+    }
+    if (this.__variant !== 'default' && this.__customBackgroundColor) {
+      element.setAttribute('data-lexical-layout-item-bg', this.__customBackgroundColor);
+    }
+    return {element};
   }
   isShadowRoot(): boolean {
     return true;
   }
   static importJSON(serializedNode: SerializedLayoutItemNode): LayoutItemNode {
-    const { backgroundColor } = serializedNode;
-    const node = $createLayoutItemNode(backgroundColor, false);
+    const {backgroundColor, variant, showFrame, extraLabel, customBackgroundColor} = serializedNode;
+    const node = $createLayoutItemNode(
+      backgroundColor,
+      false,
+      variant ?? 'default',
+      showFrame ?? true,
+      extraLabel ?? '',
+      customBackgroundColor ?? '',
+    );
     return node;
   }
 
@@ -108,6 +336,10 @@ export class LayoutItemNode extends ElementNode {
       version: 1,
       backgroundColor: this.__backgroundColor,
       isEditable: this.__isEditable ?? true,
+      variant: this.__variant,
+      showFrame: this.__showFrame,
+      extraLabel: this.__extraLabel,
+      customBackgroundColor: this.__customBackgroundColor,
     };
   }
 
@@ -124,6 +356,58 @@ export class LayoutItemNode extends ElementNode {
     return this.__backgroundColor;
   }
 
+  setVariant(variant: LayoutItemVariant): void {
+    if (this.__editor) {
+      this.__editor.update(() => {
+        const writableNode = this.getWritable();
+        writableNode.__variant = variant;
+      });
+    }
+  }
+
+  getVariant(): LayoutItemVariant {
+    return this.__variant;
+  }
+
+  setShowFrame(showFrame: boolean): void {
+    if (this.__editor) {
+      this.__editor.update(() => {
+        const writableNode = this.getWritable();
+        writableNode.__showFrame = showFrame;
+      });
+    }
+  }
+
+  getShowFrame(): boolean {
+    return this.__showFrame;
+  }
+
+  setExtraLabel(extraLabel: string): void {
+    if (this.__editor) {
+      this.__editor.update(() => {
+        const writableNode = this.getWritable();
+        writableNode.__extraLabel = extraLabel;
+      });
+    }
+  }
+
+  getExtraLabel(): string {
+    return this.__extraLabel;
+  }
+
+  setCustomBackgroundColor(customBackgroundColor: string): void {
+    if (this.__editor) {
+      this.__editor.update(() => {
+        const writableNode = this.getWritable();
+        writableNode.__customBackgroundColor = customBackgroundColor;
+      });
+    }
+  }
+
+  getCustomBackgroundColor(): string {
+    return this.__customBackgroundColor;
+  }
+
   set isEditable(value: boolean) {
     this.__isEditable = value;
   }
@@ -138,8 +422,23 @@ export class LayoutItemNode extends ElementNode {
   }
 }
 
-export function $createLayoutItemNode(backgroundColor: string = '#ffffff', isEditable: boolean = true): LayoutItemNode {
-  return new LayoutItemNode(undefined, backgroundColor, isEditable);
+export function $createLayoutItemNode(
+  backgroundColor: string = '#ffffff',
+  isEditable: boolean = true,
+  variant: LayoutItemVariant = 'default',
+  showFrame: boolean = true,
+  extraLabel: string = '',
+  customBackgroundColor: string = '',
+): LayoutItemNode {
+  return new LayoutItemNode(
+    undefined,
+    backgroundColor,
+    isEditable,
+    variant,
+    showFrame,
+    extraLabel,
+    customBackgroundColor,
+  );
 }
 
 export function $isLayoutItemNode(

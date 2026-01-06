@@ -2,6 +2,8 @@ import {
   $applyNodeReplacement,
   $getNodeByKey,
   DecoratorNode,
+  DOMConversionMap,
+  DOMConversionOutput,
   DOMExportOutput,
   EditorConfig,
   LexicalEditor,
@@ -15,6 +17,35 @@ import { ToCompleteNode } from "../ToCompleteNode";
 
 export interface Dictionary {
   [Key: string]: string;
+}
+
+function $convertDictionaryElement(domNode: HTMLElement): null | DOMConversionOutput {
+  if (!domNode.hasAttribute('data-lexical-dictionary')) {
+    return null;
+  }
+
+  const dictionaryData: Dictionary = {};
+
+  for (const child of Array.from(domNode.children)) {
+    const text = (child.textContent || '').trim();
+    if (!text) continue;
+
+    const separatorIndex = text.indexOf(' - ');
+    if (separatorIndex === -1) {
+      // Fallback: treat the whole line as a key with an empty value
+      dictionaryData[text] = '';
+      continue;
+    }
+
+    const key = text.slice(0, separatorIndex).trim();
+    const value = text.slice(separatorIndex + 3).trim();
+    if (key.length === 0 && value.length === 0) continue;
+
+    dictionaryData[key] = value;
+  }
+
+  const node = $createDictionaryNode(dictionaryData, true);
+  return { node };
 }
 
 // Serialized format *without* transient state
@@ -137,6 +168,20 @@ export class DictionaryNode extends DecoratorNode<JSX.Element> implements ToComp
     }
 
     return {element: container};
+  }
+
+  static importDOM(): DOMConversionMap | null {
+    return {
+      div: (domNode: HTMLElement) => {
+        if (!domNode.hasAttribute('data-lexical-dictionary')) {
+          return null;
+        }
+        return {
+          conversion: $convertDictionaryElement,
+          priority: 1,
+        };
+      },
+    };
   }
 
   getTextContent(): string {

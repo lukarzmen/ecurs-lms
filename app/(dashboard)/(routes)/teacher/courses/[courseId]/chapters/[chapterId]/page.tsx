@@ -6,12 +6,33 @@ import { redirect } from "next/navigation";
 import ChapterDescriptionForm from "./_components/chapter-description-form";
 import ChapterTitleForm from "./_components/chapter-title-form";
 import { ModulePublicationSchedule } from "./_components/module-publication-schedule";
+import { SignedOut } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
 
 
 const ChapterEditPage = async ({ params }: { params: Promise<{ courseId: string; chapterId: string }> }) => {
-  const { userId } = await auth() ?? "";
+  const { userId } = await auth();
   if (!userId) {
-    return redirect("/sign-in");
+    return (
+      <SignedOut>
+        <div className="p-6">
+          <div className="max-w-2xl space-y-4">
+            <h1 className="text-3xl font-bold text-gray-900">Zaloguj się, aby edytować treści</h1>
+            <p className="text-gray-600">
+              Po zalogowaniu możesz edytować moduły, planować publikację i zarządzać zawartością kursu.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild>
+                <Link href="/sign-in">Zaloguj się</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/sign-up">Załóż konto</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </SignedOut>
+    );
   }
   const { courseId, chapterId } = await params;
 

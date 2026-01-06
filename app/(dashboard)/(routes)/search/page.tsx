@@ -2,10 +2,10 @@ import { Categories } from "./_components/categories";
 import { SearchInput } from "@/components/ui/search-input";
 import { auth } from "@clerk/nextjs/server";
 import { MarketplaceCoursesList } from "@/components/ui/marketplace-list";
-import { redirect } from "next/navigation";
-import { authorizeUser } from '@/hooks/use-auth';
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { Search } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 
 const SearchPage = async ({ searchParams }: { searchParams: Promise<{ title?: string; categoryId?: string }> }) => {
@@ -13,7 +13,36 @@ const SearchPage = async ({ searchParams }: { searchParams: Promise<{ title?: st
   const { title = '', categoryId = '' } = resolvedSearchParams || {};
 
   const { userId, sessionId } = await auth();
-  if (!userId) return redirect('/sign-in');
+  if (!userId) {
+    return (
+      <SignedOut>
+        <div className="p-6">
+          <div className="max-w-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <Search className="h-8 w-8 text-orange-600" />
+              <h1 className="text-3xl font-bold text-gray-900">Wyszukaj kursy</h1>
+            </div>
+            <p className="text-gray-600">
+              Zaloguj się lub załóż konto, aby przeglądać kursy, zapisywać je na liście życzeń i kontynuować naukę w jednym miejscu.
+            </p>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild>
+                <Link href="/sign-in">Zaloguj się</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/sign-up">Załóż konto</Link>
+              </Button>
+            </div>
+
+            <p className="text-sm text-gray-600">
+              Masz już konto? Kliknij „Zaloguj się”. Nowy użytkownik? „Załóż konto” zajmie chwilę.
+            </p>
+          </div>
+        </div>
+      </SignedOut>
+    );
+  }
 
   const resCategories = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, { next: { revalidate: 60 } });
   const categories = await resCategories.json();
@@ -24,11 +53,6 @@ const SearchPage = async ({ searchParams }: { searchParams: Promise<{ title?: st
   console.log("[SEARCH_PAGE] Courses data:", JSON.stringify(courses.slice(0, 3), null, 2));
   return (
     <>
-      <SignedOut>
-        <div className="px-6 mt-4 pt-6 mb-0 block w-full">
-          Odśwież stronę, aby zalogować się ponownie.
-        </div>
-      </SignedOut>
       <SignedIn>
         <div className="p-6 space-y-8">
           {/* Header Section */}

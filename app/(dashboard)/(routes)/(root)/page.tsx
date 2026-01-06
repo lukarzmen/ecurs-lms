@@ -6,6 +6,9 @@ import { authorizeUser } from "@/hooks/use-auth";
 import { DashboardCoursesResponse, CourseDetails } from "@/app/api/user/courses/route"; // Import CourseDetails
 import { EnrolledEduList } from "@/components/ui/enrolled-list";
 import { EnrolledEduList as EnrolledEduPathList } from "@/components/ui/enrolled-list";
+import { SignedOut } from "@clerk/nextjs";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default async function Home() {
   let educationalPaths: any[] = [];
@@ -13,7 +16,26 @@ export default async function Home() {
   let eduPathUnfinishedCount = 0;
   const { userId, sessionId } = await auth();
   if (!userId) {
-    return redirect("/sign-in");
+    return (
+      <SignedOut>
+        <div className="p-6">
+          <div className="max-w-2xl space-y-4">
+            <h1 className="text-3xl font-bold text-gray-900">Ecurs — platforma nowoczesnej edukacji</h1>
+            <p className="text-gray-600">
+              Zaloguj się lub załóż konto, aby zobaczyć panel, swoje kursy oraz postępy nauki.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild>
+                <Link href="/sign-in">Zaloguj się</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/sign-up">Załóż konto</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </SignedOut>
+    );
   }
   const authState = await authorizeUser(userId, sessionId);
   console.debug('Authorization state:', authState);

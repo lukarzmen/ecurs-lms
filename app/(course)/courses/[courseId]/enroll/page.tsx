@@ -4,6 +4,8 @@ import PurchaseCard from "./_components/purchase-card";
 import Link from "next/link";
 import { ArrowLeft, XCircle, AlertTriangle } from "lucide-react";
 import { cookies } from "next/headers";
+import { SignedOut } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
 
 type EnrollCoursePageParams = Promise<{ courseId: string }>;
 
@@ -14,7 +16,26 @@ const EnrollPage = async ({ params, searchParams }: {
 }) => {
   const { userId } = await auth();
   if (!userId) {
-    return redirect("/sign-in");
+    return (
+      <SignedOut>
+        <div className="p-6">
+          <div className="max-w-2xl space-y-4">
+            <h1 className="text-3xl font-bold text-gray-900">Dokończ zapis na kurs</h1>
+            <p className="text-gray-600">
+              Zaloguj się lub załóż konto, aby zapisać się na kurs, mieć dostęp do materiałów i śledzić postępy.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild>
+                <Link href="/sign-in">Zaloguj się</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/sign-up">Załóż konto</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </SignedOut>
+    );
   }
   const awaitedParams = await params;
   const awaitedSearchParams = searchParams ? await searchParams : {};

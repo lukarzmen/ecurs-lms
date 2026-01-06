@@ -595,6 +595,81 @@
   min-width: 0;
   max-width: 100%;
 }
+.PlaygroundEditorTheme__layoutItem[data-lexical-layout-item-frame='false'] {
+  border: none;
+}
+.PlaygroundEditorTheme__layoutItem .layout-item-popover {
+  position: absolute;
+  top: 30px;
+  right: 6px;
+  z-index: 5;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px;
+  min-width: 180px;
+}
+.PlaygroundEditorTheme__layoutItem .layout-item-popover-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+.PlaygroundEditorTheme__layoutItem .layout-item-popover-btn,
+.PlaygroundEditorTheme__layoutItem .layout-item-popover-reset {
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.PlaygroundEditorTheme__layoutItem .layout-item-popover-label {
+  font-size: 12px;
+  color: #555;
+  min-width: 24px;
+}
+.PlaygroundEditorTheme__layoutItem .layout-item-popover-color {
+  width: 36px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: transparent;
+}
+.PlaygroundEditorTheme__layoutItem .layout-item-label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 8px 0;
+  user-select: none;
+}
+.PlaygroundEditorTheme__layoutItem .layout-item-extra-label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: #555;
+  margin: -6px 0 8px 0;
+  user-select: none;
+}
+.PlaygroundEditorTheme__layoutItem[data-lexical-layout-item-variant='info'] .layout-item-label {
+  color: rgb(60, 132, 244);
+}
+.PlaygroundEditorTheme__layoutItem[data-lexical-layout-item-variant='warning'] .layout-item-label {
+  color: #a16207;
+}
+.PlaygroundEditorTheme__layoutItem[data-lexical-layout-item-variant='info'] {
+  border-style: solid;
+  border-color: rgb(60, 132, 244);
+}
+.PlaygroundEditorTheme__layoutItem[data-lexical-layout-item-variant='warning'] {
+  border-style: solid;
+  background: rgba(255, 212, 0, 0.14);
+  border-color: rgba(255, 212, 0, 0.3);
+}
 .PlaygroundEditorTheme__autocomplete {
   color: #ccc;
 }

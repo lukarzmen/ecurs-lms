@@ -44,9 +44,19 @@ import {
   $isLayoutItemNode,
   LayoutItemNode,
 } from '../../nodes/LayoutItemNode';
+import type {LayoutItemVariant} from '../../nodes/LayoutItemNode';
 
-export const INSERT_LAYOUT_COMMAND: LexicalCommand<string> =
-  createCommand<string>();
+export const INSERT_LAYOUT_COMMAND: LexicalCommand<{
+  template: string;
+  itemVariant: LayoutItemVariant;
+  showFrame: boolean;
+  extraLabel: string;
+}> = createCommand<{
+  template: string;
+  itemVariant: LayoutItemVariant;
+  showFrame: boolean;
+  extraLabel: string;
+}>();
 
 export const UPDATE_LAYOUT_COMMAND: LexicalCommand<{
   template: string;
@@ -171,14 +181,23 @@ export function LayoutPlugin(): null {
       ),
       editor.registerCommand(
         INSERT_LAYOUT_COMMAND,
-        (template) => {
+        ({template, itemVariant, showFrame, extraLabel}) => {
           editor.update(() => {
             const container = $createLayoutContainerNode(template);
             const itemsCount = getItemsCountFromTemplate(template);
 
             for (let i = 0; i < itemsCount; i++) {
               container.append(
-                $createLayoutItemNode().append($createParagraphNode()),
+                $createLayoutItemNode(
+                  '#ffffff',
+                  true,
+                  itemVariant,
+                  showFrame,
+                  extraLabel,
+                  '',
+                ).append(
+                  $createParagraphNode(),
+                ),
               );
             }
 

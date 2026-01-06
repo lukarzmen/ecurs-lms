@@ -1,9 +1,11 @@
 "use client";
 
 import { SignedIn, SignedOut } from "@clerk/nextjs";
+import Link from "next/link";
 import Footer from "./_components/footer";
 import Navbar from "./_components/navbar";
 import { Sidebar } from "./_components/sidebar";
+import { Button } from "@/components/ui/button";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -23,20 +25,25 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       <SignedOut>
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
           <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Wylogowano</h2>
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">Dołącz do platformy</h2>
             <p className="text-gray-600 mb-6">
-              Zostałeś wylogowany z systemu. Odśwież stronę, aby zalogować się ponownie.
+              Zaloguj się lub załóż konto, aby mieć dostęp do panelu, kursów i postępów nauki.
             </p>
-            <div className="space-y-3">
-              <button
+            <div className="flex flex-col gap-3">
+              <Button asChild className="w-full">
+                <Link href="/sign-in">Zaloguj się</Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full">
+                <Link href="/sign-up">Załóż konto</Link>
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
                 onClick={() => window.location.reload()}
-                className="w-full bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition-colors"
               >
                 Odśwież stronę
-              </button>
-              <p className="text-sm text-gray-500">
-                lub naciśnij F5 / Ctrl+R
-              </p>
+              </Button>
             </div>
           </div>
         </div>

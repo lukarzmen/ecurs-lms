@@ -260,6 +260,7 @@ export default function Editor( {
         <HashtagPlugin />
         <TranslationPlugin />
         <KeywordsPlugin />
+        <LayoutPlugin />
         <AutoLinkPlugin />
         <AudioPlugin/>
         <DictionaryPlugin />

@@ -16,12 +16,33 @@ import PriceForm from "./_components/price-form";
 import CourseStateBar from "./_components/state-bar";
 import { PromoCodesForm } from "./_components/promo-codes-form";
 import { CommunicationLinksForm } from "./_components/communication-links-form";
+import { SignedOut } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
 
 
 const CourseIdPage = async ({ params }: { params: Promise<{ courseId: string }> }) => {
-  const { userId } = await auth() ?? "";
+  const { userId } = await auth();
   if (!userId) {
-    return redirect("/sign-in");
+    return (
+      <SignedOut>
+        <div className="p-6">
+          <div className="max-w-2xl space-y-4">
+            <h1 className="text-3xl font-bold text-gray-900">Zaloguj się, aby zarządzać kursem</h1>
+            <p className="text-gray-600">
+              Ten widok jest dostępny po zalogowaniu. Załóż konto lub zaloguj się, aby tworzyć kursy i publikować treści.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild>
+                <Link href="/sign-in">Zaloguj się</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/sign-up">Załóż konto</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </SignedOut>
+    );
   }
   const { courseId } = await params;
   const courseIdNumber = parseInt(courseId, 10);

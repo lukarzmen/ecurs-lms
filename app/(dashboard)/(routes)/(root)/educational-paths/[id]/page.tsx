@@ -5,6 +5,8 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import CourseInfoCard from "@/components/ui/course-card";
+import { SignedOut } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
 
 export default async function EducationalPathPage({ 
     params, 
@@ -17,8 +19,27 @@ export default async function EducationalPathPage({
     const awaitedParams = await params;
     const awaitedSearchParams = searchParams ? await searchParams : {};
     
-    if (!userAuth) {
-        return redirect(`/sign-in?redirectUrl=${encodeURIComponent(`/educational-paths/${awaitedParams.id}`)}`);
+    if (!userAuth?.userId) {
+        return (
+            <SignedOut>
+                <div className="p-6">
+                    <div className="max-w-2xl space-y-4">
+                        <h1 className="text-3xl font-bold text-gray-900">Zaloguj się, aby zobaczyć ścieżkę</h1>
+                        <p className="text-gray-600">
+                            Po zalogowaniu zobaczysz szczegóły ścieżki, kursy w jej składzie oraz swoje postępy.
+                        </p>
+                        <div className="flex flex-col gap-3 sm:flex-row">
+                            <Button asChild>
+                                <Link href={`/sign-in?redirectUrl=${encodeURIComponent(`/educational-paths/${awaitedParams.id}`)}`}>Zaloguj się</Link>
+                            </Button>
+                            <Button asChild variant="outline">
+                                <Link href="/sign-up">Załóż konto</Link>
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </SignedOut>
+        );
     }
 
     // Handle payment status from Stripe redirect

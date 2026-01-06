@@ -1,5 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { SignedOut } from "@clerk/nextjs";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 
 const CourseIdPage = async ({
@@ -13,8 +16,27 @@ const CourseIdPage = async ({
     const awaitedParams = await params;
     const awaitedSearchParams = searchParams ? await searchParams : {};
 
-    if (!userAuth) {
-       return redirect(`/sign-in?redirectUrl=${encodeURIComponent(`/courses/${awaitedParams.courseId}`)}`);
+    if (!userAuth?.userId) {
+        return (
+            <SignedOut>
+                <div className="p-6">
+                    <div className="max-w-2xl space-y-4">
+                        <h1 className="text-3xl font-bold text-gray-900">Zaloguj się, aby przejść do kursu</h1>
+                        <p className="text-gray-600">
+                            Załóż konto lub zaloguj się, aby uzyskać dostęp do kursu i kontynuować naukę.
+                        </p>
+                        <div className="flex flex-col gap-3 sm:flex-row">
+                            <Button asChild>
+                                <Link href={`/sign-in?redirectUrl=${encodeURIComponent(`/courses/${awaitedParams.courseId}`)}`}>Zaloguj się</Link>
+                            </Button>
+                            <Button asChild variant="outline">
+                                <Link href="/sign-up">Załóż konto</Link>
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </SignedOut>
+        );
     }
 
     // Handle payment status from Stripe redirect
