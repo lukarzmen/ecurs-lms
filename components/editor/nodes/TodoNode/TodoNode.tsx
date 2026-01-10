@@ -1,6 +1,16 @@
 import { Suspense } from "react";
 import TodoComponent, { TodoItem } from "./TodoComponent";
-import { DecoratorNode, NodeKey, SerializedLexicalNode, Spread, LexicalEditor, $getNodeByKey, EditorConfig, $applyNodeReplacement } from "lexical";
+import {
+  $applyNodeReplacement,
+  $getNodeByKey,
+  DecoratorNode,
+  DOMExportOutput,
+  EditorConfig,
+  LexicalEditor,
+  NodeKey,
+  SerializedLexicalNode,
+  Spread,
+} from "lexical";
 import { ToCompleteNode } from "../ToCompleteNode";
 import { withNodeErrorBoundary } from "../Error/BrokenNode";
 
@@ -65,6 +75,46 @@ export class TodoNode extends DecoratorNode<JSX.Element> implements ToCompleteNo
       type: "todo",
       version: 1,
     };
+  }
+
+  exportDOM(): DOMExportOutput {
+    const container = document.createElement('div');
+    container.setAttribute('data-lexical-todo', 'true');
+
+    const titleText = this.__title ? String(this.__title) : '';
+    if (titleText) {
+      const title = document.createElement('h3');
+      title.textContent = titleText;
+      container.appendChild(title);
+    }
+
+    const items = Array.isArray(this.__items) ? this.__items : [];
+    if (items.length > 0) {
+      const ul = document.createElement('ul');
+
+      for (const item of items) {
+        const li = document.createElement('li');
+        if (item?.id) {
+          li.setAttribute('data-todo-id', String(item.id));
+        }
+
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.disabled = true;
+        checkbox.checked = !!item?.checked;
+
+        const text = document.createTextNode(` ${item?.text ? String(item.text) : ''}`);
+        label.appendChild(checkbox);
+        label.appendChild(text);
+        li.appendChild(label);
+        ul.appendChild(li);
+      }
+
+      container.appendChild(ul);
+    }
+
+    return {element: container};
   }
 
   decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element {

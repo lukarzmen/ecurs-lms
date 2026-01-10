@@ -1,6 +1,7 @@
 'use client'; // <-- Make this a Client Component
 
 import { Banner } from "@/components/banner";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@clerk/nextjs"; // <-- Use client-side auth hook
 import ChapterContent from "./__components/chapter-content";
 import { ArrowLeft, Hourglass } from "lucide-react";
@@ -9,6 +10,7 @@ import toast from "react-hot-toast";
 import { useEffect, useState } from "react"; // <-- Import client-side hooks
 import { redirect, useParams, useRouter } from "next/navigation"; // <-- Import client-side navigation hooks
 import { Loader2 } from "lucide-react";
+import type { ExportHandlers } from "@/components/editor/plugins/ExportBridgePlugin";
 
 // Define a type for the fetched chapter data
 interface ChapterData {
@@ -42,6 +44,7 @@ const ChapterIdPage = () => {
     const [chapterData, setChapterData] = useState<ChapterData | null>(null);
     const [isCompleted, setIsCompleted] = useState(false); // Local state for completion status
     const [isCompleting, setIsCompleting] = useState(false); // Prevent double completion
+    const [exportHandlers, setExportHandlers] = useState<ExportHandlers | null>(null);
 
     useEffect(() => {
         // Fetch data only if userProviderId and params are available
@@ -184,12 +187,33 @@ const ChapterIdPage = () => {
             {isCompleted && (
                 <Banner variant="success" label="Rozdział ukończony" />
             )}
-            <Link
-                href={"/"} // Link back to the course page
-                className="flex items-center text-sm hover:opacity-75 transition p-4 select-none">
-                <ArrowLeft className="h-4 w-4 mr-1" />
-                Wróć do panelu kursów
-            </Link>
+            <div className="flex items-center justify-between gap-2 p-4">
+                <Link
+                    href={"/"} // Link back to the course page
+                    className="flex items-center text-sm hover:opacity-75 transition select-none">
+                    <ArrowLeft className="h-4 w-4 mr-1" />
+                    Wróć do panelu kursów
+                </Link>
+
+                <div className="flex items-center gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!exportHandlers}
+                        onClick={() => exportHandlers?.exportHtml()}>
+                        Pobierz HTML
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!exportHandlers}
+                        onClick={() => exportHandlers?.exportPdf()}>
+                        Pobierz PDF
+                    </Button>
+                </div>
+            </div>
             <div className="flex flex-col mx-auto">
                 <h1 className="text-2xl font-semibold text-center p-2">{chapterData.module.title}</h1>
                 <div className="p-4">
@@ -199,6 +223,7 @@ const ChapterIdPage = () => {
                         moduleId={chapterData.module.id}
                         onCompleted={handleCompletion}
                         isCompleting={isCompleting}
+                        onExportReady={setExportHandlers}
                         module={{
                             courseId,
                             courseName: chapterData.course.title,

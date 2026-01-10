@@ -1,4 +1,14 @@
-import { DecoratorNode, NodeKey, SerializedLexicalNode, Spread, LexicalEditor, EditorConfig, $getNodeByKey, $applyNodeReplacement } from "lexical";
+import {
+  $applyNodeReplacement,
+  $getNodeByKey,
+  DecoratorNode,
+  DOMExportOutput,
+  EditorConfig,
+  LexicalEditor,
+  NodeKey,
+  SerializedLexicalNode,
+  Spread,
+} from "lexical";
 import QuestionAnswerComponent, { QAType } from "./QuestionAnswerComponent";
 import { ToCompleteNode } from "../ToCompleteNode";
 
@@ -77,6 +87,64 @@ export class QuestionAnswerNode extends DecoratorNode<JSX.Element> implements To
   updateDOM(prevNode: QuestionAnswerNode, dom: HTMLElement, config: EditorConfig): boolean {
     // Component handles updates
     return false;
+  }
+
+  exportDOM(): DOMExportOutput {
+    const container = document.createElement('section');
+    container.setAttribute('data-lexical-question-answer', 'true');
+    container.style.border = '1px solid rgba(0,0,0,0.15)';
+    container.style.borderRadius = '10px';
+    container.style.padding = '12px 14px';
+    container.style.margin = '12px 0';
+
+    const header = document.createElement('h3');
+    header.textContent = 'Pytanie';
+    header.style.margin = '0 0 8px 0';
+    container.appendChild(header);
+
+    const qText = this.__question ? String(this.__question).trim() : '';
+    const aText = this.__answer ? String(this.__answer).trim() : '';
+    const eText = this.__explanation ? String(this.__explanation).trim() : '';
+
+    if (qText) {
+      const q = document.createElement('p');
+      q.setAttribute('data-qa', 'question');
+      q.textContent = qText;
+      q.style.margin = '0 0 10px 0';
+      q.style.whiteSpace = 'pre-wrap';
+      container.appendChild(q);
+    }
+
+    if (eText) {
+      const hintLabel = document.createElement('div');
+      hintLabel.textContent = 'Wskazówki';
+      hintLabel.style.fontWeight = '700';
+      hintLabel.style.margin = '0 0 6px 0';
+      container.appendChild(hintLabel);
+
+      const e = document.createElement('div');
+      e.setAttribute('data-qa', 'explanation');
+      e.textContent = eText;
+      e.style.margin = '0 0 10px 0';
+      e.style.whiteSpace = 'pre-wrap';
+      container.appendChild(e);
+    }
+
+    if (aText) {
+      const answerLabel = document.createElement('div');
+      answerLabel.textContent = 'Odpowiedź';
+      answerLabel.style.fontWeight = '700';
+      answerLabel.style.margin = '0 0 6px 0';
+      container.appendChild(answerLabel);
+
+      const a = document.createElement('div');
+      a.setAttribute('data-qa', 'answer');
+      a.textContent = aText;
+      a.style.whiteSpace = 'pre-wrap';
+      container.appendChild(a);
+    }
+
+    return {element: container};
   }
 
   // Method to update the transient completion state

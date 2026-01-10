@@ -1,4 +1,4 @@
-import { DecoratorNode, SerializedLexicalNode, SerializedTextNode, Spread } from "lexical";
+import { DecoratorNode, DOMExportOutput, SerializedLexicalNode, SerializedTextNode, Spread } from "lexical";
 import React, { useState } from "react";
 import { BookOpen, X, Info } from "lucide-react";
 
@@ -48,6 +48,41 @@ export class DescriptionNode extends DecoratorNode<JSX.Element> {
 
   updateDOM(): boolean {
     return false;
+  }
+
+  exportDOM(): DOMExportOutput {
+    const container = document.createElement('aside');
+    container.setAttribute('data-lexical-description', 'true');
+    // Neutral styling for export (HTML/PDF). Uses mostly current text color.
+    container.style.border = '1px solid rgba(0,0,0,0.15)';
+    container.style.borderRadius = '10px';
+    container.style.padding = '12px 14px';
+    container.style.margin = '12px 0';
+
+    const label = document.createElement('div');
+    label.textContent = 'Wyjaśnienie';
+    label.style.fontWeight = '700';
+    label.style.marginBottom = '6px';
+    container.appendChild(label);
+
+    const termText = this.__text ? String(this.__text) : '';
+    if (termText) {
+      const term = document.createElement('div');
+      term.textContent = termText;
+      term.style.fontWeight = '600';
+      term.style.marginBottom = '6px';
+      container.appendChild(term);
+    }
+
+    const defText = this.__definition ? String(this.__definition) : '';
+    if (defText) {
+      const def = document.createElement('div');
+      def.textContent = defText;
+      def.style.whiteSpace = 'pre-wrap';
+      container.appendChild(def);
+    }
+
+    return {element: container};
   }
 
   decorate(): JSX.Element {

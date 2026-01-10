@@ -1,4 +1,14 @@
-import { DecoratorNode, NodeKey, SerializedLexicalNode, Spread, LexicalEditor, EditorConfig, $getNodeByKey, $applyNodeReplacement } from "lexical"; // Import necessary types
+import {
+  $applyNodeReplacement,
+  $getNodeByKey,
+  DecoratorNode,
+  DOMExportOutput,
+  EditorConfig,
+  LexicalEditor,
+  NodeKey,
+  SerializedLexicalNode,
+  Spread,
+} from "lexical"; // Import necessary types
 import DoTaskComponent from "./DoTaskComponent";
 import { DoTaskType } from "../../plugins/TaskPlugin";
 import { ToCompleteNode } from "../ToCompleteNode";
@@ -67,6 +77,48 @@ export class DoTaskNode extends DecoratorNode<JSX.Element> implements ToComplete
   updateDOM(prevNode: DoTaskNode, dom: HTMLElement, config: EditorConfig): boolean { // Add config
     // Component handles updates
     return false;
+  }
+
+  exportDOM(): DOMExportOutput {
+    const container = document.createElement('section');
+    container.setAttribute('data-lexical-do-task', 'true');
+    container.style.border = '1px solid rgba(0,0,0,0.15)';
+    container.style.borderRadius = '10px';
+    container.style.padding = '12px 14px';
+    container.style.margin = '12px 0';
+
+    const header = document.createElement('h3');
+    header.textContent = 'Zadanie do rozwiązania';
+    header.style.margin = '0 0 8px 0';
+    container.appendChild(header);
+
+    const taskText = this.__task ? String(this.__task).trim() : '';
+    const hintText = this.__hint ? String(this.__hint).trim() : '';
+
+    if (taskText) {
+      const t = document.createElement('p');
+      t.setAttribute('data-do-task', 'task');
+      t.textContent = taskText;
+      t.style.margin = '0 0 10px 0';
+      t.style.whiteSpace = 'pre-wrap';
+      container.appendChild(t);
+    }
+
+    if (hintText) {
+      const hintLabel = document.createElement('div');
+      hintLabel.textContent = 'Wskazówki';
+      hintLabel.style.fontWeight = '700';
+      hintLabel.style.margin = '0 0 6px 0';
+      container.appendChild(hintLabel);
+
+      const h = document.createElement('div');
+      h.setAttribute('data-do-task', 'hint');
+      h.textContent = hintText;
+      h.style.whiteSpace = 'pre-wrap';
+      container.appendChild(h);
+    }
+
+    return {element: container};
   }
 
   // Method to update the transient completion state

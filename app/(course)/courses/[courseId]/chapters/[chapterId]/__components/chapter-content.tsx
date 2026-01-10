@@ -3,6 +3,7 @@
 import LexicalEditor from "@/components/editor/LexicalEditor";
 import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 import { ModuleContextData } from "@/components/editor/context/CourseContext";
+import { ExportHandlers } from "@/components/editor/plugins/ExportBridgePlugin";
 import { SerializedDocument } from "@lexical/file";
 import { useEffect, useState } from "react";
 import { Loader2, Hourglass } from "lucide-react";
@@ -12,13 +13,15 @@ export default function ChapterContent ({
   isCompleted,
   onCompleted,
   isCompleting = false,
-  module
+  module,
+  onExportReady,
 }: {
   moduleId: string | null;
   isCompleted: boolean;
   onCompleted: () => void;
   isCompleting?: boolean;
   module?: ModuleContextData;
+  onExportReady?: (handlers: ExportHandlers) => void;
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
@@ -77,6 +80,7 @@ export default function ChapterContent ({
             isEditable={false}
             isCompleted={isCompleted}
             onEditorChange={() => {}}
+            onExportReady={onExportReady}
             onSave={(serializedDocument) => {
               const saveResult: SaveResult = {
                 success: true

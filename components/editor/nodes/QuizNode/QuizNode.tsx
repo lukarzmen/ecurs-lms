@@ -53,28 +53,39 @@ export class QuizNode extends DecoratorNode<JSX.Element> implements ToCompleteNo
   }
 
   exportDOM(): DOMExportOutput {
-    const container = document.createElement('div');
+    const container = document.createElement('section');
     container.setAttribute('data-lexical-quiz', 'true');
+
+    const header = document.createElement('h2');
+    header.textContent = 'Quiz';
+    container.appendChild(header);
 
     const tests = Array.isArray(this.__tests) ? this.__tests : [];
     for (let i = 0; i < tests.length; i++) {
       const test = tests[i];
+
       const testWrap = document.createElement('div');
       testWrap.setAttribute('data-quiz-index', String(i));
 
-      const q = document.createElement('div');
-      q.textContent = test?.question ? String(test.question) : '';
-      testWrap.appendChild(q);
+      const questionText = test?.question ? String(test.question).trim() : '';
+      if (questionText) {
+        const q = document.createElement('p');
+        q.textContent = `${i + 1}. ${questionText}`;
+        testWrap.appendChild(q);
+      }
 
       const answers = Array.isArray(test?.answers) ? test.answers : [];
       if (answers.length > 0) {
-        const ul = document.createElement('ul');
+        const ol = document.createElement('ol');
+        ol.type = 'a';
+
         for (const a of answers) {
           const li = document.createElement('li');
-          li.textContent = String(a);
-          ul.appendChild(li);
+          li.textContent = a !== null && a !== undefined ? String(a) : '';
+          ol.appendChild(li);
         }
-        testWrap.appendChild(ul);
+
+        testWrap.appendChild(ol);
       }
 
       if (test?.correctAnswerIndex !== null && test?.correctAnswerIndex !== undefined) {
@@ -85,6 +96,33 @@ export class QuizNode extends DecoratorNode<JSX.Element> implements ToCompleteNo
       }
 
       container.appendChild(testWrap);
+    }
+
+    // Add answer key at the end (requested for PDF/HTML export).
+    const hasAnyCorrect = tests.some(
+      (t) => t?.correctAnswerIndex !== null && t?.correctAnswerIndex !== undefined,
+    );
+
+    if (hasAnyCorrect) {
+      const answersHeader = document.createElement('h3');
+      answersHeader.textContent = 'Poprawne odpowiedzi';
+      container.appendChild(answersHeader);
+
+      const answersList = document.createElement('ol');
+      for (let i = 0; i < tests.length; i++) {
+        const test = tests[i];
+        const idx = test?.correctAnswerIndex;
+        if (idx === null || idx === undefined) continue;
+
+        const li = document.createElement('li');
+        // Map 0 -> a, 1 -> b, ...
+        const letter = Number.isFinite(Number(idx))
+          ? String.fromCharCode(97 + Number(idx))
+          : '';
+        li.textContent = letter ? `${letter})` : '';
+        answersList.appendChild(li);
+      }
+      container.appendChild(answersList);
     }
 
     return {element: container};

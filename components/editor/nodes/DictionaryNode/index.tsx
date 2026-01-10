@@ -26,22 +26,38 @@ function $convertDictionaryElement(domNode: HTMLElement): null | DOMConversionOu
 
   const dictionaryData: Dictionary = {};
 
-  for (const child of Array.from(domNode.children)) {
-    const text = (child.textContent || '').trim();
-    if (!text) continue;
+  // New export format: <table data-lexical-dictionary> with 2 cells per row.
+  // Also keep compatibility with older export format: rows of "key - value" text.
+  const rows = Array.from(domNode.querySelectorAll('tr'));
+  if (rows.length > 0) {
+    for (const row of rows) {
+      const cells = Array.from(row.querySelectorAll('th,td'));
+      if (cells.length === 0) continue;
 
-    const separatorIndex = text.indexOf(' - ');
-    if (separatorIndex === -1) {
-      // Fallback: treat the whole line as a key with an empty value
-      dictionaryData[text] = '';
-      continue;
+      const key = (cells[0]?.textContent || '').trim();
+      const value = (cells[1]?.textContent || '').trim();
+      if (key.length === 0 && value.length === 0) continue;
+
+      dictionaryData[key] = value;
     }
+  } else {
+    for (const child of Array.from(domNode.children)) {
+      const text = (child.textContent || '').trim();
+      if (!text) continue;
 
-    const key = text.slice(0, separatorIndex).trim();
-    const value = text.slice(separatorIndex + 3).trim();
-    if (key.length === 0 && value.length === 0) continue;
+      const separatorIndex = text.indexOf(' - ');
+      if (separatorIndex === -1) {
+        // Fallback: treat the whole line as a key with an empty value
+        dictionaryData[text] = '';
+        continue;
+      }
 
-    dictionaryData[key] = value;
+      const key = text.slice(0, separatorIndex).trim();
+      const value = text.slice(separatorIndex + 3).trim();
+      if (key.length === 0 && value.length === 0) continue;
+
+      dictionaryData[key] = value;
+    }
   }
 
   const node = $createDictionaryNode(dictionaryData, true);
@@ -154,25 +170,45 @@ export class DictionaryNode extends DecoratorNode<JSX.Element> implements ToComp
   }
 
   exportDOM(): DOMExportOutput {
-    const container = document.createElement('div');
-    container.setAttribute('data-lexical-dictionary', 'true');
+    const table = document.createElement('table');
+    table.setAttribute('data-lexical-dictionary', 'true');
+
+    const tbody = document.createElement('tbody');
+    table.appendChild(tbody);
 
     const entries = Object.entries(this.__dictionaryData)
       .map(([key, value]) => [key.trim(), value.trim()] as const)
       .filter(([key, value]) => key.length > 0 || value.length > 0);
 
     for (const [key, value] of entries) {
-      const row = document.createElement('div');
-      row.textContent = `${key} - ${value}`;
-      container.appendChild(row);
+      const tr = document.createElement('tr');
+
+      const left = document.createElement('td');
+      left.textContent = key;
+
+      const right = document.createElement('td');
+      right.textContent = value;
+
+      tr.appendChild(left);
+      tr.appendChild(right);
+      tbody.appendChild(tr);
     }
 
-    return {element: container};
+    return { element: table };
   }
 
   static importDOM(): DOMConversionMap | null {
     return {
       div: (domNode: HTMLElement) => {
+        if (!domNode.hasAttribute('data-lexical-dictionary')) {
+          return null;
+        }
+        return {
+          conversion: $convertDictionaryElement,
+          priority: 1,
+        };
+      },
+      table: (domNode: HTMLElement) => {
         if (!domNode.hasAttribute('data-lexical-dictionary')) {
           return null;
         }

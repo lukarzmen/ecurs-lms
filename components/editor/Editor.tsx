@@ -70,6 +70,7 @@ import CodeActionMenuPlugin from './plugins/CodeActionMenuPlugin';
 import CourseInfoPlugin from './plugins/CourseInfoPlugin';
 import EditorRefreshPlugin from './plugins/EditorRefreshPlugin';
 import ShortcutsPlugin from './plugins/ShortcutsPlugin';
+import ExportBridgePlugin, {ExportHandlers} from './plugins/ExportBridgePlugin';
 
 
 // Helper function to recursively find nodes with __isCompleted property
@@ -108,6 +109,7 @@ export default function Editor( {
   isCompleted,
   onCompleted,
   initialStateJSON,
+  onExportReady,
 }: {
   onSave: (serializedDocument: SerializedDocument) => SaveResult;
   onEditorChange: (editorState: string) => void;
@@ -115,6 +117,7 @@ export default function Editor( {
   isCompleted?: boolean;
   onCompleted: () => void;
   initialStateJSON: string | null;
+  onExportReady?: (handlers: ExportHandlers) => void;
 }): JSX.Element {
 
   const {historyState} = useSharedHistoryContext();
@@ -161,6 +164,11 @@ export default function Editor( {
       window.removeEventListener('resize', updateViewPortWidth);
     };
   }, [isSmallWidthViewport]);
+
+  // Expose export helpers to parent (e.g. student Chapter Page).
+  // This does not render any toolbar UI.
+  // It only registers callbacks when requested.
+
 
   useEffect(() => {
     const unregisterListener = editor.registerUpdateListener(({ editorState }) => {
@@ -234,6 +242,7 @@ export default function Editor( {
   return (
     <>
       {showTableOfContents && <TableOfContentsPlugin />}
+      {onExportReady && <ExportBridgePlugin onReady={onExportReady} />}
       {isEditable && <NewToolbarPlugin 
               editor={editor}
           activeEditor={activeEditor}
