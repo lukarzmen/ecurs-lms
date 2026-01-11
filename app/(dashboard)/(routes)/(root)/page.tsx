@@ -39,9 +39,12 @@ export default async function Home({
       <div className="p-6 space-y-10 bg-gradient-to-b from-gray-50 to-white">
         <section className="max-w-4xl mx-auto rounded-2xl border bg-white p-6 sm:p-10 shadow-sm">
           <div className="space-y-3 text-center">
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
-              Ecurs 🎓 — nauka dla Ciebie
-            </h1>
+            <div className="flex items-center justify-center gap-3">
+              <img src="/logo.png" alt="Ecurs" className="h-10 w-10" />
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+              Ecurs — nauka dla Ciebie
+              </h1>
+            </div>
             <p className="text-gray-600 text-base sm:text-lg">
               Ucz się interaktywnie i śledź postępy, albo twórz kursy i ścieżki dla swoich uczniów — szybko, przejrzyście i z pomocą AI.
             </p>
