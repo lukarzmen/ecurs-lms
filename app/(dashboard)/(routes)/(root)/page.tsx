@@ -40,10 +40,10 @@ export default async function Home({
         <section className="max-w-4xl mx-auto rounded-2xl border bg-white p-6 sm:p-10 shadow-sm">
           <div className="space-y-3 text-center">
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
-              Ecurs 🎓 — platforma kursów dla nauczycieli
+              Ecurs 🎓 — nauka dla Ciebie
             </h1>
             <p className="text-gray-600 text-base sm:text-lg">
-              Twórz kursy, lekcje i ścieżki, zapraszaj uczniów i prowadź ich krok po kroku — interaktywnie, nowocześnie i z pomocą AI.
+              Ucz się interaktywnie i śledź postępy, albo twórz kursy i ścieżki dla swoich uczniów — szybko, przejrzyście i z pomocą AI.
             </p>
           </div>
 
@@ -105,7 +105,7 @@ export default async function Home({
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-semibold text-gray-900">Dołącz do platformy lub zaloguj się</h2>
             <p className="text-gray-600">
-              Załóż konto i sprawdź, jak wygląda nauka ucznia — a jako nauczyciel zacznij budować swój kurs w kilka minut.
+              Dołącz do Nas i skorzystaj z możliwości platformy już teraz! Zacznij swoją przygodę z nauką lub twórz kursy dla swoich uczniów.
             </p>
           </div>
 
