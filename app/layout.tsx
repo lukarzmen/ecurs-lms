@@ -8,9 +8,11 @@ import {
 } from "@clerk/nextjs";
 import ToastProvider from "@/components/providers/toast-provider";
 import { ConfettiProvider } from "@/components/providers/confetti-provider";
-import { plPL } from '@clerk/localizations'
+import { enUS, plPL } from "@clerk/localizations";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { I18nProvider } from "@/components/providers/i18n-provider";
+import { createTranslator, getMessages, getRequestLocale } from "@/lib/i18n/server";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -40,39 +42,28 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getRequestLocale();
+  const messages = await getMessages(locale, "common");
+  const t = createTranslator(messages);
+  const clerkLocalization = locale === "en" ? enUS : plPL;
+  const htmlLang = locale === "en" ? "en" : "pl-PL";
+
   return (
-    <ClerkProvider  localization={plPL}>
-      <html lang="pl-PL">
+    <ClerkProvider localization={clerkLocalization}>
+      <html lang={htmlLang}>
         <body className={inter.className}>
-        <SignedIn>
-          <ConfettiProvider/>
-          <ToastProvider />
-          
-        </SignedIn>
-        <SignedOut>
-          <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-            <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
-              <h2 className="text-2xl font-bold mb-4 text-gray-800">Ecurs — platforma nowoczesnej edukacji</h2>
-              <p className="text-gray-600 mb-6">
-                Zaloguj się lub załóż konto, aby przeglądać kursy, śledzić postępy i korzystać z funkcji platformy.
-              </p>
-              <div className="flex flex-col gap-3">
-                <Button asChild className="w-full">
-                  <Link href="/sign-in">Zaloguj się</Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full">
-                  <Link href="/sign-up">Załóż konto</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </SignedOut>
-          {children}
+          <I18nProvider locale={locale} messages={messages}>
+            <SignedIn>
+              <ConfettiProvider />
+              <ToastProvider />
+            </SignedIn>
+            {children}
+          </I18nProvider>
         </body>
       </html>
     </ClerkProvider>

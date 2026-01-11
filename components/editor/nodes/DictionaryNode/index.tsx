@@ -247,9 +247,11 @@ export class DictionaryNode extends DecoratorNode<JSX.Element> implements ToComp
   }
 
   decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element { // Add editor, config
+    const isReadonly = !editor.isEditable() || !this.__isEditable;
+
     return (
         <DictionaryComponent
-        isReadonly={!this.__isEditable}
+        isReadonly={isReadonly}
         onDictionaryChanged={(dict) => this.handleDictionaryChanged(dict, editor)}
         dictionary={this.__dictionaryData}
         // Pass bound update method

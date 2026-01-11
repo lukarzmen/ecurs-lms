@@ -1,5 +1,9 @@
 {
   "welcome": "Welcome to the app!",
   "login": "Login",
-  "logout": "Logout"
+  "logout": "Logout",
+  "auth.signedOut.title": "Ecurs — modern education platform",
+  "auth.signedOut.description": "Sign in or create an account to browse courses, track progress, and use the platform features.",
+  "auth.signIn": "Sign in",
+  "auth.signUp": "Create account"
 }

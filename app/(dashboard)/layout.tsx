@@ -6,8 +6,11 @@ import Footer from "./_components/footer";
 import Navbar from "./_components/navbar";
 import { Sidebar } from "./_components/sidebar";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/hooks/use-i18n";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+  const { t } = useI18n();
+    
   return (
     <>
       <SignedIn>
@@ -25,24 +28,14 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       <SignedOut>
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
           <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Dołącz do platformy</h2>
-            <p className="text-gray-600 mb-6">
-              Zaloguj się lub załóż konto, aby mieć dostęp do panelu, kursów i postępów nauki.
-            </p>
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">{t("auth.signedOut.title")}</h2>
+            <p className="text-gray-600 mb-6">{t("auth.signedOut.description")}</p>
             <div className="flex flex-col gap-3">
               <Button asChild className="w-full">
-                <Link href="/sign-in">Zaloguj się</Link>
+                <Link href="/sign-in">{t("auth.signIn")}</Link>
               </Button>
               <Button asChild variant="outline" className="w-full">
-                <Link href="/sign-up">Załóż konto</Link>
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full"
-                onClick={() => window.location.reload()}
-              >
-                Odśwież stronę
+                <Link href="/sign-up">{t("auth.signUp")}</Link>
               </Button>
             </div>
           </div>
