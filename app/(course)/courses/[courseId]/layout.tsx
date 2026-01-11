@@ -17,21 +17,41 @@ const CourseLayout = async ({ children, params }: {
     if (!userId) {
         return (
             <SignedOut>
-                <div className="p-6">
-                    <div className="max-w-2xl space-y-4">
-                        <h1 className="text-3xl font-bold text-gray-900">Zaloguj się, aby rozpocząć naukę</h1>
-                        <p className="text-gray-600">
-                            Ecurs to platforma kursów online — po zalogowaniu zyskasz dostęp do materiałów, postępów i funkcji kursu.
-                        </p>
-                        <div className="flex flex-col gap-3 sm:flex-row">
-                            <Button asChild>
+                <div className="min-h-screen flex items-center justify-center p-6">
+                    <section className="max-w-3xl rounded-xl border bg-white p-6 sm:p-8">
+                        <div className="space-y-3">
+                            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+                                Zaloguj się, aby rozpocząć naukę 🚀
+                            </h1>
+                            <p className="text-gray-600 text-base sm:text-lg">
+                                Po zalogowaniu odblokujesz materiały kursu, zapis postępów i wszystkie funkcje nauki w Ecurs.
+                            </p>
+                        </div>
+
+                        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                            <div className="rounded-lg border bg-white p-4">
+                                <div className="font-semibold text-gray-900">📚 Materiały</div>
+                                <div className="mt-1 text-sm text-gray-600">Pełny dostęp do lekcji i zasobów.</div>
+                            </div>
+                            <div className="rounded-lg border bg-white p-4">
+                                <div className="font-semibold text-gray-900">✅ Postępy</div>
+                                <div className="mt-1 text-sm text-gray-600">Kontynuuj dokładnie tam, gdzie skończyłeś.</div>
+                            </div>
+                            <div className="rounded-lg border bg-white p-4">
+                                <div className="font-semibold text-gray-900">💬 Funkcje kursu</div>
+                                <div className="mt-1 text-sm text-gray-600">Pełne doświadczenie i interakcje.</div>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex flex-col gap-3 max-w-sm mx-auto">
+                            <Button asChild className="w-full h-12 text-base">
                                 <Link href={`/sign-in?redirectUrl=${encodeURIComponent(`/courses/${resolvedParams.courseId}`)}`}>Zaloguj się</Link>
                             </Button>
-                            <Button asChild variant="outline">
-                                <Link href="/sign-up">Załóż konto</Link>
+                            <Button asChild variant="outline" className="w-full h-12 text-base">
+                                <Link href={`/sign-up?redirectUrl=${encodeURIComponent(`/courses/${resolvedParams.courseId}`)}`}>Załóż konto ✨</Link>
                             </Button>
                         </div>
-                    </div>
+                    </section>
                 </div>
             </SignedOut>
         );

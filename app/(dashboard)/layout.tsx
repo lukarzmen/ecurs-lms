@@ -2,6 +2,7 @@
 
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Footer from "./_components/footer";
 import Navbar from "./_components/navbar";
 import { Sidebar } from "./_components/sidebar";
@@ -10,6 +11,7 @@ import { useI18n } from "@/hooks/use-i18n";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { t } = useI18n();
+  const pathname = usePathname();
     
   return (
     <>
@@ -26,20 +28,24 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </SignedIn>
       <SignedOut>
+        {pathname === "/" ? (
+          <div className="min-h-screen">{children}</div>
+        ) : (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
           <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
             <h2 className="text-2xl font-bold mb-4 text-gray-800">{t("auth.signedOut.title")}</h2>
             <p className="text-gray-600 mb-6">{t("auth.signedOut.description")}</p>
             <div className="flex flex-col gap-3">
               <Button asChild className="w-full">
-                <Link href="/sign-in">{t("auth.signIn")}</Link>
+                <Link href={`/sign-in?redirectUrl=${encodeURIComponent("/")}`}>{t("auth.signIn")}</Link>
               </Button>
               <Button asChild variant="outline" className="w-full">
-                <Link href="/sign-up">{t("auth.signUp")}</Link>
+                <Link href={`/sign-up?redirectUrl=${encodeURIComponent("/")}`}>{t("auth.signUp")}</Link>
               </Button>
             </div>
           </div>
         </div>
+        )}
       </SignedOut>
     </>
   );

@@ -8,28 +8,81 @@ import { EnrolledEduList } from "@/components/ui/enrolled-list";
 import { EnrolledEduList as EnrolledEduPathList } from "@/components/ui/enrolled-list";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Categories } from "@/app/(dashboard)/(routes)/search/_components/categories";
+import { MarketplaceCoursesList } from "@/components/ui/marketplace-list";
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: Promise<{ title?: string; categoryId?: string }>;
+}) {
   let educationalPaths: any[] = [];
   let eduPathFinishedCount = 0;
   let eduPathUnfinishedCount = 0;
   const { userId, sessionId } = await auth();
   if (!userId) {
+    const resolvedSearchParams = searchParams ? await searchParams : undefined;
+    const { title = "", categoryId = "" } = resolvedSearchParams || {};
+
+    const resCategories = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/categories`,
+      { next: { revalidate: 60 } }
+    );
+
+    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/courses/search?title=${encodeURIComponent(
+      title
+    )}&categoryId=${encodeURIComponent(categoryId)}`;
+    const res = await fetch(apiUrl);
+    const courses = await res.json();
+
     return (
-      <div className="p-6">
-        <div className="max-w-2xl space-y-4">
-          <h1 className="text-3xl font-bold text-gray-900">Ecurs — platforma nowoczesnej edukacji</h1>
-          <p className="text-gray-600">
-            Zaloguj się lub załóż konto, aby zobaczyć panel, swoje kursy oraz postępy nauki.
-          </p>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild>
-              <Link href="/sign-in">Zaloguj się</Link>
+      <div className="p-6 space-y-8">
+        <section className="max-w-4xl mx-auto rounded-xl border bg-white p-6 sm:p-8">
+          <div className="space-y-3 text-center">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+              Ecurs 🎓 — ucz się nowocześnie, po swojemu
+            </h1>
+            <p className="text-gray-600 text-base sm:text-lg">
+              Odkrywaj kursy i ścieżki edukacyjne, rozwijaj kompetencje i wracaj do nauki, kiedy chcesz.
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border bg-white p-4">
+              <div className="font-semibold text-gray-900">🚀 Szybki start</div>
+              <div className="mt-1 text-sm text-gray-600">Wybierz temat i zacznij od razu.</div>
+            </div>
+            <div className="rounded-lg border bg-white p-4">
+              <div className="font-semibold text-gray-900">🧠 Nauka w tempie</div>
+              <div className="mt-1 text-sm text-gray-600">Wracaj do materiałów, kiedy potrzebujesz.</div>
+            </div>
+            <div className="rounded-lg border bg-white p-4">
+              <div className="font-semibold text-gray-900">📈 Postępy i dostęp</div>
+              <div className="mt-1 text-sm text-gray-600">Zaloguj się, żeby zapisywać i śledzić postępy.</div>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-col gap-3 max-w-sm mx-auto">
+            <Button asChild className="w-full h-12 text-base">
+              <Link href={`/sign-in?redirectUrl=${encodeURIComponent("/")}`}>Zaloguj się</Link>
             </Button>
-            <Button asChild variant="outline">
-              <Link href="/sign-up">Załóż konto</Link>
+            <Button asChild variant="outline" className="w-full h-12 text-base">
+              <Link href={`/sign-up?redirectUrl=${encodeURIComponent("/")}`}>Dołącz teraz ✨</Link>
             </Button>
           </div>
+        </section>
+
+        <div className="max-w-3xl mx-auto text-center space-y-2">
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Kursy czekają na Ciebie 👇</h2>
+          <p className="text-gray-600">
+            Poniżej znajdziesz dostępne kursy i ścieżki. Wybierz coś dla siebie, a jeśli chcesz mieć dostęp do materiałów i
+            zapisywać postępy — zaloguj się lub dołącz do Ecurs ✨
+          </p>
+        </div>
+
+        <div className="space-y-6">
+          {/* <Categories items={categories} /> */}
+          <MarketplaceCoursesList items={courses} />
         </div>
       </div>
     );

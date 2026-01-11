@@ -16,6 +16,8 @@ const EnrollPage = async ({ params, searchParams }: {
 }) => {
   const { userId } = await auth();
   if (!userId) {
+    const awaitedParams = await params;
+    const enrollUrl = `/educational-paths/${awaitedParams.id}/enroll`;
     return (
       <SignedOut>
         <div className="p-6">
@@ -26,10 +28,10 @@ const EnrollPage = async ({ params, searchParams }: {
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button asChild>
-                <Link href="/sign-in">Zaloguj się</Link>
+                <Link href={`/sign-in?redirectUrl=${encodeURIComponent(enrollUrl)}`}>Zaloguj się</Link>
               </Button>
               <Button asChild variant="outline">
-                <Link href="/sign-up">Załóż konto</Link>
+                <Link href={`/sign-up?redirectUrl=${encodeURIComponent(enrollUrl)}`}>Załóż konto</Link>
               </Button>
             </div>
           </div>
