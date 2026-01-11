@@ -36,30 +36,77 @@ export default async function Home({
     const courses = await res.json();
 
     return (
-      <div className="p-6 space-y-8">
-        <section className="max-w-4xl mx-auto rounded-xl border bg-white p-6 sm:p-8">
+      <div className="p-6 space-y-10 bg-gradient-to-b from-gray-50 to-white">
+        <section className="max-w-4xl mx-auto rounded-2xl border bg-white p-6 sm:p-10 shadow-sm">
           <div className="space-y-3 text-center">
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
-              Ecurs 🎓 — ucz się nowocześnie, po swojemu
+              Ecurs 🎓 — platforma kursów dla nauczycieli
             </h1>
             <p className="text-gray-600 text-base sm:text-lg">
-              Odkrywaj kursy i ścieżki edukacyjne, rozwijaj kompetencje i wracaj do nauki, kiedy chcesz.
+              Twórz kursy, lekcje i ścieżki, zapraszaj uczniów i prowadź ich krok po kroku — interaktywnie, nowocześnie i z pomocą AI.
             </p>
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-lg border bg-white p-4">
-              <div className="font-semibold text-gray-900">🚀 Szybki start</div>
-              <div className="mt-1 text-sm text-gray-600">Wybierz temat i zacznij od razu.</div>
+          <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border bg-gray-50 p-4 transition-colors hover:bg-white">
+              <div className="font-semibold text-gray-900">🎓 Dla uczniów</div>
+              <div className="mt-1 text-sm text-gray-600 leading-relaxed">
+                Interaktywne lekcje, jasny plan nauki i postępy, które motywują.
+              </div>
             </div>
-            <div className="rounded-lg border bg-white p-4">
-              <div className="font-semibold text-gray-900">🧠 Nauka w tempie</div>
-              <div className="mt-1 text-sm text-gray-600">Wracaj do materiałów, kiedy potrzebujesz.</div>
+            <div className="rounded-xl border bg-gray-50 p-4 transition-colors hover:bg-white">
+              <div className="font-semibold text-gray-900">🧑‍🏫 Dla edukatorów</div>
+              <div className="mt-1 text-sm text-gray-600 leading-relaxed">
+                Kursy, ścieżki i materiały w jednym panelu — bez chaosu.
+              </div>
             </div>
-            <div className="rounded-lg border bg-white p-4">
-              <div className="font-semibold text-gray-900">📈 Postępy i dostęp</div>
-              <div className="mt-1 text-sm text-gray-600">Zaloguj się, żeby zapisywać i śledzić postępy.</div>
+            <div className="rounded-xl border bg-gray-50 p-4 transition-colors hover:bg-white">
+              <div className="font-semibold text-gray-900">🤖 Wsparcie AI</div>
+              <div className="mt-1 text-sm text-gray-600 leading-relaxed">
+                Szybsze tworzenie treści i feedback dla uczniów.
+              </div>
             </div>
+          </div>
+
+          <div className="mt-8 rounded-2xl border bg-gray-50 p-4 sm:p-6">
+            <div className="text-center text-sm sm:text-base font-semibold text-gray-900">
+              Na platformie znajdziesz
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm text-gray-700 shadow-sm">
+                <span className="text-lg">🎯</span>
+                <span>Ścieżki edukacyjne</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm text-gray-700 shadow-sm">
+                <span className="text-lg">⚡</span>
+                <span>Kursy</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm text-gray-700 shadow-sm">
+                <span className="text-lg">🧩</span>
+                <span>Interaktywne zadania</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm text-gray-700 shadow-sm">
+                <span className="text-lg">🔔</span>
+                <span>Powiadomienia</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm text-gray-700 shadow-sm">
+                <span className="text-lg">📈</span>
+                <span>Analityki postępów</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm text-gray-700 shadow-sm">
+                <span className="text-lg">💳</span>
+                <span>Płatności i sprzedaż</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="max-w-4xl mx-auto rounded-2xl border bg-white p-6 sm:p-10 shadow-sm">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl font-semibold text-gray-900">Dołącz do platformy lub zaloguj się</h2>
+            <p className="text-gray-600">
+              Załóż konto i sprawdź, jak wygląda nauka ucznia — a jako nauczyciel zacznij budować swój kurs w kilka minut.
+            </p>
           </div>
 
           <div className="mt-6 flex flex-col gap-3 max-w-sm mx-auto">
@@ -72,18 +119,19 @@ export default async function Home({
           </div>
         </section>
 
-        <div className="max-w-3xl mx-auto text-center space-y-2">
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Kursy czekają na Ciebie 👇</h2>
-          <p className="text-gray-600">
-            Poniżej znajdziesz dostępne kursy i ścieżki. Wybierz coś dla siebie, a jeśli chcesz mieć dostęp do materiałów i
-            zapisywać postępy — zaloguj się lub dołącz do Ecurs ✨
-          </p>
-        </div>
+        <section className="max-w-6xl mx-auto rounded-2xl border bg-white p-6 sm:p-10 shadow-sm">
+          <div className="text-center space-y-2">
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Kursy czekają na Ciebie 👇</h2>
+            <p className="text-gray-600">
+              Wybierz temat i zacznij naukę od razu ✨
+            </p>
+          </div>
 
-        <div className="space-y-6">
-          {/* <Categories items={categories} /> */}
-          <MarketplaceCoursesList items={courses} />
-        </div>
+          <div className="mt-6 space-y-6">
+            {/* <Categories items={categories} /> */}
+            <MarketplaceCoursesList items={courses} />
+          </div>
+        </section>
       </div>
     );
   }
@@ -156,35 +204,56 @@ export default async function Home({
           <span className="font-medium">Błąd!</span> Nie udało się załadować kursów: {fetchError}
         </div>
       )}
+
+      {!fetchError && courses.length === 0 && educationalPaths.length === 0 && (
+        <section className="rounded-xl border bg-white p-6">
+          <div className="text-center space-y-3">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+              Nie dołączyłeś jeszcze do żadnego kursu ani ścieżki
+            </h2>
+            <p className="text-gray-600">
+              Aby wyszukać kursy i ścieżki, przejdź do zakładki Odkrywaj.
+            </p>
+            <Button asChild className="h-11">
+              <Link href="/search">Odkrywaj</Link>
+            </Button>
+          </div>
+        </section>
+      )}
       
       {/* Progress Section */}
       <section>
-        <h2 className="text-xl font-semibold mb-6 text-gray-900 flex items-center gap-2">
-          <CheckCircle className="h-6 w-6 text-orange-600" />
-          Twoje postępy
-        </h2>
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold mb-2 text-gray-900 flex items-center gap-3">
+        <CheckCircle className="h-8 w-8 text-orange-600" />
+        Twoje postępy
+          </h2>
+          <p className="text-gray-600">
+        Śledź swoje osiągnięcia w ścieżkach edukacyjnych i kursach
+          </p>
+        </div>
         
         {/* Educational Paths statistics */}
-        <div className="mb-8">
-          <h3 className="text-lg font-medium mb-4 text-gray-700 flex items-center gap-2">
-            <GraduationCap className="h-5 w-5 text-orange-600" />
-            Ścieżki edukacyjne
+        <div className="mb-10">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
+        <GraduationCap className="h-5 w-5 text-orange-600" />
+        Ścieżki edukacyjne
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <InfoCard icon={Clock} label="Ścieżki w trakcie" numberOfItems={eduPathUnfinishedCount} variant="path" />
-            <InfoCard icon={CheckCircle} label="Ścieżki ukończone" numberOfItems={eduPathFinishedCount} variant="path" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <InfoCard icon={Clock} label="Ścieżki w trakcie" numberOfItems={eduPathUnfinishedCount} variant="path" />
+        <InfoCard icon={CheckCircle} label="Ścieżki ukończone" numberOfItems={eduPathFinishedCount} variant="path" />
           </div>
         </div>
         
         {/* Courses statistics */}
         <div>
-          <h3 className="text-lg font-medium mb-4 text-gray-700 flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-orange-600" />
-            Kursy
+          <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
+        <BookOpen className="h-5 w-5 text-orange-600" />
+        Kursy
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <InfoCard icon={Clock} label="Kursy w trakcie" numberOfItems={unfinishedCount} variant="course" />
-            <InfoCard icon={CheckCircle} label="Kursy ukończone" numberOfItems={finishedCount} variant="course" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <InfoCard icon={Clock} label="Kursy w trakcie" numberOfItems={unfinishedCount} variant="course" />
+        <InfoCard icon={CheckCircle} label="Kursy ukończone" numberOfItems={finishedCount} variant="course" />
           </div>
         </div>
       </section>
