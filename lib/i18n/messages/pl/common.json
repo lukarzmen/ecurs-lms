@@ -1,0 +1,9 @@
+{
+  "welcome": "Witamy w aplikacji!",
+  "login": "Zaloguj się",
+  "logout": "Wyloguj się",
+  "auth.signedOut.title": "Ecurs — platforma nowoczesnej edukacji",
+  "auth.signedOut.description": "Zaloguj się lub załóż konto, aby przeglądać kursy, śledzić postępy i korzystać z funkcji platformy.",
+  "auth.signIn": "Zaloguj się",
+  "auth.signUp": "Załóż konto"
+}

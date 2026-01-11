@@ -4,8 +4,19 @@ import { cookies, headers } from "next/headers";
 import path from "path";
 import { promises as fs } from "fs";
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale } from "./types";
+import enCommon from "./messages/en/common.json";
+import plCommon from "./messages/pl/common.json";
 
 export type Messages = Record<string, string>;
+
+const BUNDLED_MESSAGES: Record<Locale, Record<string, Messages>> = {
+  en: {
+    common: enCommon as Messages,
+  },
+  pl: {
+    common: plCommon as Messages,
+  },
+};
 
 function normalizeLocale(input: string | null | undefined): Locale {
   if (!input) return DEFAULT_LOCALE;
@@ -33,8 +44,18 @@ export async function getRequestLocale(): Promise<Locale> {
 
 export async function getMessages(locale: Locale, namespace: string = "common"): Promise<Messages> {
   const filePath = path.join(process.cwd(), "public", "locales", locale, `${namespace}.json`);
-  const raw = await fs.readFile(filePath, "utf8");
-  return JSON.parse(raw) as Messages;
+  try {
+    const raw = await fs.readFile(filePath, "utf8");
+    return JSON.parse(raw) as Messages;
+  } catch (error) {
+    const bundled = BUNDLED_MESSAGES[locale]?.[namespace];
+    if (bundled) return bundled;
+
+    const fallback = BUNDLED_MESSAGES[DEFAULT_LOCALE]?.[namespace];
+    if (fallback) return fallback;
+
+    throw error;
+  }
 }
 
 export function createTranslator(messages: Messages) {
