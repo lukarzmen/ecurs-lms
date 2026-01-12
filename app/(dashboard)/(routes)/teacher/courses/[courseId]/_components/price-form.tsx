@@ -1,12 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { FormCard, FormActions, FormGrid, FormSection } from "@/components/ui/form-card";
+import { FormCard } from "@/components/ui/form-card";
 import { Pencil, DollarSign } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -27,6 +22,36 @@ const intervalOptions = [
   { value: "MONTH", label: "Miesięcznie" },
   { value: "YEAR", label: "Rocznie" },
 ];
+
+function formatMoney(amount: number, currency: string) {
+  try {
+    return new Intl.NumberFormat("pl-PL", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return String(amount);
+  }
+}
+
+function computeNetFromGross(gross: number, vatRate?: number) {
+  const rate = typeof vatRate === "number" ? vatRate : 0;
+  const divisor = 1 + rate / 100;
+  if (!isFinite(divisor) || divisor <= 0) return gross;
+  return gross / divisor;
+}
+
+function computeGrossFromNet(net: number, vatRate?: number) {
+  const rate = typeof vatRate === "number" ? vatRate : 0;
+  const multiplier = 1 + rate / 100;
+  if (!isFinite(multiplier) || multiplier <= 0) return net;
+  return net * multiplier;
+}
+
+function toNumber(value: unknown, fallback: number) {
+  const num = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(num) ? num : fallback;
+}
 
 export default function PriceForm({ price, courseId }: { price: Price; courseId: string }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -50,15 +75,18 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
     return "";
   }
   const [trialMode, setTrialMode] = useState<"days"|"end">(initialTrialMode);
+  const initialVatRate = toNumber(price?.vatRate, 23);
+  const initialNetAmount = toNumber(price?.amount, 0);
   const [form, setForm] = useState<Price & { trialPeriodType?: string }>({
-    amount: price?.amount ?? 0,
+    // In DB/API we store NET, but in this form we edit/display GROSS.
+    amount: computeGrossFromNet(initialNetAmount, initialVatRate),
     currency: price?.currency ?? "PLN",
     interval: price?.interval ?? "ONE_TIME",
     isRecurring: price?.isRecurring ?? false,
-    trialPeriodDays: price?.trialPeriodDays ?? 0,
+    trialPeriodDays: toNumber(price?.trialPeriodDays, 0),
     trialPeriodEnd: toInputDateFormat(price?.trialPeriodEnd),
     trialPeriodType: price?.trialPeriodType ?? (initialTrialMode === "days" ? "DAYS" : "DATE"),
-    vatRate: price?.vatRate ?? 23,
+    vatRate: initialVatRate,
   });
 
   const toggleEdit = () => setIsEditing((v) => !v);
@@ -73,7 +101,7 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
         setTrialMode("days");
         return;
       }
-    } else if (name === "amount") {
+    } else if (name === "amount" || name === "vatRate" || name === "trialPeriodDays") {
       fieldValue = Number(value);
     }
     setForm((prev) => ({
@@ -85,13 +113,16 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const vatRateNumber = toNumber(form.vatRate, 0);
+      const netAmount = computeNetFromGross(toNumber(form.amount, 0), vatRateNumber);
       const payload: any = {
-        amount: form.amount,
+        // API expects NET amount; we let user edit GROSS.
+        amount: netAmount,
         currency: form.currency,
         interval: form.interval,
         isRecurring: form.isRecurring,
         trialPeriodType: trialMode === "days" ? "DAYS" : "DATE",
-        vatRate: form.vatRate,
+        vatRate: vatRateNumber,
       };
       if (trialMode === "days" && form.trialPeriodDays && form.trialPeriodDays > 0) {
         payload.trialPeriodDays = form.trialPeriodDays;
@@ -139,7 +170,7 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
       {isEditing ? (
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="form-group">
-            <label className="block text-sm font-medium text-gray-700">Kwota</label>
+            <label className="block text-sm font-medium text-gray-700">Kwota brutto</label>
             <input
               type="number"
               min={0}
@@ -249,10 +280,24 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
       ) : (
         <>
           <p className={`text-sm mt-2 ${Number(form.amount) === 0 ? "text-orange-700 font-semibold" : ""}`}>
-            {Number(form.amount) === 0
-              ? "Darmowy"
-              : <span className="font-semibold text-orange-700">{form.amount} {form.currency} {form.isRecurring ? `/ ${form.interval === "MONTH" ? "msc" : form.interval === "YEAR" ? "rok" : "jednorazowo"}` : ""}</span>}
+            {Number(form.amount) === 0 ? (
+              "Darmowy"
+            ) : (
+              <span className="font-semibold text-orange-700">
+                {formatMoney(form.amount, form.currency)} {form.currency}
+                {form.isRecurring
+                  ? ` / ${form.interval === "MONTH" ? "msc" : form.interval === "YEAR" ? "rok" : "jednorazowo"}`
+                  : ""}{" "}
+                brutto
+              </span>
+            )}
           </p>
+
+          {Number(form.amount) > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Netto: {formatMoney(computeNetFromGross(form.amount, toNumber(form.vatRate, 0)), form.currency)} {form.currency} • VAT {toNumber(form.vatRate, 0)}%
+            </p>
+          )}
           {/* Only show trial period if valid */}
           {form.isRecurring && form.trialPeriodType === "DAYS" && form.trialPeriodDays && form.trialPeriodDays > 0 && (
             <p className="text-xs text-orange-500 mt-1">Okres próbny: {form.trialPeriodDays} dni</p>
