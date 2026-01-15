@@ -29,11 +29,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Ecurs - nowoczesna edukacja',
     description: 'Zacznij tworzyć interaktywne kursy online z Ecurs.',
-    url: 'http://platforma.ecurs.pl/',
+    url: 'http://ecurs.pl/',
     type: 'website',
     images: [
       {
-        url: 'http://platforma.ecurs.pl/demo4.png',
+        url: 'http://ecurs.pl/demo4.png',
         width: 1200,
         height: 630,
         alt: 'Ecurs - nowoczesna edukacja',
