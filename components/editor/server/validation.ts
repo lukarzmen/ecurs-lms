@@ -13,6 +13,7 @@ import {$getRoot, $isElementNode, LexicalNode} from 'lexical';
 import * as url from 'url';
 
 import EditorNodes from '../nodes/EditorNodes';
+import {migrateLexicalStateJSON} from '../utils/migrateLexicalState';
 
 const hostname = 'localhost';
 const port = 1235;
@@ -60,11 +61,12 @@ const $sanitizeNode = (node: LexicalNode): void => {
 const validateEditorState = async (
   stringifiedJSON: string,
 ): Promise<boolean> => {
-  if (stringifiedEditorStateJSON === stringifiedJSON) {
+  const migratedJSON = migrateLexicalStateJSON(stringifiedJSON);
+  if (stringifiedEditorStateJSON === migratedJSON) {
     return true;
   }
   const prevEditorState = editor.getEditorState();
-  const nextEditorState = editor.parseEditorState(stringifiedJSON);
+  const nextEditorState = editor.parseEditorState(migratedJSON);
   editor.setEditorState(nextEditorState);
   editor.update(() => {
     const root = $getRoot();
@@ -73,7 +75,7 @@ const validateEditorState = async (
   await Promise.resolve().then();
 
   const assertion = JSON.stringify(editor.getEditorState().toJSON());
-  const success = assertion === stringifiedEditorStateJSON;
+  const success = assertion === migratedJSON;
   if (success) {
     editor.setEditorState(nextEditorState);
     stringifiedEditorStateJSON = assertion;
@@ -99,9 +101,10 @@ const server = http.createServer(async (req: http.IncomingMessage, res: http.Ser
 
   if (method === 'POST' && pathname === '/setEditorState') {
     const stringifiedJSON = await getJSONData(req);
-    const editorState = editor.parseEditorState(stringifiedJSON);
+    const migratedJSON = migrateLexicalStateJSON(stringifiedJSON);
+    const editorState = editor.parseEditorState(migratedJSON);
     editor.setEditorState(editorState);
-    stringifiedEditorStateJSON = stringifiedJSON;
+    stringifiedEditorStateJSON = migratedJSON;
     res.statusCode = 200;
     res.end();
   } else if (method === 'POST' && pathname === '/validateEditorState') {

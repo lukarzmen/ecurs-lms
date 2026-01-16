@@ -1,12 +1,18 @@
-import { createEditor } from "lexical";
-import { $generateHtmlFromNodes } from "@lexical/html";
+import {createEditor} from 'lexical';
+import {$generateHtmlFromNodes} from '@lexical/html';
+
+import EditorNodes from '../nodes/EditorNodes';
+import {migrateLexicalStateJSON} from './migrateLexicalState';
 
 export function convertLexicalJsonToHtml(lexicalJson: string) {
   // Create a Lexical Editor instance
-  const editor = createEditor();
+  const editor = createEditor({
+    nodes: [...EditorNodes],
+  });
 
   // Parse the JSON into an EditorState
-  const editorState = editor.parseEditorState(lexicalJson);
+  const migrated = migrateLexicalStateJSON(lexicalJson);
+  const editorState = editor.parseEditorState(migrated);
 
   let html = "";
 

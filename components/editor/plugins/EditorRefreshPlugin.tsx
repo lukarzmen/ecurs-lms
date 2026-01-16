@@ -1,6 +1,7 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEffect } from 'react';
 import { $createParagraphNode, $getRoot, $createTextNode } from 'lexical';
+import { migrateLexicalStateJSON } from '../utils/migrateLexicalState';
 
 interface EditorRefreshPluginProps {
   initialStateJSON: string | null;
@@ -12,16 +13,20 @@ export default function EditorRefreshPlugin({ initialStateJSON }: EditorRefreshP
   useEffect(() => {
     if (initialStateJSON) {
       try {
-        const parsedState = editor.parseEditorState(initialStateJSON);
+        const migratedJSON = migrateLexicalStateJSON(initialStateJSON);
+        const parsedState = editor.parseEditorState(migratedJSON);
         editor.update(() => {
           editor.setEditorState(parsedState);
         });
       } catch (error) {
         console.error('Error parsing editor state:', error);
-        // If parsing fails, clear the editor
+        // If parsing fails, reset to an empty paragraph (avoid silent data loss).
         editor.update(() => {
           const root = $getRoot();
           root.clear();
+          const paragraph = $createParagraphNode();
+          paragraph.append($createTextNode(''));
+          root.append(paragraph);
         });
       }
     } else {
