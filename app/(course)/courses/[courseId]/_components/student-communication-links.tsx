@@ -5,6 +5,7 @@ import axios from "axios";
 import { CourseCommunication } from "@prisma/client";
 import { MessageCircle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@clerk/nextjs";
 import {
   Popover,
   PopoverContent,
@@ -36,22 +37,93 @@ const platformIcons = {
 };
 
 export const StudentCommunicationLinks = ({ courseId }: StudentCommunicationLinksProps) => {
+  const { userId } = useAuth();
   const [communicationLinks, setCommunicationLinks] = useState<CourseCommunication[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
 
   const fetchCommunicationLinks = useCallback(async () => {
     try {
+      if (!courseId || !userId) {
+        setCommunicationLinks([]);
+        return;
+      }
+
       setIsLoading(true);
-      // Create a public endpoint for students to view communication links
-      const response = await axios.get(`/api/courses/${courseId}/communication/public`);
-      setCommunicationLinks(response.data);
+      const url = `/api/courses/${courseId}/communication/public`;
+
+      const readPendingAccessTs = (): number | null => {
+        try {
+          const raw = window.localStorage.getItem(`ecurs:pending-course-access:${courseId}`);
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          const ts = typeof parsed?.ts === "number" ? parsed.ts : null;
+          return ts;
+        } catch {
+          return null;
+        }
+      };
+
+      const clearPendingAccess = () => {
+        try {
+          window.localStorage.removeItem(`ecurs:pending-course-access:${courseId}`);
+        } catch {
+          // Non-blocking
+        }
+      };
+
+      const requestOnce = async () => {
+        const response = await axios.get(url);
+        return response.data as CourseCommunication[];
+      };
+
+      try {
+        const data = await requestOnce();
+        setCommunicationLinks(data);
+        return;
+      } catch (err: any) {
+        const status = err?.response?.status as number | undefined;
+        const pendingTs = readPendingAccessTs();
+        const pendingWindowMs = 10 * 60 * 1000; // 10 minutes
+        const isPending = pendingTs ? (Date.now() - pendingTs) < pendingWindowMs : false;
+
+        // If checkout just happened, webhook may not have granted access yet.
+        if ((status === 401 || status === 403) && isPending) {
+          const startedAt = Date.now();
+          const maxWaitMs = 35_000;
+          const pollEveryMs = 1_200;
+
+          while ((Date.now() - startedAt) < maxWaitMs) {
+            await new Promise((r) => setTimeout(r, pollEveryMs));
+            try {
+              const data = await requestOnce();
+              setCommunicationLinks(data);
+              clearPendingAccess();
+              return;
+            } catch (innerErr: any) {
+              const innerStatus = innerErr?.response?.status as number | undefined;
+              if (innerStatus !== 401 && innerStatus !== 403) {
+                console.error("Failed to fetch communication links:", innerErr);
+                break;
+              }
+            }
+          }
+        }
+
+        // For 401/403 (no access), just hide links without spamming console.
+        if (status === 401 || status === 403) {
+          setCommunicationLinks([]);
+          return;
+        }
+
+        throw err;
+      }
     } catch (error) {
       console.error("Failed to fetch communication links:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [courseId]);
+  }, [courseId, userId]);
 
   useEffect(() => {
     fetchCommunicationLinks();

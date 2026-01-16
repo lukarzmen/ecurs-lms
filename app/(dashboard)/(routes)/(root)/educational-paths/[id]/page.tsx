@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import CourseInfoCard from "@/components/ui/course-card";
 import { SignedOut } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
+import { EducationalPathPaymentProcessing } from "./_components/educational-path-payment-processing";
 
 export default async function EducationalPathPage({ 
     params, 
@@ -73,6 +74,12 @@ export default async function EducationalPathPage({
         
         // Redirect to enrollment page with failed status
         return redirect(`/educational-paths/${awaitedParams.id}/enroll?failed=1`);
+    }
+
+    if (awaitedSearchParams.success === '1') {
+        // Stripe redirects here immediately, but access is granted asynchronously via webhook.
+        // Avoid showing a 403 from /api/educational-paths/[id]/user while we wait.
+        return <EducationalPathPaymentProcessing educationalPathId={awaitedParams.id} userId={userAuth.userId} />;
     }
 
     // Fetch educational path details and courses for user

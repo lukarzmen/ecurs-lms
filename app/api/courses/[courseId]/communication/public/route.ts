@@ -15,6 +15,10 @@ export async function GET(
     const { courseId } = await params;
     const courseIdNumber = parseInt(courseId, 10);
 
+    if (!courseIdNumber || Number.isNaN(courseIdNumber)) {
+      return new NextResponse("Invalid courseId", { status: 400 });
+    }
+
     // Find the user by providerId (Clerk ID)
     const user = await db.user.findUnique({
       where: {
@@ -34,13 +38,27 @@ export async function GET(
           courseId: courseIdNumber,
         },
       },
+      select: {
+        state: true,
+        purchase: {
+          select: {
+            id: true,
+          },
+        },
+      },
     });
 
+    const hasPaidAccess = !!userCourse?.purchase;
+    const hasActiveAccess = userCourse?.state === 1;
+
     // If user is not enrolled, check if they are the course author
-    if (!userCourse) {
+    if (!hasActiveAccess && !hasPaidAccess) {
       const course = await db.course.findUnique({
         where: {
           id: courseIdNumber,
+        },
+        select: {
+          authorId: true,
         },
       });
 

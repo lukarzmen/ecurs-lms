@@ -41,6 +41,7 @@ const ChapterIdPage = () => {
 
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
     const [chapterData, setChapterData] = useState<ChapterData | null>(null);
     const [isCompleted, setIsCompleted] = useState(false); // Local state for completion status
     const [isCompleting, setIsCompleting] = useState(false); // Prevent double completion
@@ -56,18 +57,64 @@ const ChapterIdPage = () => {
         const fetchData = async () => {
             setIsLoading(true);
             setError(null);
+            setLoadingMessage(null);
             try {
-                // 1. Check Permissions (use GET instead of POST)
-                const permResponse = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/api/permissions?courseId=${courseId}&userId=${userId}`,
-                    { method: 'GET' }
-                );
+                const permissionsUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/permissions?courseId=${courseId}&userId=${userId}`;
 
-                if (!permResponse.ok) {
-                    throw new Error("Sprawdzanie uprawnień nie powiodło się. Spróbuj ponownie później.");
+                const readPendingAccessTs = (): number | null => {
+                    try {
+                        const raw = window.localStorage.getItem(`ecurs:pending-course-access:${courseId}`);
+                        if (!raw) return null;
+                        const parsed = JSON.parse(raw);
+                        const ts = typeof parsed?.ts === 'number' ? parsed.ts : null;
+                        return ts;
+                    } catch {
+                        return null;
+                    }
+                };
+
+                const clearPendingAccess = () => {
+                    try {
+                        window.localStorage.removeItem(`ecurs:pending-course-access:${courseId}`);
+                    } catch {
+                        // Non-blocking
+                    }
+                };
+
+                const checkPermissionsOnce = async () => {
+                    const permResponse = await fetch(permissionsUrl, { method: 'GET', cache: 'no-store' });
+                    if (!permResponse.ok) {
+                        throw new Error("Sprawdzanie uprawnień nie powiodło się. Spróbuj ponownie później.");
+                    }
+                    return await permResponse.json();
+                };
+
+                // 1. Check Permissions
+                let permResult = await checkPermissionsOnce();
+
+                // If access is missing but we recently completed checkout, retry briefly.
+                if (!permResult.hasAccess) {
+                    const pendingTs = readPendingAccessTs();
+                    const pendingWindowMs = 10 * 60 * 1000; // 10 minutes
+                    const isPending = pendingTs ? (Date.now() - pendingTs) < pendingWindowMs : false;
+
+                    if (isPending) {
+                        setLoadingMessage("Potwierdzamy płatność i aktywujemy dostęp do kursu…");
+
+                        const startedAt = Date.now();
+                        const maxWaitMs = 35_000;
+                        const pollEveryMs = 1_200;
+
+                        while (!permResult.hasAccess && (Date.now() - startedAt) < maxWaitMs) {
+                            await new Promise((r) => setTimeout(r, pollEveryMs));
+                            permResult = await checkPermissionsOnce();
+                        }
+
+                        if (permResult.hasAccess) {
+                            clearPendingAccess();
+                        }
+                    }
                 }
-
-                const permResult = await permResponse.json();
 
                 if (!permResult.hasAccess) {
                     throw new Error("Brak dostępu. Skontaktuj się z nauczycielem, aby uzyskać dostęp do tego kursu.");
@@ -159,7 +206,12 @@ const ChapterIdPage = () => {
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-full mt-16">
-                <Loader2 className="animate-spin text-orange-700" size={32} />
+                <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="animate-spin text-orange-700" size={32} />
+                    {loadingMessage && (
+                        <p className="text-sm text-gray-600 text-center max-w-md px-4">{loadingMessage}</p>
+                    )}
+                </div>
             </div>
         );
     }

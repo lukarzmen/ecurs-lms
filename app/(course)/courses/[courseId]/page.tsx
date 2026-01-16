@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { SignedOut } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { CoursePaymentProcessing } from "./_components/course-payment-processing";
 
 
 const CourseIdPage = async ({
@@ -54,6 +55,12 @@ const CourseIdPage = async ({
         
         // Redirect to enrollment page with canceled status
         return redirect(`/courses/${awaitedParams.courseId}/enroll?canceled=1`);
+    }
+
+    if (awaitedSearchParams.success === '1') {
+        // Stripe redirects here immediately, but access is granted asynchronously via webhook.
+        // Avoid sending the user into chapter pages until permissions are active.
+        return <CoursePaymentProcessing courseId={awaitedParams.courseId} userId={userAuth.userId} />;
     }
 
     if (awaitedSearchParams.success === '0') {
