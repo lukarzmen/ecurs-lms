@@ -446,7 +446,9 @@ i.superscript {
 i.link {
   background-image: url(images/icons/link.svg);
 }
-
+i.highlight {
+  background-image: url(images/icons/highlighter.svg);
+}
 i.uppercase {
   background: none;
   font-weight: bold;
