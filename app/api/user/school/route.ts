@@ -17,7 +17,15 @@ export async function GET() {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        {
+          userExists: false,
+          ownedSchools: [],
+          memberSchools: [],
+          schools: [],
+        },
+        { status: 200 }
+      );
     }
 
     // Get member schools - use raw queries to handle null schools gracefully

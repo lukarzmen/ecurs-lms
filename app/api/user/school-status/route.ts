@@ -21,7 +21,18 @@ export async function GET() {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        {
+          userExists: false,
+          isMemberOfSchool: false,
+          ownsSchool: false,
+          hasPendingRequests: false,
+          memberSchools: [],
+          ownedSchools: [],
+          pendingRequests: [],
+        },
+        { status: 200 }
+      );
     }
 
     // Check if user belongs to any school (is member)

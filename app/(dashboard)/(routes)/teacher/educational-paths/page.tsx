@@ -132,10 +132,15 @@ const EducationalPathsPage = () => {
   };
 
   // Filter paths based on search term
-  const filteredPaths = paths.filter(path =>
-    path.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    path.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const normalizedSearchTerm = searchTerm.toLowerCase();
+  const filteredPaths = paths.filter((path) => {
+    const title = (path?.title ?? "").toString().toLowerCase();
+    const description = (path?.description ?? "").toString().toLowerCase();
+    return (
+      title.includes(normalizedSearchTerm) ||
+      description.includes(normalizedSearchTerm)
+    );
+  });
 
   return (
     <div className="p-6 space-y-8">
@@ -281,11 +286,11 @@ const EducationalPathsPage = () => {
                           <td className="px-6 py-4 text-gray-600">
                             <div 
                               className="max-w-md truncate cursor-help hover:text-gray-800 transition-colors relative group text-sm"
-                              title={path.description}
+                              title={path.description ?? ""}
                             >
-                              {path.description}
+                              {path.description ?? "—"}
                               <div className="absolute left-0 top-full mt-2 p-3 bg-gray-900 text-white text-sm rounded-lg shadow-lg z-50 max-w-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-normal">
-                                {path.description}
+                                {path.description ?? ""}
                               </div>
                             </div>
                           </td>
