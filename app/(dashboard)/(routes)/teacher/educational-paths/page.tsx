@@ -64,7 +64,16 @@ const EducationalPathsPage = () => {
     }
   }, [userId]);
 
-  const handleDelete = async (id: number) => {
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  const handleDelete = async (id: number, title: string) => {
+    const safeTitle = escapeHtml(title);
     const confirmWithModal = (): Promise<boolean> =>
       new Promise((resolve) => {
       const dialog = document.createElement("dialog");
@@ -72,7 +81,10 @@ const EducationalPathsPage = () => {
       dialog.innerHTML = `
         <form method="dialog" class="flex flex-col gap-4">
         <div class="text-lg font-medium">Potwierdź usunięcie</div>
-        <div>Czy na pewno chcesz usunąć tę ścieżkę edukacyjną?</div>
+        <div>
+          Czy na pewno chcesz usunąć ścieżkę edukacyjną <span class="font-medium">„${safeTitle}”</span>?
+        </div>
+        <div class="text-sm text-gray-500">Ta operacja jest nieodwracalna.</div>
         <div class="flex justify-end gap-2">
           <button value="cancel" class="px-3 py-1 rounded bg-gray-200">Anuluj</button>
           <button value="confirm" class="px-3 py-1 rounded bg-red-600 text-white">Usuń</button>
@@ -93,7 +105,9 @@ const EducationalPathsPage = () => {
       if (typeof dialog.showModal === "function") dialog.showModal();
       else {
         // fallback to window.confirm if dialog unsupported
-        const fallback = window.confirm("Czy na pewno chcesz usunąć tę ścieżkę edukacyjną?");
+        const fallback = window.confirm(
+          `Czy na pewno chcesz usunąć ścieżkę edukacyjną „${title}”?\n\nTa operacja jest nieodwracalna.`
+        );
         dialog.remove();
         resolve(fallback);
       }
@@ -280,7 +294,7 @@ const EducationalPathsPage = () => {
                               variant="ghost"
                               className="h-4 w-8 p-0"
                               disabled={deletingId === path.id}
-                              onClick={() => handleDelete(path.id)}
+                              onClick={() => handleDelete(path.id, path.title)}
                             >
                               {deletingId === path.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />

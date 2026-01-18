@@ -40,7 +40,13 @@ function CourseActionsCell({
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded shadow-lg">
-            <div>Czy na pewno chcesz usunąć ten kurs?</div>
+            <div>
+              Czy na pewno chcesz usunąć kurs{" "}
+              <span className="font-medium">„{course.title}”</span>?
+            </div>
+            <div className="mt-1 text-sm text-muted-foreground">
+              Ta operacja jest nieodwracalna.
+            </div>
             <div className="flex justify-end mt-4">
               <Button
                 variant="secondary"
