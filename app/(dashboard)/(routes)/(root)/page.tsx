@@ -46,7 +46,7 @@ export default async function Home({
               </h1>
             </div>
             <p className="text-gray-600 text-base sm:text-lg">
-              Ucz się interaktywnie i śledź postępy, albo twórz kursy i ścieżki dla swoich uczniów — szybko, przejrzyście i z pomocą AI.
+              Ucz się interaktywnie 📚 i śledź postępy, albo twórz kursy i ścieżki dla swoich uczniów — szybko, przejrzyście i z pomocą AI.🤖
             </p>
           </div>
 
@@ -106,7 +106,7 @@ export default async function Home({
 
         <section className="max-w-4xl mx-auto rounded-2xl border bg-white p-6 sm:p-10 shadow-sm">
           <div className="text-center space-y-2">
-            <h2 className="text-2xl font-semibold text-gray-900">Dołącz do platformy lub zaloguj się</h2>
+            <h2 className="text-2xl font-semibold text-gray-900">Dołącz do platformy lub zaloguj się ✨</h2>
             <p className="text-gray-600">
               Dołącz do Nas i skorzystaj z możliwości platformy już teraz! Zacznij swoją przygodę z nauką lub twórz kursy dla swoich uczniów.
             </p>
@@ -126,7 +126,7 @@ export default async function Home({
           <div className="text-center space-y-2">
             <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Kursy czekają na Ciebie 👇</h2>
             <p className="text-gray-600">
-              Wybierz temat i zacznij naukę od razu ✨
+              Wybierz temat i zacznij naukę od razu 🛫
             </p>
           </div>
 
