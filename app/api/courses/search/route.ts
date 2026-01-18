@@ -136,7 +136,19 @@ export async function GET(req: NextRequest): Promise<NextResponse<LearningUnitSe
 
     // Union and sort by updatedAt desc
     const union = [...mappedCourses, ...mappedPaths].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-    return NextResponse.json(union);
+
+    // Cache for 1 hour.
+    // - Anonymous (no userId): allow shared caches (CDN) to store.
+    // - User-specific (userId): keep it private to avoid shared cache leaks.
+    const cacheControl = userId
+      ? "private, max-age=3600"
+      : "public, s-maxage=3600, stale-while-revalidate=60";
+
+    return NextResponse.json(union, {
+      headers: {
+        "Cache-Control": cacheControl,
+      },
+    });
 
   } catch (error) {
     console.error("[GET_COURSES]", error);

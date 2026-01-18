@@ -48,9 +48,9 @@ const SearchPage = async ({ searchParams }: { searchParams: Promise<{ title?: st
   const categories = await resCategories.json();
   
   const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/courses/search?title=${encodeURIComponent(title)}&categoryId=${encodeURIComponent(categoryId)}&userId=${userId}`;
-  const res = await fetch(apiUrl);
+  const res = await fetch(apiUrl, { next: { revalidate: 3600, tags: ["learning-units-search"] } });
   const courses = await res.json();
-  console.log("[SEARCH_PAGE] Courses data:", JSON.stringify(courses.slice(0, 3), null, 2));
+  console.log("[SEARCH_PAGE] Marketplace data:", JSON.stringify(courses.slice(0, 3), null, 2));
   return (
     <>
       <SignedIn>

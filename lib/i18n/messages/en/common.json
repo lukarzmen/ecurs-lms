@@ -5,5 +5,6 @@
   "auth.signedOut.title": "Ecurs — modern education platform",
   "auth.signedOut.description": "Sign in or create an account to browse courses, track progress, and use the platform features.",
   "auth.signIn": "Sign in",
-  "auth.signUp": "Create account"
+  "auth.signUp": "Create account",
+  "common.backToHome": "Back to home"
 }

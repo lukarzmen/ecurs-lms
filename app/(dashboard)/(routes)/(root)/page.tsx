@@ -32,7 +32,7 @@ export default async function Home({
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/courses/search?title=${encodeURIComponent(
       title
     )}&categoryId=${encodeURIComponent(categoryId)}`;
-    const res = await fetch(apiUrl);
+    const res = await fetch(apiUrl, { next: { revalidate: 3600, tags: ["learning-units-search"] } });
     const courses = await res.json();
 
     return (

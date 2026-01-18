@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { revalidateTag } from "next/cache";
 
 export async function PATCH(
   req: Request,
@@ -27,6 +28,8 @@ export async function PATCH(
       where: { id: courseIdNumber },
       data: { state },
     });
+
+    revalidateTag("learning-units-search");
 
     return new NextResponse("OK");
   } catch (error) {
