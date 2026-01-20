@@ -49,6 +49,19 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Prevent tampering: if client sent a subscriptionId, it must match DB
+    if (subscriptionId && purchase.subscriptionId && subscriptionId !== purchase.subscriptionId) {
+      return NextResponse.json({ error: 'Invalid subscriptionId' }, { status: 400 });
+    }
+
+    // Idempotency: already cancelled or scheduled
+    if (purchase.subscriptionStatus === 'canceled' || purchase.subscriptionStatus === 'cancel_at_period_end') {
+      return NextResponse.json({
+        message: 'Educational path subscription already cancelled or scheduled',
+        success: true,
+      });
+    }
+
     // Cancel the Stripe subscription if it exists
     if (purchase.subscriptionId) {
       try {
@@ -60,33 +73,42 @@ export async function POST(
         const schoolStripeAccountId = purchase.educationalPath.school?.stripeAccountId;
         
         if (schoolStripeAccountId) {
-          // Cancel on school's Connect account
-          await stripeClient.subscriptions.cancel(purchase.subscriptionId, {}, {
-            stripeAccount: schoolStripeAccountId
-          });
-          console.log(`Cancelled subscription ${purchase.subscriptionId} on school Connect account ${schoolStripeAccountId}`);
+          // Cancel at period end on school's Connect account
+          await stripeClient.subscriptions.update(
+            purchase.subscriptionId,
+            { cancel_at_period_end: true },
+            { stripeAccount: schoolStripeAccountId }
+          );
+          console.log(`Scheduled cancellation for subscription ${purchase.subscriptionId} on school Connect account ${schoolStripeAccountId}`);
         } else {
-          // Cancel on platform account
-          await stripeClient.subscriptions.cancel(purchase.subscriptionId);
-          console.log(`Cancelled subscription ${purchase.subscriptionId} on platform account`);
+          // Cancel at period end on platform account
+          await stripeClient.subscriptions.update(purchase.subscriptionId, {
+            cancel_at_period_end: true,
+          });
+          console.log(`Scheduled cancellation for subscription ${purchase.subscriptionId} on platform account`);
         }
       } catch (stripeError) {
         console.error('Error cancelling Stripe subscription:', stripeError);
-        // Continue with database update even if Stripe fails
+        return NextResponse.json(
+          { error: 'Failed to update Stripe subscription' },
+          { status: 502 }
+        );
       }
+    } else {
+      return NextResponse.json({ error: 'No subscription found for this purchase' }, { status: 404 });
     }
 
     // Update the purchase record
     await db.educationalPathPurchase.update({
       where: { id: purchaseId },
       data: {
-        subscriptionStatus: 'canceled',
-        isRecurring: false,
+        subscriptionStatus: 'cancel_at_period_end',
+        isRecurring: true,
       },
     });
 
     return NextResponse.json({ 
-      message: 'Educational path subscription cancelled successfully',
+      message: 'Educational path subscription will be cancelled at the end of the current billing period',
       success: true 
     });
 

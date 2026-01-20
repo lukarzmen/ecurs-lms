@@ -108,7 +108,7 @@ const TeacherSettingsPage = () => {
       if (coursesResponse.ok) {
         const coursesData = await coursesResponse.json();
         setUserCourses(coursesData.filter((course: UserCourse) => 
-          course.purchase?.isRecurring && course.purchase?.subscriptionStatus === 'active'
+          course.purchase?.isRecurring && ['active', 'cancel_at_period_end'].includes(course.purchase?.subscriptionStatus || '')
         ));
       }
 
@@ -117,7 +117,7 @@ const TeacherSettingsPage = () => {
       if (pathsResponse.ok) {
         const pathsData = await pathsResponse.json();
         setEducationalPathPurchases(pathsData.filter((purchase: EducationalPathPurchase) => 
-          purchase.isRecurring && purchase.subscriptionStatus === 'active'
+          purchase.isRecurring && ['active', 'cancel_at_period_end'].includes(purchase.subscriptionStatus || '')
         ));
       }
 

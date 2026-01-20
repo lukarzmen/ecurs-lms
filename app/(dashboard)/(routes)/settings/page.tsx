@@ -104,7 +104,7 @@ const SettingsPage = () => {
       });
 
       if (response.ok) {
-        toast.success('Subskrypcja kursu została anulowana');
+        toast.success('Subskrypcja kursu zostanie anulowana na koniec okresu rozliczeniowego');
         fetchSubscriptions(); // Refresh the list
       } else {
         toast.error('Błąd podczas anulowania subskrypcji kursu');
@@ -126,7 +126,7 @@ const SettingsPage = () => {
       });
 
       if (response.ok) {
-        toast.success('Subskrypcja ścieżki edukacyjnej została anulowana');
+        toast.success('Subskrypcja ścieżki edukacyjnej zostanie anulowana na koniec okresu rozliczeniowego');
         fetchSubscriptions(); // Refresh the list
       } else {
         toast.error('Błąd podczas anulowania subskrypcji ścieżki edukacyjnej');
@@ -193,7 +193,10 @@ const SettingsPage = () => {
                           <p>Status płatności: {userCourse.purchase.subscriptionStatus || 'N/A'}</p>
                           <p>ID subskrypcji: {userCourse.purchase.subscriptionId || 'Brak'}</p>
                           {userCourse.purchase.currentPeriodEnd && (
-                            <p>Odnowienie: {new Date(userCourse.purchase.currentPeriodEnd).toLocaleDateString('pl-PL')}</p>
+                            <p>
+                              {userCourse.purchase.subscriptionStatus === 'cancel_at_period_end' ? 'Anulowanie: ' : 'Odnowienie: '}
+                              {new Date(userCourse.purchase.currentPeriodEnd).toLocaleDateString('pl-PL')}
+                            </p>
                           )}
                           {userCourse.purchase.amount && (
                             <p>Kwota: {userCourse.purchase.amount} {userCourse.purchase.currency}</p>
@@ -205,7 +208,7 @@ const SettingsPage = () => {
                     </div>
                   </div>
                   {/* Show cancel button only for active subscriptions that are not already cancelled */}
-                  {userCourse.purchase?.subscriptionId && userCourse.purchase?.subscriptionStatus !== 'canceled' ? (
+                  {userCourse.purchase?.subscriptionId && !['canceled', 'cancel_at_period_end'].includes(userCourse.purchase?.subscriptionStatus || '') ? (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">
@@ -234,7 +237,8 @@ const SettingsPage = () => {
                     </AlertDialog>
                   ) : (
                     <div className="text-sm text-muted-foreground px-3 py-2 bg-gray-50 rounded">
-                      {userCourse.purchase?.subscriptionStatus === 'canceled' ? 'Subskrypcja anulowana' : 
+                      {userCourse.purchase?.subscriptionStatus === 'canceled' ? 'Subskrypcja anulowana' :
+                       userCourse.purchase?.subscriptionStatus === 'cancel_at_period_end' ? 'Anulowanie zaplanowane' :
                        !userCourse.purchase?.subscriptionId ? 'Jednorazowy zakup' : 'Nieaktywna subskrypcja'}
                     </div>
                   )}
@@ -270,7 +274,10 @@ const SettingsPage = () => {
                       <p>Status płatności: {purchase.subscriptionStatus || 'N/A'}</p>
                       <p>ID subskrypcji: {purchase.subscriptionId || 'Brak'}</p>
                       {purchase.currentPeriodEnd && (
-                        <p>Odnowienie: {new Date(purchase.currentPeriodEnd).toLocaleDateString('pl-PL')}</p>
+                        <p>
+                          {purchase.subscriptionStatus === 'cancel_at_period_end' ? 'Anulowanie: ' : 'Odnowienie: '}
+                          {new Date(purchase.currentPeriodEnd).toLocaleDateString('pl-PL')}
+                        </p>
                       )}
                       {purchase.amount && (
                         <p>Kwota: {purchase.amount} {purchase.currency}</p>
@@ -278,7 +285,7 @@ const SettingsPage = () => {
                     </div>
                   </div>
                   {/* Show cancel button only for active subscriptions that are not already cancelled */}
-                  {purchase.subscriptionId && purchase.subscriptionStatus !== 'canceled' ? (
+                  {purchase.subscriptionId && !['canceled', 'cancel_at_period_end'].includes(purchase.subscriptionStatus || '') ? (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">
@@ -307,7 +314,8 @@ const SettingsPage = () => {
                     </AlertDialog>
                   ) : (
                     <div className="text-sm text-muted-foreground px-3 py-2 bg-gray-50 rounded">
-                      {purchase.subscriptionStatus === 'canceled' ? 'Subskrypcja anulowana' : 
+                      {purchase.subscriptionStatus === 'canceled' ? 'Subskrypcja anulowana' :
+                       purchase.subscriptionStatus === 'cancel_at_period_end' ? 'Anulowanie zaplanowane' :
                        !purchase.subscriptionId ? 'Jednorazowy zakup' : 'Nieaktywna subskrypcja'}
                     </div>
                   )}
