@@ -224,11 +224,15 @@ export async function POST(
 
         let stripeCustomerId = user.stripeCustomers[0]?.stripeCustomerId || null;
         
-        // Validate existing customer or create new one
+        // Validate existing customer or create new one (on the connected account)
         if (stripeCustomerId) {
             try {
-                // Verify that the customer still exists in Stripe
-                await stripeClient.customers.retrieve(stripeCustomerId);
+                // Verify that the customer still exists in Stripe (connected account)
+                await stripeClient.customers.retrieve(
+                    stripeCustomerId,
+                    {},
+                    { stripeAccount: paymentStripeAccountId as string }
+                );
             } catch (stripeError: any) {
                 // Customer doesn't exist in Stripe anymore, remove from our database and create new one
                 console.error(`Stripe customer ${stripeCustomerId} not found, removing from database:`, stripeError?.message);
@@ -246,6 +250,8 @@ export async function POST(
         if (!stripeCustomerId) {
             const customer = await stripeClient.customers.create({
                 email: email,
+            }, {
+                stripeAccount: paymentStripeAccountId as string,
             });
             if (!customer) {
                 return new NextResponse("Failed to create customer", { status: 500 });
@@ -335,9 +341,11 @@ export async function POST(
             
             // Create customer on Connect account if needed
             try {
-                await stripeClient.customers.retrieve(stripeCustomerId, {
-                    stripeAccount: paymentStripeAccountId
-                });
+                await stripeClient.customers.retrieve(
+                    stripeCustomerId,
+                    {},
+                    { stripeAccount: paymentStripeAccountId as string }
+                );
                 console.log(`Customer exists on Connect account: ${stripeCustomerId}`);
             } catch (connectError: any) {
                 console.log(`Customer doesn't exist on Connect account, creating new one...`);
@@ -480,7 +488,11 @@ export async function POST(
             
             // Create customer on Connect account if needed
             try {
-                await stripeClient.customers.retrieve(stripeCustomerId);
+                await stripeClient.customers.retrieve(
+                    stripeCustomerId,
+                    {},
+                    { stripeAccount: paymentStripeAccountId as string }
+                );
                 console.log(`Customer exists on Connect account: ${stripeCustomerId}`);
             } catch (connectError: any) {
                 console.log(`Customer doesn't exist on Connect account, creating new one...`);

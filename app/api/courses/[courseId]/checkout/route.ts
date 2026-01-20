@@ -1,7 +1,6 @@
 import { db } from "@/lib/db";
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse, NextRequest } from "next/server";
-import { use } from "react";
 import Stripe from "stripe";
 
 export async function POST(
@@ -192,12 +191,16 @@ export async function POST(
         console.log(`User info - ID: ${user.id}, Email: ${user.email}`);
         console.log(`Initial stripeCustomerId for user ${user.id}: ${stripeCustomerId}`);
         
-        // Validate existing customer or create new one
+        // Validate existing customer or create new one (on the connected account)
         if (stripeCustomerId) {
             try {
-                // Verify that the customer still exists in Stripe
+                // Verify that the customer still exists in Stripe (connected account)
                 console.log(`Verifying Stripe customer: ${stripeCustomerId}`);
-                await stripeClient.customers.retrieve(stripeCustomerId);
+                await stripeClient.customers.retrieve(
+                    stripeCustomerId,
+                    {},
+                    { stripeAccount: paymentStripeAccountId as string }
+                );
                 console.log(`Stripe customer ${stripeCustomerId} verified successfully`);
             } catch (stripeError: any) {
                 // Customer doesn't exist in Stripe anymore, remove from our database and create new one
@@ -314,9 +317,11 @@ export async function POST(
             
             // Create customer on Connect account if needed
             try {
-                await stripeClient.customers.retrieve(stripeCustomerId, {
-                    stripeAccount: paymentStripeAccountId as string
-                });
+                    await stripeClient.customers.retrieve(
+                        stripeCustomerId,
+                        {},
+                        { stripeAccount: paymentStripeAccountId as string }
+                    );
                 console.log(`Customer exists on Connect account: ${stripeCustomerId}`);
             } catch (connectError: any) {
                 console.log(`Customer doesn't exist on Connect account, creating new one...`);
@@ -459,7 +464,11 @@ export async function POST(
             
             // Create customer on Connect account if needed
             try {
-                await stripeClient.customers.retrieve(stripeCustomerId);
+                await stripeClient.customers.retrieve(
+                    stripeCustomerId,
+                    {},
+                    { stripeAccount: paymentStripeAccountId as string }
+                );
                 console.log(`Customer exists on Connect account: ${stripeCustomerId}`);
             } catch (connectError: any) {
                 console.log(`Customer doesn't exist on Connect account, creating new one...`);
