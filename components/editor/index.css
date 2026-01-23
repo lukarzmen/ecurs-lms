@@ -1867,14 +1867,21 @@ button.toolbar-item.active i {
 .spacer {
   letter-spacing: -2px;
 }
-
 .editor-equation {
-  cursor: default;
+  cursor: pointer;
   user-select: none;
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+.editor-equation:hover {
+  transform: translateY(-1px);
 }
 
 .editor-equation.focused {
-  outline: 2px solid rgb(60, 132, 244);
+  outline: 2px solid hsl(222.2, 47.4%, 11.2%);
+  outline-offset: 2px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 button.item i {

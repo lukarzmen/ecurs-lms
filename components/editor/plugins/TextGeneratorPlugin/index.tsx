@@ -13,6 +13,7 @@ import * as React from 'react';
 import { $createHeadingNode } from '@lexical/rich-text';
 import { $createCodeNode } from '@lexical/code';
 import { $createListItemNode, $createListNode, ListType } from '@lexical/list';
+import { $createEquationNode } from '../../nodes/EquationNode';
 import { useCourseContext } from '../../context/CourseContext';
 import { Sparkles, X, Edit2, Loader2 } from 'lucide-react';
 
@@ -350,9 +351,15 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
                 container: ReturnType<typeof $createParagraphNode>,
                 text: string,
               ) => {
-                const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
+                // Split by inline equations ($...$), code (`...`), and bold (**...**)
+                const parts = text.split(/(\$[^$]+\$|`[^`]+`|\*\*[^*]+\*\*)/g);
                 parts.forEach((part) => {
-                  if (part.startsWith('`') && part.endsWith('`')) {
+                  if (part.startsWith('$') && part.endsWith('$') && !part.startsWith('$$')) {
+                    // Inline equation
+                    const equation = part.slice(1, -1);
+                    const equationNode = $createEquationNode(equation, true);
+                    container.append(equationNode);
+                  } else if (part.startsWith('`') && part.endsWith('`')) {
                     const codeText = part.slice(1, -1);
                     const textNode = $createTextNode(codeText);
                     textNode.setFormat('code');
@@ -374,6 +381,8 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
               
               let inCodeBlock = false;
               let codeBlockContent = '';
+              let inEquationBlock = false;
+              let equationBlockContent = '';
 
               let activeList:
                 | {
@@ -383,6 +392,29 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
                 | null = null;
               
               lines.forEach((line) => {
+                // Handle block equations ($$...$$)
+                if (line.trim().startsWith("$$")) {
+                  if (inEquationBlock) {
+                    // End of equation block
+                    inEquationBlock = false;
+                    const equationNode = $createEquationNode(equationBlockContent.trim(), false);
+                    root.append(equationNode);
+                    equationBlockContent = '';
+                  } else {
+                    // Start of equation block
+                    activeList = null;
+                    inEquationBlock = true;
+                    equationBlockContent = '';
+                  }
+                  return;
+                }
+                
+                // If we're in an equation block, accumulate content
+                if (inEquationBlock) {
+                  equationBlockContent += (equationBlockContent ? '\n' : '') + line;
+                  return;
+                }
+                
                 // Handle code blocks (```)
                 if (line.trim().startsWith("```")) {
                   if (inCodeBlock) {

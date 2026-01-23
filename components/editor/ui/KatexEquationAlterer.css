@@ -7,6 +7,185 @@
  *
  */
 
+.KatexEquationAlterer_container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  max-width: 600px;
+  animation: slideInDialog 0.3s ease;
+}
+
+@keyframes slideInDialog {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.KatexEquationAlterer_header {
+  border-bottom: 2px solid hsl(214.3, 31.8%, 91.4%);
+  padding-bottom: 16px;
+}
+
+.KatexEquationAlterer_title {
+  font-size: 20px;
+  font-weight: 600;
+  color: hsl(222.2, 47.4%, 11.2%);
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+}
+
+.KatexEquationAlterer_subtitle {
+  font-size: 14px;
+  color: hsl(215.4, 16.3%, 46.9%);
+  margin: 0;
+}
+
+.KatexEquationAlterer_section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.KatexEquationAlterer_label {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.KatexEquationAlterer_labelText {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: hsl(222.2, 47.4%, 11.2%);
+}
+
+.KatexEquationAlterer_labelIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.KatexEquationAlterer_checkboxWrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: hsl(210, 40%, 98%);
+  border: 2px solid hsl(214.3, 31.8%, 91.4%);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.KatexEquationAlterer_checkboxWrapper:hover {
+  background: hsl(210, 40%, 96.1%);
+  border-color: hsl(222.2, 47.4%, 11.2%);
+}
+
+.KatexEquationAlterer_checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: hsl(222.2, 47.4%, 11.2%);
+}
+
+.KatexEquationAlterer_checkboxLabel {
+  font-size: 14px;
+  color: hsl(222.2, 47.4%, 11.2%);
+  font-weight: 500;
+  user-select: none;
+}
+
+.KatexEquationAlterer_input,
+.KatexEquationAlterer_textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid hsl(214.3, 31.8%, 91.4%);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  color: hsl(222.2, 47.4%, 11.2%);
+  background: white;
+  transition: all 0.2s ease;
+  resize: vertical;
+}
+
+.KatexEquationAlterer_input:focus,
+.KatexEquationAlterer_textarea:focus {
+  outline: none;
+  border-color: hsl(222.2, 47.4%, 11.2%);
+  box-shadow: 0 0 0 3px hsl(222.2, 47.4%, 11.2%, 0.1);
+}
+
+.KatexEquationAlterer_input::placeholder,
+.KatexEquationAlterer_textarea::placeholder {
+  color: hsl(215.4, 16.3%, 46.9%);
+  opacity: 0.6;
+}
+
+.KatexEquationAlterer_preview {
+  min-height: 80px;
+  padding: 20px;
+  background: linear-gradient(135deg, hsl(210, 40%, 98%) 0%, hsl(210, 40%, 96.1%) 100%);
+  border: 2px solid hsl(214.3, 31.8%, 91.4%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.KatexEquationAlterer_placeholder {
+  color: hsl(215.4, 16.3%, 46.9%);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.KatexEquationAlterer_error {
+  color: hsl(0, 84.2%, 60.2%);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.KatexEquationAlterer_footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 2px solid hsl(214.3, 31.8%, 91.4%);
+}
+
+.KatexEquationAlterer_confirmButton {
+  background: linear-gradient(135deg, hsl(222.2, 47.4%, 11.2%) 0%, hsl(222.2, 47.4%, 20%) 100%);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.KatexEquationAlterer_confirmButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, hsl(222.2, 47.4%, 15%) 0%, hsl(222.2, 47.4%, 25%) 100%);
+}
+
+.KatexEquationAlterer_confirmButton:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Legacy classes for backward compatibility */
 .KatexEquationAlterer_defaultRow {
   display: flex;
   flex-direction: row;

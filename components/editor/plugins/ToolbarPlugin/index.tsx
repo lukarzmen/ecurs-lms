@@ -1499,7 +1499,7 @@ export default function NewToolbarPlugin({
                   }}
                   className="item">
                   <i className="icon equation" />
-                  <span className="text">Równanie</span>
+                  <span className="text">Wzór</span>
                 </DropDownItem>
                 <DropDownItem
                   onClick={() => {

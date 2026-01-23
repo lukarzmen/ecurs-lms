@@ -30,51 +30,93 @@ export default function KatexEquationAlterer({
   }, [setInline, inline]);
 
   return (
-    <>
-      <div className="KatexEquationAlterer_defaultRow">
-        Czy w linii?
-        <input
-          type="checkbox"
-          checked={inline}
-          onChange={onCheckboxChange}
-          className="bg-orange-100"
-        />
+    <div className="KatexEquationAlterer_container">
+      <div className="KatexEquationAlterer_header">
+        <h3 className="KatexEquationAlterer_title">Wstaw równanie matematyczne</h3>
+        <p className="KatexEquationAlterer_subtitle">Użyj składni LaTeX do utworzenia równania</p>
       </div>
-      <div className="KatexEquationAlterer_defaultRow">Równanie </div>
-      <div className="KatexEquationAlterer_centerRow">
-        {inline ? (
-          <input
-            onChange={(event) => {
-              setEquation(event.target.value);
-            }}
-            value={equation}
-            className="KatexEquationAlterer_textArea bg-orange-100 rounded-md"
-          />
-        ) : (
-          <textarea
-            onChange={(event) => {
-              setEquation(event.target.value);
-            }}
-            value={equation}
-            className="KatexEquationAlterer_textArea bg-orange-100 rounded-md"
-          />
-        )}
+      
+      <div className="KatexEquationAlterer_section">
+        <label className="KatexEquationAlterer_label">
+          <div className="KatexEquationAlterer_labelText">
+            <span className="KatexEquationAlterer_labelIcon">📐</span>
+            Tryb wyświetlania
+          </div>
+          <label className="KatexEquationAlterer_checkboxWrapper">
+            <input
+              type="checkbox"
+              checked={inline}
+              onChange={onCheckboxChange}
+              className="KatexEquationAlterer_checkbox"
+            />
+            <span className="KatexEquationAlterer_checkboxLabel">
+              {inline ? 'W linii tekstu' : 'Wycentrowane (blok)'}
+            </span>
+          </label>
+        </label>
       </div>
-      <div className="KatexEquationAlterer_defaultRow">Podgląd </div>
-      <div className="KatexEquationAlterer_centerRow">
-        <ErrorBoundary onError={(e) => editor._onError(e)} fallback={null}>
-          <KatexRenderer
-            equation={equation}
-            inline={false}
-            onDoubleClick={() => null}
-          />
-        </ErrorBoundary>
+      
+      <div className="KatexEquationAlterer_section">
+        <label className="KatexEquationAlterer_label">
+          <div className="KatexEquationAlterer_labelText">
+            <span className="KatexEquationAlterer_labelIcon">✏️</span>
+            Równanie (LaTeX)
+          </div>
+          {inline ? (
+            <input
+              onChange={(event) => {
+                setEquation(event.target.value);
+              }}
+              value={equation}
+              placeholder="np. E = mc^2"
+              className="KatexEquationAlterer_input"
+              autoFocus
+            />
+          ) : (
+            <textarea
+              onChange={(event) => {
+                setEquation(event.target.value);
+              }}
+              value={equation}
+              placeholder="np. \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}"
+              className="KatexEquationAlterer_textarea"
+              rows={4}
+              autoFocus
+            />
+          )}
+        </label>
       </div>
-      <div className="KatexEquationAlterer_dialogActions">
-        <Button onClick={onClick} className="bg-orange-500 text-white">
-          Zatwiedź
+      
+      <div className="KatexEquationAlterer_section">
+        <div className="KatexEquationAlterer_label">
+          <div className="KatexEquationAlterer_labelText">
+            <span className="KatexEquationAlterer_labelIcon">👁️</span>
+            Podgląd na żywo
+          </div>
+          <div className="KatexEquationAlterer_preview">
+            <ErrorBoundary 
+              onError={(e) => editor._onError(e)} 
+              fallback={<div className="KatexEquationAlterer_error">❌ Błąd w składni LaTeX</div>}
+            >
+              {equation ? (
+                <KatexRenderer
+                  equation={equation}
+                  inline={false}
+                  onDoubleClick={() => null}
+                />
+              ) : (
+                <div className="KatexEquationAlterer_placeholder">Wpisz równanie, aby zobaczyć podgląd</div>
+              )}
+            </ErrorBoundary>
+          </div>
+        </div>
+      </div>
+      
+      <div className="KatexEquationAlterer_footer">
+        <Button onClick={onClick} className="KatexEquationAlterer_confirmButton">
+          ✓ Wstaw wzór
         </Button>
       </div>
-    </>
+    </div>
   );
 }
