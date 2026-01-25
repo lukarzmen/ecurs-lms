@@ -90,6 +90,18 @@ export async function POST(req: Request) {
       }
       updateData.schoolType = "business";
     } else {
+      // Dla individual (osoba fizyczna lub JDG)
+      // NIP wymagany tylko gdy requiresVatInvoices = true (JDG)
+      if (businessData.taxId) {
+        updateData.taxId = businessData.taxId;
+      }
+      if (businessData.requiresVatInvoices !== undefined) {
+        updateData.requiresVatInvoices = businessData.requiresVatInvoices;
+      }
+      // Wyczyść NIP jeśli nie wystawia faktur
+      if (!businessData.requiresVatInvoices) {
+        updateData.taxId = null;
+      }
       updateData.schoolType = "individual";
     }
 

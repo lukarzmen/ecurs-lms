@@ -66,7 +66,7 @@ const STUDENT_TERMS = (
       <li><b>Umowa sprzedaży kursu zawierana jest bezpośrednio między uczniem a nauczycielem.</b> Platforma Ecurs pełni wyłącznie rolę pośrednika technicznego umożliwiającego zawarcie umowy.</li>
       <li><b>Płatności za kursy trafiają bezpośrednio na konto nauczyciela.</b> Platforma nie jest stroną umowy sprzedaży i nie ponosi odpowiedzialności za jej wykonanie.</li>
       <li><b>Obsługa płatności:</b> Wszystkie płatności są obsługiwane przez bezpieczny system Stripe Connect. Z każdej transakcji pobierana jest prowizja zgodnie z <a href="https://stripe.com/en-pl/pricing" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">cennikiem Stripe</a>, która jest automatycznie potrącana przed przekazaniem środków nauczycielowi.</li>
-      <li><b>Faktury VAT:</b> Uczniowie mogą opcjonalnie zaznaczyć podczas zakupu kursu, że wymagają faktury VAT. Faktura zostanie automatycznie wygenerowana przez system Stripe z danych nauczyciela zgodnie z obowiązującymi przepisami podatkowymi.</li>
+      <li><b>Faktury VAT:</b> Uczniowie mogą opcjonalnie zaznaczyć podczas zakupu kursu, że wymagają faktury VAT. Faktura zostanie automatycznie wygenerowana przez system Stripe z danych nauczyciela zgodnie z obowiązującymi przepisami podatkowymi. Dla odbiorców w Polsce VAT ID będzie wyświetlony w formacie "PL" + NIP.</li>
     </ul>
     <p className="font-semibold text-gray-700 mt-2">§6. Odpowiedzialność za treści kursów</p>
     <ul className="list-disc ml-6 text-gray-700">
@@ -157,7 +157,7 @@ const TEACHER_TERMS = (
         <b>Proces rejestracji:</b> W dalszych krokach rejestracji poprosimy Cię o konfigurację konta płatności w Stripe, gdzie podasz swoje dane do celów płatności i fiskalnych.
       </li>
       <li>
-        <b>Dane wymagane przez Stripe:</b> Imię i nazwisko, adres, numer telefonu, dane bankowe do otrzymywania płatności oraz informacje niezbędne do wystawiania faktur zgodnie z polskim prawem podatkowym.
+        <b>Dane wymagane przez Stripe:</b> Imię i nazwisko, adres, numer telefonu, dane bankowe do otrzymywania płatności oraz NIP (który w Stripe będzie używany jako VAT ID w formacie "PL" + NIP dla celów fakturowania VAT).
       </li>
       <li>
         <b>Weryfikacja dokumentu tożsamości (Stripe Identity):</b> Korzystamy ze Stripe w celu weryfikacji dokumentu tożsamości. Stripe zbiera obrazy dokumentów tożsamości, obrazy twarzy, numery dokumentów i adresy, a także zaawansowane sygnały antyfraudowe oraz informacje o urządzeniach łączących się z jego usługami. Stripe udostępnia nam te informacje oraz wykorzystuje je do świadczenia i ulepszania swoich usług, w tym do wykrywania oszustw. Możesz również zdecydować, że zezwalasz Stripe na wykorzystanie Twoich danych w celu ulepszania technologii biometrycznej weryfikacji Stripe. Więcej informacji o Stripe oraz jego polityce prywatności znajdziesz na <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">https://stripe.com/privacy</a>.
@@ -193,7 +193,7 @@ const TEACHER_TERMS = (
         <b>Zwroty i refundacje:</b> Proces zwrotów środków jest obsługiwany przez system Stripe zgodnie z jego regulaminem i może podlegać dodatkowym opłatom zgodnie z cennikiem Stripe.
       </li>
       <li>
-        <b>Automatyczne faktury VAT:</b> System Stripe Connect umożliwia automatyczne generowanie faktur VAT dla transakcji. Nauczyciele mogą skonfigurować w swoim panelu Stripe automatyczne wystawianie faktur VAT zgodnie z polskimi i europejskimi przepisami podatkowymi. Uczniowie mogą opcjonalnie zaznaczyć podczas zakupu, że wymagają faktury VAT.
+        <b>Automatyczne faktury VAT:</b> System Stripe Connect umożliwia automatyczne generowanie faktur VAT dla transakcji. NIP nauczyciela jest automatycznie konwertowany na VAT ID w formacie "PL" + NIP dla celów rozliczeń w Polsce. Nauczyciele mogą skonfigurować w swoim panelu Stripe automatyczne wystawianie faktur VAT zgodnie z polskimi i europejskimi przepisami podatkowymi. Uczniowie mogą opcjonalnie zaznaczyć podczas zakupu, że wymagają faktury VAT.
       </li>
       <li>
         <b>Obsługa VAT w UE:</b> Stripe automatycznie obsługuje procedury VAT dla sprzedaży cyfrowej w krajach Unii Europejskiej, w tym system OSS (One-Stop Shop), co umożliwia nauczycielom compliance z przepisami podatkowymi różnych krajów UE.
@@ -1436,8 +1436,15 @@ export default function RegisterPage() {
       return;
     }
 
+    // Walidacja - NIP wymagany dla spółek i dla JDG (individual z requiresVatInvoices)
     if (businessData.businessType === "company" && (!businessData.schoolName || !businessData.companyName || !businessData.taxId)) {
-      setRegistrationError("Dla firmy wymagana jest nazwa szkoły, nazwa firmy i NIP");
+      setRegistrationError("Dla spółki wymagana jest nazwa szkoły, nazwa firmy i NIP");
+      return;
+    }
+    
+    // Dla individual - NIP wymagany tylko gdy chce wystawiać faktury (JDG)
+    if (businessData.businessType === "individual" && businessData.requiresVatInvoices && !businessData.taxId) {
+      setRegistrationError("NIP jest wymagany dla JDG, jeśli chcesz wystawiać faktury VAT");
       return;
     }
 
@@ -1902,53 +1909,60 @@ export default function RegisterPage() {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-700 text-sm sm:text-base">🧑‍💼 Indywidualny nauczyciel</div>
                       <div className="text-xs sm:text-sm text-gray-600 mt-1 leading-tight">
-                        Osoba fizyczna lub jednoosobowa działalność (JDG) - możliwość podania NIPu dla faktur VAT
+                        Osoba fizyczna lub JDG - możesz wybrać czy chcesz wystawiać faktury VAT
                       </div>
                     </div>
                   </label>
 
                   {businessData.businessType === "individual" && (
                     <div className="ml-8 sm:ml-10 mt-2 space-y-3 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <h4 className="font-medium text-green-800 text-sm sm:text-base">Dane dla JDG (opcjonalne):</h4>
+                      <h4 className="font-medium text-green-800 text-sm sm:text-base">Dodatkowe opcje:</h4>
                       
-                      <div>
-                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                          NIP (opcjonalny, ale zalecany dla JDG)
-                        </label>
+                      <label className="flex items-start space-x-2 sm:space-x-3 cursor-pointer">
                         <input
-                          type="text"
-                          value={businessData.taxId || ""}
+                          type="checkbox"
+                          checked={businessData.requiresVatInvoices || false}
                           onChange={(e) => {
                             if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") return;
-                            setBusinessData(prev => ({ ...prev, taxId: e.target.value }))
+                            setBusinessData(prev => ({ 
+                              ...prev, 
+                              requiresVatInvoices: e.target.checked,
+                              taxId: e.target.checked ? prev.taxId : "" // Wyczyść NIP gdy odznaczono
+                            }))
                           }}
-                          className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                          placeholder="np. 1234567890"
+                          className="mt-1 flex-shrink-0"
                           disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                         />
-                        <p className="text-xs text-gray-600 mt-1">
-                          Podanie NIPu umożliwi otrzymywanie faktur VAT za subskrypcję platformy i wystawianie faktur uczniom
-                        </p>
-                      </div>
+                        <div className="text-xs sm:text-sm">
+                          <div className="font-medium text-gray-700">Prowadzę JDG i chcę wystawiać faktury VAT</div>
+                          <div className="text-gray-600">Zaznacz, jeśli prowadzisz jednoosobową działalność gospodarczą i chcesz wystawiać faktury VAT uczniom</div>
+                        </div>
+                      </label>
 
-                      {businessData.taxId && (
-                        <label className="flex items-start space-x-2 sm:space-x-3 cursor-pointer">
+                      {businessData.requiresVatInvoices && (
+                        <div className="mt-3">
+                          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                            NIP * (wymagany dla JDG)
+                          </label>
                           <input
-                            type="checkbox"
-                            checked={businessData.requiresVatInvoices || false}
+                            type="text"
+                            value={businessData.taxId || ""}
                             onChange={(e) => {
                               if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") return;
-                              setBusinessData(prev => ({ ...prev, requiresVatInvoices: e.target.checked }))
+                              setBusinessData(prev => ({ ...prev, taxId: e.target.value }))
                             }}
-                            className="mt-1 flex-shrink-0"
+                            className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            placeholder="np. 1234567890"
                             disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
+                            required
                           />
-                          <div className="text-xs sm:text-sm">
-                            <div className="font-medium text-gray-700">Wymagam wystawiania faktur VAT</div>
-                            <div className="text-gray-600">Będę wystawiać faktury VAT swoim uczniom</div>
-                          </div>
-                        </label>
+                          <p className="text-xs text-gray-600 mt-1">
+                            NIP jest wymagany do wystawiania faktur VAT. W Stripe będzie użyty jako VAT ID w formacie "PL" + NIP
+                          </p>
+                        </div>
                       )}
+
+
                     </div>
                   )}
 
@@ -2082,9 +2096,9 @@ export default function RegisterPage() {
 
                 <button
                   onClick={handleBusinessTypeSelection}
-                  disabled={isLoading || (businessData.businessType === "company" && (!businessData.schoolName || !businessData.companyName || !businessData.taxId)) || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
+                  disabled={isLoading || (businessData.businessType === "company" && (!businessData.schoolName || !businessData.companyName || !businessData.taxId)) || (businessData.businessType === "individual" && businessData.requiresVatInvoices && !businessData.taxId) || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                   className={`w-full py-3 px-3 sm:px-4 md:px-8 rounded-lg font-medium text-white text-sm sm:text-base lg:text-lg transition-all
-                    ${isLoading || (businessData.businessType === "company" && (!businessData.schoolName || !businessData.companyName || !businessData.taxId)) || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"
+                    ${isLoading || (businessData.businessType === "company" && (!businessData.schoolName || !businessData.companyName || !businessData.taxId)) || (businessData.businessType === "individual" && businessData.requiresVatInvoices && !businessData.taxId) || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg"
                     }`}

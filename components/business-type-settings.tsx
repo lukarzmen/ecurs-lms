@@ -47,7 +47,13 @@ export function BusinessTypeSettings() {
 
   const handleSubmit = async () => {
     if (formData.businessType === "company" && (!formData.companyName || !formData.taxId)) {
-      toast.error("Dla firmy wymagana jest nazwa firmy i NIP");
+      toast.error("Dla spółki wymagana jest nazwa firmy i NIP");
+      return;
+    }
+    
+    // Dla individual - NIP wymagany tylko gdy chce wystawiać faktury (JDG)
+    if (formData.businessType === "individual" && formData.requiresVatInvoices && !formData.taxId) {
+      toast.error("NIP jest wymagany dla JDG, jeśli chcesz wystawiać faktury VAT");
       return;
     }
 
@@ -227,38 +233,43 @@ export function BusinessTypeSettings() {
               <div className="space-y-3 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-center gap-2 text-green-800 font-medium">
                   <AlertCircle className="h-4 w-4" />
-                  Dane dla JDG (opcjonalne)
+                  Dodatkowe opcje
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    NIP (opcjonalny)
-                  </label>
+                <label className="flex items-start space-x-3 cursor-pointer">
                   <input
-                    type="text"
-                    value={formData.taxId || ""}
-                    onChange={(e) => setFormData(prev => ({ ...prev, taxId: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    placeholder="np. 1234567890"
+                    type="checkbox"
+                    checked={formData.requiresVatInvoices || false}
+                    onChange={(e) => setFormData(prev => ({ 
+                      ...prev, 
+                      requiresVatInvoices: e.target.checked,
+                      taxId: e.target.checked ? prev.taxId : "" // Wyczyść NIP gdy odznaczono
+                    }))}
+                    className="mt-1"
                   />
-                  <p className="text-xs text-gray-600 mt-1">
-                    Podanie NIPu umożliwi otrzymywanie faktur VAT za subskrypcję platformy i wystawianie faktur uczniom
-                  </p>
-                </div>
+                  <div className="text-sm">
+                    <div className="font-medium text-gray-700">Prowadzę JDG i chcę wystawiać faktury VAT</div>
+                    <div className="text-gray-600">Zaznacz, jeśli prowadzisz jednoosobową działalność gospodarczą i chcesz wystawiać faktury VAT uczniom</div>
+                  </div>
+                </label>
 
-                {formData.taxId && (
-                  <label className="flex items-start space-x-3 cursor-pointer">
+                {formData.requiresVatInvoices && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      NIP * (wymagany dla JDG)
+                    </label>
                     <input
-                      type="checkbox"
-                      checked={formData.requiresVatInvoices || false}
-                      onChange={(e) => setFormData(prev => ({ ...prev, requiresVatInvoices: e.target.checked }))}
-                      className="mt-1"
+                      type="text"
+                      value={formData.taxId || ""}
+                      onChange={(e) => setFormData(prev => ({ ...prev, taxId: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      placeholder="np. 1234567890"
+                      required
                     />
-                    <div className="text-sm">
-                      <div className="font-medium text-gray-700">Wymagam wystawiania faktur VAT</div>
-                      <div className="text-gray-600">Będę wystawiać faktury VAT swoim uczniom</div>
-                    </div>
-                  </label>
+                    <p className="text-xs text-gray-600 mt-1">
+                      NIP jest wymagany do wystawiania faktur VAT. W Stripe będzie użyty jako VAT ID w formacie "PL" + NIP
+                    </p>
+                  </div>
                 )}
               </div>
             )}
@@ -314,7 +325,7 @@ export function BusinessTypeSettings() {
             <div className="flex gap-2">
               <Button
                 onClick={handleSubmit}
-                disabled={isLoading || (formData.businessType === "company" && (!formData.companyName || !formData.taxId))}
+                disabled={isLoading || (formData.businessType === "company" && (!formData.companyName || !formData.taxId)) || (formData.businessType === "individual" && formData.requiresVatInvoices && !formData.taxId)}
                 className="flex-1"
               >
                 {isLoading ? "Zapisywanie..." : "Zapisz zmiany"}
