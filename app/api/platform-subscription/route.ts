@@ -181,6 +181,16 @@ export async function POST(req: NextRequest) {
             success_url: `${process.env.NEXT_PUBLIC_API_URL}${returnUrl || '/register'}?success=subscription`,
             cancel_url: `${process.env.NEXT_PUBLIC_API_URL}${returnUrl || '/register'}?cancelled=subscription`,
             client_reference_id: String(teacherSubscription.id),
+            // Zbieranie danych do faktury VAT (NIP, nazwa firmy, adres)
+            // NIP jest OPCJONALNY - nauczyciele bez działalności gospodarczej mogą go pominąć
+            customer_update: {
+                address: 'auto',
+                name: 'auto',
+            },
+            billing_address_collection: 'required',
+            tax_id_collection: {
+                enabled: true, // Udostępnia pole NIP/VAT ID (opcjonalne, nie wymagane)
+            },
             metadata: {
                 teacherSubscriptionId: teacherSubscription.id.toString(),
                 userId: String(user.id),
