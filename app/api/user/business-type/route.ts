@@ -39,11 +39,13 @@ export async function PUT(req: Request) {
         if (user.roleId === 1 && user.ownedSchools && user.ownedSchools.length > 0) {
             const school = user.ownedSchools[0];
             
+            // Dla "individual" z NIPem zapisujemy tylko taxId i requiresVatInvoices
+            // Dla "company" wymagamy wszystkich pól
             const updatedSchool = await db.school.update({
                 where: { id: school.id },
                 data: {
-                    companyName: businessType === 'company' ? companyName : null,
-                    taxId: businessType === 'company' ? taxId : null,
+                    companyName: businessType === 'company' ? companyName : (taxId ? null : null),
+                    taxId: taxId || null,
                     requiresVatInvoices: requiresVatInvoices || false,
                     updatedAt: new Date(),
                 }

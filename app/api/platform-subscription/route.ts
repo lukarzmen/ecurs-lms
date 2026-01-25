@@ -182,7 +182,7 @@ export async function POST(req: NextRequest) {
             cancel_url: `${process.env.NEXT_PUBLIC_API_URL}${returnUrl || '/register'}?cancelled=subscription`,
             client_reference_id: String(teacherSubscription.id),
             // Zbieranie danych do faktury VAT (NIP, nazwa firmy, adres)
-            // Dla szkół NIP jest WYMAGANY, dla indywidualnych nauczycieli OPCJONALNY
+            // NIP jest zawsze opcjonalny ale dostępny dla wszystkich - zarówno szkół jak i JDG
             customer_update: {
                 address: 'auto',
                 name: 'auto',
@@ -190,7 +190,7 @@ export async function POST(req: NextRequest) {
             billing_address_collection: 'required',
             tax_id_collection: {
                 enabled: true,
-                required: subscriptionType === "school" ? 'if_supported' : 'never', // Szkoły MUSZĄ podać NIP
+                required: 'if_supported', // Wszyscy nauczyciele (JDG i szkoły) mogą podać NIP
             },
             metadata: {
                 teacherSubscriptionId: teacherSubscription.id.toString(),

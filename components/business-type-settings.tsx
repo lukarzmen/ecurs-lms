@@ -117,7 +117,7 @@ export function BusinessTypeSettings() {
                 <>
                   <User className="h-4 w-4 text-green-600" />
                   <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    Osoba fizyczna
+                    Osoba fizyczna / JDG
                   </Badge>
                 </>
               )}
@@ -137,6 +137,23 @@ export function BusinessTypeSettings() {
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-blue-600" />
                     <span className="text-sm text-blue-700 font-medium">
+                      Wystawianie faktur VAT: Włączone
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {businessData?.businessType === "individual" && businessData?.taxId && (
+              <div className="space-y-2 pl-6 border-l-2 border-green-200">
+                <div>
+                  <span className="text-sm font-medium text-gray-700">NIP (JDG):</span>
+                  <p className="text-gray-900">{businessData.taxId}</p>
+                </div>
+                {businessData.requiresVatInvoices && (
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-green-600" />
+                    <span className="text-sm text-green-700 font-medium">
                       Wystawianie faktur VAT: Włączone
                     </span>
                   </div>
@@ -177,7 +194,7 @@ export function BusinessTypeSettings() {
                     Osoba fizyczna (JDG)
                   </div>
                   <div className="text-sm text-gray-600 mt-1">
-                    Prowadzisz kursy jako osoba fizyczna prowadząca działalność gospodarczą
+                    Prowadzisz kursy jako osoba fizyczna prowadząca działalność gospodarczą - możesz podać NIP
                   </div>
                 </div>
               </label>
@@ -205,6 +222,46 @@ export function BusinessTypeSettings() {
                 </div>
               </label>
             </div>
+
+            {formData.businessType === "individual" && (
+              <div className="space-y-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-2 text-green-800 font-medium">
+                  <AlertCircle className="h-4 w-4" />
+                  Dane dla JDG (opcjonalne)
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    NIP (opcjonalny)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.taxId || ""}
+                    onChange={(e) => setFormData(prev => ({ ...prev, taxId: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    placeholder="np. 1234567890"
+                  />
+                  <p className="text-xs text-gray-600 mt-1">
+                    Podanie NIPu umożliwi otrzymywanie faktur VAT za subskrypcję platformy i wystawianie faktur uczniom
+                  </p>
+                </div>
+
+                {formData.taxId && (
+                  <label className="flex items-start space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.requiresVatInvoices || false}
+                      onChange={(e) => setFormData(prev => ({ ...prev, requiresVatInvoices: e.target.checked }))}
+                      className="mt-1"
+                    />
+                    <div className="text-sm">
+                      <div className="font-medium text-gray-700">Wymagam wystawiania faktur VAT</div>
+                      <div className="text-gray-600">Będę wystawiać faktury VAT swoim uczniom</div>
+                    </div>
+                  </label>
+                )}
+              </div>
+            )}
 
             {formData.businessType === "company" && (
               <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">

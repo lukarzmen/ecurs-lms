@@ -1902,10 +1902,55 @@ export default function RegisterPage() {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-700 text-sm sm:text-base">🧑‍💼 Indywidualny nauczyciel</div>
                       <div className="text-xs sm:text-sm text-gray-600 mt-1 leading-tight">
-                        Osoba fizyczna lub jednoosobowa działalność (JDG) - uproszczony proces w Stripe
+                        Osoba fizyczna lub jednoosobowa działalność (JDG) - możliwość podania NIPu dla faktur VAT
                       </div>
                     </div>
                   </label>
+
+                  {businessData.businessType === "individual" && (
+                    <div className="ml-8 sm:ml-10 mt-2 space-y-3 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <h4 className="font-medium text-green-800 text-sm sm:text-base">Dane dla JDG (opcjonalne):</h4>
+                      
+                      <div>
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                          NIP (opcjonalny, ale zalecany dla JDG)
+                        </label>
+                        <input
+                          type="text"
+                          value={businessData.taxId || ""}
+                          onChange={(e) => {
+                            if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") return;
+                            setBusinessData(prev => ({ ...prev, taxId: e.target.value }))
+                          }}
+                          className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                          placeholder="np. 1234567890"
+                          disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
+                        />
+                        <p className="text-xs text-gray-600 mt-1">
+                          Podanie NIPu umożliwi otrzymywanie faktur VAT za subskrypcję platformy i wystawianie faktur uczniom
+                        </p>
+                      </div>
+
+                      {businessData.taxId && (
+                        <label className="flex items-start space-x-2 sm:space-x-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={businessData.requiresVatInvoices || false}
+                            onChange={(e) => {
+                              if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") return;
+                              setBusinessData(prev => ({ ...prev, requiresVatInvoices: e.target.checked }))
+                            }}
+                            className="mt-1 flex-shrink-0"
+                            disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
+                          />
+                          <div className="text-xs sm:text-sm">
+                            <div className="font-medium text-gray-700">Wymagam wystawiania faktur VAT</div>
+                            <div className="text-gray-600">Będę wystawiać faktury VAT swoim uczniom</div>
+                          </div>
+                        </label>
+                      )}
+                    </div>
+                  )}
 
                   <label className="flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 md:p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                     <input
