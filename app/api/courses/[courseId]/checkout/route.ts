@@ -72,7 +72,8 @@ export async function POST(
                         stripeAccountId: true,
                         stripeOnboardingComplete: true,
                         ownerId: true,
-                        requiresVatInvoices: true
+                        requiresVatInvoices: true,
+                        taxId: true, // NIP szkoły
                     }
                 },
                 price: {
@@ -92,15 +93,23 @@ export async function POST(
         
         const price = course?.price;
         
-        // Determine if invoice should be created: school requires VAT OR customer requested it
-        const shouldCreateInvoice = course?.school?.requiresVatInvoices || vatInvoiceRequested;
+        // Szkoła może wystawić fakturę tylko jeśli ma NIP (taxId)
+        const schoolHasTaxId = course?.school?.taxId && course.school.taxId.trim() !== '';
+        
+        // Faktura tylko gdy: (szkoła wymaga LUB klient zażądał) I szkoła ma NIP
+        const shouldCreateInvoice = schoolHasTaxId && (course?.school?.requiresVatInvoices || vatInvoiceRequested);
+        
+        // Zbieraj dane do faktury tylko gdy faktury będą wystawiane
+        const shouldCollectBillingDetails = shouldCreateInvoice;
         
         console.log(`Course data for courseId ${courseId}:`, {
             courseExists: !!course,
             priceData: course?.price,
+            schoolHasTaxId,
             schoolRequiresVat: course?.school?.requiresVatInvoices,
             customerRequested: vatInvoiceRequested,
-            shouldCreateInvoice: shouldCreateInvoice
+            shouldCreateInvoice,
+            shouldCollectBillingDetails
         });
         
         if (!course) {
@@ -414,6 +423,17 @@ export async function POST(
                 success_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?success=1`,
                 cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?canceled=1`,
                 client_reference_id: String(userCourse.id),
+                // Zbieranie danych do faktury VAT tylko gdy klient chce fakturę i szkoła ma NIP
+                ...(shouldCollectBillingDetails ? {
+                    customer_update: {
+                        address: 'auto',
+                        name: 'auto',
+                    },
+                    billing_address_collection: 'required',
+                    tax_id_collection: {
+                        enabled: true, // Umożliwia podanie NIP/VAT ID
+                    },
+                } : {}),
                 // NOTE: invoice_creation is not supported in subscription mode - Stripe creates invoices automatically
                 metadata: {
                     userCourseId: userCourse.id.toString(),
@@ -558,6 +578,17 @@ export async function POST(
                 success_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?success=1`,
                 cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?canceled=1`,
                 client_reference_id: String(userCourse.id),
+                // Zbieranie danych do faktury VAT tylko gdy klient chce fakturę i szkoła ma NIP
+                ...(shouldCollectBillingDetails ? {
+                    customer_update: {
+                        address: 'auto',
+                        name: 'auto',
+                    },
+                    billing_address_collection: 'required',
+                    tax_id_collection: {
+                        enabled: true, // Umożliwia podanie NIP/VAT ID
+                    },
+                } : {}),
                 // Automatyczne faktury jeśli szkoła wymaga lub klient zażądał
                 invoice_creation: shouldCreateInvoice ? { 
                     enabled: true,

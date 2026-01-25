@@ -75,7 +75,8 @@ export async function POST(
                         stripeAccountId: true,
                         stripeOnboardingComplete: true,
                         ownerId: true,
-                        requiresVatInvoices: true
+                        requiresVatInvoices: true,
+                        taxId: true, // NIP szkoły
                     }
                 },
                 courses: {
@@ -89,6 +90,24 @@ export async function POST(
             console.error("Educational Path not found for id:", educationalPathId);
             return new NextResponse("Educational Path not found", { status: 404 });
         }
+
+        // Szkoła może wystawić fakturę tylko jeśli ma NIP (taxId)
+        const schoolHasTaxId = eduPath?.school?.taxId && eduPath.school.taxId.trim() !== '';
+        
+        // Faktura tylko gdy: (szkoła wymaga LUB klient zażądał) I szkoła ma NIP
+        const shouldCreateInvoice = schoolHasTaxId && (eduPath?.school?.requiresVatInvoices || vatInvoiceRequested);
+        
+        // Zbieraj dane do faktury tylko gdy faktury będą wystawiane
+        const shouldCollectBillingDetails = shouldCreateInvoice;
+        
+        console.log(`Educational path data for id ${educationalPathId}:`, {
+            pathExists: !!eduPath,
+            schoolHasTaxId,
+            schoolRequiresVat: eduPath?.school?.requiresVatInvoices,
+            customerRequested: vatInvoiceRequested,
+            shouldCreateInvoice,
+            shouldCollectBillingDetails
+        });
 
         const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
             apiVersion: "2025-05-28.basil",
@@ -171,15 +190,6 @@ export async function POST(
         // Fetch price from EducationalPathPrice
         const price = await db.educationalPathPrice.findUnique({
             where: { educationalPathId: Number(educationalPathId) },
-        });
-
-        // Determine if invoice should be created: school requires VAT OR customer requested it
-        const shouldCreateInvoice = eduPath.school?.requiresVatInvoices || vatInvoiceRequested;
-        
-        console.log(`Invoice decision for educational path ${educationalPathId}:`, {
-            schoolRequiresVat: eduPath.school?.requiresVatInvoices,
-            customerRequested: vatInvoiceRequested,
-            shouldCreate: shouldCreateInvoice
         });
 
         // Create or update UserCourse for all courses in the path with state 0 initially
@@ -438,6 +448,17 @@ export async function POST(
                 success_url: `${process.env.NEXT_PUBLIC_API_URL}/educational-paths/${educationalPathId}?success=1`,
                 cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/educational-paths/${educationalPathId}?canceled=1`,
                 client_reference_id: String(userEducationalPath.id),
+                // Zbieranie danych do faktury VAT tylko gdy klient chce fakturę i szkoła ma NIP
+                ...(shouldCollectBillingDetails ? {
+                    customer_update: {
+                        address: 'auto',
+                        name: 'auto',
+                    },
+                    billing_address_collection: 'required',
+                    tax_id_collection: {
+                        enabled: true, // Umożliwia podanie NIP/VAT ID
+                    },
+                } : {}),
                 // NOTE: invoice_creation is not supported in subscription mode - Stripe creates invoices automatically
                 metadata: {
                     userEducationalPathId: userEducationalPath.id.toString(),
@@ -582,6 +603,17 @@ export async function POST(
                 success_url: `${process.env.NEXT_PUBLIC_API_URL}/educational-paths/${educationalPathId}?success=1`,
                 cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/educational-paths/${educationalPathId}?canceled=1`,
                 client_reference_id: String(userEducationalPath.id),
+                // Zbieranie danych do faktury VAT tylko gdy klient chce fakturę i szkoła ma NIP
+                ...(shouldCollectBillingDetails ? {
+                    customer_update: {
+                        address: 'auto',
+                        name: 'auto',
+                    },
+                    billing_address_collection: 'required',
+                    tax_id_collection: {
+                        enabled: true, // Umożliwia podanie NIP/VAT ID
+                    },
+                } : {}),
                 // Automatyczne faktury jeśli szkoła wymaga lub klient zażądał
                 invoice_creation: shouldCreateInvoice ? { 
                     enabled: true,
