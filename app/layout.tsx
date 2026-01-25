@@ -53,17 +53,26 @@ export default async function RootLayout({
   const clerkLocalization = locale === "en" ? enUS : plPL;
   const htmlLang = locale === "en" ? "en" : "pl-PL";
 
+  const isTestEnvironment = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_TEST_ENV === 'true';
+
   return (
     <ClerkProvider localization={clerkLocalization}>
       <html lang={htmlLang}>
         <body className={inter.className}>
-          <I18nProvider locale={locale} messages={messages}>
+          {isTestEnvironment && (
+            <div className="bg-yellow-400 text-black text-center py-2 px-4 font-bold text-sm fixed bottom-0 left-0 right-0 z-[9999] shadow-md">
+              ⚠️ ŚRODOWISKO TESTOWE / TEST ENVIRONMENT ⚠️
+            </div>
+          )}
+          <div>
+            <I18nProvider locale={locale} messages={messages}>
             <SignedIn>
               <ConfettiProvider />
               <ToastProvider />
             </SignedIn>
             {children}
           </I18nProvider>
+          </div>
         </body>
       </html>
     </ClerkProvider>
