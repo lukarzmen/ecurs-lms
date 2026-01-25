@@ -899,6 +899,23 @@ export async function POST(req: Request) {
                             amount: session.amount_total || subscriptionDetails.items.data[0]?.price?.unit_amount || 0
                         });
 
+                        // Sprawdź czy klient podał NIP/VAT ID podczas checkout
+                        let customerTaxId: string | null = null;
+                        if (session.customer) {
+                            try {
+                                const customer = await stripeClient.customers.retrieve(session.customer as string);
+                                if (customer && !customer.deleted && customer.tax_ids) {
+                                    const taxIds = await stripeClient.customers.listTaxIds(session.customer as string);
+                                    if (taxIds.data && taxIds.data.length > 0) {
+                                        customerTaxId = taxIds.data[0].value; // Pierwszy NIP z listy
+                                        console.log(`[WEBHOOK] Customer provided tax ID: ${customerTaxId}`);
+                                    }
+                                }
+                            } catch (taxError) {
+                                console.error(`[WEBHOOK] Error retrieving customer tax ID:`, taxError);
+                            }
+                        }
+
                         // Update teacher platform subscription
                         // Note: This will work after running Prisma migration
                         await db.teacherPlatformSubscription.update({
@@ -924,6 +941,30 @@ export async function POST(req: Request) {
                                 updatedAt: new Date(),
                             },
                         });
+
+                        // Jeśli to szkoła i podała NIP - ustaw requiresVatInvoices = true
+                        if (subscriptionType === "school" && customerTaxId) {
+                            try {
+                                // Znajdź szkołę użytkownika
+                                const school = await db.school.findFirst({
+                                    where: { ownerId: appUserId }
+                                });
+                                
+                                if (school) {
+                                    await db.school.update({
+                                        where: { id: school.id },
+                                        data: { 
+                                            requiresVatInvoices: true,
+                                            taxId: customerTaxId, // Zapisz też NIP w bazie
+                                            updatedAt: new Date(),
+                                        }
+                                    });
+                                    console.log(`[WEBHOOK] School ${school.id} set to require VAT invoices (tax ID: ${customerTaxId})`);
+                                }
+                            } catch (schoolError) {
+                                console.error(`[WEBHOOK] Error updating school VAT settings:`, schoolError);
+                            }
+                        }
 
                         console.log(`[WEBHOOK] Platform subscription activated for user ${appUserId}, subscription ${session.subscription}`);
                     } catch (err) {

@@ -1902,7 +1902,7 @@ export default function RegisterPage() {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-700 text-sm sm:text-base">🧑‍💼 Indywidualny nauczyciel</div>
                       <div className="text-xs sm:text-sm text-gray-600 mt-1 leading-tight">
-                        Tworz kursy jako osoba fizyczna - płacisz za dostęp do platformy
+                        Osoba fizyczna lub jednoosobowa działalność (JDG) - uproszczony proces w Stripe
                       </div>
                     </div>
                   </label>
@@ -1917,16 +1917,17 @@ export default function RegisterPage() {
                         if (loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") return;
                         setBusinessData(prev => ({ 
                           ...prev, 
-                          businessType: e.target.value as "individual" | "company" 
+                          businessType: e.target.value as "individual" | "company",
+                          requiresVatInvoices: true // Szkoły domyślnie wystawiają faktury VAT (mają NIP)
                         }))
                       }}
                       className="mt-1 flex-shrink-0"
                       disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-700 text-sm sm:text-base">🏢 Nowa szkoła/placówka</div>
+                      <div className="font-medium text-gray-700 text-sm sm:text-base">🏢 Nowa szkoła/placówka (spółka)</div>
                       <div className="text-xs sm:text-sm text-gray-600 mt-1 leading-tight">
-                        Tworzysz nową szkołę z którą będą pracować inni nauczyciele - szkoła płaci za platformę
+                        Sp. z o.o., fundacja, stowarzyszenie - wymaga dokumentów firmy w Stripe (KRS, zarząd)
                       </div>
                     </div>
                   </label>
@@ -2024,11 +2025,11 @@ export default function RegisterPage() {
                           setBusinessData(prev => ({ ...prev, requiresVatInvoices: e.target.checked }))
                         }}
                         className="mt-1 flex-shrink-0"
-                        disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
+                        disabled={true} // Zawsze disabled - szkoły z NIP zawsze wystawiają faktury
                       />
                       <div className="text-xs sm:text-sm">
-                        <div className="font-medium text-gray-700">Wymagam wystawiania faktur VAT</div>
-                        <div className="text-gray-600">Będę wystawiać faktury VAT swoim uczniom</div>
+                        <div className="font-medium text-gray-700">Wymagam wystawiania faktur VAT ✓</div>
+                        <div className="text-gray-600">Szkoły z NIP automatycznie wystawiają faktury VAT uczniom</div>
                       </div>
                     </label>
                   </div>

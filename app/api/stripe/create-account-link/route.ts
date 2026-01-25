@@ -59,7 +59,12 @@ export async function GET(req: Request) {
             // For localhost development, don't include business_profile URL as Stripe doesn't accept localhost
             const isLocalhost = validBaseUrl.includes('localhost') || validBaseUrl.includes('127.0.0.1');
 
-            // Allowed values: "individual" | "company". Map from our schoolType.
+            // Typ konta Stripe na podstawie typu szkoły:
+            // - schoolType='individual' → Stripe 'individual' (jednoosobowa działalność, uproszczony proces)
+            // - schoolType='business' → Stripe 'company' (sp. z o.o., fundacje, stowarzyszenia)
+            // 
+            // UWAGA: 'company' wymaga więcej dokumentów (KRS, umowa spółki, dane zarządu)
+            // Jeśli szkoła chce uproszczonego procesu, może wybrać 'individual' podczas rejestracji
             const stripeBusinessType: 'individual' | 'company' = school.schoolType === 'business' ? 'company' : 'individual';
             
             const accountData: any = {
