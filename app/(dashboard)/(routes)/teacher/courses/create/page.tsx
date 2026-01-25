@@ -39,8 +39,10 @@ const CreatePage = () => {
     try {
       let pricePayload: any = undefined;
       if (!isNaN(Number(price))) {
+        // Konwersja ceny brutto na netto
+        const priceNetto = Number(price) / (1 + Number(vatRate) / 100);
         pricePayload = {
-          amount: Number(price),
+          amount: priceNetto,
           currency,
           isRecurring,
           interval: isRecurring ? interval : "ONE_TIME",
@@ -299,8 +301,9 @@ const CreatePage = () => {
                   {/* Price */}
                   <div className="space-y-3">
                     <label className="block text-sm font-semibold text-foreground">
-                      Cena kursu
+                      Cena kursu (brutto)
                     </label>
+                    <p className="text-xs text-muted-foreground">Podaj cenę, którą zobaczą kupujący (z VAT)</p>
                     <div className="grid grid-cols-2 gap-3">
                       <Input
                         type="number"
@@ -427,8 +430,8 @@ const CreatePage = () => {
                       <p className="text-lg font-bold text-primary">Darmowy 🎁</p>
                     ) : (
                       <div className="space-y-1">
-                        <p className="text-sm"><span className="font-semibold text-foreground">{price} {currency}</span> netto</p>
-                        <p className="text-sm text-muted-foreground">({(price * (1 + vatRate / 100)).toFixed(2)} {currency} brutto, VAT {vatRate}%)</p>
+                        <p className="text-sm"><span className="font-semibold text-foreground">{price} {currency}</span> brutto (z VAT {vatRate}%)</p>
+                        <p className="text-sm text-muted-foreground">({(price / (1 + vatRate / 100)).toFixed(2)} {currency} netto)</p>
                         {isRecurring && price > 0 && (
                           <p className="text-sm text-primary font-medium mt-1">
                             {interval === 'YEAR' ? '📅 Płatność co rok' : '📅 Płatność co miesiąc'}

@@ -175,7 +175,8 @@ export default function PriceForm({ price, educationalPathId: id }: { price: Pri
       {isEditing ? (
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="form-group">
-            <label className="block text-sm font-medium text-gray-700">Kwota brutto</label>
+            <label className="block text-sm font-medium text-gray-700">Kwota brutto (z VAT)</label>
+            <p className="text-xs text-muted-foreground mb-1">Podaj cenę, którą zobaczą kupujący</p>
             <input
               type="number"
               min={0}
