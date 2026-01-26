@@ -1957,7 +1957,7 @@ export default function RegisterPage() {
                             required
                           />
                           <p className="text-xs text-gray-600 mt-1">
-                            NIP jest wymagany do wystawiania faktur VAT. W Stripe będzie użyty jako VAT ID w formacie "PL" + NIP
+                            NIP jest wymagany do wystawiania faktur VAT. W Stripe będzie użyty jako VAT ID w formacie &quot;PL&quot; + NIP
                           </p>
                         </div>
                       )}

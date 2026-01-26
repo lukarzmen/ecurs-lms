@@ -156,11 +156,11 @@ export async function POST(req: Request) {
         const businessTypeData = businessData ? {
             businessType: businessData.businessType || "individual",
             companyName: businessData.businessType === "company" ? (businessData.companyName || "") : "",
-            taxId: businessData.businessType === "company" ? (businessData.taxId || "") : `INDIVIDUAL_${userId}`,
+            taxId: businessData.businessType === "company" ? (businessData.taxId || "") : (businessData.taxId || ""),
         } : {
             businessType: "individual",
             companyName: "",
-            taxId: `INDIVIDUAL_${userId}`,
+            taxId: "",
         };
 
         if (!user) {
@@ -230,7 +230,7 @@ export async function POST(req: Request) {
                                 data: {
                                     name: businessData?.schoolName || `${user.firstName} ${user.lastName}`.trim() || "Personal School",
                                     companyName: businessTypeData.companyName || user.displayName || "",
-                                    taxId: businessTypeData.taxId || `INDIVIDUAL_${user.id}`,
+                                    taxId: businessTypeData.taxId || "",
                                     description: "",
                                     ownerId: user.id,
                                     stripeAccountId: null,
@@ -338,7 +338,7 @@ export async function POST(req: Request) {
                             data: {
                                 name: businessData?.schoolName || `${user.firstName} ${user.lastName}`.trim() || "Personal School",
                                 companyName: businessData?.businessType === "company" ? businessData.companyName : user.displayName || "",
-                                taxId: businessData?.businessType === "company" ? businessData.taxId : `INDIVIDUAL_${user.id}`,
+                                taxId: businessData?.businessType === "company" ? businessData.taxId : (businessData?.taxId || ""),
                                 description: "",
                                 ownerId: user.id,
                                 stripeAccountId: null,
