@@ -16,7 +16,10 @@ export async function POST(req: Request) {
     try {
         const user = await db.user.findUnique({
             where: { email: email },
-            include: {
+            select: {
+                id: true,
+                email: true,
+                roleId: true,
                 ownedSchools: {
                     select: {
                         id: true,
@@ -25,19 +28,6 @@ export async function POST(req: Request) {
                     },
                     take: 1
                 },
-                schoolMemberships: {
-                    select: {
-                        schoolId: true,
-                        school: {
-                            select: {
-                                id: true,
-                                stripeAccountId: true,
-                                stripeOnboardingComplete: true,
-                            }
-                        }
-                    },
-                    take: 1
-                }
             }
         });
 
@@ -50,10 +40,30 @@ export async function POST(req: Request) {
             return new NextResponse("Only teachers can onboard with Stripe", { status: 403 });
         }
 
-        // Get the school - either owned or as member
+        // Get the school - check owned schools first
         let school = user.ownedSchools?.[0];
-        if (!school && user.schoolMemberships?.[0]) {
-            school = user.schoolMemberships[0].school;
+        
+        // If no owned school, check memberships separately to avoid Prisma errors
+        if (!school) {
+            const membership = await db.schoolTeacher.findFirst({
+                where: {
+                    teacherId: user.id,
+                },
+                select: {
+                    school: {
+                        select: {
+                            id: true,
+                            stripeAccountId: true,
+                            stripeOnboardingComplete: true,
+                        }
+                    }
+                },
+                take: 1
+            });
+            
+            if (membership?.school) {
+                school = membership.school;
+            }
         }
 
         // Teacher should have a school from migration, but check

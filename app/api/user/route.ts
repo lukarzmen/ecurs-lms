@@ -65,22 +65,6 @@ export async function GET(req: Request) {
                     },
                     take: 1,
                 },
-                schoolMemberships: {
-                    select: {
-                        school: {
-                            select: {
-                                id: true,
-                                name: true,
-                                companyName: true,
-                                taxId: true,
-                                schoolType: true,
-                                requiresVatInvoices: true,
-                                stripeOnboardingComplete: true,
-                            },
-                        },
-                    },
-                    take: 1,
-                },
             },
         });
 
@@ -88,21 +72,51 @@ export async function GET(req: Request) {
             return NextResponse.json({ exists: false });
         }
 
-        const school = user.ownedSchools?.[0] ? {
+        // Get school - first check owned schools
+        let school = user.ownedSchools?.[0] ? {
             id: user.ownedSchools[0].id,
             name: user.ownedSchools[0].name,
             companyName: user.ownedSchools[0].companyName,
             taxId: user.ownedSchools[0].taxId,
             schoolType: user.ownedSchools[0].schoolType,
             requiresVatInvoices: user.ownedSchools[0].requiresVatInvoices,
-        } : user.schoolMemberships?.[0]?.school ? {
-            id: user.schoolMemberships[0].school.id,
-            name: user.schoolMemberships[0].school.name,
-            companyName: user.schoolMemberships[0].school.companyName,
-            taxId: user.schoolMemberships[0].school.taxId,
-            schoolType: user.schoolMemberships[0].school.schoolType,
-            requiresVatInvoices: user.schoolMemberships[0].school.requiresVatInvoices,
         } : null;
+
+        // If no owned school, check memberships separately to avoid Prisma errors
+        let memberSchool = null;
+        if (!school) {
+            const membership = await db.schoolTeacher.findFirst({
+                where: {
+                    teacherId: user.id,
+                },
+                select: {
+                    school: {
+                        select: {
+                            id: true,
+                            name: true,
+                            companyName: true,
+                            taxId: true,
+                            schoolType: true,
+                            requiresVatInvoices: true,
+                            stripeOnboardingComplete: true,
+                        }
+                    }
+                },
+                take: 1
+            });
+            
+            if (membership?.school) {
+                memberSchool = membership.school;
+                school = {
+                    id: memberSchool.id,
+                    name: memberSchool.name,
+                    companyName: memberSchool.companyName,
+                    taxId: memberSchool.taxId,
+                    schoolType: memberSchool.schoolType,
+                    requiresVatInvoices: memberSchool.requiresVatInvoices,
+                };
+            }
+        }
 
         const userResponse: UserResponse = {
             exists: true,
@@ -115,8 +129,8 @@ export async function GET(req: Request) {
             providerId: user.providerId,
             roleId: user.roleId,
             hasActiveSubscription: user.teacherPlatformSubscription?.subscriptionStatus === 'active',
-            schoolId: user.ownedSchools?.[0]?.id ?? user.schoolMemberships?.[0]?.school?.id ?? null,
-            schoolStripeOnboardingComplete: user.ownedSchools?.[0]?.stripeOnboardingComplete ?? user.schoolMemberships?.[0]?.school?.stripeOnboardingComplete ?? false,
+            schoolId: user.ownedSchools?.[0]?.id ?? memberSchool?.id ?? null,
+            schoolStripeOnboardingComplete: user.ownedSchools?.[0]?.stripeOnboardingComplete ?? memberSchool?.stripeOnboardingComplete ?? false,
             school,
         };
         
