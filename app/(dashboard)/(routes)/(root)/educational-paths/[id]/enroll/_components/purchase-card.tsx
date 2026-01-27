@@ -153,8 +153,8 @@ const EduPathPurchaseCard = ({ userId, educationalPathId }: PurchaseCardProps & 
     const vatRate = pathData?.price?.vatRate ?? 23;
     
     // Calculate gross price (with VAT)
-    const priceGross = priceAmount * (1 + vatRate / 100);
-    const finalPriceGross = finalPrice ? parseFloat(finalPrice) * (1 + vatRate / 100) : priceGross;
+    const priceGross = Math.round(priceAmount * (1 + vatRate / 100) * 100) / 100;
+    const finalPriceGross = finalPrice ? Math.round(parseFloat(finalPrice) * (1 + vatRate / 100) * 100) / 100 : priceGross;
     
     if (priceAmount == 0) {
         // Free educational path appearance with permission check and loading

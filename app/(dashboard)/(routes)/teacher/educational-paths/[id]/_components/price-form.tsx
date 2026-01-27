@@ -34,18 +34,23 @@ function formatMoney(amount: number, currency: string) {
   }
 }
 
+function round2(value: number) {
+  // Round to 2 decimal places properly
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
 function computeNetFromGross(gross: number, vatRate?: number) {
   const rate = typeof vatRate === "number" ? vatRate : 0;
   const divisor = 1 + rate / 100;
   if (!isFinite(divisor) || divisor <= 0) return gross;
-  return gross / divisor;
+  return round2(gross / divisor);
 }
 
 function computeGrossFromNet(net: number, vatRate?: number) {
   const rate = typeof vatRate === "number" ? vatRate : 0;
   const multiplier = 1 + rate / 100;
   if (!isFinite(multiplier) || multiplier <= 0) return net;
-  return net * multiplier;
+  return round2(net * multiplier);
 }
 
 function toNumber(value: unknown, fallback: number) {
@@ -107,7 +112,8 @@ export default function PriceForm({ price, educationalPathId: id }: { price: Pri
         }
       }
     } else if (name === "amount" || name === "vatRate" || name === "trialPeriodDays") {
-      fieldValue = Number(value);
+      const numeric = Number(value);
+      fieldValue = name === "amount" ? round2(numeric) : numeric;
     }
     setForm((prev) => ({
       ...prev,
@@ -119,7 +125,7 @@ export default function PriceForm({ price, educationalPathId: id }: { price: Pri
     e.preventDefault();
     try {
       const vatRateNumber = toNumber(form.vatRate, 0);
-      const netAmount = computeNetFromGross(toNumber(form.amount, 0), vatRateNumber);
+      const netAmount = round2(computeNetFromGross(toNumber(form.amount, 0), vatRateNumber));
       const payload: any = {
         // API expects NET amount; we let user edit GROSS.
         amount: netAmount,
