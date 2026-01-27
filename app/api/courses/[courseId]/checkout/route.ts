@@ -252,8 +252,8 @@ export async function POST(
         
         console.log(`Final stripeCustomerId before checkout: ${stripeCustomerId}`);
 
-        // Calculate price with promo code using new pricing structure
-        let finalPrice = Number(price?.amount ?? 0);
+        // Calculate price with promo code
+        let netPrice = Number(price?.amount ?? 0); // Cena netto z bazy
         let discount = 0;
         const currency = price?.currency || "pln";
         const isRecurring = price?.isRecurring;
@@ -275,15 +275,12 @@ export async function POST(
                 });
                 if (promo && typeof promo.discount === "number" && promo.discount > 0) {
                     discount = promo.discount;
-                    finalPrice = finalPrice * (1 - discount / 100);
+                    netPrice = netPrice * (1 - discount / 100);
                 }
             }
         }
         
-        // Apply VAT to final price
-        const priceWithoutVat = finalPrice;
-        const vatAmount = (priceWithoutVat * vatRate) / 100;
-        finalPrice = priceWithoutVat + vatAmount;
+        // netPrice to cena netto - Stripe sam doda VAT przy użyciu tax_rates
 
         let session;
         // Only allow 'month' or 'year' for Stripe recurring interval
@@ -410,7 +407,7 @@ export async function POST(
                                 description: "Kurs online",
                                 images: course.imageId ? [`${process.env.NEXT_PUBLIC_APP_URL}/api/images/${course.imageId}`] : [],
                             },
-                            unit_amount: Math.round(priceWithoutVat * 100), // Price WITHOUT VAT
+                            unit_amount: Math.round(netPrice * 100), // NET price (without VAT)
                             recurring: {
                                 interval: stripeRecurringInterval,
                             },
@@ -568,7 +565,7 @@ export async function POST(
                                 description: "Kurs online",
                                 images: course.imageId ? [`${process.env.NEXT_PUBLIC_APP_URL}/api/images/${course.imageId}`] : [],
                             },
-                            unit_amount: Math.round(priceWithoutVat * 100), // Price WITHOUT VAT
+                            unit_amount: Math.round(netPrice * 100), // NET price (without VAT)
                             tax_behavior: 'exclusive', // VAT will be added on top
                         },
                         quantity: 1,
