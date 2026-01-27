@@ -398,6 +398,18 @@ export async function POST(req: Request) {
                             baseData.trialEnd = trialEnd;
                         }
                     }
+                    
+                    // Calculate netAmount and vatRate
+                    if (coursePrice.vatRate && baseData.amount) {
+                        const vatRate = Number(coursePrice.vatRate);
+                        const amount = Number(baseData.amount);
+                        baseData.vatRate = vatRate;
+                        baseData.netAmount = amount / (1 + vatRate / 100);
+                    } else if (baseData.amount) {
+                        // Default to 0% VAT if not specified
+                        baseData.vatRate = 0;
+                        baseData.netAmount = baseData.amount;
+                    }
                 } else {
                     console.log(`[WEBHOOK] No course price data found for course ${userCourse.courseId}`);
                 }
@@ -493,6 +505,18 @@ export async function POST(req: Request) {
                         baseData.trialStart = trialStart;
                         baseData.trialEnd = trialEnd;
                     }
+                    
+                    // Calculate netAmount and vatRate
+                    if (coursePrice.vatRate && baseData.amount) {
+                        const vatRate = Number(coursePrice.vatRate);
+                        const amount = Number(baseData.amount);
+                        baseData.vatRate = vatRate;
+                        baseData.netAmount = amount / (1 + vatRate / 100);
+                    } else if (baseData.amount) {
+                        // Default to 0% VAT if not specified
+                        baseData.vatRate = 0;
+                        baseData.netAmount = baseData.amount;
+                    }
                 }
             }
         } catch (err) {
@@ -575,6 +599,18 @@ export async function POST(req: Request) {
                     if (!baseData.trialEnd) {
                         baseData.trialEnd = trialEnd;
                     }
+                }
+                
+                // Calculate netAmount and vatRate
+                if (educationalPathPrice.vatRate && baseData.amount) {
+                    const vatRate = Number(educationalPathPrice.vatRate);
+                    const amount = Number(baseData.amount);
+                    baseData.vatRate = vatRate;
+                    baseData.netAmount = amount / (1 + vatRate / 100);
+                } else if (baseData.amount) {
+                    // Default to 0% VAT if not specified
+                    baseData.vatRate = 0;
+                    baseData.netAmount = baseData.amount;
                 }
             } else {
                 console.log(`[WEBHOOK] No educational path price data found for path ${educationalPathId}`);
@@ -710,6 +746,18 @@ export async function POST(req: Request) {
                     const trialEnd = new Date(trialStart.getTime() + (educationalPathPrice.trialPeriodDays * 24 * 60 * 60 * 1000));
                     baseData.trialStart = trialStart;
                     baseData.trialEnd = trialEnd;
+                }
+                
+                // Calculate netAmount and vatRate
+                if (educationalPathPrice.vatRate && baseData.amount) {
+                    const vatRate = Number(educationalPathPrice.vatRate);
+                    const amount = Number(baseData.amount);
+                    baseData.vatRate = vatRate;
+                    baseData.netAmount = amount / (1 + vatRate / 100);
+                } else if (baseData.amount) {
+                    // Default to 0% VAT if not specified
+                    baseData.vatRate = 0;
+                    baseData.netAmount = baseData.amount;
                 }
             }
         } catch (err) {
