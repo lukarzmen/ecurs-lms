@@ -377,10 +377,10 @@ export async function POST(req: Request) {
                         trialPeriodDays: coursePrice.trialPeriodDays
                     });
                     
-                    // Override with price table data if available (unless already set by Stripe data)
-                    if (!baseData.amount && coursePrice.amount) {
-                        baseData.amount = coursePrice.amount;
-                    }
+                    // Always use amount from price table (netto)
+                    baseData.amount = Number(coursePrice.amount);
+                    
+                    // Override other fields from price table if not set
                     if (!baseData.currency && coursePrice.currency) {
                         baseData.currency = coursePrice.currency;
                     }
@@ -454,7 +454,7 @@ export async function POST(req: Request) {
             userCourseId,
             paymentId: paymentData.paymentId,
             eventType: paymentData.eventType,
-            amount: paymentData.amount ? paymentData.amount / 100 : null, // Convert from cents
+            // amount will be set from CoursePrice table (netto)
             currency: paymentData.currency?.toUpperCase(),
             paymentStatus: paymentData.paymentStatus,
             paymentMethod: paymentData.paymentMethod,
@@ -483,10 +483,10 @@ export async function POST(req: Request) {
             if (userCourse) {
                 const coursePrice = await getCoursePrice(userCourse.courseId);
                 if (coursePrice) {
-                    // Override with price table data if available (unless already set by payment data)
-                    if (!baseData.amount && coursePrice.amount) {
-                        baseData.amount = coursePrice.amount;
-                    }
+                    // Always use amount from price table (netto)
+                    baseData.amount = Number(coursePrice.amount);
+                    
+                    // Override other fields from price table if not set
                     if (!baseData.currency && coursePrice.currency) {
                         baseData.currency = coursePrice.currency;
                     }
@@ -533,12 +533,12 @@ export async function POST(req: Request) {
             purchaseDate: new Date(),
         };
 
-        // If eventData is provided, extract additional Stripe data
+        // If eventData is provided, extract additional Stripe data (excluding amount - we'll use price table)
         if (eventData && eventType) {
             const stripeData = extractPaymentData(eventData, eventType);
             Object.assign(baseData, {
                 eventType: stripeData.eventType,
-                amount: stripeData.amount ? stripeData.amount / 100 : null, // Convert from cents
+                // amount will be set from EducationalPathPrice table (netto)
                 currency: stripeData.currency?.toUpperCase(),
                 paymentStatus: stripeData.paymentStatus,
                 paymentMethod: stripeData.paymentMethod,
@@ -569,10 +569,10 @@ export async function POST(req: Request) {
                     trialPeriodDays: educationalPathPrice.trialPeriodDays
                 });
                 
-                // Override with price table data if available (unless already set by Stripe data)
-                if (!baseData.amount && educationalPathPrice.amount) {
-                    baseData.amount = educationalPathPrice.amount;
-                }
+                // Always use amount from price table (netto)
+                baseData.amount = Number(educationalPathPrice.amount);
+                
+                // Override other fields from price table if not set
                 if (!baseData.currency && educationalPathPrice.currency) {
                     baseData.currency = educationalPathPrice.currency;
                 }

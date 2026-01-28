@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "prisma generate && next build",
-    "start": "next start",
+    "dev": "cross-env TZ=Europe/Warsaw next dev",
+    "build": "cross-env TZ=Europe/Warsaw prisma generate && next build",
+    "start": "cross-env TZ=Europe/Warsaw next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
     "pretty": "prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json}\""
@@ -46,6 +46,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.4.5",
     "elevenlabs": "^1.50.4",
     "eslint": "8.57.0",
