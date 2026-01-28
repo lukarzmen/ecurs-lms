@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { db } from "@/lib/db";
 
 
@@ -815,6 +816,15 @@ export async function POST(req: Request) {
                                         if (sUserId && sEducationalPathId && sUserEducationalPathId) {
                                             await upsertEduPath(Number(sUserEducationalPathId), Number(sUserId), Number(sEducationalPathId), 1);
                                             await createEduPathPurchase(Number(sUserId), Number(sEducationalPathId), paymentIntent.id, paymentIntent, event.type);
+                                            
+                                            // Revalidate marketplace cache
+                                            try {
+                                                revalidateTag("learning-units-search");
+                                                console.log("[WEBHOOK] Cache revalidated for marketplace (edupath payment_intent fallback)");
+                                            } catch (revalErr) {
+                                                console.error("[WEBHOOK] Failed to revalidate cache:", revalErr);
+                                            }
+                                            
                                             return NextResponse.json({ success: true }, { status: 200 });
                                         } else {
                                             logError("PI_SUCCEEDED_EDUPATH_MISSING_SUB_META", { eventId: event.id, paymentIntentId: paymentIntent.id, subMeta });
@@ -837,6 +847,14 @@ export async function POST(req: Request) {
                     
                     // Create purchase record with detailed payment info
                     await createEduPathPurchase(appUserId, educationalPathId, paymentIntent.id, paymentIntent, event.type);
+                    
+                    // Revalidate marketplace cache to show updated purchase status
+                    try {
+                        revalidateTag("learning-units-search");
+                        console.log("[WEBHOOK] Cache revalidated for marketplace after edupath purchase (payment_intent)");
+                    } catch (revalErr) {
+                        console.error("[WEBHOOK] Failed to revalidate cache:", revalErr);
+                    }
                     
                     return NextResponse.json({ success: true }, { status: 200 });
                 } else {
@@ -861,6 +879,15 @@ export async function POST(req: Request) {
                                         if (sUserId && sCourseId && sUserCourseId) {
                                             await upsertCourse(Number(sUserCourseId), Number(sUserId), Number(sCourseId), 1);
                                             await createCoursePurchase(Number(sUserCourseId), paymentIntent.id, paymentIntent, event.type);
+                                            
+                                            // Revalidate marketplace cache
+                                            try {
+                                                revalidateTag("learning-units-search");
+                                                console.log("[WEBHOOK] Cache revalidated for marketplace (payment_intent fallback)");
+                                            } catch (revalErr) {
+                                                console.error("[WEBHOOK] Failed to revalidate cache:", revalErr);
+                                            }
+                                            
                                             return NextResponse.json({ success: true }, { status: 200 });
                                         } else {
                                             logError("PI_SUCCEEDED_MISSING_SUB_META", { eventId: event.id, paymentIntentId: paymentIntent.id, subMeta });
@@ -883,6 +910,14 @@ export async function POST(req: Request) {
                     
                     // Create purchase record with detailed payment info
                     await createCoursePurchase(Number(userCourseId), paymentIntent.id, paymentIntent, event.type);
+                    
+                    // Revalidate marketplace cache to show updated purchase status
+                    try {
+                        revalidateTag("learning-units-search");
+                        console.log("[WEBHOOK] Cache revalidated for marketplace after course purchase (payment_intent)");
+                    } catch (revalErr) {
+                        console.error("[WEBHOOK] Failed to revalidate cache:", revalErr);
+                    }
                     
                     return NextResponse.json({ success: true }, { status: 200 });
                 }
@@ -1010,6 +1045,14 @@ export async function POST(req: Request) {
                     }
                     await upsertEduPath(userEducationalPathId, appUserId, educationalPathId, 1);
                     
+                    // Revalidate marketplace cache to show updated purchase status
+                    try {
+                        revalidateTag("learning-units-search");
+                        console.log("[WEBHOOK] Cache revalidated for marketplace after edupath purchase (checkout.session)");
+                    } catch (revalErr) {
+                        console.error("[WEBHOOK] Failed to revalidate cache:", revalErr);
+                    }
+                    
                     // Also activate all courses in the educational path
                     try {
                         const eduPath = await db.educationalPath.findUnique({
@@ -1103,7 +1146,16 @@ export async function POST(req: Request) {
                                     error: String(purchaseErr) 
                                 });
                                 await createCoursePurchase(Number(userCourseId), session.id, session, event.type);
-                            }                        // Try to attach metadata to the initial PaymentIntent via latest invoice for better traceability
+                            }
+                            
+                            // Revalidate marketplace cache to show updated purchase status
+                            try {
+                                revalidateTag("learning-units-search");
+                                console.log("[WEBHOOK] Cache revalidated for marketplace after course purchase");
+                            } catch (revalErr) {
+                                console.error("[WEBHOOK] Failed to revalidate cache:", revalErr);
+                            }
+                            // Try to attach metadata to the initial PaymentIntent via latest invoice for better traceability
                         try {
                             const subscriptionOptions: any = {
                                 expand: ["latest_invoice.payment_intent"],
@@ -1313,6 +1365,14 @@ export async function POST(req: Request) {
                     }
                     await upsertEduPath(userEducationalPathId, appUserId, educationalPathId, 1);
                     
+                    // Revalidate marketplace cache to show updated purchase status
+                    try {
+                        revalidateTag("learning-units-search");
+                        console.log("[WEBHOOK] Cache revalidated for marketplace after edupath purchase (invoice.paid)");
+                    } catch (revalErr) {
+                        console.error("[WEBHOOK] Failed to revalidate cache:", revalErr);
+                    }
+                    
                     // Also activate all courses in the educational path
                     try {
                         const eduPath = await db.educationalPath.findUnique({
@@ -1383,6 +1443,14 @@ export async function POST(req: Request) {
                     }
                     await upsertCourse(Number(userCourseId), Number(appUserId), Number(courseId), 1);
                     
+                    // Revalidate marketplace cache to show updated purchase status
+                    try {
+                        revalidateTag("learning-units-search");
+                        console.log("[WEBHOOK] Cache revalidated for marketplace after course purchase (invoice.paid)");
+                    } catch (revalErr) {
+                        console.error("[WEBHOOK] Failed to revalidate cache:", revalErr);
+                    }
+                    
                     // Get full subscription details for purchase record
                     try {
                         const fullSubscription = await stripeClient.subscriptions.retrieve(subscriptionId as string, {
@@ -1416,6 +1484,14 @@ export async function POST(req: Request) {
                             return new NextResponse("Missing educational path metadata", { status: 400 });
                         }
                         await upsertEduPath(userEducationalPathId, appUserId, educationalPathId, 1);
+                        
+                        // Revalidate marketplace cache to show updated purchase status
+                        try {
+                            revalidateTag("learning-units-search");
+                            console.log("[WEBHOOK] Cache revalidated for marketplace after edupath purchase (invoice.paid one-time)");
+                        } catch (revalErr) {
+                            console.error("[WEBHOOK] Failed to revalidate cache:", revalErr);
+                        }
                         
                         // Also activate all courses in the educational path
                         try {
@@ -1472,6 +1548,15 @@ export async function POST(req: Request) {
                             return new NextResponse("Missing metadata", { status: 400 });
                         }
                         await upsertCourse(Number(userCourseId), Number(appUserId), Number(courseId), 1);
+                        
+                        // Revalidate marketplace cache to show updated purchase status
+                        try {
+                            revalidateTag("learning-units-search");
+                            console.log("[WEBHOOK] Cache revalidated for marketplace after course purchase (invoice.paid one-time)");
+                        } catch (revalErr) {
+                            console.error("[WEBHOOK] Failed to revalidate cache:", revalErr);
+                        }
+                        
                         await createCoursePurchase(Number(userCourseId), paymentIntentId as string, invoice, event.type);
                         return NextResponse.json({ success: true }, { status: 200 });
                     }
