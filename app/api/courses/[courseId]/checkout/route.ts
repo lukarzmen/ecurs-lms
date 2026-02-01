@@ -17,6 +17,8 @@ export async function POST(
         const body = await req.json();
         const promoCode = body.promoCode || "";
         const vatInvoiceRequested = body.vatInvoiceRequested || false; // Czy klient chce fakturę VAT
+        const buyerType = body.buyerType || body.businessType || "individual";
+        const buyerCompanyName = body.buyerCompanyName || body.companyName || "";
         const paymentType = "course";
 
         const currentAuthUser = await currentUser();
@@ -99,8 +101,9 @@ export async function POST(
         // Faktura tylko gdy: (szkoła wymaga LUB klient zażądał) I szkoła ma NIP
         const shouldCreateInvoice = schoolHasTaxId && (course?.school?.requiresVatInvoices || vatInvoiceRequested);
         
-        // Zbieraj dane do faktury tylko gdy faktury będą wystawiane
-        const shouldCollectBillingDetails = shouldCreateInvoice;
+        // Zbieraj dane do faktury lub gdy kupujący to firma (NIP wymagany)
+        const shouldCollectBillingDetails = shouldCreateInvoice || vatInvoiceRequested || buyerType === "company";
+        const billingAddressCollection = buyerType === "company" ? "required" : "auto";
         
         console.log(`Course data for courseId ${courseId}:`, {
             courseExists: !!course,
@@ -426,7 +429,7 @@ export async function POST(
                         address: 'auto',
                         name: 'auto',
                     },
-                    billing_address_collection: 'required',
+                    billing_address_collection: billingAddressCollection,
                     tax_id_collection: {
                         enabled: true, // Umożliwia podanie NIP/VAT ID
                     },
@@ -444,6 +447,8 @@ export async function POST(
                     teacherAccountId: paymentStripeAccountId,
                     paymentRecipientType: paymentRecipientType,
                     vatInvoiceRequested: vatInvoiceRequested.toString(),
+                    buyerType: buyerType,
+                    buyerCompanyName: buyerCompanyName,
                 },
                 subscription_data: {
                     // Only include trial_period_days if it's greater than 0 (Stripe requirement)
@@ -461,6 +466,8 @@ export async function POST(
                         teacherAccountId: paymentStripeAccountId,
                         paymentRecipientType: paymentRecipientType,
                         vatInvoiceRequested: vatInvoiceRequested.toString(),
+                        buyerType: buyerType,
+                        buyerCompanyName: buyerCompanyName,
                     }
                 },
             }, {
@@ -581,7 +588,7 @@ export async function POST(
                         address: 'auto',
                         name: 'auto',
                     },
-                    billing_address_collection: 'required',
+                    billing_address_collection: billingAddressCollection,
                     tax_id_collection: {
                         enabled: true, // Umożliwia podanie NIP/VAT ID
                     },
@@ -611,6 +618,8 @@ export async function POST(
                     teacherAccountId: paymentStripeAccountId,
                     paymentRecipientType: paymentRecipientType,
                     vatInvoiceRequested: vatInvoiceRequested.toString(),
+                    buyerType: buyerType,
+                    buyerCompanyName: buyerCompanyName,
                 },
                 // Pieniądze trafiają na konto odbiorcy (szkoła lub nauczyciel)
                 payment_intent_data: {
@@ -625,6 +634,8 @@ export async function POST(
                         teacherAccountId: paymentStripeAccountId,
                         paymentRecipientType: paymentRecipientType,
                         vatInvoiceRequested: vatInvoiceRequested.toString(),
+                        buyerType: buyerType,
+                        buyerCompanyName: buyerCompanyName,
                     }
                 },
             }, {

@@ -136,7 +136,62 @@ export async function POST(req: Request) {
     };
 
     // Helper to extract payment data from Stripe objects
+    function extractBuyerDetails(stripeObject: any, metadataOverride?: any): any {
+        const metadata = metadataOverride || stripeObject?.metadata || {};
+        let address: any = null;
+        let email: string | null | undefined;
+        let name: string | null | undefined;
+        let phone: string | null | undefined;
+        let taxIds: any[] = [];
+
+        if (stripeObject?.object === 'checkout.session') {
+            const details = stripeObject.customer_details || {};
+            address = details.address || null;
+            email = details.email || stripeObject.customer_email || null;
+            name = details.name || null;
+            phone = details.phone || null;
+            taxIds = Array.isArray(details.tax_ids) ? details.tax_ids : [];
+        } else if (stripeObject?.object === 'payment_intent') {
+            const charge = stripeObject.charges?.data?.[0];
+            const billing = charge?.billing_details || {};
+            address = billing.address || null;
+            email = billing.email || stripeObject.receipt_email || null;
+            name = billing.name || null;
+            phone = billing.phone || null;
+        } else if (stripeObject?.object === 'invoice') {
+            address = stripeObject.customer_address || null;
+            email = stripeObject.customer_email || null;
+            name = stripeObject.customer_name || null;
+            phone = stripeObject.customer_phone || null;
+            taxIds = Array.isArray(stripeObject.customer_tax_ids) ? stripeObject.customer_tax_ids : [];
+        }
+
+        const taxIdEntry = Array.isArray(taxIds) && taxIds.length > 0 ? taxIds[0] : null;
+        const buyerTaxId = taxIdEntry?.value || null;
+        const buyerTaxIdType = taxIdEntry?.type || null;
+
+        const buyerType = metadata?.buyerType || metadata?.businessType || (buyerTaxId ? "company" : null);
+        const buyerCompanyName = metadata?.buyerCompanyName || metadata?.companyName || null;
+
+        return {
+            buyerType,
+            buyerName: name || null,
+            buyerCompanyName,
+            buyerTaxId,
+            buyerTaxIdType,
+            buyerPhone: phone || null,
+            buyerAddressLine1: address?.line1 || null,
+            buyerAddressLine2: address?.line2 || null,
+            buyerCity: address?.city || null,
+            buyerState: address?.state || null,
+            buyerPostalCode: address?.postal_code || null,
+            buyerCountry: address?.country || null,
+            buyerEmail: email || null,
+        };
+    }
+
     function extractPaymentData(stripeObject: any, eventType: string, additionalData?: any): any {
+        const buyerDetails = extractBuyerDetails(stripeObject, additionalData?.metadata || stripeObject?.metadata);
         const baseData = {
             eventType,
             paymentId: stripeObject.id,
@@ -148,6 +203,18 @@ export async function POST(req: Request) {
             metadata: stripeObject.metadata,
             stripeCustomerId: stripeObject.customer,
             receiptUrl: stripeObject.receipt_url,
+            buyerType: buyerDetails.buyerType,
+            buyerName: buyerDetails.buyerName,
+            buyerCompanyName: buyerDetails.buyerCompanyName,
+            buyerTaxId: buyerDetails.buyerTaxId,
+            buyerTaxIdType: buyerDetails.buyerTaxIdType,
+            buyerPhone: buyerDetails.buyerPhone,
+            buyerAddressLine1: buyerDetails.buyerAddressLine1,
+            buyerAddressLine2: buyerDetails.buyerAddressLine2,
+            buyerCity: buyerDetails.buyerCity,
+            buyerState: buyerDetails.buyerState,
+            buyerPostalCode: buyerDetails.buyerPostalCode,
+            buyerCountry: buyerDetails.buyerCountry,
             ...additionalData
         };
 
@@ -352,6 +419,18 @@ export async function POST(req: Request) {
                 trialStart: stripeData.trialStart,
                 trialEnd: stripeData.trialEnd,
                 customerEmail: stripeData.customerEmail,
+                buyerType: stripeData.buyerType,
+                buyerName: stripeData.buyerName,
+                buyerCompanyName: stripeData.buyerCompanyName,
+                buyerTaxId: stripeData.buyerTaxId,
+                buyerTaxIdType: stripeData.buyerTaxIdType,
+                buyerPhone: stripeData.buyerPhone,
+                buyerAddressLine1: stripeData.buyerAddressLine1,
+                buyerAddressLine2: stripeData.buyerAddressLine2,
+                buyerCity: stripeData.buyerCity,
+                buyerState: stripeData.buyerState,
+                buyerPostalCode: stripeData.buyerPostalCode,
+                buyerCountry: stripeData.buyerCountry,
                 invoiceId: stripeData.invoiceId,
                 receiptUrl: stripeData.receiptUrl,
                 metadata: stripeData.metadata,
@@ -371,7 +450,7 @@ export async function POST(req: Request) {
                 if (coursePrice) {
                     console.log(`[WEBHOOK] Found course price data for course ${userCourse.courseId}:`, {
                         amount: coursePrice.amount,
-                        currency: coursePrice.currency,
+                    currency: coursePrice.currency,
                         isRecurring: coursePrice.isRecurring,
                         interval: coursePrice.interval,
                         trialPeriodDays: coursePrice.trialPeriodDays
@@ -444,6 +523,18 @@ export async function POST(req: Request) {
             trialStart?: Date;
             trialEnd?: Date;
             customerEmail?: string;
+            buyerType?: string;
+            buyerName?: string;
+            buyerCompanyName?: string;
+            buyerTaxId?: string;
+            buyerTaxIdType?: string;
+            buyerPhone?: string;
+            buyerAddressLine1?: string;
+            buyerAddressLine2?: string;
+            buyerCity?: string;
+            buyerState?: string;
+            buyerPostalCode?: string;
+            buyerCountry?: string;
             invoiceId?: string;
             receiptUrl?: string;
             metadata?: any;
@@ -466,6 +557,18 @@ export async function POST(req: Request) {
             trialStart: paymentData.trialStart,
             trialEnd: paymentData.trialEnd,
             customerEmail: paymentData.customerEmail,
+            buyerType: paymentData.buyerType,
+            buyerName: paymentData.buyerName,
+            buyerCompanyName: paymentData.buyerCompanyName,
+            buyerTaxId: paymentData.buyerTaxId,
+            buyerTaxIdType: paymentData.buyerTaxIdType,
+            buyerPhone: paymentData.buyerPhone,
+            buyerAddressLine1: paymentData.buyerAddressLine1,
+            buyerAddressLine2: paymentData.buyerAddressLine2,
+            buyerCity: paymentData.buyerCity,
+            buyerState: paymentData.buyerState,
+            buyerPostalCode: paymentData.buyerPostalCode,
+            buyerCountry: paymentData.buyerCountry,
             invoiceId: paymentData.invoiceId,
             receiptUrl: paymentData.receiptUrl,
             metadata: paymentData.metadata,
@@ -550,6 +653,18 @@ export async function POST(req: Request) {
                 trialStart: stripeData.trialStart,
                 trialEnd: stripeData.trialEnd,
                 customerEmail: stripeData.customerEmail,
+                buyerType: stripeData.buyerType,
+                buyerName: stripeData.buyerName,
+                buyerCompanyName: stripeData.buyerCompanyName,
+                buyerTaxId: stripeData.buyerTaxId,
+                buyerTaxIdType: stripeData.buyerTaxIdType,
+                buyerPhone: stripeData.buyerPhone,
+                buyerAddressLine1: stripeData.buyerAddressLine1,
+                buyerAddressLine2: stripeData.buyerAddressLine2,
+                buyerCity: stripeData.buyerCity,
+                buyerState: stripeData.buyerState,
+                buyerPostalCode: stripeData.buyerPostalCode,
+                buyerCountry: stripeData.buyerCountry,
                 invoiceId: stripeData.invoiceId,
                 receiptUrl: stripeData.receiptUrl,
                 metadata: stripeData.metadata,
@@ -681,6 +796,18 @@ export async function POST(req: Request) {
             trialStart?: Date;
             trialEnd?: Date;
             customerEmail?: string;
+            buyerType?: string;
+            buyerName?: string;
+            buyerCompanyName?: string;
+            buyerTaxId?: string;
+            buyerTaxIdType?: string;
+            buyerPhone?: string;
+            buyerAddressLine1?: string;
+            buyerAddressLine2?: string;
+            buyerCity?: string;
+            buyerState?: string;
+            buyerPostalCode?: string;
+            buyerCountry?: string;
             invoiceId?: string;
             receiptUrl?: string;
             metadata?: any;
@@ -704,6 +831,18 @@ export async function POST(req: Request) {
             trialStart: paymentData.trialStart,
             trialEnd: paymentData.trialEnd,
             customerEmail: paymentData.customerEmail,
+            buyerType: paymentData.buyerType,
+            buyerName: paymentData.buyerName,
+            buyerCompanyName: paymentData.buyerCompanyName,
+            buyerTaxId: paymentData.buyerTaxId,
+            buyerTaxIdType: paymentData.buyerTaxIdType,
+            buyerPhone: paymentData.buyerPhone,
+            buyerAddressLine1: paymentData.buyerAddressLine1,
+            buyerAddressLine2: paymentData.buyerAddressLine2,
+            buyerCity: paymentData.buyerCity,
+            buyerState: paymentData.buyerState,
+            buyerPostalCode: paymentData.buyerPostalCode,
+            buyerCountry: paymentData.buyerCountry,
             invoiceId: paymentData.invoiceId,
             receiptUrl: paymentData.receiptUrl,
             metadata: paymentData.metadata,
