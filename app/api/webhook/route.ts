@@ -1913,8 +1913,104 @@ export async function POST(req: Request) {
                     return NextResponse.json({ success: false, error: "Failed to retrieve payment intent metadata" }, { status: 200 });
                 }
             } else {
+                // Invoice without subscription or payment_intent - try to attach buyer details to the latest purchase
+                const invoiceCustomerDetails = {
+                    address: (invoice as any).customer_address || (invoice as any).customer_shipping?.address || null,
+                    email: (invoice as any).customer_email || null,
+                    name: (invoice as any).customer_name || null,
+                    phone: (invoice as any).customer_phone || null,
+                };
+                const invoiceCustomerTaxIds = Array.isArray((invoice as any).customer_tax_ids)
+                    ? (invoice as any).customer_tax_ids
+                    : [];
+                const stripeCustomerId = typeof (invoice as any).customer === "string" ? (invoice as any).customer : null;
+                const buyerData = extractPaymentData(invoice, event.type, {
+                    customerDetails: invoiceCustomerDetails,
+                    customerTaxIds: invoiceCustomerTaxIds,
+                });
+
+                const updatePayloadBase: any = {
+                    eventType: event.type,
+                    paymentStatus: invoice.status || buyerData.paymentStatus || null,
+                    customerEmail: invoice.customer_email || buyerData.customerEmail || null,
+                    buyerType: buyerData.buyerType,
+                    buyerName: buyerData.buyerName,
+                    buyerCompanyName: buyerData.buyerCompanyName,
+                    buyerTaxId: buyerData.buyerTaxId,
+                    buyerTaxIdType: buyerData.buyerTaxIdType,
+                    buyerPhone: buyerData.buyerPhone,
+                    buyerAddressLine1: buyerData.buyerAddressLine1,
+                    buyerAddressLine2: buyerData.buyerAddressLine2,
+                    buyerCity: buyerData.buyerCity,
+                    buyerState: buyerData.buyerState,
+                    buyerPostalCode: buyerData.buyerPostalCode,
+                    buyerCountry: buyerData.buyerCountry,
+                    invoiceId: invoice.id,
+                    stripeCustomerId: stripeCustomerId,
+                    updatedAt: new Date(),
+                };
+                const updatePayload = Object.fromEntries(
+                    Object.entries(updatePayloadBase).filter(([, value]) => value !== null && value !== undefined)
+                );
+
+                const whereCandidates: any[] = [];
+                if (invoice.id) {
+                    whereCandidates.push({ paymentId: invoice.id });
+                    whereCandidates.push({ invoiceId: invoice.id });
+                }
+                if (stripeCustomerId) {
+                    whereCandidates.push({ stripeCustomerId });
+                }
+                if (invoice.customer_email) {
+                    whereCandidates.push({ customerEmail: invoice.customer_email });
+                }
+
+                try {
+                    const coursePurchase = whereCandidates.length > 0
+                        ? await db.userCoursePurchase.findFirst({
+                            where: { OR: whereCandidates },
+                            orderBy: { createdAt: "desc" },
+                        })
+                        : null;
+                    const edupathPurchase = whereCandidates.length > 0
+                        ? await db.educationalPathPurchase.findFirst({
+                            where: { OR: whereCandidates },
+                            orderBy: { createdAt: "desc" },
+                        })
+                        : null;
+
+                    const latestPurchase = coursePurchase && edupathPurchase
+                        ? (coursePurchase.createdAt > edupathPurchase.createdAt
+                            ? { type: "course", id: coursePurchase.id }
+                            : { type: "edupath", id: edupathPurchase.id })
+                        : coursePurchase
+                            ? { type: "course", id: coursePurchase.id }
+                            : edupathPurchase
+                                ? { type: "edupath", id: edupathPurchase.id }
+                                : null;
+
+                    if (latestPurchase) {
+                        if (latestPurchase.type === "course") {
+                            await db.userCoursePurchase.update({
+                                where: { id: latestPurchase.id },
+                                data: updatePayload,
+                            });
+                            console.log(`[WEBHOOK] Updated latest course purchase with invoice buyer data (${invoice.id})`);
+                        } else {
+                            await db.educationalPathPurchase.update({
+                                where: { id: latestPurchase.id },
+                                data: updatePayload,
+                            });
+                            console.log(`[WEBHOOK] Updated latest educational path purchase with invoice buyer data (${invoice.id})`);
+                        }
+                        return NextResponse.json({ success: true, note: "Invoice buyer data attached" }, { status: 200 });
+                    }
+                } catch (updateErr) {
+                    logError("INVOICE_PAID_NO_META_UPDATE_ERROR", { eventId: event.id, invoiceId: invoice.id, error: String(updateErr) });
+                }
+
                 // Invoice without subscription or payment_intent - log and skip
-                console.log(`[WEBHOOK] Skipping invoice.paid ${invoice.id} - no subscription or payment_intent found`);
+                console.log(`[WEBHOOK] Skipping invoice.paid ${invoice.id} - no subscription/payment_intent and no matching purchase found`);
                 return NextResponse.json({ success: true, note: "Invoice without subscription or payment_intent" }, { status: 200 });
             }
             break;
