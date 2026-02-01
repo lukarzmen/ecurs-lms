@@ -162,7 +162,7 @@ export async function POST(req: Request) {
             phone = billing.phone || null;
             taxIds = Array.isArray(additionalData?.customerTaxIds) ? additionalData.customerTaxIds : [];
         } else if (stripeObject?.object === 'invoice') {
-            address = stripeObject.customer_address || null;
+            address = stripeObject.customer_address || stripeObject.customer_shipping?.address || null;
             email = stripeObject.customer_email || null;
             name = stripeObject.customer_name || null;
             phone = stripeObject.customer_phone || null;
@@ -171,12 +171,30 @@ export async function POST(req: Request) {
                 : (Array.isArray(stripeObject.customer_tax_ids) ? stripeObject.customer_tax_ids : []);
         }
 
+        // Fallbacks for subscription or missing customer details
+        const fallbackCustomerDetails = additionalData?.customerDetails || null;
+        if (!address && fallbackCustomerDetails?.address) {
+            address = fallbackCustomerDetails.address;
+        }
+        if (!email && fallbackCustomerDetails?.email) {
+            email = fallbackCustomerDetails.email;
+        }
+        if (!name && fallbackCustomerDetails?.name) {
+            name = fallbackCustomerDetails.name;
+        }
+        if (!phone && fallbackCustomerDetails?.phone) {
+            phone = fallbackCustomerDetails.phone;
+        }
+        if ((!taxIds || taxIds.length === 0) && Array.isArray(additionalData?.customerTaxIds)) {
+            taxIds = additionalData.customerTaxIds;
+        }
+
         const taxIdEntry = Array.isArray(taxIds) && taxIds.length > 0 ? taxIds[0] : null;
         const buyerTaxId = taxIdEntry?.value || null;
         const buyerTaxIdType = taxIdEntry?.type || null;
 
         const buyerType = metadata?.buyerType || metadata?.businessType || (buyerTaxId ? "company" : null);
-        const buyerCompanyName = metadata?.buyerCompanyName || metadata?.companyName || null;
+        const buyerCompanyName = metadata?.buyerCompanyName || metadata?.companyName || ((buyerType === "company" || buyerTaxId) ? (name || null) : null);
 
         const resolvedBuyerName = name || buyerCompanyName || null;
 
