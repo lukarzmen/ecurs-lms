@@ -1575,6 +1575,16 @@ export async function POST(req: Request) {
                 
                 console.log(`[WEBHOOK] Invoice.paid final metadata:`, JSON.stringify(metadata, null, 2));
                 
+                const invoiceCustomerDetails = {
+                    address: (invoice as any).customer_address || null,
+                    email: (invoice as any).customer_email || null,
+                    name: (invoice as any).customer_name || null,
+                    phone: (invoice as any).customer_phone || null,
+                };
+                const invoiceCustomerTaxIds = Array.isArray((invoice as any).customer_tax_ids)
+                    ? (invoice as any).customer_tax_ids
+                    : [];
+
                 if (metadata.type === "educationalPath") {
                     const appUserId = Number(metadata.userId);
                     const educationalPathId = Number(metadata.educationalPathId);
@@ -1641,7 +1651,12 @@ export async function POST(req: Request) {
                         const fullSubscription = await stripeClient.subscriptions.retrieve(subscriptionId as string, {
                             stripeAccount: isConnectEvent || undefined
                         });
-                        await createEduPathPurchase(appUserId, educationalPathId, paymentIntentId || subscriptionId || invoice.id || 'unknown', fullSubscription, event.type);
+                        await createEduPathPurchase(appUserId, educationalPathId, paymentIntentId || subscriptionId || invoice.id || 'unknown', invoice, event.type, {
+                            subscription: fullSubscription,
+                            metadata,
+                            customerDetails: invoiceCustomerDetails,
+                            customerTaxIds: invoiceCustomerTaxIds
+                        });
                     } catch (err) {
                         logError("INVOICE_PAID_EDUPATH_PURCHASE_ERROR", { 
                             eventId: event.id, 
@@ -1649,7 +1664,11 @@ export async function POST(req: Request) {
                             educationalPathId, 
                             error: String(err) 
                         });
-                        await createEduPathPurchase(appUserId, educationalPathId, paymentIntentId || subscriptionId || invoice.id || 'unknown', invoice, event.type);
+                        await createEduPathPurchase(appUserId, educationalPathId, paymentIntentId || subscriptionId || invoice.id || 'unknown', invoice, event.type, {
+                            metadata,
+                            customerDetails: invoiceCustomerDetails,
+                            customerTaxIds: invoiceCustomerTaxIds
+                        });
                     }
                     return NextResponse.json({ success: true }, { status: 200 });
                 } else {
@@ -1676,7 +1695,12 @@ export async function POST(req: Request) {
                         const fullSubscription = await stripeClient.subscriptions.retrieve(subscriptionId as string, {
                             stripeAccount: isConnectEvent || undefined
                         });
-                        await createCoursePurchase(Number(userCourseId), paymentIntentId || subscriptionId || invoice.id || 'unknown', fullSubscription, event.type);
+                        await createCoursePurchase(Number(userCourseId), paymentIntentId || subscriptionId || invoice.id || 'unknown', invoice, event.type, {
+                            subscription: fullSubscription,
+                            metadata,
+                            customerDetails: invoiceCustomerDetails,
+                            customerTaxIds: invoiceCustomerTaxIds
+                        });
                     } catch (err) {
                         logError("INVOICE_PAID_COURSE_PURCHASE_ERROR", { 
                             eventId: event.id, 
@@ -1684,7 +1708,11 @@ export async function POST(req: Request) {
                             userCourseId, 
                             error: String(err) 
                         });
-                        await createCoursePurchase(Number(userCourseId), paymentIntentId || subscriptionId || invoice.id || 'unknown', invoice, event.type);
+                        await createCoursePurchase(Number(userCourseId), paymentIntentId || subscriptionId || invoice.id || 'unknown', invoice, event.type, {
+                            metadata,
+                            customerDetails: invoiceCustomerDetails,
+                            customerTaxIds: invoiceCustomerTaxIds
+                        });
                     }
                     return NextResponse.json({ success: true }, { status: 200 });
                 }
@@ -1756,7 +1784,18 @@ export async function POST(req: Request) {
                             });
                         }
                         
-                        await createEduPathPurchase(appUserId, educationalPathId, paymentIntentId as string, invoice, event.type);
+                        await createEduPathPurchase(appUserId, educationalPathId, paymentIntentId as string, invoice, event.type, {
+                            metadata,
+                            customerDetails: {
+                                address: (invoice as any).customer_address || null,
+                                email: (invoice as any).customer_email || null,
+                                name: (invoice as any).customer_name || null,
+                                phone: (invoice as any).customer_phone || null,
+                            },
+                            customerTaxIds: Array.isArray((invoice as any).customer_tax_ids)
+                                ? (invoice as any).customer_tax_ids
+                                : []
+                        });
                         return NextResponse.json({ success: true }, { status: 200 });
                     } else {
                         // Course one-time payment
@@ -1777,7 +1816,18 @@ export async function POST(req: Request) {
                             console.error("[WEBHOOK] Failed to revalidate cache:", revalErr);
                         }
                         
-                        await createCoursePurchase(Number(userCourseId), paymentIntentId as string, invoice, event.type);
+                        await createCoursePurchase(Number(userCourseId), paymentIntentId as string, invoice, event.type, {
+                            metadata,
+                            customerDetails: {
+                                address: (invoice as any).customer_address || null,
+                                email: (invoice as any).customer_email || null,
+                                name: (invoice as any).customer_name || null,
+                                phone: (invoice as any).customer_phone || null,
+                            },
+                            customerTaxIds: Array.isArray((invoice as any).customer_tax_ids)
+                                ? (invoice as any).customer_tax_ids
+                                : []
+                        });
                         return NextResponse.json({ success: true }, { status: 200 });
                     }
                 } catch (err) {
