@@ -136,8 +136,8 @@ export async function POST(req: Request) {
     };
 
     // Helper to extract payment data from Stripe objects
-    function extractBuyerDetails(stripeObject: any, metadataOverride?: any): any {
-        const metadata = metadataOverride || stripeObject?.metadata || {};
+    function extractBuyerDetails(stripeObject: any, additionalData?: any): any {
+        const metadata = additionalData?.metadata || stripeObject?.metadata || {};
         let address: any = null;
         let email: string | null | undefined;
         let name: string | null | undefined;
@@ -145,12 +145,14 @@ export async function POST(req: Request) {
         let taxIds: any[] = [];
 
         if (stripeObject?.object === 'checkout.session') {
-            const details = stripeObject.customer_details || {};
+            const details = additionalData?.customerDetails || stripeObject.customer_details || {};
             address = details.address || null;
             email = details.email || stripeObject.customer_email || null;
             name = details.name || null;
             phone = details.phone || null;
-            taxIds = Array.isArray(details.tax_ids) ? details.tax_ids : [];
+            taxIds = Array.isArray(additionalData?.customerTaxIds)
+                ? additionalData.customerTaxIds
+                : (Array.isArray(details.tax_ids) ? details.tax_ids : []);
         } else if (stripeObject?.object === 'payment_intent') {
             const charge = stripeObject.charges?.data?.[0];
             const billing = charge?.billing_details || {};
@@ -163,7 +165,9 @@ export async function POST(req: Request) {
             email = stripeObject.customer_email || null;
             name = stripeObject.customer_name || null;
             phone = stripeObject.customer_phone || null;
-            taxIds = Array.isArray(stripeObject.customer_tax_ids) ? stripeObject.customer_tax_ids : [];
+            taxIds = Array.isArray(additionalData?.customerTaxIds)
+                ? additionalData.customerTaxIds
+                : (Array.isArray(stripeObject.customer_tax_ids) ? stripeObject.customer_tax_ids : []);
         }
 
         const taxIdEntry = Array.isArray(taxIds) && taxIds.length > 0 ? taxIds[0] : null;
@@ -173,9 +177,11 @@ export async function POST(req: Request) {
         const buyerType = metadata?.buyerType || metadata?.businessType || (buyerTaxId ? "company" : null);
         const buyerCompanyName = metadata?.buyerCompanyName || metadata?.companyName || null;
 
+        const resolvedBuyerName = name || buyerCompanyName || null;
+
         return {
             buyerType,
-            buyerName: name || null,
+            buyerName: resolvedBuyerName,
             buyerCompanyName,
             buyerTaxId,
             buyerTaxIdType,
@@ -191,7 +197,7 @@ export async function POST(req: Request) {
     }
 
     function extractPaymentData(stripeObject: any, eventType: string, additionalData?: any): any {
-        const buyerDetails = extractBuyerDetails(stripeObject, additionalData?.metadata || stripeObject?.metadata);
+        const buyerDetails = extractBuyerDetails(stripeObject, additionalData);
         const baseData = {
             eventType,
             paymentId: stripeObject.id,
@@ -395,7 +401,7 @@ export async function POST(req: Request) {
             },
         });
     }
-    async function createCoursePurchase(userCourseId: number, paymentId: string, eventData?: any, eventType?: string) {
+    async function createCoursePurchase(userCourseId: number, paymentId: string, eventData?: any, eventType?: string, additionalData?: any) {
         const baseData: any = {
             userCourseId,
             paymentId,
@@ -404,7 +410,7 @@ export async function POST(req: Request) {
 
         // If eventData is provided, extract additional Stripe data
         if (eventData && eventType) {
-            const stripeData = extractPaymentData(eventData, eventType);
+            const stripeData = extractPaymentData(eventData, eventType, additionalData);
             Object.assign(baseData, {
                 eventType: stripeData.eventType,
                 amount: stripeData.amount ? stripeData.amount / 100 : null, // Convert from cents
@@ -628,7 +634,7 @@ export async function POST(req: Request) {
             create: baseData,
         });
     }
-    async function createEduPathPurchase(appUserId: number, educationalPathId: number, paymentId: string, eventData?: any, eventType?: string) {
+    async function createEduPathPurchase(appUserId: number, educationalPathId: number, paymentId: string, eventData?: any, eventType?: string, additionalData?: any) {
         const baseData: any = {
             userId: appUserId,
             educationalPathId,
@@ -638,7 +644,7 @@ export async function POST(req: Request) {
 
         // If eventData is provided, extract additional Stripe data (excluding amount - we'll use price table)
         if (eventData && eventType) {
-            const stripeData = extractPaymentData(eventData, eventType);
+            const stripeData = extractPaymentData(eventData, eventType, additionalData);
             Object.assign(baseData, {
                 eventType: stripeData.eventType,
                 // amount will be set from EducationalPathPrice table (netto)
@@ -1067,6 +1073,17 @@ export async function POST(req: Request) {
         }
         case "checkout.session.completed": {
             const session = event.data.object as Stripe.Checkout.Session;
+            const sessionMetadata = (session.metadata || {}) as any;
+            const customerDetails = session.customer_details || null;
+            let customerTaxIds: any[] = [];
+            if (session.customer) {
+                try {
+                    const taxIds = await stripeClient.customers.listTaxIds(session.customer as string);
+                    customerTaxIds = taxIds.data || [];
+                } catch (taxError) {
+                    console.error("[WEBHOOK] Error retrieving customer tax IDs for session:", taxError);
+                }
+            }
             
             // Log detailed checkout session information
             logEventData("CHECKOUT_SESSION_COMPLETED", session, {
@@ -1078,7 +1095,7 @@ export async function POST(req: Request) {
             });
             
             if (session.mode === "subscription" && session.subscription) {
-                const sessMeta = (session.metadata || {}) as any;
+                const sessMeta = sessionMetadata;
                 if (sessMeta.type === "platform_subscription") {
                     // Handle platform subscription
                     const appUserId = Number(sessMeta.userId);
@@ -1098,7 +1115,10 @@ export async function POST(req: Request) {
                         });
                         const paymentData = extractPaymentData(session, event.type, { 
                             subscription: subscriptionMetadata,
-                            amount: session.amount_total || subscriptionDetails.items.data[0]?.price?.unit_amount || 0
+                            amount: session.amount_total || subscriptionDetails.items.data[0]?.price?.unit_amount || 0,
+                            metadata: sessionMetadata,
+                            customerDetails,
+                            customerTaxIds
                         });
 
                         // Sprawdź czy klient podał NIP/VAT ID podczas checkout
@@ -1242,7 +1262,11 @@ export async function POST(req: Request) {
                         const fullSubscription = await stripeClient.subscriptions.retrieve(session.subscription as string, {
                             stripeAccount: stripeAccountForSub || undefined
                         });
-                        await createEduPathPurchase(appUserId, educationalPathId, session.id, fullSubscription, event.type);
+                        await createEduPathPurchase(appUserId, educationalPathId, session.id, fullSubscription, event.type, {
+                            metadata: sessionMetadata,
+                            customerDetails,
+                            customerTaxIds
+                        });
                     } catch (err) {
                         logError("CHECKOUT_COMPLETED_EDUPATH_PURCHASE_ERROR", { 
                             eventId: event.id, 
@@ -1250,7 +1274,11 @@ export async function POST(req: Request) {
                             educationalPathId, 
                             error: String(err) 
                         });
-                        await createEduPathPurchase(appUserId, educationalPathId, session.id, session, event.type);
+                        await createEduPathPurchase(appUserId, educationalPathId, session.id, session, event.type, {
+                            metadata: sessionMetadata,
+                            customerDetails,
+                            customerTaxIds
+                        });
                     }
                     return NextResponse.json({ success: true }, { status: 200 });
                     } else {
@@ -1276,7 +1304,11 @@ export async function POST(req: Request) {
                                 const fullSubscription = await stripeClient.subscriptions.retrieve(session.subscription as string, {
                                     stripeAccount: stripeAccountForSub || undefined
                                 });
-                                await createCoursePurchase(Number(userCourseId), session.id, fullSubscription, event.type);
+                                await createCoursePurchase(Number(userCourseId), session.id, fullSubscription, event.type, {
+                                    metadata: sessionMetadata,
+                                    customerDetails,
+                                    customerTaxIds
+                                });
                             } catch (purchaseErr) {
                                 logError("CHECKOUT_COMPLETED_COURSE_PURCHASE_ERROR", { 
                                     eventId: event.id, 
@@ -1284,7 +1316,11 @@ export async function POST(req: Request) {
                                     userCourseId, 
                                     error: String(purchaseErr) 
                                 });
-                                await createCoursePurchase(Number(userCourseId), session.id, session, event.type);
+                                await createCoursePurchase(Number(userCourseId), session.id, session, event.type, {
+                                    metadata: sessionMetadata,
+                                    customerDetails,
+                                    customerTaxIds
+                                });
                             }
                             
                             // Revalidate marketplace cache to show updated purchase status
@@ -1328,6 +1364,51 @@ export async function POST(req: Request) {
                         logError("CHECKOUT_COMPLETED_HANDLER_ERROR", { eventId: event.id, error: String(err) });
                         return NextResponse.json({ success: false }, { status: 200 });
                     }
+                }
+            } else if (session.mode === "payment") {
+                const sessMeta = sessionMetadata;
+                if (sessMeta.type === "educationalPath") {
+                    const appUserId = Number(sessMeta.userId);
+                    const educationalPathId = Number(sessMeta.educationalPathId);
+                    const userEducationalPathId = Number(sessMeta.userEducationalPathId || session.client_reference_id);
+                    if (!appUserId || !educationalPathId || !userEducationalPathId) {
+                        logError("CHECKOUT_COMPLETED_EDUPATH_PAYMENT_MISSING_META", { eventId: event.id, sessionId: session.id, sessMeta });
+                        return new NextResponse("Missing educational path metadata", { status: 400 });
+                    }
+                    await upsertEduPath(userEducationalPathId, appUserId, educationalPathId, 1);
+                    await createEduPathPurchase(appUserId, educationalPathId, session.id, session, event.type, {
+                        metadata: sessionMetadata,
+                        customerDetails,
+                        customerTaxIds
+                    });
+                    try {
+                        revalidateTag("learning-units-search");
+                        console.log("[WEBHOOK] Cache revalidated for marketplace after edupath purchase (checkout.payment)");
+                    } catch (revalErr) {
+                        console.error("[WEBHOOK] Failed to revalidate cache:", revalErr);
+                    }
+                    return NextResponse.json({ success: true }, { status: 200 });
+                } else if (sessMeta.type === "course") {
+                    const appUserId = Number(sessMeta.userId);
+                    const courseId = Number(sessMeta.courseId);
+                    const userCourseId = Number(sessMeta.userCourseId || session.client_reference_id);
+                    if (!appUserId || !courseId || !userCourseId) {
+                        logError("CHECKOUT_COMPLETED_COURSE_PAYMENT_MISSING_META", { eventId: event.id, sessionId: session.id, sessMeta });
+                        return new NextResponse("Missing course metadata", { status: 400 });
+                    }
+                    await upsertCourse(Number(userCourseId), Number(appUserId), Number(courseId), 1);
+                    await createCoursePurchase(Number(userCourseId), session.id, session, event.type, {
+                        metadata: sessionMetadata,
+                        customerDetails,
+                        customerTaxIds
+                    });
+                    try {
+                        revalidateTag("learning-units-search");
+                        console.log("[WEBHOOK] Cache revalidated for marketplace after course purchase (checkout.payment)");
+                    } catch (revalErr) {
+                        console.error("[WEBHOOK] Failed to revalidate cache:", revalErr);
+                    }
+                    return NextResponse.json({ success: true }, { status: 200 });
                 }
             }
             break;
