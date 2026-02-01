@@ -155,11 +155,12 @@ export async function POST(req: Request) {
                 : (Array.isArray(details.tax_ids) ? details.tax_ids : []);
         } else if (stripeObject?.object === 'payment_intent') {
             const charge = stripeObject.charges?.data?.[0];
-            const billing = charge?.billing_details || {};
+            const billing = additionalData?.chargeBillingDetails || charge?.billing_details || {};
             address = billing.address || null;
             email = billing.email || stripeObject.receipt_email || null;
             name = billing.name || null;
             phone = billing.phone || null;
+            taxIds = Array.isArray(additionalData?.customerTaxIds) ? additionalData.customerTaxIds : [];
         } else if (stripeObject?.object === 'invoice') {
             address = stripeObject.customer_address || null;
             email = stripeObject.customer_email || null;
@@ -932,6 +933,49 @@ export async function POST(req: Request) {
             try {
                 const paymentIntent = event.data.object as Stripe.PaymentIntent;
                 const metadata = paymentIntent.metadata || {};
+                let customerTaxIds: any[] = [];
+                let chargeBillingDetails: any = null;
+
+                if (paymentIntent.customer) {
+                    try {
+                        const taxIds = await stripeClient.customers.listTaxIds(paymentIntent.customer as string);
+                        customerTaxIds = taxIds.data || [];
+                    } catch (taxError) {
+                        console.error("[WEBHOOK] Error retrieving customer tax IDs for payment_intent:", taxError);
+                    }
+                }
+
+                if (paymentIntent.latest_charge) {
+                    try {
+                        const charge = await stripeClient.charges.retrieve(paymentIntent.latest_charge as string);
+                        chargeBillingDetails = (charge as any).billing_details || null;
+                        const invoiceIdFromCharge = (charge as any).invoice as string | undefined;
+                        if (invoiceIdFromCharge) {
+                            try {
+                                const invoice = await stripeClient.invoices.retrieve(invoiceIdFromCharge);
+                                const invoiceCustomerTaxIds = Array.isArray((invoice as any).customer_tax_ids)
+                                    ? (invoice as any).customer_tax_ids
+                                    : [];
+                                const invoiceCustomerDetails = {
+                                    address: (invoice as any).customer_address || null,
+                                    email: (invoice as any).customer_email || null,
+                                    name: (invoice as any).customer_name || null,
+                                    phone: (invoice as any).customer_phone || null,
+                                };
+                                if (invoiceCustomerTaxIds.length > 0) {
+                                    customerTaxIds = invoiceCustomerTaxIds;
+                                }
+                                if (invoiceCustomerDetails.address || invoiceCustomerDetails.email || invoiceCustomerDetails.name || invoiceCustomerDetails.phone) {
+                                    chargeBillingDetails = invoiceCustomerDetails;
+                                }
+                            } catch (invoiceError) {
+                                console.error("[WEBHOOK] Error retrieving invoice for payment_intent:", invoiceError);
+                            }
+                        }
+                    } catch (chargeError) {
+                        console.error("[WEBHOOK] Error retrieving charge billing details:", chargeError);
+                    }
+                }
                 
                 // Log detailed payment information
                 logEventData("PAYMENT_INTENT_SUCCEEDED", paymentIntent, {
@@ -960,7 +1004,11 @@ export async function POST(req: Request) {
                                         const sUserEducationalPathId = subMeta.userEducationalPathId;
                                         if (sUserId && sEducationalPathId && sUserEducationalPathId) {
                                             await upsertEduPath(Number(sUserEducationalPathId), Number(sUserId), Number(sEducationalPathId), 1);
-                                            await createEduPathPurchase(Number(sUserId), Number(sEducationalPathId), paymentIntent.id, paymentIntent, event.type);
+                                            await createEduPathPurchase(Number(sUserId), Number(sEducationalPathId), paymentIntent.id, paymentIntent, event.type, {
+                                                metadata,
+                                                customerTaxIds,
+                                                chargeBillingDetails
+                                            });
                                             
                                             // Revalidate marketplace cache
                                             try {
@@ -991,7 +1039,11 @@ export async function POST(req: Request) {
                     await upsertEduPath(userEducationalPathId, appUserId, educationalPathId, 1);
                     
                     // Create purchase record with detailed payment info
-                    await createEduPathPurchase(appUserId, educationalPathId, paymentIntent.id, paymentIntent, event.type);
+                    await createEduPathPurchase(appUserId, educationalPathId, paymentIntent.id, paymentIntent, event.type, {
+                        metadata,
+                        customerTaxIds,
+                        chargeBillingDetails
+                    });
                     
                     // Revalidate marketplace cache to show updated purchase status
                     try {
@@ -1023,7 +1075,11 @@ export async function POST(req: Request) {
                                         const sUserCourseId = subMeta.userCourseId;
                                         if (sUserId && sCourseId && sUserCourseId) {
                                             await upsertCourse(Number(sUserCourseId), Number(sUserId), Number(sCourseId), 1);
-                                            await createCoursePurchase(Number(sUserCourseId), paymentIntent.id, paymentIntent, event.type);
+                                            await createCoursePurchase(Number(sUserCourseId), paymentIntent.id, paymentIntent, event.type, {
+                                                metadata,
+                                                customerTaxIds,
+                                                chargeBillingDetails
+                                            });
                                             
                                             // Revalidate marketplace cache
                                             try {
@@ -1054,7 +1110,11 @@ export async function POST(req: Request) {
                     await upsertCourse(Number(userCourseId), Number(appUserId), Number(courseId), 1);
                     
                     // Create purchase record with detailed payment info
-                    await createCoursePurchase(Number(userCourseId), paymentIntent.id, paymentIntent, event.type);
+                    await createCoursePurchase(Number(userCourseId), paymentIntent.id, paymentIntent, event.type, {
+                        metadata,
+                        customerTaxIds,
+                        chargeBillingDetails
+                    });
                     
                     // Revalidate marketplace cache to show updated purchase status
                     try {
