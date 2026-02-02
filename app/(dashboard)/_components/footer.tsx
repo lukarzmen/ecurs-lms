@@ -1,6 +1,7 @@
 // For example, place this at the bottom of your main layout or page component
 
 import React from "react";
+import Link from "next/link";
 
 const Footer = () => {
   const now = new Date();
@@ -15,12 +16,17 @@ const Footer = () => {
   });
 
   return (
-    <footer className="w-full py-4 px-6 bg-gray-100 border-t border-gray-200 text-sm text-gray-600 flex flex-col md:flex-row items-center justify-between">
+    <footer className="w-full py-4 px-6 bg-gray-100 border-t border-gray-200 text-sm text-gray-600 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
       <div>
         &copy; {now.getFullYear()} Łukasz Mędyk Oprogramowanie. Wszelkie prawa zastrzeżone.
       </div>
-      <div>
-        Kontakt: <a href="mailto:kontakt@ecurs.pl" className="underline hover:text-orange-600">kontakt@ecurs.pl</a>
+      <div className="flex flex-wrap items-center gap-3">
+        <span>
+          Kontakt: <a href="mailto:kontakt@ecurs.pl" className="underline hover:text-orange-600">kontakt@ecurs.pl</a>
+        </span>
+        <span className="text-gray-400">•</span>
+        <Link href="/terms" className="underline hover:text-orange-600">Regulamin</Link>
+        <Link href="/privacy" className="underline hover:text-orange-600">Polityka Prywatności</Link>
       </div>
       <div>
         {formattedDate} {formattedTime}

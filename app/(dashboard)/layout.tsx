@@ -33,6 +33,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="pointer-events-none absolute -top-24 -right-24 h-80 w-80 rounded-full bg-indigo-200/35 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-28 -left-28 h-80 w-80 rounded-full bg-orange-200/35 blur-3xl" />
             <div className="relative">{children}</div>
+            <div className="relative mx-auto mt-10 flex max-w-6xl flex-wrap items-center justify-center gap-3 px-6 pb-8 text-xs text-slate-500">
+              <Link href="/terms" className="underline hover:text-orange-600">Regulamin</Link>
+              <span className="text-slate-300">•</span>
+              <Link href="/privacy" className="underline hover:text-orange-600">Polityka Prywatności</Link>
+            </div>
           </div>
         ) : (
           <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-white to-indigo-50 px-4 py-12">
@@ -117,6 +122,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                     </div>
                   </div>
                 </div>
+              </div>
+              <div className="mt-10 flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500">
+                <Link href="/terms" className="underline hover:text-orange-600">Regulamin</Link>
+                <span className="text-slate-300">•</span>
+                <Link href="/privacy" className="underline hover:text-orange-600">Polityka Prywatności</Link>
               </div>
             </div>
           </div>

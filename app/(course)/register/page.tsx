@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
 const TERMS_EFFECTIVE_DATE = "18.10.2025";
@@ -2656,9 +2657,10 @@ export default function RegisterPage() {
                   className={`form-checkbox h-4 w-4 mt-0.5 flex-shrink-0 ${selectedRole === "student" ? "accent-orange-500" : "accent-blue-500"} disabled:opacity-50`}
                 />
                 <span className={`ml-2 text-xs sm:text-sm leading-tight ${isLoading ? "text-gray-400" : "text-gray-700"}`}>
-                  {selectedRole === "student"
-                    ? "Akceptuję regulamin platformy Ecurs"
-                    : "Akceptuję regulamin platformy Ecurs"}
+                  Akceptuję
+                  <Link href="/terms" className="ml-1 underline hover:text-orange-600">Regulamin</Link>
+                  <span className="mx-1">oraz</span>
+                  <Link href="/privacy" className="underline hover:text-orange-600">Politykę Prywatności</Link>
                 </span>
               </label>
 
@@ -2770,6 +2772,11 @@ export default function RegisterPage() {
             Proszę najpierw się zalogować, aby zakończyć rejestrację
           </p>
         )}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs text-gray-500">
+          <Link href="/terms" className="underline hover:text-orange-600">Regulamin</Link>
+          <span className="text-gray-300">•</span>
+          <Link href="/privacy" className="underline hover:text-orange-600">Polityka Prywatności</Link>
+        </div>
         </div>
       </div>
     </>
