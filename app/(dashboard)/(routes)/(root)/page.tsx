@@ -104,8 +104,6 @@ export default async function Home({
             </div>
           </div>
         </section>
-
-
         <section className="max-w-6xl mx-auto rounded-2xl border bg-white p-6 sm:p-10 shadow-sm">
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-semibold text-gray-900">Dołącz do platformy i zacznij od razu ✨</h2>
