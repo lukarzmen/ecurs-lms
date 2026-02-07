@@ -42,11 +42,12 @@ export default async function Home({
             <div className="flex items-center justify-center gap-3">
               <img src="/logo.png" alt="Ecurs" className="h-10 w-10" />
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
-              Ecurs — nauka dla Ciebie
+              Ecurs — uczysz się skuteczniej
               </h1>
             </div>
             <p className="text-gray-600 text-base sm:text-lg">
-              Ucz się interaktywnie 📚 i śledź postępy, albo twórz kursy i ścieżki dla swoich uczniów — szybko, przejrzyście i z pomocą AI.🤖
+              Jesteś uczniem? Ucz się we własnym tempie i miej postępy zawsze pod ręką. Jesteś nauczycielem?
+              Twórz kursy i ścieżki w jednym miejscu, a AI niech pomoże Ci przygotować materiały szybciej i lepiej.
             </p>
           </div>
 
@@ -54,19 +55,19 @@ export default async function Home({
             <div className="rounded-xl border bg-gray-50 p-4 transition-colors hover:bg-white">
               <div className="font-semibold text-gray-900">🎓 Dla uczniów</div>
               <div className="mt-1 text-sm text-gray-600 leading-relaxed">
-                Interaktywne lekcje, jasny plan nauki i postępy, które motywują.
+                Dostawaj lekcje, zadania i jasny plan nauki, który napędza do działania.
               </div>
             </div>
             <div className="rounded-xl border bg-gray-50 p-4 transition-colors hover:bg-white">
-              <div className="font-semibold text-gray-900">🧑‍🏫 Dla edukatorów</div>
+              <div className="font-semibold text-gray-900">🧑‍🏫 Dla nauczycieli</div>
               <div className="mt-1 text-sm text-gray-600 leading-relaxed">
-                Kursy, ścieżki i materiały w jednym panelu — bez chaosu.
+                Twórz kursy, ścieżki i materiały w jednym panelu, gotowe do sprzedaży i pracy z grupą.
               </div>
             </div>
             <div className="rounded-xl border bg-gray-50 p-4 transition-colors hover:bg-white">
               <div className="font-semibold text-gray-900">🤖 Wsparcie AI</div>
               <div className="mt-1 text-sm text-gray-600 leading-relaxed">
-                Szybsze tworzenie treści i feedback dla uczniów.
+                Twórz treści szybciej, dostawaj propozycje zadań i informacje zwrotne dla uczniów.
               </div>
             </div>
           </div>
@@ -106,9 +107,9 @@ export default async function Home({
 
         <section className="max-w-4xl mx-auto rounded-2xl border bg-white p-6 sm:p-10 shadow-sm">
           <div className="text-center space-y-2">
-            <h2 className="text-2xl font-semibold text-gray-900">Dołącz do platformy lub zaloguj się ✨</h2>
+            <h2 className="text-2xl font-semibold text-gray-900">Dołącz do platformy i zacznij od razu ✨</h2>
             <p className="text-gray-600">
-              Dołącz do Nas i skorzystaj z możliwości platformy już teraz! Zacznij swoją przygodę z nauką lub twórz kursy dla swoich uczniów.
+              Wybierz kurs i zacznij od razu. Jeśli uczysz innych, twórz własne programy i obserwuj realne postępy grupy.
             </p>
           </div>
 
