@@ -37,7 +37,7 @@ export default async function Home({
 
     return (
       <div className="p-6 space-y-10 bg-gradient-to-b from-gray-50 to-white">
-        <section className="max-w-4xl mx-auto rounded-2xl border bg-white p-6 sm:p-10 shadow-sm">
+        <section className="max-w-6xl mx-auto rounded-2xl border bg-white p-6 sm:p-10 shadow-sm">
           <div className="space-y-3 text-center">
             <div className="flex items-center justify-center gap-3">
               <img src="/logo.png" alt="Ecurs" className="h-10 w-10" />
@@ -105,7 +105,7 @@ export default async function Home({
           </div>
         </section>
 
-        <section className="max-w-4xl mx-auto rounded-2xl border bg-white p-6 sm:p-10 shadow-sm">
+        <section className="max-w-6xl mx-auto rounded-2xl border bg-white p-6 sm:p-10 shadow-sm">
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-semibold text-gray-900">Dołącz do platformy i zacznij od razu ✨</h2>
             <p className="text-gray-600">
