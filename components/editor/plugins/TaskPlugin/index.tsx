@@ -14,9 +14,13 @@ import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $createDoTaskNode, DoTaskNode } from '../../nodes/DoTaskNode/DoTask';
 
-export type DoTaskType = {
+export type DoTaskItem = {
   task: string;
-  hint: string | null;
+  hint?: string | null;
+};
+
+export type DoTaskType = {
+  items: DoTaskItem[];
 };
 
 export const INSERT_TASK_COMMAND: LexicalCommand<DoTaskType> = createCommand('INSERT_TASK_COMMAND');

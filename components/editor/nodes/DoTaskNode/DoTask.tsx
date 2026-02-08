@@ -10,7 +10,7 @@ import {
   Spread,
 } from "lexical"; // Import necessary types
 import DoTaskComponent from "./DoTaskComponent";
-import { DoTaskType } from "../../plugins/TaskPlugin";
+import { DoTaskItem, DoTaskType } from "../../plugins/TaskPlugin";
 import { ToCompleteNode } from "../ToCompleteNode";
 import React from "react"; // Import React
 
@@ -19,6 +19,7 @@ export type SerializedDoTaskNode = Spread<
   {
     task: string;
     hint: string | null;
+    items?: DoTaskItem[] | null;
     // No isCompleted here
   },
   SerializedLexicalNode
@@ -27,13 +28,16 @@ export type SerializedDoTaskNode = Spread<
 export class DoTaskNode extends DecoratorNode<JSX.Element> implements ToCompleteNode {
   __task: string;
   __hint: string | null;
+  __items: DoTaskItem[] | null;
   // Transient state
   public __isCompleted: boolean = false; // Initialized to false
 
-  constructor(task: string, hint: string | null, key?: NodeKey) { // Use NodeKey type
+  constructor(items: DoTaskItem[] | null, key?: NodeKey) { // Use NodeKey type
     super(key);
-    this.__task = task;
-    this.__hint = hint;
+    this.__items = items;
+    const firstItem = items?.[0];
+    this.__task = firstItem?.task ?? "";
+    this.__hint = firstItem?.hint ?? null;
     // Transient state defaults are set by class property initializer
   }
 
@@ -43,7 +47,7 @@ export class DoTaskNode extends DecoratorNode<JSX.Element> implements ToComplete
 
   static clone(node: DoTaskNode): DoTaskNode {
     // Clone basic props
-    const newNode = new DoTaskNode(node.__task, node.__hint, node.__key);
+    const newNode = new DoTaskNode(node.__items, node.__key);
     // Manually copy transient state
     newNode.__isCompleted = node.__isCompleted;
     return newNode;
@@ -51,17 +55,26 @@ export class DoTaskNode extends DecoratorNode<JSX.Element> implements ToComplete
 
   static importJSON(serializedNode: SerializedDoTaskNode): DoTaskNode {
     // Import *without* transient state
-    const { task, hint } = serializedNode;
-    return new DoTaskNode(task, hint);
+    const { task, hint, items } = serializedNode;
+    const normalizedItems = Array.isArray(items) && items.length > 0
+      ? items
+      : (task ? [{ task, hint: hint ?? null }] : []);
+    return new DoTaskNode(normalizedItems.length > 0 ? normalizedItems : null);
   }
 
   exportJSON(): SerializedDoTaskNode {
     // Export *without* transient state
+    const normalizedItems = Array.isArray(this.__items) && this.__items.length > 0
+      ? this.__items
+      : (this.__task ? [{ task: this.__task, hint: this.__hint ?? null }] : []);
+    const fallbackTask = normalizedItems[0]?.task ?? this.__task;
+    const fallbackHint = normalizedItems[0]?.hint ?? this.__hint ?? null;
     return {
       type: "do-task",
       version: 1,
-      task: this.__task,
-      hint: this.__hint,
+      task: fallbackTask,
+      hint: fallbackHint,
+      items: normalizedItems.length > 0 ? normalizedItems : null,
       // No isCompleted here
     };
   }
@@ -94,28 +107,51 @@ export class DoTaskNode extends DecoratorNode<JSX.Element> implements ToComplete
 
     const taskText = this.__task ? String(this.__task).trim() : '';
     const hintText = this.__hint ? String(this.__hint).trim() : '';
+    const items = Array.isArray(this.__items) && this.__items.length > 0
+      ? this.__items
+      : (taskText ? [{ task: taskText, hint: hintText || null }] : []);
 
-    if (taskText) {
-      const t = document.createElement('p');
-      t.setAttribute('data-do-task', 'task');
-      t.textContent = taskText;
-      t.style.margin = '0 0 10px 0';
-      t.style.whiteSpace = 'pre-wrap';
-      container.appendChild(t);
-    }
-
-    if (hintText) {
-      const hintLabel = document.createElement('div');
-      hintLabel.textContent = 'Wskazówki';
-      hintLabel.style.fontWeight = '700';
-      hintLabel.style.margin = '0 0 6px 0';
-      container.appendChild(hintLabel);
-
-      const h = document.createElement('div');
-      h.setAttribute('data-do-task', 'hint');
-      h.textContent = hintText;
-      h.style.whiteSpace = 'pre-wrap';
-      container.appendChild(h);
+    if (items.length > 0) {
+      if (items.length === 1) {
+        const t = document.createElement('p');
+        t.setAttribute('data-do-task', 'task');
+        t.textContent = String(items[0].task);
+        t.style.margin = '0 0 10px 0';
+        t.style.whiteSpace = 'pre-wrap';
+        container.appendChild(t);
+        if (items[0].hint) {
+          const hintLabel = document.createElement('div');
+          hintLabel.textContent = 'Wskazowki';
+          hintLabel.style.fontWeight = '700';
+          hintLabel.style.margin = '0 0 6px 0';
+          container.appendChild(hintLabel);
+          const h = document.createElement('div');
+          h.setAttribute('data-do-task', 'hint');
+          h.textContent = String(items[0].hint);
+          h.style.whiteSpace = 'pre-wrap';
+          container.appendChild(h);
+        }
+      } else {
+        const list = document.createElement('ul');
+        list.setAttribute('data-do-task', 'tasks');
+        list.style.margin = '0 0 10px 18px';
+        list.style.padding = '0';
+        for (const item of items) {
+          const li = document.createElement('li');
+          li.textContent = String(item.task);
+          li.style.margin = '0 0 6px 0';
+          li.style.whiteSpace = 'pre-wrap';
+          if (item.hint) {
+            const hintNode = document.createElement('div');
+            hintNode.textContent = String(item.hint);
+            hintNode.style.margin = '4px 0 0 0';
+            hintNode.style.whiteSpace = 'pre-wrap';
+            li.appendChild(hintNode);
+          }
+          list.appendChild(li);
+        }
+        container.appendChild(list);
+      }
     }
 
     return {element: container};
@@ -137,6 +173,7 @@ export class DoTaskNode extends DecoratorNode<JSX.Element> implements ToComplete
         <DoTaskComponent
             task={this.__task}
             hint={this.__hint}
+          items={this.__items}
             initialCompleted={this.__isCompleted} // Pass current transient state
             // Pass bound update method
             onComplete={(isCorrect) => this.setCompleted(isCorrect, editor)}
@@ -147,7 +184,12 @@ export class DoTaskNode extends DecoratorNode<JSX.Element> implements ToComplete
 
 // Update function signature to match constructor
 export function $createDoTaskNode(qa: DoTaskType): DoTaskNode {
-  return $applyNodeReplacement(new DoTaskNode(qa.task, qa.hint));
+  const normalizedItems = Array.isArray(qa.items)
+    ? qa.items.filter((item) => item.task.trim() !== '')
+    : [];
+  return $applyNodeReplacement(
+    new DoTaskNode(normalizedItems.length > 0 ? normalizedItems : null)
+  );
 }
 
 // Type guard

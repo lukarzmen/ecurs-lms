@@ -1,4 +1,4 @@
-import { LexicalEditor, $getSelection, $isRangeSelection } from "lexical";
+import { LexicalEditor, $getSelection, $isRangeSelection, $getRoot } from "lexical";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Test } from "../../nodes/QuizNode/QuizComponent";
 import { INSERT_TEST_COMMAND } from ".";
@@ -19,6 +19,8 @@ export function InsertQuizDialog({
   const [sourceText, setSourceText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAiOpen, setIsAiOpen] = useState(false);
+  const [aiQuestionCount, setAiQuestionCount] = useState(5);
+  const [isUsingFullContext, setIsUsingFullContext] = useState(false);
   const [tests, setTests] = useState<Test[]>([]);
   const [current, setCurrent] = useState<Test>({
     question: "",
@@ -40,8 +42,11 @@ export function InsertQuizDialog({
       const selection = $getSelection();
       if ($isRangeSelection(selection)) {
         setSourceText(selection.getTextContent());
+        setIsUsingFullContext(false);
       } else {
-        setSourceText("");
+        const fullText = $getRoot().getTextContent();
+        setSourceText(fullText);
+        setIsUsingFullContext(Boolean(fullText.trim()));
       }
     });
   }, [activeEditor]);
@@ -56,11 +61,14 @@ export function InsertQuizDialog({
         if (trimmed) {
           setSourceText(text);
           setIsAiOpen(true); // if user has selection, auto-open for convenience
+          setIsUsingFullContext(false);
           return;
         }
       }
-      // No selection: keep AI collapsed by default, but prefill context if we have it.
-      setSourceText(defaultContextText);
+      // No selection: use full editor content as AI context.
+      const fullText = $getRoot().getTextContent();
+      setSourceText(fullText || defaultContextText);
+      setIsUsingFullContext(Boolean(fullText.trim()));
       setIsAiOpen(false);
     });
   }, [activeEditor, defaultContextText]);
@@ -88,12 +96,12 @@ export function InsertQuizDialog({
     return JSON.parse(candidate);
   }
 
-  function normalizeTests(payload: unknown): Test[] {
+  function normalizeTests(payload: unknown, expectedCount: number): Test[] {
     if (!Array.isArray(payload)) {
       throw new Error("Model nie zwrócił tablicy pytań.");
     }
-    if (payload.length !== 5) {
-      throw new Error("Model powinien zwrócić dokładnie 5 pytań.");
+    if (payload.length !== expectedCount) {
+      throw new Error(`Model powinien zwrócić dokładnie ${expectedCount} pytań.`);
     }
 
     return payload.map((item, idx) => {
@@ -147,8 +155,11 @@ export function InsertQuizDialog({
 
     setIsGenerating(true);
     try {
-      const userPrompt = `Wygeneruj quiz: dokładnie 5 pytań, każde z 4 odpowiedziami (A-D).
-Zwróć WYŁĄCZNIE poprawny JSON (bez Markdown), w formacie tablicy 5 obiektów:
+      const requestedCount = Number.isFinite(aiQuestionCount)
+        ? Math.max(1, Math.min(aiQuestionCount, 20))
+        : 5;
+      const userPrompt = `Wygeneruj quiz: dokładnie ${requestedCount} pytań, każde z 4 odpowiedziami (A-D).
+  Zwróć WYŁĄCZNIE poprawny JSON (bez Markdown), w formacie tablicy ${requestedCount} obiektów:
 [
   {
     "question": "...",
@@ -186,12 +197,12 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
 
       const raw = await res.text();
       const parsed = extractJsonArray(raw);
-      const generatedTests = normalizeTests(parsed);
+      const generatedTests = normalizeTests(parsed, requestedCount);
 
       activeEditor.dispatchCommand(INSERT_TEST_COMMAND, {
         tests: generatedTests,
       });
-      toast.success("Wygenerowano quiz (5 pytań) i wstawiono do edytora.");
+      toast.success(`Wygenerowano quiz (${requestedCount} pytań) i wstawiono do edytora.`);
       onClose();
     } catch (err) {
       console.error("Quiz AI generation error:", err);
@@ -278,7 +289,10 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
             </div>
             <Textarea
               value={sourceText}
-              onChange={(e) => setSourceText(e.target.value)}
+              onChange={(e) => {
+                setSourceText(e.target.value);
+                setIsUsingFullContext(false);
+              }}
               placeholder={
                 module?.courseName || module?.moduleName
                   ? "Brak zaznaczenia — możesz wkleić tekst, albo użyć kontekstu lekcji."
@@ -287,14 +301,43 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
               className="min-h-[120px]"
               disabled={isGenerating}
             />
-            <div className="flex gap-2">
+            {isUsingFullContext && !sourceText.trim() && (
+              <div className="text-xs text-gray-500">
+                Brak tekstu — używam całego kontekstu z edytora.
+              </div>
+            )}
+            {isUsingFullContext && sourceText.trim() && (
+              <div className="text-xs text-gray-500">
+                Brak zaznaczenia — używam całego kontekstu z edytora.
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="text-xs font-semibold text-gray-700">
+                Liczba pytań
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={aiQuestionCount}
+                  onChange={(e) => {
+                    const nextValue = Number(e.target.value);
+                    if (!Number.isFinite(nextValue)) {
+                      setAiQuestionCount(5);
+                      return;
+                    }
+                    setAiQuestionCount(Math.max(1, Math.min(nextValue, 20)));
+                  }}
+                  disabled={isGenerating}
+                  className="ml-2 w-20 rounded-md border border-gray-300 px-2 py-1 text-sm"
+                />
+              </label>
               <button
                 type="button"
                 onClick={refreshSelectionIntoSource}
                 disabled={isGenerating}
                 className={`px-3 py-2 rounded-md border ${isGenerating ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"}`}
               >
-                Pobierz zaznaczenie
+                Wczytaj zaznaczenie
               </button>
               <button
                 type="button"
@@ -308,7 +351,9 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
                     Generowanie...
                   </>
                 ) : (
-                  "Wygeneruj 5 pytań"
+                  `Wygeneruj ${Number.isFinite(aiQuestionCount)
+                    ? Math.max(1, Math.min(aiQuestionCount, 20))
+                    : 5} pytań`
                 )}
               </button>
             </div>

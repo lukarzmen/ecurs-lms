@@ -2,6 +2,8 @@ import React, { useEffect, useState, useMemo } from "react"; // Added useMemo
 import { useSwipeable } from "react-swipeable";
 import Confetti from "react-confetti";
 import { ChevronLeft, ChevronRight, Plus, X, Table, Shuffle, BookOpen, Trophy } from "lucide-react";
+import toast from "react-hot-toast";
+import ProgressSpinner from "../../plugins/TextGeneratorPlugin/ProgressComponent";
 
 export interface Dictionary {
   [Key: string]: string;
@@ -13,13 +15,15 @@ interface DictionaryComponentProps {
   isReadonly?: boolean;
   initialCompleted: boolean; // Receive initial state
   onComplete: (isCorrect: boolean) => void; // Callback to update node
+  contextText?: string;
 }
 
 export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
     dictionary,
     onDictionaryChanged,
     isReadonly,
-    onComplete // Use callback
+  onComplete, // Use callback
+  contextText
 }) => {
   // Derive entries from the dictionary prop instead of keeping separate state
   const currentEntries = useMemo(() => Object.entries(dictionary), [dictionary]);
@@ -128,6 +132,11 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
   const [shuffledValues, setShuffledValues] = useState<[string, number][]>([]); // [value, originalIndex]
   const [showConfetti, setShowConfetti] = useState(false);
   const [selectedEntries, setSelectedEntries] = useState<[string, string][]>([]);
+  const [isAiOpen, setIsAiOpen] = useState(false);
+  const [aiSourceText, setAiSourceText] = useState("");
+  const [aiItemCount, setAiItemCount] = useState(6);
+  const [aiOutputType, setAiOutputType] = useState<"translations" | "definitions" | "mixed">("definitions");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const getRandomColorIndex = () => {
     const usedIndices = new Set(Object.values(matches).filter(v => typeof v === 'number'));
@@ -214,6 +223,111 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
   };
 
   const baseColor = "bg-gray-200";
+
+  const extractJsonArray = (text: string): unknown => {
+    const trimmed = text.trim();
+    const withoutFences = trimmed
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
+
+    const start = withoutFences.indexOf("[");
+    const end = withoutFences.lastIndexOf("]");
+    const candidate =
+      start !== -1 && end !== -1 && end > start
+        ? withoutFences.slice(start, end + 1)
+        : withoutFences;
+
+    return JSON.parse(candidate);
+  };
+
+  const normalizeGeneratedEntries = (payload: unknown, expectedCount: number): [string, string][] => {
+    if (!Array.isArray(payload)) {
+      throw new Error("Model nie zwrócił tablicy wpisów.");
+    }
+    if (payload.length !== expectedCount) {
+      throw new Error(`Model powinien zwrócić dokładnie ${expectedCount} wpisów.`);
+    }
+
+    return payload.map((item, idx) => {
+      if (!item || typeof item !== "object") {
+        throw new Error(`Niepoprawny format wpisu #${idx + 1}.`);
+      }
+      const obj = item as Record<string, unknown>;
+      const term = typeof obj.term === "string" ? obj.term.trim() : "";
+      const definition = typeof obj.definition === "string" ? obj.definition.trim() : "";
+
+      if (!term || !definition) {
+        throw new Error(`Wpis #${idx + 1} musi mieć hasło i definicję.`);
+      }
+
+      return [term, definition] as [string, string];
+    });
+  };
+
+  const handleGenerateFromSource = async () => {
+    const text = aiSourceText.trim() || (contextText || '').trim();
+    if (!text) {
+      toast.error("Wpisz treść źródłową.");
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const requestedCount = Number.isFinite(aiItemCount)
+        ? Math.max(1, Math.min(aiItemCount, 20))
+        : 1;
+      const modeLabel = aiOutputType === "translations"
+        ? "tłumaczenia"
+        : aiOutputType === "definitions"
+          ? "krótkie wyjaśnienia"
+          : "mieszane (tłumaczenia i krótkie wyjaśnienia)";
+      const userPrompt = `Wygeneruj słowniczek do szybkiej nauki (fiszki): ${modeLabel}.
+Każde "term" i "definition" ma być krótkie (najlepiej 1-6 słów), bez długich zdań i bez akapitów.
+Wygeneruj DOKŁADNIE ${requestedCount} wpisów. Zwróć WYŁĄCZNIE poprawny JSON (bez Markdown), w formacie tablicy ${requestedCount} obiektów:
+[
+  {
+    "term": "...",
+    "definition": "..."
+  }
+]
+
+Tekst źródłowy:
+"""
+${text}
+"""`;
+
+      const payload = {
+        systemPrompt: "Tworzysz krótkie tłumaczenia i wyjaśnienia do fiszek. Zwracasz tylko JSON.",
+        userPrompt,
+      };
+
+      const res = await fetch("/api/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        throw new Error("API error");
+      }
+
+      const raw = await res.text();
+      const parsed = extractJsonArray(raw);
+      const generatedEntries = normalizeGeneratedEntries(parsed, requestedCount);
+      const newDictionary = Object.fromEntries(generatedEntries);
+
+      onDictionaryChanged(newDictionary);
+      toast.success(`Wygenerowano ${requestedCount} wpisów.`);
+    } catch (err) {
+      console.error("Dictionary AI generation error:", err);
+      toast.error("Nie udało się wygenerować słowniczka. Spróbuj ponownie.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   // Check for game completion
   useEffect(() => {
@@ -367,6 +481,96 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
       {/* Dictionary View */}
       {view === "dictionaryView" && !isReadonly && (
         <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+          <div className="space-y-2 mb-6">
+            <button
+              type="button"
+              onClick={() => setIsAiOpen((v) => !v)}
+              aria-expanded={isAiOpen}
+              className={
+                "w-full text-left rounded-lg border px-4 py-3 transition-colors " +
+                (isAiOpen
+                  ? "border-orange-300 bg-orange-50"
+                  : "border-orange-200 bg-orange-50/60 hover:bg-orange-50")
+              }
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="font-semibold text-gray-900">Generuj z AI</div>
+                <div className="text-xs font-semibold text-orange-700">
+                  {isAiOpen ? "Ukryj" : "Rozwiń"}
+                </div>
+              </div>
+              <div className="mt-1 text-xs text-gray-600">
+                Wklej tekst źródłowy, a AI zaproponuje hasła i definicje.
+              </div>
+            </button>
+
+            {isAiOpen ? (
+              <>
+                <textarea
+                  value={aiSourceText}
+                  onChange={(e) => setAiSourceText(e.target.value)}
+                  placeholder="Wklej treść źródłową..."
+                  className="min-h-[120px] w-full rounded-md border border-gray-300 p-2 resize-y"
+                  disabled={isGenerating}
+                />
+                {!aiSourceText.trim() && (contextText || '').trim() && (
+                  <div className="text-xs text-gray-500">
+                    Brak tekstu — używam całego kontekstu z edytora.
+                  </div>
+                )}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <label className="text-xs font-semibold text-gray-700">
+                    Co generować
+                    <select
+                      value={aiOutputType}
+                      onChange={(e) => setAiOutputType(e.target.value as "translations" | "definitions" | "mixed")}
+                      disabled={isGenerating}
+                      className="ml-2 rounded-md border border-gray-300 px-2 py-1 text-sm"
+                    >
+                      <option value="translations">Tłumaczenia</option>
+                      <option value="definitions">Krótkie wyjaśnienia</option>
+                      <option value="mixed">Mieszane</option>
+                    </select>
+                  </label>
+                  <label className="text-xs font-semibold text-gray-700">
+                    Liczba wpisów
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={aiItemCount}
+                      onChange={(e) => {
+                        const nextValue = Number(e.target.value);
+                        if (!Number.isFinite(nextValue)) {
+                          setAiItemCount(1);
+                          return;
+                        }
+                        setAiItemCount(Math.max(1, Math.min(nextValue, 20)));
+                      }}
+                      disabled={isGenerating}
+                      className="ml-2 w-20 rounded-md border border-gray-300 px-2 py-1 text-sm"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateFromSource}
+                    disabled={isGenerating}
+                    className={`px-4 py-2 rounded-md text-white flex items-center gap-2 ${isGenerating ? "bg-gray-400" : "bg-orange-600 hover:bg-orange-700"}`}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <ProgressSpinner />
+                        Generowanie...
+                      </>
+                    ) : (
+                      "Wygeneruj"
+                    )}
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </div>
+
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">

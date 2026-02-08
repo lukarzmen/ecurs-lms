@@ -1,7 +1,9 @@
-import { LexicalEditor } from 'lexical';
+import { LexicalEditor, $getSelection, $isRangeSelection, $getRoot } from 'lexical';
 import * as React from 'react';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { INSERT_TASK_COMMAND } from '.';
+import toast from 'react-hot-toast';
+import ProgressSpinner from '../TextGeneratorPlugin/ProgressComponent';
 
 
 export function DoTaskDialog({
@@ -10,42 +12,363 @@ export function DoTaskDialog({
   activeEditor: LexicalEditor;
   onClose: () => void;
 }): JSX.Element {
-  const [task, setQuestion] = useState('');
-  const [hint, setHint] = useState(''); 
+  const [items, setItems] = useState<Array<{ task: string; hint: string }>>([
+    { task: '', hint: '' },
+  ]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const currentItem = items[currentIndex];
+  const hasValidItems = items.some((item) => item.task.trim() !== '');
+  const [isAiOpen, setIsAiOpen] = useState(false);
+  const [aiSourceText, setAiSourceText] = useState('');
+  const [aiItemCount, setAiItemCount] = useState(1);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isUsingFullContext, setIsUsingFullContext] = useState(false);
+
+  const refreshSelectionIntoSource = useCallback(() => {
+    activeEditor.getEditorState().read(() => {
+      const selection = $getSelection();
+      if ($isRangeSelection(selection)) {
+        setAiSourceText(selection.getTextContent());
+        setIsUsingFullContext(false);
+      } else {
+        const fullText = $getRoot().getTextContent();
+        setAiSourceText(fullText);
+        setIsUsingFullContext(Boolean(fullText.trim()));
+      }
+    });
+  }, [activeEditor]);
+
+  useEffect(() => {
+    activeEditor.getEditorState().read(() => {
+      const selection = $getSelection();
+      if ($isRangeSelection(selection)) {
+        const text = selection.getTextContent();
+        if (text.trim()) {
+          setAiSourceText(text);
+          setIsAiOpen(true);
+          setIsUsingFullContext(false);
+          return;
+        }
+      }
+      const fullText = $getRoot().getTextContent();
+      if (fullText.trim()) {
+        setAiSourceText(fullText);
+        setIsUsingFullContext(true);
+      }
+    });
+  }, [activeEditor]);
+
+  function extractJsonArray(text: string): unknown {
+    const trimmed = text.trim();
+    const withoutFences = trimmed
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
+
+    const start = withoutFences.indexOf("[");
+    const end = withoutFences.lastIndexOf("]");
+    const candidate =
+      start !== -1 && end !== -1 && end > start
+        ? withoutFences.slice(start, end + 1)
+        : withoutFences;
+
+    return JSON.parse(candidate);
+  }
+
+  function normalizeGeneratedItems(payload: unknown, expectedCount: number) {
+    if (!Array.isArray(payload)) {
+      throw new Error("Model nie zwrócił tablicy zadań.");
+    }
+    if (payload.length !== expectedCount) {
+      throw new Error(`Model powinien zwrócić dokładnie ${expectedCount} zadań.`);
+    }
+
+    return payload.map((item, idx) => {
+      if (!item || typeof item !== 'object') {
+        throw new Error(`Niepoprawny format zadania #${idx + 1}.`);
+      }
+      const obj = item as Record<string, unknown>;
+      const task = typeof obj.task === 'string' ? obj.task.trim() : '';
+      const hintValue = obj.hint;
+      const hintText =
+        hintValue === null || hintValue === undefined
+          ? ''
+          : typeof hintValue === 'string'
+            ? hintValue.trim()
+            : '';
+
+      if (!task) {
+        throw new Error(`Brak treści zadania #${idx + 1}.`);
+      }
+
+      return { task, hint: hintText };
+    });
+  }
+
+  const handleGenerateFromSource = async () => {
+    const text = aiSourceText.trim();
+    if (!text) {
+      toast.error('Podaj tekst źródłowy lub zaznacz fragment w edytorze.');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const requestedCount = Number.isFinite(aiItemCount)
+        ? Math.max(1, Math.min(aiItemCount, 20))
+        : 1;
+      const userPrompt = `Wygeneruj zestaw zadań: dokładnie ${requestedCount} elementów.
+Zwróć WYŁĄCZNIE poprawny JSON (bez Markdown), w formacie tablicy ${requestedCount} obiektów:
+[
+  {
+    "task": "...",
+    "hint": "opcjonalna wskazowka albo null"
+  }
+]
+
+Tekst źródłowy:
+"""
+${text}
+"""`;
+
+      const payload = {
+        systemPrompt: "Tworzysz krótkie zadania na podstawie tekstu. Zwracasz tylko JSON.",
+        userPrompt,
+      };
+
+      const res = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        throw new Error('API error');
+      }
+
+      const raw = await res.text();
+      const parsed = extractJsonArray(raw);
+      const generatedItems = normalizeGeneratedItems(parsed, requestedCount);
+
+      setItems(generatedItems);
+      setCurrentIndex(0);
+      toast.success(`Wygenerowano ${requestedCount} zadań.`);
+    } catch (err) {
+      console.error('DoTask AI generation error:', err);
+      toast.error('Nie udało się wygenerować zadań. Spróbuj ponownie.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const updateCurrentItem = (field: 'task' | 'hint', value: string) => {
+    setItems((prev) =>
+      prev.map((item, index) =>
+        index === currentIndex ? { ...item, [field]: value } : item
+      )
+    );
+  };
+
+  const handleAddItem = () => {
+    setItems((prev) => {
+      const next = [...prev, { task: '', hint: '' }];
+      setCurrentIndex(next.length - 1);
+      return next;
+    });
+  };
+
+  const handleRemoveItem = () => {
+    if (items.length <= 1) return;
+    setItems((prev) => {
+      const next = prev.filter((_, index) => index !== currentIndex);
+      const nextIndex = Math.min(currentIndex, next.length - 1);
+      setCurrentIndex(Math.max(0, nextIndex));
+      return next;
+    });
+  };
+
   const handleOnClick = () => {
-    activeEditor.dispatchCommand(INSERT_TASK_COMMAND, { task, hint });
+    const normalizedItems = items
+      .map((item) => ({
+        task: item.task.trim(),
+        hint: item.hint.trim() || null,
+      }))
+      .filter((item) => item.task !== '');
+    activeEditor.dispatchCommand(INSERT_TASK_COMMAND, {
+      items: normalizedItems,
+    });
     onClose();
   };
 
   return (
-    <div className="p-4">
-      <div className="grid grid-cols-[1fr_3fr] gap-4 items-center mb-4">
-        {/* Question */}
-        <label className="text-sm font-medium text-gray-700 text-left">Zadanie:</label>
+    <div className="p-4 space-y-4">
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={() => setIsAiOpen((v) => !v)}
+          aria-expanded={isAiOpen}
+          className={
+            "w-full text-left rounded-lg border px-4 py-3 transition-colors " +
+            (isAiOpen
+              ? "border-orange-300 bg-orange-50"
+              : "border-orange-200 bg-orange-50/60 hover:bg-orange-50")
+          }
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="font-semibold text-gray-900">Zadania z AI</div>
+            <div className="text-xs font-semibold text-orange-700">
+              {isAiOpen ? "Ukryj" : "Rozwiń"}
+            </div>
+          </div>
+          <div className="mt-1 text-xs text-gray-600">
+            Wklej tekst źródłowy lub pobierz zaznaczenie z edytora.
+          </div>
+        </button>
+
+        {isAiOpen ? (
+          <>
+            <textarea
+              value={aiSourceText}
+              onChange={(e) => {
+                setAiSourceText(e.target.value);
+                setIsUsingFullContext(false);
+              }}
+              placeholder="Wklej tekst źródłowy..."
+              className="min-h-[120px] w-full rounded-md border border-gray-300 p-2 resize-y"
+              disabled={isGenerating}
+            />
+            {isUsingFullContext && !aiSourceText.trim() && (
+              <div className="text-xs text-gray-500">
+                Brak tekstu — używam całego kontekstu z edytora.
+              </div>
+            )}
+            {isUsingFullContext && aiSourceText.trim() && (
+              <div className="text-xs text-gray-500">
+                Brak zaznaczenia — używam całego kontekstu z edytora.
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="text-xs font-semibold text-gray-700">
+                Liczba zadań
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={aiItemCount}
+                  onChange={(e) => {
+                    const nextValue = Number(e.target.value);
+                    if (!Number.isFinite(nextValue)) {
+                      setAiItemCount(1);
+                      return;
+                    }
+                    setAiItemCount(Math.max(1, Math.min(nextValue, 20)));
+                  }}
+                  disabled={isGenerating}
+                  className="ml-2 w-20 rounded-md border border-gray-300 px-2 py-1 text-sm"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={refreshSelectionIntoSource}
+                disabled={isGenerating}
+                className={`px-3 py-2 rounded-md border ${isGenerating ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"}`}
+              >
+                Wczytaj zaznaczenie
+              </button>
+              <button
+                type="button"
+                onClick={handleGenerateFromSource}
+                disabled={isGenerating}
+                className={`px-3 py-2 rounded-md text-white flex items-center gap-2 ${isGenerating ? "bg-gray-400" : "bg-orange-600 hover:bg-orange-700"}`}
+              >
+                {isGenerating ? (
+                  <>
+                    <ProgressSpinner />
+                    Generowanie...
+                  </>
+                ) : (
+                  "Wygeneruj"
+                )}
+              </button>
+            </div>
+          </>
+        ) : null}
+      </div>
+
+      <hr className="border-gray-200" />
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-semibold text-gray-700">
+          Element {currentIndex + 1} z {items.length}
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleRemoveItem}
+            disabled={items.length <= 1}
+            className="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+          >
+            Usun
+          </button>
+          <button
+            type="button"
+            onClick={handleAddItem}
+            className="px-3 py-1.5 rounded-md bg-orange-50 text-orange-700 hover:bg-orange-100"
+          >
+            Dodaj
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-[1fr_3fr] gap-4 items-start">
+        <label className="text-sm font-medium text-gray-700 text-left pt-2">Zadanie:</label>
         <textarea
-          value={task}
-          onChange={(e) => setQuestion(e.target.value)}
+          value={currentItem.task}
+          onChange={(e) => updateCurrentItem('task', e.target.value)}
           rows={6}
-          className="w-full border border-gray-300 rounded-md p-2"
-          placeholder="Zadanie"
+          className="w-full border border-gray-300 rounded-md p-2 resize-y min-h-[140px]"
+          placeholder="Wpisz treść zadania"
         />
-         {/* Explanation */}
-        <label className="text-sm font-medium text-gray-700 text-left">Wskazówki:</label>
+        <label className="text-sm font-medium text-gray-700 text-left pt-2">Wskazowka:</label>
         <textarea
-          value={hint}
-          onChange={(e) => setHint(e.target.value)}
-          className="w-full border border-gray-300 rounded-md p-2"
-          placeholder="Wpisz wskazówki (opcjonalnie)"
+          value={currentItem.hint}
+          onChange={(e) => updateCurrentItem('hint', e.target.value)}
+          rows={4}
+          className="w-full border border-gray-300 rounded-md p-2 resize-y min-h-[100px]"
+          placeholder="Wpisz wskazowke (opcjonalnie)"
         />
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+            disabled={currentIndex === 0}
+            className="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+          >
+            Wstecz
+          </button>
+          <button
+            type="button"
+            onClick={() => setCurrentIndex((prev) => Math.min(items.length - 1, prev + 1))}
+            disabled={currentIndex >= items.length - 1}
+            className="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+          >
+            Dalej
+          </button>
+        </div>
+        <div className="text-xs text-gray-500">Kreator elementu</div>
       </div>
 
       <div className="flex justify-end space-x-4">
         {/* Confirm Button */}
         <button
-          disabled={task.trim() === ''}
+          disabled={!hasValidItems}
           onClick={handleOnClick}
           className={`px-4 py-2 rounded-md text-white ${
-            task.trim() === ''
+            !hasValidItems
               ? 'bg-gray-400'
               : 'bg-orange-600 hover:bg-orange-700'
           }`}

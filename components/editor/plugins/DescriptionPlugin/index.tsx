@@ -20,15 +20,28 @@ function DefinitionModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (definition: string) => void;
+  onSubmit: (term: string, definition: string) => void;
   selectedText: string;
 }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [term, setTerm] = useState("");
   const [definition, setDefinition] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      setTerm(selectedText);
+    }
+  }, [isOpen, selectedText]);
   
   const handleSubmit = () => {
-    if (definition.trim()) {
-      onSubmit(definition.trim());
+    const trimmedTerm = term.trim();
+    const trimmedDefinition = definition.trim();
+    if (!trimmedTerm) {
+      toast.error("Hasło nie może być puste.");
+      return;
+    }
+    if (trimmedDefinition) {
+      onSubmit(trimmedTerm, trimmedDefinition);
       setDefinition("");
       onClose();
     } else {
@@ -42,6 +55,11 @@ function DefinitionModal({
   };
   
   const handleGenerateAI = () => {
+    const trimmedTerm = term.trim();
+    if (!trimmedTerm) {
+      toast.error("Hasło nie może być puste.");
+      return;
+    }
     setIsLoading(true);
     fetch('/api/tasks', {
       method: 'POST',
@@ -50,7 +68,7 @@ function DefinitionModal({
       },
       body: JSON.stringify({
         systemPrompt: "Jesteś ekspertem w danej dziedzinie. Wyjaśnij znaczenie w 2-3 zdaniach. Bądź zwięzły i precyzyjny.",
-        userPrompt: `Napisz definicję dla słowa "${selectedText}".`,
+        userPrompt: `Napisz definicję dla słowa "${trimmedTerm}".`,
       }),
     })
       .then((response) => response.text())
@@ -93,6 +111,17 @@ function DefinitionModal({
 
         {/* Content */}
         <div className="px-6 py-4">
+          <label className="block text-sm font-semibold text-foreground mb-2">
+            Hasło
+          </label>
+          <input
+            className="w-full p-3 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:border-primary bg-background font-medium text-foreground transition-all duration-200"
+            placeholder="Wpisz hasło"
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            disabled={isLoading}
+          />
+          <div className="h-4" />
           <label className="block text-sm font-semibold text-foreground mb-2">
             Definicja
           </label>
@@ -180,11 +209,11 @@ export default function DescriptionPlugin(): JSX.Element | null {
     );
   }, [editor]);
 
-  const handleModalSubmit = (definition: string) => {
+  const handleModalSubmit = (term: string, definition: string) => {
     editor.update(() => {
       const selection = $getSelection();
       if ($isRangeSelection(selection)) {
-        const definitionNode = new DescriptionNode(selectedText, definition);
+        const definitionNode = new DescriptionNode(term, definition);
         selection.insertNodes([definitionNode]);
       }
     });

@@ -7,7 +7,6 @@ import {
   COMMAND_PRIORITY_LOW, 
   createCommand, 
   LexicalCommand, 
-  $insertNodes, 
   LexicalNode, 
   ElementNode,
   $getNodeByKey, // Added import
@@ -107,7 +106,9 @@ export function GenerateDictionaryPlugin() {
         const paragraphToInsertKey = paragraphToInsert.getKey();
 
         if ($isRangeSelection(selection)) {
-          selection.insertNodes([paragraphToInsert]);
+          const anchorNode = selection.anchor.getNode();
+          const topLevelElement = anchorNode.getTopLevelElementOrThrow();
+          topLevelElement.insertAfter(paragraphToInsert);
         } else {
           const root = $getRoot();
           root.append(paragraphToInsert);

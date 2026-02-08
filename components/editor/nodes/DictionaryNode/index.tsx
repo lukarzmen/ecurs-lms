@@ -1,6 +1,7 @@
 import {
   $applyNodeReplacement,
   $getNodeByKey,
+  $getRoot,
   DecoratorNode,
   DOMConversionMap,
   DOMConversionOutput,
@@ -248,12 +249,17 @@ export class DictionaryNode extends DecoratorNode<JSX.Element> implements ToComp
 
   decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element { // Add editor, config
     const isReadonly = !editor.isEditable() || !this.__isEditable;
+    let contextText = '';
+    editor.getEditorState().read(() => {
+      contextText = $getRoot().getTextContent();
+    });
 
     return (
         <DictionaryComponent
         isReadonly={isReadonly}
         onDictionaryChanged={(dict) => this.handleDictionaryChanged(dict, editor)}
         dictionary={this.__dictionaryData}
+        contextText={contextText}
         // Pass bound update method
         onComplete={(isCorrect) => this.setCompleted(isCorrect, editor)} initialCompleted={false}        />
     );
