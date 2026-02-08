@@ -34,7 +34,7 @@ export function InsertTodoDialog({
   };
 
   return (
-    <div className="p-4 space-y-4 max-w-lg mx-auto">
+    <div className="p-4 space-y-4 w-full max-w-lg md:max-w-none md:w-[820px] lg:w-[980px] mx-auto">
       <div className="mb-2 text-lg font-bold text-orange-700">Nowa lista zadań</div>
       <label className="block text-sm font-medium text-gray-700 mb-1">Tytuł</label>
       <input
@@ -50,9 +50,9 @@ export function InsertTodoDialog({
           <textarea
             value={newText}
             onChange={(e) => setNewText(e.target.value)}
-            className="w-full border border-gray-300 rounded-md p-2 resize-y"
+            className="w-full border border-gray-300 rounded-md p-2 resize-y min-h-[160px]"
             placeholder="Nowe zadanie..."
-            rows={4}
+            rows={6}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAddItem(); } }}
           />
           <div className="flex justify-end">
