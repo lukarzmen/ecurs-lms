@@ -5,8 +5,8 @@ import {$generateHtmlFromNodes} from '@lexical/html';
 import {useCallback, useEffect, useMemo} from 'react';
 
 export type ExportHandlers = {
-  exportHtml: () => void;
-  exportPdf: () => void;
+  exportHtml: (courseName?: string, moduleName?: string) => void;
+  exportPdf: (courseName?: string, moduleName?: string) => void;
 };
 
 export default function ExportBridgePlugin({
@@ -18,6 +18,14 @@ export default function ExportBridgePlugin({
 }): null {
   const [editor] = useLexicalComposerContext();
 
+  const generateFileName = useCallback((courseName?: string, moduleName?: string) => {
+    if (courseName && moduleName) {
+      const sanitize = (str: string) => str.replace(/[^a-z0-9_-]/gi, '_');
+      return `${sanitize(courseName)}_${sanitize(moduleName)}`;
+    }
+    return fileBaseName;
+  }, [fileBaseName]);
+
   const getHtmlFromEditor = useCallback(() => {
     let html = '';
     editor.getEditorState().read(() => {
@@ -27,24 +35,26 @@ export default function ExportBridgePlugin({
   }, [editor]);
 
   const handlers = useMemo<ExportHandlers>(() => {
-    const exportHtml = () => {
+    const exportHtml = (courseName?: string, moduleName?: string) => {
       const bodyHtml = getHtmlFromEditor();
-      const htmlDocument = `<!doctype html><html lang="pl"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>Eksport</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;}img{max-width:100%;height:auto;}table{width:100%;margin:12px 0;border:1px solid rgba(0,0,0,0.15);border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden;}th,td{padding:8px 10px;vertical-align:top;border-right:1px solid rgba(0,0,0,0.12);border-bottom:1px solid rgba(0,0,0,0.12);}th:last-child,td:last-child{border-right:0;}tr:last-child td{border-bottom:0;}th{background:rgba(0,0,0,0.06);font-weight:700;text-align:left;}tbody tr:nth-child(even) td{background:rgba(0,0,0,0.02);}</style></head><body>${bodyHtml}</body></html>`;
+      const fileName = generateFileName(courseName, moduleName);
+      const htmlDocument = `<!doctype html><html lang="pl"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>${fileName}</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;}img{max-width:100%;height:auto;}table{width:100%;margin:12px 0;border:1px solid rgba(0,0,0,0.15);border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden;}th,td{padding:8px 10px;vertical-align:top;border-right:1px solid rgba(0,0,0,0.12);border-bottom:1px solid rgba(0,0,0,0.12);}th:last-child,td:last-child{border-right:0;}tr:last-child td{border-bottom:0;}th{background:rgba(0,0,0,0.06);font-weight:700;text-align:left;}tbody tr:nth-child(even) td{background:rgba(0,0,0,0.02);}</style></head><body>${bodyHtml}</body></html>`;
 
       const blob = new Blob([htmlDocument], {type: 'text/html;charset=utf-8'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${fileBaseName}.html`;
+      a.download = `${fileName}.html`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
     };
 
-    const exportPdf = () => {
+    const exportPdf = (courseName?: string, moduleName?: string) => {
       const bodyHtml = getHtmlFromEditor();
-      const htmlDocument = `<!doctype html><html lang="pl"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>Eksport PDF</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;}img{max-width:100%;height:auto;}table{width:100%;margin:12px 0;border:1px solid rgba(0,0,0,0.15);border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden;}th,td{padding:8px 10px;vertical-align:top;border-right:1px solid rgba(0,0,0,0.12);border-bottom:1px solid rgba(0,0,0,0.12);}th:last-child,td:last-child{border-right:0;}tr:last-child td{border-bottom:0;}th{background:rgba(0,0,0,0.06);font-weight:700;text-align:left;}tbody tr:nth-child(even) td{background:rgba(0,0,0,0.02);}@media print{body{margin:0;}}</style></head><body>${bodyHtml}<script>window.addEventListener('load',()=>{setTimeout(()=>{try{window.focus();window.print();}catch(e){}},0)},{once:true});</script></body></html>`;
+      const fileName = generateFileName(courseName, moduleName);
+      const htmlDocument = `<!doctype html><html lang="pl"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>${fileName}</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;}img{max-width:100%;height:auto;}table{width:100%;margin:12px 0;border:1px solid rgba(0,0,0,0.15);border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden;}th,td{padding:8px 10px;vertical-align:top;border-right:1px solid rgba(0,0,0,0.12);border-bottom:1px solid rgba(0,0,0,0.12);}th:last-child,td:last-child{border-right:0;}tr:last-child td{border-bottom:0;}th{background:rgba(0,0,0,0.06);font-weight:700;text-align:left;}tbody tr:nth-child(even) td{background:rgba(0,0,0,0.02);}@media print{body{margin:0;}}</style></head><body>${bodyHtml}<script>window.addEventListener('load',()=>{setTimeout(()=>{try{window.focus();window.print();}catch(e){}},0)},{once:true});</script></body></html>`;
 
       const isProbablyMobile =
         (typeof window !== 'undefined' &&
@@ -107,7 +117,7 @@ export default function ExportBridgePlugin({
     };
 
     return {exportHtml, exportPdf};
-  }, [fileBaseName, getHtmlFromEditor]);
+  }, [generateFileName, getHtmlFromEditor]);
 
   useEffect(() => {
     if (onReady) {

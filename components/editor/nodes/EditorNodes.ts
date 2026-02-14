@@ -45,6 +45,8 @@ import { DescriptionNode } from './DictionaryNode/DescriptionNode';
 import { SelectAnswerNode } from './SelectAnserNode';
 import { DoTaskNode } from './DoTaskNode/DoTask';
 import { TodoNode } from './TodoNode/TodoNode';
+import { OrderingNode } from './OrderingNode/OrderingNode';
+import { TrueFalseNode } from './TrueFalseNode/TrueFalseNode';
 
 const EditorNodes: Array<Klass<LexicalNode>> = [
   HeadingNode,
@@ -88,6 +90,8 @@ const EditorNodes: Array<Klass<LexicalNode>> = [
   DictionaryKeywordNode,
   QuestionAnswerNode,
   DoTaskNode,
+  OrderingNode,
+  TrueFalseNode,
 ];
 
 export default EditorNodes;

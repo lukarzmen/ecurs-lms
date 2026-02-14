@@ -79,6 +79,7 @@ import {
   blockTypeToBlockName,
   useToolbarState,
 } from '../../context/ToolbarContext';
+import {useCourseContext} from '../../context/CourseContext';
 import useModal from '../../hooks/useModal';
 import catTypingGif from '../../images/cat-typing.gif';
 import {$createStickyNode} from '../../nodes/StickyNode';
@@ -113,6 +114,8 @@ import {TextToVoiceDialog} from '../../TextToVoicePlugin';
 import {InsertSelectAnswerDialog} from '../SelectAnswerPlugin/InsertSelectAnswerDialog';
 import {DoTaskDialog} from '../TaskPlugin/DoTaskDialog';
 import {InsertTodoDialog} from '../TodoPlugin/InsertTodoDialog';
+import {InsertOrderingDialog} from '../OrderingPlugin/InsertOrderingDialog';
+import {InsertTrueFalseDialog} from '../TrueFalsePlugin/InsertTrueFalseDialog';
 import {
   clearFormatting,
   formatBulletList,
@@ -594,6 +597,15 @@ export default function NewToolbarPlugin({
   const [isEditable, setIsEditable] = useState(() => editor.isEditable());
   const [isEditorEmpty, setIsEditorEmpty] = useState(true);
   const {toolbarState, updateToolbarState} = useToolbarState();
+  const {module} = useCourseContext();
+
+  const generateFileName = useCallback(() => {
+    if (module?.courseName && module?.moduleName) {
+      const sanitize = (str: string) => str.replace(/[^a-z0-9_-]/gi, '_');
+      return `${sanitize(module.courseName)}_${sanitize(module.moduleName)}`;
+    }
+    return 'modul';
+  }, [module]);
 
   const dispatchToolbarCommand = <T extends LexicalCommand<unknown>>(
     command: T,
@@ -994,22 +1006,24 @@ export default function NewToolbarPlugin({
 
   const exportHtml = useCallback(() => {
     const bodyHtml = getHtmlFromEditor();
-    const htmlDocument = `<!doctype html><html lang="pl"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>Eksport</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;}img{max-width:100%;height:auto;}table{width:100%;margin:12px 0;border:1px solid rgba(0,0,0,0.15);border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden;}th,td{padding:8px 10px;vertical-align:top;border-right:1px solid rgba(0,0,0,0.12);border-bottom:1px solid rgba(0,0,0,0.12);}th:last-child,td:last-child{border-right:0;}tr:last-child td{border-bottom:0;}th{background:rgba(0,0,0,0.06);font-weight:700;text-align:left;}tbody tr:nth-child(even) td{background:rgba(0,0,0,0.02);}</style></head><body>${bodyHtml}</body></html>`;
+    const fileName = generateFileName();
+    const htmlDocument = `<!doctype html><html lang="pl"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>${fileName}</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;}img{max-width:100%;height:auto;}table{width:100%;margin:12px 0;border:1px solid rgba(0,0,0,0.15);border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden;}th,td{padding:8px 10px;vertical-align:top;border-right:1px solid rgba(0,0,0,0.12);border-bottom:1px solid rgba(0,0,0,0.12);}th:last-child,td:last-child{border-right:0;}tr:last-child td{border-bottom:0;}th{background:rgba(0,0,0,0.06);font-weight:700;text-align:left;}tbody tr:nth-child(even) td{background:rgba(0,0,0,0.02);}</style></head><body>${bodyHtml}</body></html>`;
 
     const blob = new Blob([htmlDocument], {type: 'text/html;charset=utf-8'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'modul.html';
+    a.download = `${generateFileName()}.html`;
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-  }, [getHtmlFromEditor]);
+  }, [getHtmlFromEditor, generateFileName]);
 
   const exportPdf = useCallback(() => {
     const bodyHtml = getHtmlFromEditor();
-    const htmlDocument = `<!doctype html><html lang="pl"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>Eksport PDF</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;}img{max-width:100%;height:auto;}table{width:100%;margin:12px 0;border:1px solid rgba(0,0,0,0.15);border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden;}th,td{padding:8px 10px;vertical-align:top;border-right:1px solid rgba(0,0,0,0.12);border-bottom:1px solid rgba(0,0,0,0.12);}th:last-child,td:last-child{border-right:0;}tr:last-child td{border-bottom:0;}th{background:rgba(0,0,0,0.06);font-weight:700;text-align:left;}tbody tr:nth-child(even) td{background:rgba(0,0,0,0.02);}@media print{body{margin:0;}}</style></head><body>${bodyHtml}<script>window.addEventListener('load',()=>{setTimeout(()=>{try{window.focus();window.print();}catch(e){}},0)},{once:true});</script></body></html>`;
+    const fileName = generateFileName();
+    const htmlDocument = `<!doctype html><html lang="pl"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>${fileName}</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;}img{max-width:100%;height:auto;}table{width:100%;margin:12px 0;border:1px solid rgba(0,0,0,0.15);border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden;}th,td{padding:8px 10px;vertical-align:top;border-right:1px solid rgba(0,0,0,0.12);border-bottom:1px solid rgba(0,0,0,0.12);}th:last-child,td:last-child{border-right:0;}tr:last-child td{border-bottom:0;}th{background:rgba(0,0,0,0.06);font-weight:700;text-align:left;}tbody tr:nth-child(even) td{background:rgba(0,0,0,0.02);}@media print{body{margin:0;}}</style></head><body>${bodyHtml}<script>window.addEventListener('load',()=>{setTimeout(()=>{try{window.focus();window.print();}catch(e){}},0)},{once:true});</script></body></html>`;
 
     const isProbablyMobile =
       (typeof window !== 'undefined' &&
@@ -1069,7 +1083,7 @@ export default function NewToolbarPlugin({
 
     iframe.srcdoc = htmlDocument;
     document.body.appendChild(iframe);
-  }, [getHtmlFromEditor]);
+  }, [getHtmlFromEditor, generateFileName]);
 
   return (
     <div className="toolbar">
@@ -1594,6 +1608,26 @@ export default function NewToolbarPlugin({
           className="item">
           <i className="icon quiz" />
           <span className="text">Quiz</span>
+        </DropDownItem>
+        <DropDownItem
+          onClick={() => {
+            showModal('Ułóż kolejność', (onClose) => (
+              <InsertOrderingDialog activeEditor={activeEditor} onClose={onClose} />
+            ));
+          }}
+          className="item">
+          <i className="icon number" />
+          <span className="text">Ułóż kolejność</span>
+        </DropDownItem>
+        <DropDownItem
+          onClick={() => {
+            showModal('Prawda / fałsz', (onClose) => (
+              <InsertTrueFalseDialog activeEditor={activeEditor} onClose={onClose} />
+            ));
+          }}
+          className="item">
+          <i className="icon question" />
+          <span className="text">Prawda / fałsz</span>
         </DropDownItem>
         <DropDownItem
           onClick={() => {

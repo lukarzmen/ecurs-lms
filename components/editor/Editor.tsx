@@ -19,7 +19,7 @@ import {RichTextPlugin} from '@lexical/react/LexicalRichTextPlugin';
 import {TabIndentationPlugin} from '@lexical/react/LexicalTabIndentationPlugin';
 import {TablePlugin} from '@lexical/react/LexicalTablePlugin';
 import * as React from 'react';
-import {useEffect, useState} from 'react';
+import {useCallback, useEffect, useState} from 'react';
 import TableCellActionMenuPlugin from './plugins/TableActionMenuPlugin';
 import TableHoverActionsPlugin from './plugins/TableHoverActionsPlugin';
 import {useSettings} from './context/SettingsContext';
@@ -61,6 +61,8 @@ import SelectAnswerPlugin from './plugins/SelectAnswerPlugin';
 import TaskPlugin from './plugins/TaskPlugin';
 import { $getRoot, $isElementNode, LexicalNode } from 'lexical';
 import { TodoPlugin } from './plugins/TodoPlugin';
+import OrderingPlugin from './plugins/OrderingPlugin';
+import TrueFalsePlugin from './plugins/TrueFalsePlugin';
 import NewToolbarPlugin from './plugins/ToolbarPlugin';
 import { CAN_USE_DOM } from './shared/canUseDOM';
 import FloatingLinkEditorPlugin from './plugins/FloatingLinkEditorPlugin';
@@ -142,11 +144,11 @@ export default function Editor( {
   const [isSmallWidthViewport, setIsSmallWidthViewport] =
     useState<boolean>(false);
 
-  const onRef = (_floatingAnchorElem: HTMLDivElement) => {
+  const onRef = useCallback((_floatingAnchorElem: HTMLDivElement) => {
     if (_floatingAnchorElem !== null) {
       setFloatingAnchorElem(_floatingAnchorElem);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const updateViewPortWidth = () => {
@@ -301,6 +303,8 @@ export default function Editor( {
         <TextGeneratorPlugin />
         <QuizPlugin />
         <TodoPlugin />
+        <OrderingPlugin />
+        <TrueFalsePlugin />
         <GenerateDictionaryPlugin />
         <TaskPlugin/>
         <QuestionAnswerPlugin />

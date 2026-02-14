@@ -253,7 +253,7 @@ const ChapterIdPage = () => {
                         variant="outline"
                         size="sm"
                         disabled={!exportHandlers}
-                        onClick={() => exportHandlers?.exportHtml()}>
+                        onClick={() => exportHandlers?.exportHtml(chapterData.course.title, chapterData.module.title)}>
                         Pobierz HTML
                     </Button>
                     <Button
@@ -261,7 +261,7 @@ const ChapterIdPage = () => {
                         variant="outline"
                         size="sm"
                         disabled={!exportHandlers}
-                        onClick={() => exportHandlers?.exportPdf()}>
+                        onClick={() => exportHandlers?.exportPdf(chapterData.course.title, chapterData.module.title)}>
                         Pobierz PDF
                     </Button>
                 </div>
