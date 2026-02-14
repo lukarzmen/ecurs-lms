@@ -186,7 +186,7 @@ ${text}
   };
 
   return (
-    <div className="p-4 space-y-4 w-full max-w-lg md:max-w-none md:w-[820px] lg:w-[980px] mx-auto">
+    <div className="p-4 space-y-4 w-full max-w-lg md:max-w-none md:w-[820px] lg:w-[980px] mx-auto max-h-[80vh] overflow-y-auto">
       <div className="mb-2 text-lg font-bold text-orange-700">Nowa kolejność</div>
 
       <div className="space-y-2">

@@ -77,6 +77,7 @@ export function DoTaskDialog({
 
   function normalizeGeneratedItems(payload: unknown, expectedCount: number) {
     if (!Array.isArray(payload)) {
+
       throw new Error("Model nie zwrócił tablicy zadań.");
     }
     if (payload.length !== expectedCount) {
@@ -203,7 +204,7 @@ ${text}
   };
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4 max-h-[80vh] overflow-y-auto">
       <div className="space-y-2">
         <button
           type="button"

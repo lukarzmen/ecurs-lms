@@ -209,7 +209,7 @@ ${text}
   };
 
   return (
-    <div className="p-4 space-y-4 max-w-2xl mx-auto">
+    <div className="p-4 space-y-4 max-w-2xl mx-auto max-h-[80vh] overflow-y-auto">
       <div className="space-y-2">
         <button
           type="button"
