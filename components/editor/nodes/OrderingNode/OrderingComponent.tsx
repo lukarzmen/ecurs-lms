@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, CheckCircle2, Eye } from "lucide-react";
+import { ArrowDown, ArrowUp, CheckCircle2, Eye, XCircle } from "lucide-react";
 
 export interface OrderingItem {
   id: string;
@@ -50,6 +50,8 @@ export default function OrderingComponent({
   const correctItems = useMemo(() => normalizeItems(items), [items]);
   const [currentOrder, setCurrentOrder] = useState<OrderingItem[]>([]);
   const [revealed, setRevealed] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
   const onCompleteRef = useRef(onComplete);
   const lastReportedRef = useRef<boolean | null>(null);
 
@@ -61,6 +63,8 @@ export default function OrderingComponent({
     if (correctItems.length === 0) {
       setCurrentOrder([]);
       setRevealed(false);
+      setChecked(false);
+      setShowCorrectAnswer(false);
       return;
     }
 
@@ -69,6 +73,7 @@ export default function OrderingComponent({
       : shuffleItems(correctItems);
     setCurrentOrder(nextOrder);
     setRevealed(initialCompleted);
+    setChecked(initialCompleted);
   }, [correctItems, initialCompleted]);
 
   const isCorrectNow = useMemo(
@@ -84,13 +89,14 @@ export default function OrderingComponent({
       }
       return;
     }
-    if (lastReportedRef.current !== isCorrectNow) {
+    // Only report completion after checking
+    if (checked && lastReportedRef.current !== isCorrectNow) {
       onCompleteRef.current(isCorrectNow);
       lastReportedRef.current = isCorrectNow;
     }
-  }, [correctItems.length, isCorrectNow]);
+  }, [correctItems.length, isCorrectNow, checked]);
 
-  const isLocked = initialCompleted || revealed || isCorrectNow;
+  const isLocked = initialCompleted || revealed || (checked && isCorrectNow);
 
   const moveItem = (from: number, to: number) => {
     setCurrentOrder((prev) => {
@@ -100,11 +106,32 @@ export default function OrderingComponent({
       updated.splice(to, 0, moved);
       return updated;
     });
+    // Reset checked state when user makes changes
+    if (checked && !initialCompleted && !revealed) {
+      setChecked(false);
+      // Report that the answer is no longer checked/verified
+      onCompleteRef.current(false);
+      lastReportedRef.current = false;
+    }
+    // Hide correct answer when user makes changes
+    if (showCorrectAnswer) {
+      setShowCorrectAnswer(false);
+    }
+  };
+
+  const handleCheck = () => {
+    setChecked(true);
+  };
+
+  const toggleCorrectAnswer = () => {
+    setShowCorrectAnswer((prev) => !prev);
   };
 
   const revealAnswer = () => {
     setCurrentOrder(correctItems);
     setRevealed(true);
+    setChecked(true);
+    setShowCorrectAnswer(false);
     onCompleteRef.current(true);
     lastReportedRef.current = true;
   };
@@ -122,10 +149,16 @@ export default function OrderingComponent({
                 Ustaw elementy w poprawnej kolejności
               </h3>
             </div>
-            {isCorrectNow && (
+            {checked && isCorrectNow && (
               <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
                 <CheckCircle2 className="h-4 w-4" />
                 Poprawnie
+              </div>
+            )}
+            {checked && !isCorrectNow && (
+              <div className="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-sm font-semibold text-red-700">
+                <XCircle className="h-4 w-4" />
+                Niepoprawnie
               </div>
             )}
           </div>
@@ -173,21 +206,58 @@ export default function OrderingComponent({
           )}
 
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={revealAnswer}
-              disabled={isLocked || correctItems.length === 0}
-              className="inline-flex items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 transition hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <Eye className="h-4 w-4" />
-              Pokaż poprawną kolejność
-            </button>
-            {!isCorrectNow && !revealed && (
+            {!isLocked && (
+              <button
+                type="button"
+                onClick={handleCheck}
+                disabled={correctItems.length === 0}
+                className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Sprawdź
+              </button>
+            )}
+            {!revealed && (
+              <button
+                type="button"
+                onClick={toggleCorrectAnswer}
+                disabled={correctItems.length === 0}
+                className="inline-flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Eye className="h-4 w-4" />
+                {showCorrectAnswer ? "Ukryj poprawne" : "Pokaż poprawne"}
+              </button>
+            )}
+            {!isLocked && (
               <div className="text-xs text-muted-foreground">
-                Ułóż elementy we właściwej kolejności.
+                Ułóż elementy we właściwej kolejności, a następnie kliknij Sprawdź.
               </div>
             )}
           </div>
+
+          {showCorrectAnswer && correctItems.length > 0 && (
+            <div className="rounded-lg border border-green-200 bg-green-50/50 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle2 className="h-5 w-5 text-green-700" />
+                <div className="font-semibold text-green-900">Poprawna kolejność:</div>
+              </div>
+              <div className="space-y-2">
+                {correctItems.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 rounded-md bg-white px-4 py-2"
+                  >
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-green-100 text-sm font-semibold text-green-800">
+                      {index + 1}
+                    </div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {item.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
