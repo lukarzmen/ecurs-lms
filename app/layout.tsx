@@ -60,6 +60,9 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  other: {
+    'fb:app_id': '580840648168709',
+  },
 };
 
 export default async function RootLayout({
