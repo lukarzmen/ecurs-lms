@@ -60,9 +60,6 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  other: {
-    'fb:app_id': '580840648168709',
-  },
 };
 
 export default async function RootLayout({
@@ -81,6 +78,9 @@ export default async function RootLayout({
   return (
     <ClerkProvider localization={clerkLocalization}>
       <html lang={htmlLang}>
+        <head>
+          <meta property="fb:app_id" content="580840648168709" />
+        </head>
         <body className={inter.className}>
           {isTestEnvironment && (
             <div className="bg-yellow-400 text-black text-center py-2 px-4 font-bold text-sm fixed bottom-0 left-0 right-0 z-[9999] shadow-md">
