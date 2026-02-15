@@ -24,21 +24,41 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://ecurs.pl'),
   title: "Ecurs - nowoczesna edukacja",
-  description: "Ecurs to innowacyjna platforma edukacyjna, która oferuje tworzenie i uczestnictwo w interaktywnych wspieranych przez sztuczna inteligencję.",
+  description: "Ecurs to innowacyjna platforma edukacyjna, która oferuje tworzenie i uczestnictwo w interaktywnych kursach wspieranych przez sztuczną inteligencję.",
   openGraph: {
     title: 'Ecurs - nowoczesna edukacja',
-    description: 'Zacznij tworzyć interaktywne kursy online z Ecurs.',
-    url: 'http://ecurs.pl/',
+    description: 'Zacznij tworzyć interaktywne kursy online z Ecurs. Platforma wspierana przez AI.',
+    url: 'https://ecurs.pl/',
+    siteName: 'Ecurs',
     type: 'website',
+    locale: 'pl_PL',
     images: [
       {
-        url: 'http://ecurs.pl/demo4.png',
+        url: '/demo4.png',
         width: 1200,
         height: 630,
         alt: 'Ecurs - nowoczesna edukacja',
       },
-    ]
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Ecurs - nowoczesna edukacja',
+    description: 'Zacznij tworzyć interaktywne kursy online z Ecurs. Platforma wspierana przez AI.',
+    images: ['/demo4.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 
