@@ -258,6 +258,7 @@ export async function POST(
         // Calculate price with promo code
         let netPrice = Number(price?.amount ?? 0); // Cena netto z bazy
         let discount = 0;
+        let appliedPromoCodeId: number | null = null;
         const currency = price?.currency || "pln";
         const isRecurring = price?.isRecurring;
         const interval = price?.interval;
@@ -274,10 +275,11 @@ export async function POST(
                         code: promoCode,
                         id: { in: joins.map(j => j.promoCodeId) },
                     },
-                    select: { discount: true }
+                    select: { id: true, discount: true }
                 });
                 if (promo && typeof promo.discount === "number" && promo.discount > 0) {
                     discount = promo.discount;
+                    appliedPromoCodeId = promo.id;
                     netPrice = netPrice * (1 - discount / 100);
                 }
             }
@@ -441,6 +443,7 @@ export async function POST(
                     userId: String(user.id),
                     email: email,
                     promoCode: promoCode,
+                    ...(appliedPromoCodeId ? { promoCodeId: appliedPromoCodeId.toString() } : {}),
                     discount: discount.toString(),
                     mode: "subscription",
                     type: paymentType,
@@ -460,6 +463,7 @@ export async function POST(
                         userId: user.id,
                         email: email,
                         promoCode: promoCode,
+                        ...(appliedPromoCodeId ? { promoCodeId: appliedPromoCodeId.toString() } : {}),
                         discount: discount.toString(),
                         mode: "subscription",
                         type: paymentType,
@@ -612,6 +616,7 @@ export async function POST(
                     userId: String(user.id),
                     email: email,
                     promoCode: promoCode,
+                    ...(appliedPromoCodeId ? { promoCodeId: appliedPromoCodeId.toString() } : {}),
                     discount: discount.toString(),
                     mode: "payment",
                     type: paymentType,
@@ -629,6 +634,7 @@ export async function POST(
                         userId: user.id,
                         email: email,
                         promoCode: promoCode,
+                        ...(appliedPromoCodeId ? { promoCodeId: appliedPromoCodeId.toString() } : {}),
                         discount: discount.toString(),
                         type: paymentType,
                         teacherAccountId: paymentStripeAccountId,

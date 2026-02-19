@@ -267,7 +267,7 @@ export async function POST(req: Request) {
         if (stripeObject.object === 'invoice' || additionalData?.invoice) {
             const invoiceData = additionalData?.invoice || stripeObject;
             baseData.invoiceId = invoiceData.id;
-            baseData.amount = invoiceData.total;
+            baseData.amount = invoiceData.subtotal_excluding_tax ?? invoiceData.subtotal ?? invoiceData.total;
             baseData.currency = invoiceData.currency;
             
             // Add subscription data from invoice if available
@@ -288,7 +288,8 @@ export async function POST(req: Request) {
         // Add checkout session specific data
         if (stripeObject.object === 'checkout.session') {
             baseData.paymentStatus = stripeObject.payment_status;
-            baseData.amount = stripeObject.amount_total;
+            // Prefer subtotal (before taxes) to keep DB amount consistent with NET pricing stored in price tables
+            baseData.amount = stripeObject.amount_subtotal ?? stripeObject.amount_total;
             baseData.customerEmail = stripeObject.customer_email || stripeObject.customer_details?.email;
             
             // Add subscription data from session if available
@@ -461,6 +462,12 @@ export async function POST(req: Request) {
                 metadata: stripeData.metadata,
                 stripeCustomerId: stripeData.stripeCustomerId,
             });
+
+            // Persist applied promo code (internal PromoCode id) if provided in Stripe metadata
+            const promoCodeIdRaw = stripeData?.metadata?.promoCodeId;
+            const promoCodeIdNum = promoCodeIdRaw ? Number(promoCodeIdRaw) : NaN;
+            baseData.promoCodeId = Number.isFinite(promoCodeIdNum) ? promoCodeIdNum : null;
+            baseData.promoCodeCode = stripeData?.metadata?.promoCode || null;
         }
 
         // Get course ID from userCourse and fetch price data
@@ -481,8 +488,10 @@ export async function POST(req: Request) {
                         trialPeriodDays: coursePrice.trialPeriodDays
                     });
                     
-                    // Always use amount from price table (netto)
-                    baseData.amount = Number(coursePrice.amount);
+                    // Use price table as a fallback only (amount should reflect the actual transaction incl. discounts)
+                    if (baseData.amount == null && coursePrice.amount != null) {
+                        baseData.amount = Number(coursePrice.amount);
+                    }
                     
                     // Override other fields from price table if not set
                     if (!baseData.currency && coursePrice.currency) {
@@ -504,7 +513,7 @@ export async function POST(req: Request) {
                         }
                     }
                     
-                    // Set vatRate - amount już przechowuje wartość netto z Stripe
+                    // Set vatRate
                     if (coursePrice.vatRate) {
                         baseData.vatRate = Number(coursePrice.vatRate);
                     } else {
@@ -611,8 +620,10 @@ export async function POST(req: Request) {
             if (userCourse) {
                 const coursePrice = await getCoursePrice(userCourse.courseId);
                 if (coursePrice) {
-                    // Always use amount from price table (netto)
-                    baseData.amount = Number(coursePrice.amount);
+                    // Use price table as a fallback only
+                    if (baseData.amount == null && coursePrice.amount != null) {
+                        baseData.amount = Number(coursePrice.amount);
+                    }
                     
                     // Override other fields from price table if not set
                     if (!baseData.currency && coursePrice.currency) {
@@ -695,6 +706,17 @@ export async function POST(req: Request) {
                 metadata: stripeData.metadata,
                 stripeCustomerId: stripeData.stripeCustomerId,
             });
+
+            // Persist applied promo code (internal PromoCode id) if provided in Stripe metadata
+            const promoCodeIdRaw = stripeData?.metadata?.promoCodeId;
+            const promoCodeIdNum = promoCodeIdRaw ? Number(promoCodeIdRaw) : NaN;
+            baseData.promoCodeId = Number.isFinite(promoCodeIdNum) ? promoCodeIdNum : null;
+            baseData.promoCodeCode = stripeData?.metadata?.promoCode || null;
+
+            // Prefer Stripe amount when available (keeps discounts), otherwise fallback to price table
+            if (stripeData.amount != null) {
+                baseData.amount = stripeData.amount / 100;
+            }
         }
 
         // Fetch price data from EducationalPathPrice table
@@ -709,8 +731,10 @@ export async function POST(req: Request) {
                     trialPeriodDays: educationalPathPrice.trialPeriodDays
                 });
                 
-                // Always use amount from price table (netto)
-                baseData.amount = Number(educationalPathPrice.amount);
+                // Use price table as a fallback only (amount should reflect the actual transaction incl. discounts)
+                if (baseData.amount == null && educationalPathPrice.amount != null) {
+                    baseData.amount = Number(educationalPathPrice.amount);
+                }
                 
                 // Override other fields from price table if not set
                 if (!baseData.currency && educationalPathPrice.currency) {
@@ -732,7 +756,7 @@ export async function POST(req: Request) {
                     }
                 }
                 
-                // Set vatRate - amount już przechowuje wartość netto z Stripe
+                // Set vatRate
                 if (educationalPathPrice.vatRate) {
                     baseData.vatRate = Number(educationalPathPrice.vatRate);
                 } else {
