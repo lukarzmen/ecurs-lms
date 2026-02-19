@@ -10,8 +10,21 @@ export async function POST(req: Request) {
     if (!email) {
         return new NextResponse("User email not found", { status: 401 });
     }
-    const body = await req.json();
-    const businessType =  body.businessType || 'individual';
+    let body: any = {};
+    try {
+        body = await req.json();
+    } catch {
+        body = {};
+    }
+    const requestedBusinessTypeRaw = body?.businessType;
+    const requestedBusinessType = typeof requestedBusinessTypeRaw === 'string' ? requestedBusinessTypeRaw.trim().toLowerCase() : undefined;
+
+    if (requestedBusinessType && requestedBusinessType !== 'individual' && requestedBusinessType !== 'company') {
+        return NextResponse.json(
+            { error: 'Invalid businessType. Expected "individual" or "company".' },
+            { status: 400 }
+        );
+    }
 
     try {
         const user = await db.user.findUnique({
@@ -25,6 +38,9 @@ export async function POST(req: Request) {
                         id: true,
                         stripeAccountId: true,
                         stripeOnboardingComplete: true,
+                        requiresVatInvoices: true,
+                        schoolType: true,
+                        taxId: true,
                     },
                     take: 1
                 },
@@ -55,6 +71,9 @@ export async function POST(req: Request) {
                             id: true,
                             stripeAccountId: true,
                             stripeOnboardingComplete: true,
+                            requiresVatInvoices: true,
+                            schoolType: true,
+                            taxId: true,
                         }
                     }
                 },
@@ -71,10 +90,125 @@ export async function POST(req: Request) {
             return new NextResponse("Teacher has no school. Please contact admin.", { status: 400 });
         }
 
+        type StripeBusinessType = 'individual' | 'company';
+
+        const desiredStripeBusinessType: StripeBusinessType = (() => {
+            if (requestedBusinessType === 'company') {
+                return 'company';
+            }
+
+            const hasNip = typeof school.taxId === 'string' && school.taxId.trim().length > 0;
+            const wantsVatInvoices = !!school.requiresVatInvoices;
+            const isBusinessSchool = school.schoolType === 'business';
+
+            // Rule: if teacher provides NIP for VAT invoices (JDG), register Stripe account as company.
+            if (wantsVatInvoices && hasNip) {
+                return 'company';
+            }
+
+            if (isBusinessSchool) {
+                return 'company';
+            }
+
+            return 'individual';
+        })();
+
         // Check if school already has a Stripe Connect account
         if (school.stripeAccountId) {
             // Get existing account details
             const account = await stripe.accounts.retrieve(school.stripeAccountId);
+
+            const existingBusinessType = (account as any)?.business_type as StripeBusinessType | undefined;
+
+            // If the existing account type doesn't match what we need (e.g. NIP/VAT invoices require company),
+            // we can only safely replace it before it is enabled for payouts/charges.
+            if (
+                existingBusinessType &&
+                existingBusinessType !== desiredStripeBusinessType &&
+                !account.charges_enabled &&
+                !account.payouts_enabled
+            ) {
+                const businessUrl = process.env.NEXT_PUBLIC_APP_URL;
+                if (!businessUrl) {
+                    throw new Error('NEXT_PUBLIC_APP_URL environment variable is required for Stripe Connect account creation');
+                }
+
+                const isLocalhost = businessUrl.includes('localhost') || businessUrl.includes('127.0.0.1');
+
+                const accountData: any = {
+                    type: 'express',
+                    country: 'PL',
+                    email,
+                    business_type: desiredStripeBusinessType,
+                    capabilities: {
+                        card_payments: { requested: true },
+                        transfers: { requested: true },
+                    },
+                    settings: {
+                        payouts: {
+                            schedule: {
+                                interval: 'daily'
+                            }
+                        }
+                    },
+                };
+
+                if (!isLocalhost) {
+                    try {
+                        new URL(businessUrl);
+                        accountData.business_profile = {
+                            url: businessUrl,
+                            mcc: '5815',
+                        };
+                    } catch {
+                        throw new Error(`Invalid URL format for NEXT_PUBLIC_APP_URL: ${businessUrl}`);
+                    }
+                } else {
+                    accountData.business_profile = { mcc: '5815' };
+                }
+
+                const newAccount = await stripe.accounts.create(accountData);
+
+                await db.school.update({
+                    where: { id: school.id },
+                    data: {
+                        stripeAccountId: newAccount.id,
+                        stripeOnboardingComplete: false,
+                        updatedAt: new Date(),
+                    }
+                });
+
+                const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+                if (!baseUrl) {
+                    throw new Error('NEXT_PUBLIC_APP_URL environment variable is required for Stripe Connect onboarding links');
+                }
+
+                let validBaseUrl: string;
+                try {
+                    const url = new URL(baseUrl);
+                    validBaseUrl = url.origin;
+                } catch {
+                    throw new Error(`Invalid URL format for NEXT_PUBLIC_APP_URL: ${baseUrl}`);
+                }
+
+                const accountLink = await stripe.accountLinks.create({
+                    account: newAccount.id,
+                    refresh_url: `${validBaseUrl}/register?refresh=true`,
+                    return_url: `${validBaseUrl}/register?success=stripe`,
+                    type: 'account_onboarding',
+                    collect: 'eventually_due',
+                });
+
+                return NextResponse.json({
+                    accountId: newAccount.id,
+                    onboardingUrl: accountLink.url,
+                    onboardingComplete: false,
+                    existingAccount: false,
+                    requiresOnboarding: true,
+                    schoolId: school.id,
+                    replacedExistingAccount: true,
+                });
+            }
             
             // If onboarding is not complete, allow re-onboarding
             if (!school.stripeOnboardingComplete || !account.charges_enabled || !account.payouts_enabled) {
@@ -145,7 +279,7 @@ export async function POST(req: Request) {
             type: 'express',
             country: 'PL', // Poland
             email: email,
-            business_type: businessType,
+            business_type: desiredStripeBusinessType,
             capabilities: {
                 card_payments: { requested: true },
                 transfers: { requested: true },
@@ -379,6 +513,7 @@ export async function GET(req: Request) {
             hasAccount: true,
             accountId: school.stripeAccountId,
             onboardingComplete: isComplete,
+            stripeBusinessType: (account as any)?.business_type ?? null,
             details: account,
             schoolId: school.id
         });

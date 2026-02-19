@@ -20,6 +20,8 @@ export async function GET(req: Request) {
                         id: true,
                         stripeAccountId: true,
                         schoolType: true,
+                        requiresVatInvoices: true,
+                        taxId: true,
                     },
                     take: 1
                 }
@@ -65,7 +67,8 @@ export async function GET(req: Request) {
             // 
             // UWAGA: 'company' wymaga więcej dokumentów (KRS, umowa spółki, dane zarządu)
             // Jeśli szkoła chce uproszczonego procesu, może wybrać 'individual' podczas rejestracji
-            const stripeBusinessType: 'individual' | 'company' = school.schoolType === 'business' ? 'company' : 'individual';
+            const hasNip = typeof school.taxId === 'string' && school.taxId.trim().length > 0;
+            const stripeBusinessType: 'individual' | 'company' = (school.schoolType === 'business' || (school.requiresVatInvoices && hasNip)) ? 'company' : 'individual';
             
             const accountData: any = {
                 type: 'express',

@@ -74,6 +74,13 @@ interface PlatformSubscription {
   trialEnd?: string;
 }
 
+interface StripeConnectInfo {
+  hasAccount: boolean;
+  onboardingComplete: boolean;
+  accountId?: string;
+  stripeBusinessType?: "individual" | "company" | null;
+}
+
 const TeacherSettingsPage = () => {
   const { userId, sessionId } = useAuth();
   const [userCourses, setUserCourses] = useState<UserCourse[]>([]);
@@ -82,6 +89,9 @@ const TeacherSettingsPage = () => {
   const [platformSubscription, setPlatformSubscription] = useState<PlatformSubscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [stripeRecreateConfirm, setStripeRecreateConfirm] = useState(false);
+  const [isRecreatingStripe, setIsRecreatingStripe] = useState(false);
+  const [stripeConnectInfo, setStripeConnectInfo] = useState<StripeConnectInfo | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -101,6 +111,17 @@ const TeacherSettingsPage = () => {
       if (profileResponse.ok) {
         const profileData = await profileResponse.json();
         setUserProfile(profileData);
+      }
+
+      // Fetch Stripe Connect details (best-effort)
+      try {
+        const stripeResponse = await fetch('/api/stripe/connect', { method: 'GET' });
+        if (stripeResponse.ok) {
+          const stripeData = await stripeResponse.json();
+          setStripeConnectInfo(stripeData);
+        }
+      } catch {
+        // ignore
       }
 
       // Fetch user courses with subscriptions
@@ -260,6 +281,44 @@ const TeacherSettingsPage = () => {
     }
   };
 
+  const recreateStripeAccountAsCompany = async () => {
+    try {
+      if (!stripeRecreateConfirm) {
+        toast.error("Zaznacz potwierdzenie przed kontynuacją");
+        return;
+      }
+
+      setIsRecreatingStripe(true);
+
+      const response = await fetch("/api/stripe/recreate-company-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirm: true }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const msg = result?.error || "Nie udało się utworzyć nowego konta Stripe";
+        toast.error(msg);
+        return;
+      }
+
+      if (result?.onboardingUrl) {
+        toast.success("Tworzymy nowe konto Stripe jako firma. Przekierowujemy do konfiguracji...");
+        window.location.href = result.onboardingUrl;
+        return;
+      }
+
+      toast.error("Nie otrzymano linku do konfiguracji Stripe");
+    } catch (error) {
+      console.error("Error recreating Stripe account:", error);
+      toast.error(error instanceof Error ? error.message : "Wystąpił błąd");
+    } finally {
+      setIsRecreatingStripe(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-6">
@@ -376,6 +435,11 @@ const TeacherSettingsPage = () => {
                 <p className="text-sm text-muted-foreground">
                   Onboarding: {userProfile.stripeOnboardingComplete ? 'Zakończony' : 'W trakcie'}
                 </p>
+                {stripeConnectInfo?.stripeBusinessType && (
+                  <p className="text-sm text-muted-foreground">
+                    Typ konta Stripe: {stripeConnectInfo.stripeBusinessType === 'company' ? 'Firma' : 'Individual'}
+                  </p>
+                )}
               </div>
               {!userProfile.stripeOnboardingComplete && userProfile.stripeAccountStatus && (
                 <Button asChild>
@@ -385,6 +449,43 @@ const TeacherSettingsPage = () => {
                 </Button>
               )}
             </div>
+
+            {/* JDG/VAT invoices: recreate Stripe account as company */}
+            {userProfile.isSchoolOwner &&
+              userProfile.businessType === "individual" &&
+              userProfile.requiresVatInvoices &&
+              !!userProfile.taxId &&
+              (stripeConnectInfo?.stripeBusinessType === 'individual' || stripeConnectInfo?.stripeBusinessType == null) && (
+                <div className="mt-6 space-y-3 rounded-lg border p-4">
+                  <p className="text-sm font-medium">
+                    Faktury VAT (JDG): konto Stripe jako firma
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Jeśli Twoje konto Stripe zostało założone jako &quot;individual&quot;, Stripe może nie
+                    pozwolić na wystawianie faktur VAT. Ta opcja utworzy nowe konto Stripe Connect
+                    typu &quot;company&quot; i podmieni je w Twojej szkole. Stare konto nie zostanie usunięte.
+                  </p>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="stripeRecreateConfirm"
+                      checked={stripeRecreateConfirm}
+                      onCheckedChange={(checked) => setStripeRecreateConfirm(!!checked)}
+                    />
+                    <Label htmlFor="stripeRecreateConfirm">
+                      Rozumiem, że muszę ponownie przejść onboarding w Stripe
+                    </Label>
+                  </div>
+
+                  <Button
+                    variant="destructive"
+                    onClick={recreateStripeAccountAsCompany}
+                    disabled={!stripeRecreateConfirm || isRecreatingStripe}
+                  >
+                    {isRecreatingStripe ? "Tworzenie konta..." : "Utwórz nowe konto Stripe jako firma"}
+                  </Button>
+                </div>
+              )}
           </CardContent>
         </Card>
       )}
