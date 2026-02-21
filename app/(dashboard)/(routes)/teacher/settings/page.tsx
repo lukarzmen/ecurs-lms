@@ -490,8 +490,8 @@ const TeacherSettingsPage = () => {
         </Card>
       )}
 
-      {/* Platform Subscription Management - hide for school members (non-owners) */}
-      {(!userProfile?.isMemberOfSchool || userProfile?.isSchoolOwner) && (
+      {/* Platform Subscription Management - only the school owner can manage platform fees */}
+      {userProfile?.isSchoolOwner && (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -572,10 +572,15 @@ const TeacherSettingsPage = () => {
                 Nie masz aktywnej subskrypcji platformy. Wybierz plan aby uzyskać pełny dostęp do funkcji nauczycielskich.
               </p>
               <div className="space-y-4">
-                {(userProfile?.businessType === 'individual' || !userProfile?.businessType) && !userProfile?.isSchoolOwner && (
+                {(
+                  // Non-owners: allow Individual plan by businessType (or unset)
+                  (!userProfile?.isSchoolOwner && (userProfile?.businessType === 'individual' || !userProfile?.businessType)) ||
+                  // School owners: allow Individual plan by ownerSchoolType
+                  (userProfile?.isSchoolOwner && userProfile?.ownerSchoolType === 'individual')
+                ) && (
                   <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                     <h4 className="font-semibold">Plan Indywidualny</h4>
-                    <p className="text-sm text-muted-foreground mb-2">Do 20 uczniów</p>
+                    <p className="text-sm text-muted-foreground mb-2">Do 50 uczniów</p>
                     <p className="text-2xl font-bold mb-2">39 zł<span className="text-sm font-normal">/miesiąc</span></p>
                     <p className="text-xs text-green-600 mb-3">30 dni gratis</p>
                     <Button onClick={() => subscribeToPlatform('individual')} className="w-full">
@@ -583,10 +588,15 @@ const TeacherSettingsPage = () => {
                     </Button>
                   </div>
                 )}
-                {((userProfile?.businessType === 'company' || userProfile?.businessType === 'business' || userProfile?.ownerSchoolType === 'business')) && (
+                {(
+                  // Non-owners: allow School plan by businessType
+                  (!userProfile?.isSchoolOwner && (userProfile?.businessType === 'company' || userProfile?.businessType === 'business')) ||
+                  // School owners: allow School plan by ownerSchoolType
+                  (userProfile?.isSchoolOwner && userProfile?.ownerSchoolType === 'business')
+                ) && (
                   <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                     <h4 className="font-semibold">Plan Szkolny</h4>
-                    <p className="text-sm text-muted-foreground mb-2">Powyżej 20 uczniów</p>
+                    <p className="text-sm text-muted-foreground mb-2">Powyżej 50 uczniów</p>
                     <p className="text-2xl font-bold mb-2">1499 zł<span className="text-sm font-normal">/rok</span></p>
                     <p className="text-xs text-green-600 mb-3">30 dni gratis</p>
                     <Button onClick={() => subscribeToPlatform('school')} className="w-full">

@@ -61,19 +61,19 @@ const STUDENT_TERMS = (
     <p className="font-semibold text-gray-700 mt-2">§5. Warunki płatności</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li>Uczestnictwo w płatnych kursach wymaga zakupu dostępu do wybranego kursu według ceny podanej w marketplace.</li>
-      <li>Płatność za kurs może być jednorazowa lub w formie subskrypcji, w zależności od opcji wybranej przez nauczyciela.</li>
+      <li>Płatność za kurs może być jednorazowa lub w formie subskrypcji, w zależności od opcji wybranej przez szkołę.</li>
       <li><b>Anulowanie subskrypcji:</b> W przypadku subskrypcji, uczeń może anulować subskrypcję w dowolnym momencie przez panel ustawień. Anulowanie jest skuteczne na koniec bieżącego okresu rozliczeniowego - do tego czasu uczeń zachowuje dostęp do zakupionych materiałów.</li>
       <li>Zwroty i reklamacje są rozpatrywane indywidualnie zgodnie z polityką platformy.</li>
-      <li><b>Umowa sprzedaży kursu zawierana jest bezpośrednio między uczniem a nauczycielem.</b> Platforma Ecurs pełni wyłącznie rolę pośrednika technicznego umożliwiającego zawarcie umowy.</li>
-      <li><b>Płatności za kursy trafiają bezpośrednio na konto nauczyciela.</b> Platforma nie jest stroną umowy sprzedaży i nie ponosi odpowiedzialności za jej wykonanie.</li>
-      <li><b>Obsługa płatności:</b> Wszystkie płatności są obsługiwane przez bezpieczny system Stripe Connect. Z każdej transakcji pobierana jest prowizja zgodnie z <a href="https://stripe.com/en-pl/pricing" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">cennikiem Stripe</a>, która jest automatycznie potrącana przed przekazaniem środków nauczycielowi.</li>
-      <li><b>Faktury VAT:</b> Uczniowie mogą opcjonalnie zaznaczyć podczas zakupu kursu, że wymagają faktury VAT. Faktura zostanie automatycznie wygenerowana przez system Stripe z danych nauczyciela zgodnie z obowiązującymi przepisami podatkowymi. Dla odbiorców w Polsce VAT ID będzie wyświetlony w formacie "PL" + NIP.</li>
+      <li><b>Umowa sprzedaży kursu zawierana jest bezpośrednio między uczniem a szkołą.</b> Platforma Ecurs pełni wyłącznie rolę pośrednika technicznego umożliwiającego zawarcie umowy.</li>
+      <li><b>Płatności za kursy trafiają bezpośrednio na konto szkoły.</b> Platforma nie jest stroną umowy sprzedaży i nie ponosi odpowiedzialności za jej wykonanie.</li>
+      <li><b>Obsługa płatności:</b> Wszystkie płatności są obsługiwane przez bezpieczny system Stripe Connect. Z każdej transakcji pobierana jest prowizja zgodnie z <a href="https://stripe.com/en-pl/pricing" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">cennikiem Stripe</a>, która jest automatycznie potrącana przed przekazaniem środków szkole.</li>
+      <li><b>Faktury VAT:</b> Uczniowie mogą opcjonalnie zaznaczyć podczas zakupu kursu, że wymagają faktury VAT. Faktura zostanie automatycznie wygenerowana przez system Stripe z danych szkoły zgodnie z obowiązującymi przepisami podatkowymi. Dla odbiorców w Polsce VAT ID będzie wyświetlony w formacie &quot;PL&quot; + NIP.</li>
     </ul>
     <p className="font-semibold text-gray-700 mt-2">§6. Odpowiedzialność za treści kursów</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li><b>Wyłączna odpowiedzialność nauczyciela:</b> Za merytoryczną treść kursów, ich jakość, poprawność oraz zgodność z prawem odpowiada wyłącznie nauczyciel prowadzący kurs.</li>
       <li><b>Brak odpowiedzialności platformy:</b> Platforma Ecurs nie weryfikuje treści merytorycznej kursów i nie ponosi odpowiedzialności za ich zawartość, błędy, szkody wynikające z korzystania z kursów lub niezgodność z oczekiwaniami ucznia.</li>
-      <li><b>Roszczenia uczniów:</b> Wszelkie roszczenia dotyczące treści kursów, ich jakości, zwrotów, odszkodowań lub innych roszczeń związanych z kursami uczniowie kierują bezpośrednio do nauczyciela. Platforma nie jest stroną tych sporów.</li>
+      <li><b>Roszczenia uczniów:</b> Wszelkie roszczenia dotyczące treści kursów, ich jakości, zwrotów, odszkodowań lub innych roszczeń związanych z kursami uczniowie kierują bezpośrednio do szkoły. Platforma nie jest stroną tych sporów.</li>
       <li><b>Moderacja:</b> Platforma zastrzega sobie prawo do usuwania treści naruszających prawo lub regulamin, ale nie ma obowiązku ich weryfikacji.</li>
     </ul>
     <p className="font-semibold text-gray-700 mt-2">§7. Ograniczenie odpowiedzialności platformy</p>
@@ -158,7 +158,7 @@ const TEACHER_TERMS = (
         <b>Proces rejestracji:</b> W dalszych krokach rejestracji poprosimy Cię o konfigurację konta płatności w Stripe, gdzie podasz swoje dane do celów płatności i fiskalnych.
       </li>
       <li>
-        <b>Dane wymagane przez Stripe:</b> Imię i nazwisko, adres, numer telefonu, dane bankowe do otrzymywania płatności oraz NIP (który w Stripe będzie używany jako VAT ID w formacie "PL" + NIP dla celów fakturowania VAT).
+        <b>Dane wymagane przez Stripe:</b> Imię i nazwisko, adres, numer telefonu, dane bankowe do otrzymywania płatności oraz NIP (który w Stripe będzie używany jako VAT ID w formacie &quot;PL&quot; + NIP dla celów fakturowania VAT).
       </li>
       <li>
         <b>Weryfikacja dokumentu tożsamości (Stripe Identity):</b> Korzystamy ze Stripe w celu weryfikacji dokumentu tożsamości. Stripe zbiera obrazy dokumentów tożsamości, obrazy twarzy, numery dokumentów i adresy, a także zaawansowane sygnały antyfraudowe oraz informacje o urządzeniach łączących się z jego usługami. Stripe udostępnia nam te informacje oraz wykorzystuje je do świadczenia i ulepszania swoich usług, w tym do wykrywania oszustw. Możesz również zdecydować, że zezwalasz Stripe na wykorzystanie Twoich danych w celu ulepszania technologii biometrycznej weryfikacji Stripe. Więcej informacji o Stripe oraz jego polityce prywatności znajdziesz na <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">https://stripe.com/privacy</a>.
@@ -173,10 +173,10 @@ const TEACHER_TERMS = (
     <p className="font-semibold text-gray-700 mt-2">§5A. Obsługa płatności przez Stripe Connect i prowizje</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li>
-        <b>Technologia Stripe Connect:</b> Platforma wykorzystuje system Stripe Connect do obsługi płatności, który umożliwia bezpieczne i automatyczne przekazywanie płatności bezpośrednio na konto nauczyciela po dokonaniu zakupu przez ucznia.
+        <b>Technologia Stripe Connect:</b> Platforma wykorzystuje system Stripe Connect do obsługi płatności, który umożliwia bezpieczne i automatyczne przekazywanie płatności bezpośrednio na konto szkoły po dokonaniu zakupu przez ucznia.
       </li>
       <li>
-        <b>Prowizje Stripe:</b> Ze każdej transakcji płatniczej Stripe pobiera prowizję zgodnie z aktualnym cennikiem dostępnym na <a href="https://stripe.com/en-pl/pricing" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">stripe.com/en-pl/pricing</a>. Prowizja ta jest automatycznie potrącana z kwoty płatności przed jej przekazaniem na konto nauczyciela.
+        <b>Prowizje Stripe:</b> Ze każdej transakcji płatniczej Stripe pobiera prowizję zgodnie z aktualnym cennikiem dostępnym na <a href="https://stripe.com/en-pl/pricing" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">stripe.com/en-pl/pricing</a>. Prowizja ta jest automatycznie potrącana z kwoty płatności przed jej przekazaniem na konto szkoły.
       </li>
       <li>
         <b>Brak dodatkowych opłat platformy:</b> Platforma Ecurs nie pobiera dodatkowych prowizji ani opłat od transakcji płatniczych - jedyne koszty to prowizje Stripe oraz opłata za licencję platformy zgodnie z wybranym planem.
@@ -185,7 +185,7 @@ const TEACHER_TERMS = (
         <b>Automatyczne rozliczenia:</b> Wszystkie płatności są automatycznie rozliczane przez system Stripe, a nauczyciel otrzymuje szczegółowe raporty transakcji w swoim panelu Stripe oraz na platformie Ecurs.
       </li>
       <li>
-        <b>Rozliczenia podatkowe:</b> Stripe obsługuje wszystkie rozliczenia podatkowe związane z transakcjami i dostarcza nauczycielowi odpowiednie dokumenty podatkowe, w tym faktury VAT jeśli zostały skonfigurowane. Platforma Ecurs nie jest stroną transakcji i nie ponosi odpowiedzialności za rozliczenia podatkowe.
+        <b>Rozliczenia podatkowe:</b> Stripe obsługuje wszystkie rozliczenia podatkowe związane z transakcjami i dostarcza szkole odpowiednie dokumenty podatkowe, w tym faktury VAT jeśli zostały skonfigurowane. Platforma Ecurs nie jest stroną transakcji i nie ponosi odpowiedzialności za rozliczenia podatkowe.
       </li>
       <li>
         <b>Waluty i kursy wymiany:</b> System obsługuje płatności w różnych walutach zgodnie z możliwościami Stripe, a konwersje walutowe są realizowane według aktualnych kursów Stripe.
@@ -194,7 +194,7 @@ const TEACHER_TERMS = (
         <b>Zwroty i refundacje:</b> Proces zwrotów środków jest obsługiwany przez system Stripe zgodnie z jego regulaminem i może podlegać dodatkowym opłatom zgodnie z cennikiem Stripe.
       </li>
       <li>
-        <b>Automatyczne faktury VAT:</b> System Stripe Connect umożliwia automatyczne generowanie faktur VAT dla transakcji. NIP nauczyciela jest automatycznie konwertowany na VAT ID w formacie "PL" + NIP dla celów rozliczeń w Polsce. Nauczyciele mogą skonfigurować w swoim panelu Stripe automatyczne wystawianie faktur VAT zgodnie z polskimi i europejskimi przepisami podatkowymi. Uczniowie mogą opcjonalnie zaznaczyć podczas zakupu, że wymagają faktury VAT.
+        <b>Automatyczne faktury VAT:</b> System Stripe Connect umożliwia automatyczne generowanie faktur VAT dla transakcji. NIP szkoły jest automatycznie konwertowany na VAT ID w formacie &quot;PL&quot; + NIP dla celów rozliczeń w Polsce. Szkoły mogą skonfigurować w swoim panelu Stripe automatyczne wystawianie faktur VAT zgodnie z polskimi i europejskimi przepisami podatkowymi. Uczniowie mogą opcjonalnie zaznaczyć podczas zakupu, że wymagają faktury VAT.
       </li>
       <li>
         <b>Obsługa VAT w UE:</b> Stripe automatycznie obsługuje procedury VAT dla sprzedaży cyfrowej w krajach Unii Europejskiej, w tym system OSS (One-Stop Shop), co umożliwia nauczycielom compliance z przepisami podatkowymi różnych krajów UE.
@@ -203,19 +203,19 @@ const TEACHER_TERMS = (
     <p className="font-semibold text-gray-700 mt-2">§6. Warunki płatności, okresy rozliczeniowe i zmiana licencji</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li>
-        <b>Indywidualny twórca</b> – osoba fizyczna prowadząca kursy na platformie Ecurs, posiadająca nie więcej niż 10 aktywnych uczniów oraz jedno konto nauczyciela.
+        <b>Indywidualny twórca</b> – osoba fizyczna prowadząca kursy na platformie Ecurs, posiadająca nie więcej niż 50 aktywnych uczniów oraz jedno konto nauczyciela.
       </li>
       <li>
-        <b>Szkoła lub placówka edukacyjna</b> – instytucja lub organizacja, która posiada więcej niż jednego nauczyciela (współtworzących kursy) lub więcej niż 10 aktywnych uczniów. Szkoła może tworzyć zespoły nauczycieli i zarządzać kursami wspólnie.
+        <b>Tryb Organizacji</b> – (szkoła / placówka edukacyjna) instytucja lub organizacja, która posiada więcej niż jednego nauczyciela (współtworzących kursy) lub więcej niż 50 aktywnych uczniów. Szkoła może tworzyć zespoły nauczycieli i zarządzać kursami wspólnie.
       </li>
       <li>
         Po zakończeniu okresu próbnego (3 miesiące) nauczyciel lub szkoła zobowiązani są do wyboru jednego z planów płatności:
         <ul className="list-disc ml-6 mt-2">
           <li>
-            <b>Plan dla indywidualnych twórców prowadzących do 20 uczniów w zamkniętych kursach:</b> 39 zł za miesiąc – pełny dostęp do funkcji, tworzenie interaktywnych kursów, zarządzanie treściami i uczniami, podstawowe wsparcie techniczne.
+            <b>Plan dla indywidualnych twórców prowadzących do 50 uczniów w zamkniętych kursach:</b> 39 zł za miesiąc – pełny dostęp do funkcji, tworzenie interaktywnych kursów, zarządzanie treściami i uczniami, podstawowe wsparcie techniczne.
           </li>
           <li>
-            <b>Dla szkół i placówek edukacyjnych lub twórców posiadających więcej niż 20 uczniów w zamkniętych kursach:</b> 1499 zł za rok – pełny dostęp do wszystkich funkcjonalności, nielimitowani członkowie zespołu, pełne wsparcie techniczne.
+            <b>Tryb Organizacji (szkoły i placówki edukacyjne) lub twórcy posiadający więcej niż 50 uczniów w zamkniętych kursach:</b> 1499 zł za rok – pełny dostęp do wszystkich funkcjonalności, nielimitowani członkowie zespołu, pełne wsparcie techniczne.
           </li>
           <li>
             <b>Dołączenie do istniejącej szkoły:</b> Nauczyciel, który dołączy do istniejącej szkoły jako członek zespołu, nie płaci za korzystanie z platformy. Subskrypcję platformy opłaca właściciel szkoły, a nauczyciel dołączony do szkoły automatycznie otrzymuje pełny dostęp do wszystkich funkcjonalności platformy.
@@ -223,7 +223,7 @@ const TEACHER_TERMS = (
         </ul>
       </li>
       <li>
-        <b>Mechanizm przejścia:</b> Jeśli liczba aktywnych uczniów w kursach zamkniętych przekroczy 20 osób lub do kursów zostanie przypisany drugi nauczyciel, użytkownik zostanie automatycznie poinformowany o konieczności przejścia na plan dla szkół. Informacja zostanie przekazana mailowo na adres podany przy rejestracji oraz poprzez komunikat w panelu platformy. Użytkownik ma 30 dni na przejście na wyższy plan.
+        <b>Mechanizm przejścia:</b> Jeśli liczba aktywnych uczniów w kursach zamkniętych przekroczy 50 osób lub do kursów zostanie przypisany drugi nauczyciel, użytkownik zostanie automatycznie poinformowany o konieczności przejścia na Tryb Organizacji. Informacja zostanie przekazana mailowo na adres podany przy rejestracji oraz poprzez komunikat w panelu platformy. Użytkownik ma 30 dni na przejście na wyższy plan.
       </li>
       <li>
         <b>Zasady naliczania opłat:</b> W przypadku zmiany planu w trakcie trwania okresu rozliczeniowego, opłata za nową licencję zostanie naliczona proporcjonalnie do pozostałego okresu rozliczeniowego.
@@ -273,7 +273,7 @@ const TEACHER_TERMS = (
     <p className="font-semibold text-gray-700 mt-2">§10. Zgodność z prawem i obowiązki fiskalne</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li><b>Platforma nie jest stroną transakcji:</b> Platforma Ecurs nie jest stroną umowy sprzedaży między nauczycielem a uczniem i nie rozlicza sprzedaży klientów. Nauczyciel jest formalnie sprzedawcą usług edukacyjnych.</li>
-      <li><b>Rozliczenia podatkowe przez Stripe:</b> Wszystkie rozliczenia podatkowe związane z transakcjami płatniczymi są obsługiwane przez system Stripe zgodnie z obowiązującymi przepisami podatkowymi. Stripe dostarcza nauczycielowi niezbędne dokumenty i raporty do rozliczeń podatkowych.</li>
+      <li><b>Rozliczenia podatkowe przez Stripe:</b> Wszystkie rozliczenia podatkowe związane z transakcjami płatniczymi są obsługiwane przez system Stripe zgodnie z obowiązującymi przepisami podatkowymi. Stripe dostarcza szkole niezbędne dokumenty i raporty do rozliczeń podatkowych.</li>
       <li><b>Obowiązki podatkowe nauczyciela:</b> Nauczyciel ponosi pełną odpowiedzialność za prawidłowe rozliczenie podatkowe wszystkich otrzymanych płatności zgodnie z polskim prawem podatkowym na podstawie dokumentów dostarczanych przez Stripe.</li>
       <li><b>Brak odpowiedzialności podatkowej platformy:</b> Platforma Ecurs nie ponosi odpowiedzialności za rozliczenia podatkowe nauczycieli ani za błędy w rozliczeniach podatkowych. Wszelkie kwestie podatkowe nauczyciel rozlicza bezpośrednio ze Stripe lub odpowiednimi organami podatkowymi.</li>
       <li><b>Konfiguracja stawki VAT:</b> Nauczyciel jest zobowiązany do samodzielnego skonfigurowania odpowiedniej stawki VAT (0% lub 23%) dla każdego kursu i ścieżki edukacyjnej w formularzu ceny. Wybór stawki VAT powinien być zgodny z obowiązującymi przepisami podatkowymi dotyczącymi sprzedaży usług edukacyjnych. Domyślna stawka VAT wynosi 23%.</li>
@@ -1985,9 +1985,9 @@ export default function RegisterPage() {
                       disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-700 text-sm sm:text-base">🏢 Nowa szkoła/placówka (spółka)</div>
+                      <div className="font-medium text-gray-700 text-sm sm:text-base">🏢 Tryb Organizacji (nowa szkoła/placówka)</div>
                       <div className="text-xs sm:text-sm text-gray-600 mt-1 leading-tight">
-                        Sp. z o.o., fundacja, stowarzyszenie - wymaga dokumentów firmy w Stripe (KRS, zarząd)
+                        Sp. z o.o., fundacja, stowarzyszenie - wymaga dokumentów firmy w Stripe
                       </div>
                     </div>
                   </label>
@@ -2515,9 +2515,9 @@ export default function RegisterPage() {
                     <div className="bg-gradient-to-r from-purple-50 to-purple-100 border-2 border-purple-300 rounded-lg p-4 mb-4">
                       <div className="flex justify-between items-start">
                         <div>
-                          <div className="font-medium text-gray-800 text-lg">🏫 Plan dla Szkół</div>
+                          <div className="font-medium text-gray-800 text-lg">🏫 Tryb Organizacji</div>
                           <div className="text-sm text-gray-700 mt-1">
-                            Pełny dostęp dla instytucji edukacyjnych
+                            Dla szkół/organizacji: gdy masz &gt; 50 aktywnych uczniów lub dodajesz drugiego nauczyciela
                           </div>
                           <div className="text-xs text-gray-600 mt-2">
                             • Wszystkie funkcjonalności<br/>

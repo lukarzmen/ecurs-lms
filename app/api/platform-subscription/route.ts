@@ -23,9 +23,17 @@ export async function POST(req: NextRequest) {
 
         const user = await db.user.findUnique({
             where: { email: email },
-            include: { 
+            include: {
                 stripeCustomers: true,
-                teacherPlatformSubscription: true 
+                teacherPlatformSubscription: true,
+                ownedSchools: {
+                    select: { id: true },
+                    take: 1,
+                },
+                schoolMemberships: {
+                    select: { schoolId: true },
+                    take: 1,
+                },
             }
         });
         
@@ -39,6 +47,12 @@ export async function POST(req: NextRequest) {
         // Check if user is a teacher (roleId = 1)
         if (user.roleId !== 1) {
             return new NextResponse("Access denied. Only teachers can subscribe to platform.", { status: 403 });
+        }
+
+        // Platform fees can be managed only by the school owner
+        const isSchoolOwner = (user.ownedSchools?.length || 0) > 0;
+        if (!isSchoolOwner) {
+            return new NextResponse("Access denied. Only the school owner can manage platform fees.", { status: 403 });
         }
 
         // Check if user already has a subscription - return existing subscription data if so
@@ -250,8 +264,19 @@ export async function GET(req: NextRequest) {
 
         const user = await db.user.findUnique({
             where: { email: email },
-            include: { 
-                teacherPlatformSubscription: true 
+            include: {
+                ownedSchools: {
+                    select: { id: true },
+                    take: 1,
+                },
+                schoolMemberships: {
+                    select: {
+                        school: {
+                            select: { ownerId: true },
+                        },
+                    },
+                    take: 1,
+                },
             }
         });
         
@@ -264,7 +289,16 @@ export async function GET(req: NextRequest) {
             return new NextResponse("Access denied. Only teachers can access platform subscription info.", { status: 403 });
         }
 
-        return NextResponse.json(user.teacherPlatformSubscription);
+        const isSchoolOwner = (user.ownedSchools?.length || 0) > 0;
+        const ownerUserId = isSchoolOwner
+            ? user.id
+            : (user.schoolMemberships?.[0]?.school?.ownerId ?? user.id);
+
+        const subscription = await db.teacherPlatformSubscription.findUnique({
+            where: { userId: ownerUserId },
+        });
+
+        return NextResponse.json(subscription);
 
     } catch (error) {
         console.error("Get platform subscription error:", error);

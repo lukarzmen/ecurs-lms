@@ -67,6 +67,23 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const getDbServerLabel = () => {
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) return null;
+
+    try {
+      const url = new URL(databaseUrl);
+      const host = url.hostname;
+      const port = url.port ? `:${url.port}` : "";
+      const dbName = url.pathname?.replace(/^\//, "") || "";
+      const dbSuffix = dbName ? `/${dbName}` : "";
+      return `${host}${port}${dbSuffix}`;
+    } catch {
+      // If DATABASE_URL is not a valid URL (e.g. special formats), do not risk leaking it.
+      return "(unparseable)";
+    }
+  };
+
   const locale = await getRequestLocale();
   const messages = await getMessages(locale, "common");
   const t = createTranslator(messages);
@@ -74,6 +91,7 @@ export default async function RootLayout({
   const htmlLang = locale === "en" ? "en" : "pl-PL";
 
   const isTestEnvironment = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_TEST_ENV === 'true';
+  const dbServerLabel = isTestEnvironment ? getDbServerLabel() : null;
 
   return (
     <ClerkProvider localization={clerkLocalization}>
@@ -85,6 +103,7 @@ export default async function RootLayout({
           {isTestEnvironment && (
             <div className="bg-yellow-400 text-black text-center py-2 px-4 font-bold text-sm fixed bottom-0 left-0 right-0 z-[9999] shadow-md">
               ⚠️ ŚRODOWISKO TESTOWE / TEST ENVIRONMENT ⚠️
+              {dbServerLabel ? ` | DB: ${dbServerLabel}` : ""}
             </div>
           )}
           <div>

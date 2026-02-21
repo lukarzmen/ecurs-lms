@@ -19,8 +19,12 @@ export async function POST(req: NextRequest) {
 
         const user = await db.user.findUnique({
             where: { email: email },
-            include: { 
-                teacherPlatformSubscription: true 
+            include: {
+                teacherPlatformSubscription: true,
+                ownedSchools: {
+                    select: { id: true },
+                    take: 1,
+                },
             }
         });
         
@@ -32,6 +36,12 @@ export async function POST(req: NextRequest) {
         // Check if user is a teacher (roleId = 1)
         if (user.roleId !== 1) {
             return new NextResponse("Access denied. Only teachers can cancel platform subscription.", { status: 403 });
+        }
+
+        // Platform fees can be managed only by the school owner
+        const isSchoolOwner = (user.ownedSchools?.length || 0) > 0;
+        if (!isSchoolOwner) {
+            return new NextResponse("Access denied. Only the school owner can manage platform fees.", { status: 403 });
         }
 
         if (!user.teacherPlatformSubscription) {
