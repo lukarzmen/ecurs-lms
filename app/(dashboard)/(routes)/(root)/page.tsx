@@ -7,6 +7,7 @@ import { DashboardCoursesResponse, CourseDetails } from "@/app/api/user/courses/
 import { EnrolledEduList } from "@/components/ui/enrolled-list";
 import { EnrolledEduList as EnrolledEduPathList } from "@/components/ui/enrolled-list";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Categories } from "@/app/(dashboard)/(routes)/search/_components/categories";
 import { MarketplaceCoursesList } from "@/components/ui/marketplace-list";
@@ -40,15 +41,41 @@ export default async function Home({
         <section className="max-w-6xl mx-auto rounded-2xl border bg-white p-6 sm:p-10 shadow-sm">
           <div className="space-y-3 text-center">
             <div className="flex items-center justify-center gap-3">
-              <img src="/logo.png" alt="Ecurs" className="h-10 w-10" />
+              <Image
+                src="/logo.png"
+                alt="Ecurs"
+                width={40}
+                height={40}
+                className="h-10 w-10"
+                priority
+              />
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
               Ecurs — uczysz się skuteczniej
               </h1>
             </div>
-            <p className="text-gray-600 text-base sm:text-lg">
-              Jesteś uczniem? Ucz się we własnym tempie i miej postępy zawsze pod ręką. Jesteś nauczycielem?
-              Twórz kursy i ścieżki w jednym miejscu, a AI niech pomoże Ci przygotować materiały szybciej i lepiej.
-            </p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 text-center">
+              <div className="rounded-xl border bg-gray-50 p-4">
+                <div className="text-base sm:text-lg font-semibold text-gray-900">
+                  <span className="underline underline-offset-4 decoration-4 decoration-orange-600">
+                    Jesteś uczniem?
+                  </span>
+                </div>
+                <p className="mt-2 text-gray-600 text-sm sm:text-base">
+                  Ucz się we własnym tempie i miej postępy zawsze pod ręką.
+                </p>
+              </div>
+
+              <div className="rounded-xl border bg-gray-50 p-4">
+                <div className="text-base sm:text-lg font-semibold text-gray-900">
+                  <span className="underline underline-offset-4 decoration-4 decoration-orange-600">
+                    Jesteś nauczycielem?
+                  </span>
+                </div>
+                <p className="mt-2 text-gray-600 text-sm sm:text-base">
+                  Twórz kursy i ścieżki w jednym miejscu, a AI niech pomoże Ci przygotować materiały szybciej i lepiej.
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
@@ -67,7 +94,7 @@ export default async function Home({
             <div className="rounded-xl border bg-gray-50 p-4 transition-colors hover:bg-white">
               <div className="font-semibold text-gray-900">🤖 Wsparcie AI</div>
               <div className="mt-1 text-sm text-gray-600 leading-relaxed">
-                Twórz treści szybciej, dostawaj propozycje zadań i informacje zwrotne dla uczniów.
+                AI pomaga w tworzeniu treści i wspiera uczniów w rozwoju.
               </div>
             </div>
           </div>
@@ -108,7 +135,8 @@ export default async function Home({
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-semibold text-gray-900">Dołącz do platformy i zacznij od razu ✨</h2>
             <p className="text-gray-600">
-              Wybierz kurs i zacznij od razu. Jeśli uczysz innych, twórz własne programy i obserwuj realne postępy grupy.
+              <span className="block">Wybierz kurs i zacznij od razu.</span>
+              <span className="block">Jeśli uczysz innych — twórz własne programy i obserwuj realne postępy grupy.</span>
             </p>
           </div>
 
