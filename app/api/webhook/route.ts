@@ -10,6 +10,8 @@ export async function POST(req: Request) {
     const headersList = await headers();
     const signature = headersList.get("stripe-signature");
 
+    const isProduction = process.env.NODE_ENV === "production";
+
     let event: Stripe.Event | undefined;
     let stripeClient: Stripe;
     
@@ -18,74 +20,86 @@ export async function POST(req: Request) {
     
     console.log(`[WEBHOOK] Received request with signature: ${signature?.substring(0, 50)}...`);
     console.log(`[WEBHOOK] Body length: ${body.length} bytes`);
-    
-    if (!signature) {
-        console.error("[WEBHOOK] No stripe-signature header found");
-        return new NextResponse("No signature header", { status: 400 });
-    }
-    
-    // Try to parse the event first to determine if it's a Connect event
-    // We need to try both secrets to know which one to use
-    let webhookSecret: string;
-    let eventParseError: any = null;
-    
-    // First, try to construct event with Connect webhook secret (if available)
-    if (process.env.STRIPE_CONNECT_WEBHOOK_SECRET) {
+
+    // DEV convenience: allow calling webhook without Stripe signature verification.
+    // In production we ALWAYS verify using webhook secret(s).
+    if (!isProduction) {
         try {
-            event = Stripe.webhooks.constructEvent(
-                body,
-                signature as string,
-                process.env.STRIPE_CONNECT_WEBHOOK_SECRET as string
-            );
-            webhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
-            console.log(`[WEBHOOK] Successfully verified Connect event: ${event.id} (${event.type})`);
-        } catch (err: any) {
-            eventParseError = err;
-            // If Connect secret fails, try platform secret
-            if (process.env.STRIPE_WEBHOOK_SECRET) {
-                try {
-                    event = Stripe.webhooks.constructEvent(
-                        body,
-                        signature as string,
-                        process.env.STRIPE_WEBHOOK_SECRET as string
-                    );
-                    webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-                    console.log(`[WEBHOOK] Successfully verified platform event: ${event.id} (${event.type})`);
-                } catch (err2: any) {
-                    console.error("[WEBHOOK] Both webhook secrets failed:", {
-                        connectError: err.message,
-                        platformError: err2.message,
-                        connectSecretPrefix: process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.substring(0, 15),
-                        platformSecretPrefix: process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 15)
-                    });
-                    return new NextResponse(`Webhook Error: ${err2.message}`, { status: 400 });
-                }
-            } else {
-                console.error("[WEBHOOK] STRIPE_WEBHOOK_SECRET not configured and STRIPE_CONNECT_WEBHOOK_SECRET failed");
-                return new NextResponse("Webhook secret not configured", { status: 500 });
-            }
-        }
-    } else if (process.env.STRIPE_WEBHOOK_SECRET) {
-        // Only platform secret is configured
-        try {
-            event = Stripe.webhooks.constructEvent(
-                body,
-                signature as string,
-                process.env.STRIPE_WEBHOOK_SECRET as string
-            );
-            webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-            console.log(`[WEBHOOK] Successfully verified event with platform secret: ${event.id} (${event.type})`);
-        } catch (err: any) {
-            console.error("[WEBHOOK] Platform webhook secret failed:", {
-                error: err.message,
-                type: err.type,
-                secretPrefix: process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 15)
-            });
-            return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
+            event = JSON.parse(body) as Stripe.Event;
+            console.warn("[WEBHOOK] Signature verification is DISABLED because NODE_ENV is not production");
+        } catch (err) {
+            console.error("[WEBHOOK] Failed to parse webhook JSON body (signature verification disabled)", err);
+            return new NextResponse("Invalid JSON body", { status: 400 });
         }
     } else {
-        console.error("[WEBHOOK] No webhook secrets configured");
-        return new NextResponse("Webhook secret not configured", { status: 500 });
+        if (!signature) {
+            console.error("[WEBHOOK] No stripe-signature header found");
+            return new NextResponse("No signature header", { status: 400 });
+        }
+
+        // Try to parse the event first to determine if it's a Connect event
+        // We need to try both secrets to know which one to use
+        let webhookSecret: string;
+        let eventParseError: any = null;
+
+        // First, try to construct event with Connect webhook secret (if available)
+        if (process.env.STRIPE_CONNECT_WEBHOOK_SECRET) {
+            try {
+                event = Stripe.webhooks.constructEvent(
+                    body,
+                    signature as string,
+                    process.env.STRIPE_CONNECT_WEBHOOK_SECRET as string
+                );
+                webhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
+                console.log(`[WEBHOOK] Successfully verified Connect event: ${event.id} (${event.type})`);
+            } catch (err: any) {
+                eventParseError = err;
+                // If Connect secret fails, try platform secret
+                if (process.env.STRIPE_WEBHOOK_SECRET) {
+                    try {
+                        event = Stripe.webhooks.constructEvent(
+                            body,
+                            signature as string,
+                            process.env.STRIPE_WEBHOOK_SECRET as string
+                        );
+                        webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+                        console.log(`[WEBHOOK] Successfully verified platform event: ${event.id} (${event.type})`);
+                    } catch (err2: any) {
+                        console.error("[WEBHOOK] Both webhook secrets failed:", {
+                            connectError: err.message,
+                            platformError: err2.message,
+                            connectSecretPrefix: process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.substring(0, 15),
+                            platformSecretPrefix: process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 15)
+                        });
+                        return new NextResponse(`Webhook Error: ${err2.message}`, { status: 400 });
+                    }
+                } else {
+                    console.error("[WEBHOOK] STRIPE_WEBHOOK_SECRET not configured and STRIPE_CONNECT_WEBHOOK_SECRET failed");
+                    return new NextResponse("Webhook secret not configured", { status: 500 });
+                }
+            }
+        } else if (process.env.STRIPE_WEBHOOK_SECRET) {
+            // Only platform secret is configured
+            try {
+                event = Stripe.webhooks.constructEvent(
+                    body,
+                    signature as string,
+                    process.env.STRIPE_WEBHOOK_SECRET as string
+                );
+                webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+                console.log(`[WEBHOOK] Successfully verified event with platform secret: ${event.id} (${event.type})`);
+            } catch (err: any) {
+                console.error("[WEBHOOK] Platform webhook secret failed:", {
+                    error: err.message,
+                    type: err.type,
+                    secretPrefix: process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 15)
+                });
+                return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
+            }
+        } else {
+            console.error("[WEBHOOK] No webhook secrets configured");
+            return new NextResponse("Webhook secret not configured", { status: 500 });
+        }
     }
     
     // Ensure event is defined (should always be after successful verification)
