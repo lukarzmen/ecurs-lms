@@ -91,20 +91,67 @@ export class SelectAnswerNode extends DecoratorNode<JSX.Element> implements ToCo
     }
 
     exportDOM(): DOMExportOutput {
-        const container = document.createElement('div');
+        const container = document.createElement('section');
         container.setAttribute('data-lexical-select-answer', 'true');
         container.setAttribute('data-correct-index', String(this.__correctAnswerIndex));
         if (this.__selectedAnswer !== null) {
             container.setAttribute('data-selected', this.__selectedAnswer);
         }
 
-        const ul = document.createElement('ul');
-        for (const a of this.__answers) {
-            const li = document.createElement('li');
-            li.textContent = String(a);
-            ul.appendChild(li);
+        container.style.border = '1px solid rgba(0,0,0,0.15)';
+        container.style.borderRadius = '10px';
+        container.style.padding = '12px 14px';
+        container.style.margin = '12px 0';
+
+        const header = document.createElement('h3');
+        header.textContent = 'Wybierz poprawną odpowiedź';
+        header.style.margin = '0 0 8px 0';
+        container.appendChild(header);
+
+        const answers = Array.isArray(this.__answers) ? this.__answers : [];
+        if (answers.length > 0) {
+            const ol = document.createElement('ol');
+            ol.type = 'a';
+            ol.style.margin = '0 0 10px 18px';
+            ol.style.padding = '0';
+
+            for (const a of answers) {
+                const li = document.createElement('li');
+                li.textContent = a !== null && a !== undefined ? String(a) : '';
+                li.style.margin = '0 0 6px 0';
+                li.style.whiteSpace = 'pre-wrap';
+                ol.appendChild(li);
+            }
+
+            container.appendChild(ol);
         }
-        container.appendChild(ul);
+
+        // Answer key at the end (for PDF/HTML export)
+        const idx = this.__correctAnswerIndex;
+        const hasCorrect = Number.isFinite(Number(idx)) && Number(idx) >= 0 && Number(idx) < answers.length;
+        if (hasCorrect) {
+            const answerSection = document.createElement('div');
+            answerSection.style.marginTop = '8px';
+            answerSection.style.paddingTop = '10px';
+            answerSection.style.borderTop = '1px solid rgba(0,0,0,0.12)';
+
+            const label = document.createElement('div');
+            label.textContent = 'Poprawna odpowiedź';
+            label.style.fontWeight = '700';
+            label.style.margin = '0 0 6px 0';
+            answerSection.appendChild(label);
+
+            const correctLetter = String.fromCharCode(97 + Number(idx));
+            const correctText = answers[Number(idx)] !== null && answers[Number(idx)] !== undefined
+                ? String(answers[Number(idx)])
+                : '';
+            const value = document.createElement('div');
+            value.textContent = `${correctLetter}) ${correctText}`.trim();
+            value.style.whiteSpace = 'pre-wrap';
+            answerSection.appendChild(value);
+
+            container.appendChild(answerSection);
+        }
 
         return { element: container };
     }

@@ -109,22 +109,81 @@ export class YouTubeNode extends DecoratorBlockNode {
   }
 
   exportDOM(): DOMExportOutput {
-    const element = document.createElement('iframe');
-    element.setAttribute('data-lexical-youtube', this.__id);
-    element.setAttribute('width', '560');
-    element.setAttribute('height', '315');
-    element.setAttribute(
-      'src',
-      `https://www.youtube-nocookie.com/embed/${this.__id}`,
-    );
-    element.setAttribute('frameborder', '0');
-    element.setAttribute(
+    const url = `https://youtu.be/${this.__id}`;
+
+    // Wrapper ensures we can provide a print/PDF-friendly fallback (link + QR)
+    // while still keeping the iframe in exported HTML.
+    const container = document.createElement('section');
+    container.setAttribute('data-lexical-youtube-block', 'true');
+    container.style.border = '1px solid rgba(0,0,0,0.15)';
+    container.style.borderRadius = '10px';
+    container.style.padding = '12px 14px';
+    container.style.margin = '12px 0';
+
+    const header = document.createElement('h3');
+    header.textContent = 'Wideo';
+    header.style.margin = '0 0 8px 0';
+    container.appendChild(header);
+
+    // Embed (may be hidden during print)
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('data-lexical-youtube', this.__id);
+    iframe.setAttribute('width', '560');
+    iframe.setAttribute('height', '315');
+    iframe.setAttribute('src', `https://www.youtube-nocookie.com/embed/${this.__id}`);
+    iframe.setAttribute('frameborder', '0');
+    iframe.setAttribute(
       'allow',
       'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
     );
-    element.setAttribute('allowfullscreen', 'true');
-    element.setAttribute('title', 'YouTube');
-    return {element};
+    iframe.setAttribute('allowfullscreen', 'true');
+    iframe.setAttribute('title', 'YouTube');
+    iframe.style.width = '100%';
+    iframe.style.maxWidth = '100%';
+    iframe.style.display = 'block';
+    iframe.style.margin = '0 0 10px 0';
+    container.appendChild(iframe);
+
+    // Print/PDF fallback: phone-friendly link + QR placeholder.
+    const p = document.createElement('p');
+    p.style.margin = '0 0 8px 0';
+    p.style.wordBreak = 'break-word';
+    const label = document.createElement('span');
+    label.textContent = 'Otwórz na telefonie: ';
+    const a = document.createElement('a');
+    a.href = url;
+    a.textContent = url;
+    a.target = '_blank';
+    a.rel = 'noreferrer noopener';
+    p.appendChild(label);
+    p.appendChild(a);
+    container.appendChild(p);
+
+    const qrWrap = document.createElement('div');
+    qrWrap.style.display = 'flex';
+    qrWrap.style.gap = '12px';
+    qrWrap.style.alignItems = 'center';
+
+    const qrImg = document.createElement('img');
+    qrImg.setAttribute('data-youtube-qr', url);
+    qrImg.alt = `Kod QR do filmu: ${url}`;
+    qrImg.style.width = '140px';
+    qrImg.style.height = '140px';
+    // Avoid broken image icon when exporting HTML without QR hydration.
+    qrImg.style.display = 'none';
+    qrImg.style.border = '1px solid rgba(0,0,0,0.12)';
+    qrImg.style.borderRadius = '8px';
+    qrWrap.appendChild(qrImg);
+
+    const hint = document.createElement('div');
+    hint.textContent = 'Zeskanuj kod QR (w PDF) albo wpisz link powyżej.';
+    hint.style.fontSize = '0.95em';
+    hint.style.opacity = '0.85';
+    qrWrap.appendChild(hint);
+
+    container.appendChild(qrWrap);
+
+    return {element: container};
   }
 
   static importDOM(): DOMConversionMap | null {

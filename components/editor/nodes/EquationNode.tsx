@@ -23,6 +23,31 @@ import * as React from 'react';
 
 const EquationComponent = React.lazy(() => import('./EquationComponent'));
 
+function base64EncodeUtf8(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let binary = '';
+  // Avoid call stack limits for longer strings.
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    let chunkBinary = '';
+    for (let j = 0; j < chunk.length; j++) {
+      chunkBinary += String.fromCharCode(chunk[j]);
+    }
+    binary += chunkBinary;
+  }
+  return btoa(binary);
+}
+
+function base64DecodeUtf8(base64: string): string {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder('utf-8', {fatal: false}).decode(bytes);
+}
+
 export type SerializedEquationNode = Spread<
   {
     equation: string;
@@ -36,8 +61,18 @@ function $convertEquationElement(
 ): null | DOMConversionOutput {
   let equation = domNode.getAttribute('data-lexical-equation');
   const inline = domNode.getAttribute('data-lexical-inline') === 'true';
-  // Decode the equation from base64
-  equation = atob(equation || '');
+
+  // Decode the equation from base64 (UTF-8).
+  // Fallback to plain atob() for legacy exports.
+  try {
+    equation = base64DecodeUtf8(equation || '');
+  } catch {
+    try {
+      equation = atob(equation || '');
+    } catch {
+      equation = equation || '';
+    }
+  }
   if (equation) {
     const node = $createEquationNode(equation, inline);
     return {node};
@@ -88,8 +123,8 @@ export class EquationNode extends DecoratorNode<JSX.Element> {
 
   exportDOM(): DOMExportOutput {
     const element = document.createElement(this.__inline ? 'span' : 'div');
-    // Encode the equation as base64 to avoid issues with special characters
-    const equation = btoa(this.__equation);
+    // Encode as UTF-8 base64 (btoa supports Latin1 only).
+    const equation = base64EncodeUtf8(this.__equation);
     element.setAttribute('data-lexical-equation', equation);
     element.setAttribute('data-lexical-inline', `${this.__inline}`);
     katex.render(this.__equation, element, {
