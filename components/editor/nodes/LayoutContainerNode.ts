@@ -83,7 +83,7 @@ export class LayoutContainerNode extends ElementNode {
 
     // Header spans the whole grid.
     const header = document.createElement('h3');
-    header.textContent = 'Bloki w kolumnach';
+    header.textContent = 'UWAGA';
     header.style.margin = '0 0 8px 0';
     header.style.gridColumn = '1 / -1';
     element.appendChild(header);
