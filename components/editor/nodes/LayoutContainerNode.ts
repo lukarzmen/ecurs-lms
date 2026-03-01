@@ -68,8 +68,25 @@ export class LayoutContainerNode extends ElementNode {
 
   exportDOM(): DOMExportOutput {
     const element = document.createElement('div');
-    element.style.gridTemplateColumns = this.__templateColumns;
     element.setAttribute('data-lexical-layout-container', 'true');
+
+    // Export should be self-contained (PDF/print), so do not rely on editor theme CSS.
+    element.style.display = 'grid';
+    element.style.gridTemplateColumns = this.__templateColumns;
+    element.style.gap = '12px';
+    element.style.alignItems = 'start';
+
+    element.style.border = '1px solid rgba(0,0,0,0.15)';
+    element.style.borderRadius = '10px';
+    element.style.padding = '12px 14px';
+    element.style.margin = '12px 0';
+
+    // Header spans the whole grid.
+    const header = document.createElement('h3');
+    header.textContent = 'Bloki w kolumnach';
+    header.style.margin = '0 0 8px 0';
+    header.style.gridColumn = '1 / -1';
+    element.appendChild(header);
     return {element};
   }
 

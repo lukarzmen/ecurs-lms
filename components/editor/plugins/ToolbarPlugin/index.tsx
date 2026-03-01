@@ -1583,7 +1583,7 @@ export default function NewToolbarPlugin({
                 </DropDownItem>
                 <DropDownItem
                   onClick={() => {
-                    showModal('Wstaw układ kolumnowy', (onClose) => (
+                    showModal('Wstaw bloki w kolumnach', (onClose) => (
                       <InsertLayoutDialog
                         activeEditor={activeEditor}
                         onClose={onClose}
@@ -1592,7 +1592,7 @@ export default function NewToolbarPlugin({
                   }}
                   className="item">
                   <i className="icon columns" />
-                  <span className="text">Układ kolumnowy</span>
+                  <span className="text">Bloki w kolumnach</span>
                 </DropDownItem>
                 <DropDownItem
                   onClick={() => {
@@ -1656,6 +1656,100 @@ export default function NewToolbarPlugin({
                     <span className="text">{embedConfig.contentName}</span>
                   </DropDownItem>
                 ))}
+
+                <DropDownItem
+                  onClick={() => {
+                    activeEditor.dispatchCommand(INSERT_GAP_NODE_COMMAND, '');
+                  }}
+                  className="item">
+                  <i className="icon fillgap" />
+                  <span className="text">Luka</span>
+                </DropDownItem>
+                <DropDownItem
+                  onClick={() => {
+                    showModal('Wstaw quiz', (onClose) => (
+                      <InsertQuizDialog
+                        activeEditor={activeEditor}
+                        onClose={onClose}
+                      />
+                    ));
+                  }}
+                  className="item">
+                  <i className="icon quiz" />
+                  <span className="text">Quiz</span>
+                </DropDownItem>
+                <DropDownItem
+                  onClick={() => {
+                    showModal('Wstaw zadanie: ułóż kolejność', (onClose) => (
+                      <InsertOrderingDialog
+                        activeEditor={activeEditor}
+                        onClose={onClose}
+                      />
+                    ));
+                  }}
+                  className="item">
+                  <i className="icon number" />
+                  <span className="text">Ułóż kolejność</span>
+                </DropDownItem>
+                <DropDownItem
+                  onClick={() => {
+                    showModal('Wstaw zadanie: prawda / fałsz', (onClose) => (
+                      <InsertTrueFalseDialog
+                        activeEditor={activeEditor}
+                        onClose={onClose}
+                      />
+                    ));
+                  }}
+                  className="item">
+                  <i className="icon question" />
+                  <span className="text">Prawda / fałsz</span>
+                </DropDownItem>
+                <DropDownItem
+                  onClick={() => {
+                    activeEditor.dispatchCommand(
+                      INSERT_DEFINITION_NODE_COMMAND,
+                      '',
+                    );
+                  }}
+                  className="item">
+                  <i className="icon plus" />
+                  <span className="text">Wyjaśnienie</span>
+                </DropDownItem>
+                <DropDownItem
+                  onClick={() => {
+                    showModal('Wstaw zadanie: wybierz odpowiedź', (onClose) => (
+                      <InsertSelectAnswerDialog
+                        activeEditor={activeEditor}
+                        onClose={onClose}
+                      />
+                    ));
+                  }}
+                  className="item">
+                  <i className="icon multi-select-checkbox" />
+                  <span className="text">Wybierz odpowiedź</span>
+                </DropDownItem>
+                <DropDownItem
+                  onClick={() => {
+                    showModal('Wstaw: lista zadań', (onClose) => (
+                      <InsertTodoDialog
+                        activeEditor={activeEditor}
+                        onClose={onClose}
+                      />
+                    ));
+                  }}
+                  className="item">
+                  <i className="icon select-checkbox" />
+                  <span className="text">Lista zadań</span>
+                </DropDownItem>
+
+                <DropDownItem
+                  onClick={() => {
+                    activeEditor.dispatchCommand(GENERATE_DICTIONARY_COMMAND, '');
+                  }}
+                  className="item">
+                  <i className="icon dictionary" />
+                  <span className="text">Słowniczek</span>
+                </DropDownItem>
               </DropDown>
             </>
           )}
@@ -1668,88 +1762,6 @@ export default function NewToolbarPlugin({
         editor={activeEditor}
         isRTL={toolbarState.isRTL}
       />
-      <Divider />
-      <DropDown
-        disabled={!isEditable}
-        buttonClassName="toolbar-item spaced"
-        buttonLabel="Narzędzia"
-        buttonAriaLabel="Opcje kursu"
-        buttonIconClassName="icon dropdown-course">
-        <DropDownItem
-          onClick={() => {
-            activeEditor.dispatchCommand(GENERATE_DICTIONARY_COMMAND, "");
-          }}
-          className="item">
-          <i className="icon dictionary" />
-          <span className="text">Słownik</span>
-        </DropDownItem>
-        <DropDownItem
-          onClick={() => {
-            activeEditor.dispatchCommand(INSERT_GAP_NODE_COMMAND, "");
-          }}
-          className="item">
-          <i className="icon fillgap" />
-          <span className="text">Luka</span>
-        </DropDownItem>
-        <DropDownItem
-          onClick={() => {
-            showModal('Generuj test', (onClose) => (
-              <InsertQuizDialog activeEditor={activeEditor} onClose={onClose} />
-            ));
-          }}
-          className="item">
-          <i className="icon quiz" />
-          <span className="text">Quiz</span>
-        </DropDownItem>
-        <DropDownItem
-          onClick={() => {
-            showModal('Ułóż kolejność', (onClose) => (
-              <InsertOrderingDialog activeEditor={activeEditor} onClose={onClose} />
-            ));
-          }}
-          className="item">
-          <i className="icon number" />
-          <span className="text">Ułóż kolejność</span>
-        </DropDownItem>
-        <DropDownItem
-          onClick={() => {
-            showModal('Prawda / fałsz', (onClose) => (
-              <InsertTrueFalseDialog activeEditor={activeEditor} onClose={onClose} />
-            ));
-          }}
-          className="item">
-          <i className="icon question" />
-          <span className="text">Prawda / fałsz</span>
-        </DropDownItem>
-        <DropDownItem
-          onClick={() => {
-            activeEditor.dispatchCommand(INSERT_DEFINITION_NODE_COMMAND, "");
-          }}
-          className="item">
-          <i className="icon plus" />
-          <span className="text">Wytłumaczenie</span>
-        </DropDownItem>
-        <DropDownItem
-          onClick={() => {
-            showModal('Wybierz odpowiedź', (onClose) => (
-              <InsertSelectAnswerDialog activeEditor={activeEditor} onClose={onClose} />
-            ));
-          }}
-          className="item">
-          <i className="icon multi-select-checkbox" />
-          <span className="text">Lista wybierana</span>
-        </DropDownItem>
-          <DropDownItem
-          onClick={() => {
-            showModal('Lista wybierana', (onClose) => (
-              <InsertTodoDialog activeEditor={activeEditor} onClose={onClose} />
-            ));
-          }}
-          className="item">
-          <i className="icon select-checkbox" />
-          <span className="text">Zadania domowe</span>
-        </DropDownItem>
-      </DropDown>
       <Divider />
       <DropDown
         disabled={!isEditable}
@@ -1768,7 +1780,7 @@ export default function NewToolbarPlugin({
           }}
           className="item">
           <i className="icon generate-text" />
-          <span className="text">Treść</span>
+          <span className="text">Generuj treść</span>
         </DropDownItem>
         <DropDownItem
           onClick={() => {
@@ -1794,7 +1806,7 @@ export default function NewToolbarPlugin({
           }}
           className="item">
           <i className="icon task" />
-          <span className="text">Zadanie</span>
+          <span className="text">Zadanie opisowe</span>
         </DropDownItem>
         <DropDownItem
           onClick={() => {
@@ -1807,7 +1819,7 @@ export default function NewToolbarPlugin({
           }}
           className="item">
           <i className="icon question" />
-          <span className="text">Pytanie - odpowiedź</span>
+          <span className="text">Pytanie otwarte</span>
         </DropDownItem>
         <DropDownItem
           onClick={() => {
@@ -1827,30 +1839,35 @@ export default function NewToolbarPlugin({
       <DropDown
         disabled={!isEditable}
         buttonClassName="toolbar-item spaced"
-        buttonLabel="Pobierz"
-        buttonAriaLabel="Pobierz"
-        buttonIconClassName="icon download">
-        <DropDownItem onClick={exportHtml} className="item">
+        buttonLabel="Narzędzia"
+        buttonAriaLabel="Narzędzia dokumentu"
+        buttonIconClassName="icon dropdown-course">
+        <DropDownItem
+          onClick={exportHtml}
+          className="item">
           <i className="icon html" />
-          <span className="text">HTML</span>
+          <span className="text">Pobierz HTML</span>
         </DropDownItem>
-        <DropDownItem onClick={exportPdf} className="item">
+        <DropDownItem
+          onClick={exportPdf}
+          className="item">
           <i className="icon pdf" />
-          <span className="text">PDF</span>
+          <span className="text">Pobierz PDF</span>
         </DropDownItem>
+        {!isEditorEmpty && (
+          <DropDownItem
+            onClick={() => {
+              showModal('Wyczyść edytor', (onClose) => (
+                <ShowClearDialog editor={editor} onClose={onClose} />
+              ));
+            }}
+            className="item">
+            <i className="icon clear" />
+            <span className="text">Wyczyść edytor</span>
+          </DropDownItem>
+        )}
       </DropDown>
-      <button
-        className="toolbar-item spaced"
-        disabled={isEditorEmpty}
-        onClick={() => {
-          showModal('Wyczyść edytor', (onClose) => (
-            <ShowClearDialog editor={editor} onClose={onClose} />
-          ));
-        }}
-        title="Wyczyść"
-        aria-label="Wyczyść edytor">
-        <i className="format clear" />
-      </button>
+      <Divider />
       <Settings />
       {modal}
     </div>

@@ -311,6 +311,50 @@ export class LayoutItemNode extends ElementNode {
     if (this.__variant !== 'default' && this.__customBackgroundColor) {
       element.setAttribute('data-lexical-layout-item-bg', this.__customBackgroundColor);
     }
+
+    // Export should be self-contained for PDF/print.
+    element.style.position = 'relative';
+    element.style.padding = '10px 12px';
+    element.style.borderRadius = '10px';
+    element.style.minWidth = '0';
+    // Avoid breaking a column box in print when possible.
+    (element.style as any).breakInside = 'avoid';
+    (element.style as any).pageBreakInside = 'avoid';
+
+    if (this.__showFrame) {
+      element.style.border = '1px solid rgba(0,0,0,0.12)';
+    }
+
+    const background =
+      this.__variant === 'default'
+        ? this.__backgroundColor
+        : this.__customBackgroundColor || '';
+    if (background) {
+      element.style.backgroundColor = background;
+    }
+
+    const labelText =
+      this.__variant === 'warning'
+        ? 'Ważne'
+        : this.__variant === 'info'
+          ? 'Info'
+          : 'Ciekawostka';
+
+    const label = document.createElement('div');
+    label.textContent = labelText;
+    label.style.fontWeight = '700';
+    label.style.margin = '0 0 6px 0';
+    label.style.fontSize = '0.95em';
+    element.appendChild(label);
+
+    if (this.__extraLabel) {
+      const extra = document.createElement('div');
+      extra.textContent = this.__extraLabel;
+      extra.style.margin = '0 0 8px 0';
+      extra.style.opacity = '0.85';
+      extra.style.fontSize = '0.95em';
+      element.appendChild(extra);
+    }
     return {element};
   }
   isShadowRoot(): boolean {
