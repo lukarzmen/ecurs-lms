@@ -75,10 +75,6 @@ export class LayoutContainerNode extends ElementNode {
     element.style.gridTemplateColumns = this.__templateColumns;
     element.style.gap = '12px';
     element.style.alignItems = 'start';
-
-    element.style.border = '1px solid rgba(0,0,0,0.15)';
-    element.style.borderRadius = '10px';
-    element.style.padding = '12px 14px';
     element.style.margin = '12px 0';
 
     // Header spans the whole grid.
