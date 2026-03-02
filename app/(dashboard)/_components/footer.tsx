@@ -27,6 +27,14 @@ const Footer = () => {
         <span className="text-gray-400">•</span>
         <Link href="/terms" className="underline hover:text-orange-600">Regulamin</Link>
         <Link href="/privacy" className="underline hover:text-orange-600">Polityka Prywatności</Link>
+        <a
+          href="https://www.facebook.com/ecurspolska"
+          target="_blank"
+          rel="noreferrer"
+          className="underline hover:text-orange-600"
+        >
+          Facebook
+        </a>
       </div>
       <div>
         {formattedDate} {formattedTime}
