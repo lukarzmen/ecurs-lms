@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FormCard, FormActions, FormSection } from "@/components/ui/form-card";
-import { Pencil, FileText } from "lucide-react";
+import { FileText, Loader2, Pencil, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface DescriptionFormProps {
@@ -18,6 +18,7 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
   const [isEditing, setIsEditing] = useState(false);
   const [descriptionValue, setDescriptionValue] = useState(description);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const router = useRouter();
 
   const toggleEdit = () => {
@@ -40,6 +41,41 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
       toast.error("Coś poszło nie tak");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleGenerateAiDescription = async () => {
+    if (isGenerating || isSubmitting) return;
+
+    setIsGenerating(true);
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemPrompt:
+            "Jesteś doświadczonym copywriterem i metodykiem e-learningu. Napisz krótki, zachęcający opis kursu po polsku (3-6 zdań). Nie używaj emoji. Skup się na korzyściach, zakresie i dla kogo jest kurs.",
+          userPrompt:
+            "Wygeneruj opis kursu. Jeśli nie znasz tematu, napisz neutralny opis ogólny bez zmyślania faktów.",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("AI generation failed");
+      }
+
+      const text = (await response.text()).trim();
+      if (!text) {
+        toast.error("AI nie zwróciło treści");
+        return;
+      }
+
+      setDescriptionValue(text);
+      toast.success("Opis został wygenerowany przez AI");
+    } catch {
+      toast.error("Błąd podczas generowania opisu");
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -73,15 +109,34 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
               <Textarea
                 value={descriptionValue}
                 onChange={handleChange}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isGenerating}
                 placeholder="Opisz swój kurs..."
                 rows={4}
               />
             </div>
             <FormActions>
               <Button
+                type="button"
+                onClick={handleGenerateAiDescription}
+                disabled={isSubmitting || isGenerating}
+                variant="outline"
+                className="flex-1"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generuję...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Generuj AI
+                  </>
+                )}
+              </Button>
+              <Button
                 type="submit"
-                disabled={!descriptionValue || isSubmitting}
+                disabled={!descriptionValue?.trim() || isSubmitting || isGenerating}
                 className="flex-1"
               >
                 Zapisz
@@ -108,5 +163,5 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
     </div>
   );
 };
-
+ 
 export default DescriptionForm;
