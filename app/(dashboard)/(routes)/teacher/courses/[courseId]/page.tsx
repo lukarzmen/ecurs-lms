@@ -93,7 +93,11 @@ const CourseIdPage = async ({ params }: { params: Promise<{ courseId: string }> 
         </>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TitleForm title={courseTitle} courseId={courseId} />
-          <DescriptionForm description={course.description ?? ''} courseId={courseId} />
+          <DescriptionForm
+            description={course.description ?? ""}
+            courseId={courseId}
+            courseTitle={courseTitle}
+          />
           <CategoryForm
             categoryId={course.categoryId ?? -1}
             options={categories.map((x: Category) => ({

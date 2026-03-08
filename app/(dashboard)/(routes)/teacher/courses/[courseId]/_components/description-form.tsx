@@ -12,9 +12,10 @@ import toast from "react-hot-toast";
 interface DescriptionFormProps {
   description: string;
   courseId: string;
+  courseTitle?: string;
 }
 
-const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId }) => {
+const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId, courseTitle }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [descriptionValue, setDescriptionValue] = useState(description);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,7 +57,7 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
           systemPrompt:
             "Jesteś doświadczonym copywriterem i metodykiem e-learningu. Napisz krótki, zachęcający opis kursu po polsku (3-6 zdań). Nie używaj emoji. Skup się na korzyściach, zakresie i dla kogo jest kurs.",
           userPrompt:
-            "Wygeneruj opis kursu. Jeśli nie znasz tematu, napisz neutralny opis ogólny bez zmyślania faktów.",
+            `Wygeneruj opis kursu ${courseTitle ? `\"${courseTitle}\"` : "(tytuł nieznany)"}. ${courseTitle ? "" : "Jeśli nie znasz tematu, napisz neutralny opis ogólny bez zmyślania faktów."}`,
         }),
       });
 
