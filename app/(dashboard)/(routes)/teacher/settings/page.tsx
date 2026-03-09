@@ -580,9 +580,9 @@ const TeacherSettingsPage = () => {
                 ) && (
                   <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                     <h4 className="font-semibold">Plan Indywidualny</h4>
-                    <p className="text-sm text-muted-foreground mb-2">Do 50 uczniów</p>
-                    <p className="text-2xl font-bold mb-2">39 zł<span className="text-sm font-normal">/miesiąc</span></p>
-                    <p className="text-xs text-green-600 mb-3">30 dni gratis</p>
+                    <p className="text-sm text-muted-foreground mb-2">Do 100 uczniów</p>
+                    <p className="text-2xl font-bold mb-2">19 zł <span className="text-sm font-normal text-muted-foreground line-through">29 zł</span><span className="text-sm font-normal">/miesiąc</span></p>
+                    <p className="text-xs text-green-600 mb-3">3 miesiące gratis</p>
                     <Button onClick={() => subscribeToPlatform('individual')} className="w-full">
                       Wybierz plan
                     </Button>
@@ -596,9 +596,9 @@ const TeacherSettingsPage = () => {
                 ) && (
                   <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                     <h4 className="font-semibold">Plan Szkolny</h4>
-                    <p className="text-sm text-muted-foreground mb-2">Powyżej 50 uczniów</p>
-                    <p className="text-2xl font-bold mb-2">1499 zł<span className="text-sm font-normal">/rok</span></p>
-                    <p className="text-xs text-green-600 mb-3">30 dni gratis</p>
+                    <p className="text-sm text-muted-foreground mb-2">Powyżej 100 uczniów</p>
+                    <p className="text-2xl font-bold mb-2">1199 zł <span className="text-sm font-normal text-muted-foreground line-through">1499 zł</span><span className="text-sm font-normal">/rok</span></p>
+                    <p className="text-xs text-green-600 mb-3">3 miesiące gratis</p>
                     <Button onClick={() => subscribeToPlatform('school')} className="w-full">
                       Wybierz plan
                     </Button>

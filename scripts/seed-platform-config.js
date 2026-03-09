@@ -9,19 +9,19 @@ async function seedPlatformConfig() {
     const platformConfig = await prisma.platformFeeConfig.upsert({
       where: { name: 'Default Platform Fees' },
       update: {
-        individualMonthlyFee: 39.00,
-        schoolYearlyFee: 1499.00,
+        individualMonthlyFee: 19.00,
+        schoolYearlyFee: 1199.00,
         currency: 'PLN',
-        trialPeriodDays: 30,
+        trialPeriodDays: 90,
         isActive: true,
       },
       create: {
         name: 'Default Platform Fees',
         description: 'Default configuration for platform access fees for teachers',
-        individualMonthlyFee: 39.00,
-        schoolYearlyFee: 1499.00,
+        individualMonthlyFee: 19.00,
+        schoolYearlyFee: 1199.00,
         currency: 'PLN',
-        trialPeriodDays: 30,
+        trialPeriodDays: 90,
         isActive: true,
       },
     });

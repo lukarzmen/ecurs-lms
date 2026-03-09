@@ -60,7 +60,7 @@ const SearchPage = async ({ searchParams }: { searchParams: Promise<{ title?: st
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
                 <Search className="h-8 w-8 text-orange-600" />
-                <span>Wyszukaj kursy</span>
+                <span>Odkrywaj</span>
               </h1>
               <p className="text-gray-600 mt-2">
                 Znajdź idealny kurs dla siebie z naszej bogatej oferty edukacyjnej

@@ -461,10 +461,10 @@ model PlatformFeeConfig {
   id                    Int     @id @default(autoincrement())
   name                  String  @unique
   description           String?
-  individualMonthlyFee  Decimal @default(39) @db.Decimal(10, 2)
-  schoolYearlyFee       Decimal @default(1499) @db.Decimal(10, 2)
+  individualMonthlyFee  Decimal @default(19) @db.Decimal(10, 2)
+  schoolYearlyFee       Decimal @default(1199) @db.Decimal(10, 2)
   currency              String  @default("PLN")
-  trialPeriodDays       Int     @default(30)
+  trialPeriodDays       Int     @default(90)
   isActive              Boolean @default(true)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt

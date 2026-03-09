@@ -7,19 +7,15 @@ import { ReactNode } from "react";
 interface SidebarItemProps {
   label: string;
   href: string;
-}
-
-interface SidebarItemProps {
-  label: string;
-  href: string;
   icon?: ReactNode;
 }
 
 export const SidebarItem = ({ label, href, icon }: SidebarItemProps) => {
   const pathName = usePathname();
   const router = useRouter();
-  const isActive = (pathName === "/" && href === "/") || pathName.startsWith(href) && href !== "/";
-  // icon prop is expected to be a ReactNode, e.g. <BarChart />, <Compass />, etc.
+
+  const isActive = href === "/" ? pathName === "/" : (pathName?.startsWith(href) ?? false);
+
   const onClick = () => {
     router.push(href);
   };
@@ -28,15 +24,26 @@ export const SidebarItem = ({ label, href, icon }: SidebarItemProps) => {
     <button
       onClick={onClick}
       type="button"
+      aria-current={isActive ? "page" : undefined}
       className={cn(
-        "flex items-center gap-x-2 text-orange-600 text-sm font-[500] pl-6 transition-all hover:text-orange-700 hover:bg-orange-100",
-        isActive && "text-orange-700 bg-orange-200 hover:bg-orange-200"
+        "group relative flex w-full items-center gap-x-3 rounded-md px-3 py-2 text-left text-sm font-medium text-muted-foreground transition-colors",
+        // Orange is the visual motif for navigation accents
+        "hover:bg-orange-500/10 hover:text-orange-700",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        isActive && "bg-orange-500/10 text-orange-700",
+        isActive && "before:absolute before:left-0 before:top-1/2 before:h-6 before:w-1 before:-translate-y-1/2 before:rounded-r before:bg-orange-500"
       )}
     >
-      <div className="flex items-center gap-x-2 py-4 select-none w-full">
-        {icon && <span className="mr-2">{icon}</span>}
-        {label}
-      </div>
+      <span
+        className={cn(
+          "flex h-8 w-8 items-center justify-center rounded-md",
+          "text-muted-foreground group-hover:text-orange-700",
+          isActive && "bg-orange-500/15 text-orange-700"
+        )}
+      >
+        {icon}
+      </span>
+      <span className="select-none truncate">{label}</span>
     </button>
   );
 };

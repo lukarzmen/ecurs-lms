@@ -203,19 +203,19 @@ const TEACHER_TERMS = (
     <p className="font-semibold text-gray-700 mt-2">§6. Warunki płatności, okresy rozliczeniowe i zmiana licencji</p>
     <ul className="list-disc ml-6 text-gray-700">
       <li>
-        <b>Indywidualny twórca</b> – osoba fizyczna prowadząca kursy na platformie Ecurs, posiadająca nie więcej niż 50 aktywnych uczniów oraz jedno konto nauczyciela.
+        <b>Indywidualny twórca</b> – osoba fizyczna prowadząca kursy na platformie Ecurs, posiadająca nie więcej niż 100 aktywnych uczniów oraz jedno konto nauczyciela.
       </li>
       <li>
-        <b>Tryb Organizacji</b> – (szkoła / placówka edukacyjna) instytucja lub organizacja, która posiada więcej niż jednego nauczyciela (współtworzących kursy) lub więcej niż 50 aktywnych uczniów. Szkoła może tworzyć zespoły nauczycieli i zarządzać kursami wspólnie.
+        <b>Tryb Organizacji</b> – (szkoła / placówka edukacyjna) instytucja lub organizacja, która posiada więcej niż jednego nauczyciela (współtworzących kursy) lub więcej niż 100 aktywnych uczniów. Szkoła może tworzyć zespoły nauczycieli i zarządzać kursami wspólnie.
       </li>
       <li>
         Po zakończeniu okresu próbnego (3 miesiące) nauczyciel lub szkoła zobowiązani są do wyboru jednego z planów płatności:
         <ul className="list-disc ml-6 mt-2">
           <li>
-            <b>Plan dla indywidualnych twórców prowadzących do 50 uczniów w zamkniętych kursach:</b> 39 zł za miesiąc – pełny dostęp do funkcji, tworzenie interaktywnych kursów, zarządzanie treściami i uczniami, podstawowe wsparcie techniczne.
+            <b>Plan dla indywidualnych twórców prowadzących do 100 uczniów w zamkniętych kursach:</b> 19 zł za miesiąc (promocja z 29 zł) – pełny dostęp do funkcji, tworzenie interaktywnych kursów, zarządzanie treściami i uczniami, podstawowe wsparcie techniczne.
           </li>
           <li>
-            <b>Tryb Organizacji (szkoły i placówki edukacyjne) lub twórcy posiadający więcej niż 50 uczniów w zamkniętych kursach:</b> 1499 zł za rok – pełny dostęp do wszystkich funkcjonalności, nielimitowani członkowie zespołu, pełne wsparcie techniczne.
+            <b>Tryb Organizacji (szkoły i placówki edukacyjne) lub twórcy posiadający więcej niż 100 uczniów w zamkniętych kursach:</b> 1199 zł za rok (promocja z 1499 zł) – pełny dostęp do wszystkich funkcjonalności, nielimitowani członkowie zespołu, pełne wsparcie techniczne.
           </li>
           <li>
             <b>Dołączenie do istniejącej szkoły:</b> Nauczyciel, który dołączy do istniejącej szkoły jako członek zespołu, nie płaci za korzystanie z platformy. Subskrypcję platformy opłaca właściciel szkoły, a nauczyciel dołączony do szkoły automatycznie otrzymuje pełny dostęp do wszystkich funkcjonalności platformy.
@@ -223,7 +223,7 @@ const TEACHER_TERMS = (
         </ul>
       </li>
       <li>
-        <b>Mechanizm przejścia:</b> Jeśli liczba aktywnych uczniów w kursach zamkniętych przekroczy 50 osób lub do kursów zostanie przypisany drugi nauczyciel, użytkownik zostanie automatycznie poinformowany o konieczności przejścia na Tryb Organizacji. Informacja zostanie przekazana mailowo na adres podany przy rejestracji oraz poprzez komunikat w panelu platformy. Użytkownik ma 30 dni na przejście na wyższy plan.
+        <b>Mechanizm przejścia:</b> Jeśli liczba aktywnych uczniów w kursach zamkniętych przekroczy 100 osób lub do kursów zostanie przypisany drugi nauczyciel, użytkownik zostanie automatycznie poinformowany o konieczności przejścia na Tryb Organizacji. Informacja zostanie przekazana mailowo na adres podany przy rejestracji oraz poprzez komunikat w panelu platformy. Użytkownik ma 30 dni na przejście na wyższy plan.
       </li>
       <li>
         <b>Zasady naliczania opłat:</b> W przypadku zmiany planu w trakcie trwania okresu rozliczeniowego, opłata za nową licencję zostanie naliczona proporcjonalnie do pozostałego okresu rozliczeniowego.
@@ -2461,14 +2461,15 @@ export default function RegisterPage() {
                           <div className="text-xs text-gray-600 mt-2">
                             • Pełny dostęp do funkcji<br/>
                             • Tworzenie interaktywnych kursów<br/>
+                            • Do 100 uczniów<br/>
                             • Podstawowe wsparcie techniczne<br/>
                             • <span className="text-green-600 font-medium">Anulowanie w każdej chwili</span>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-2xl font-bold text-blue-600">39 zł</div>
+                          <div className="text-2xl font-bold text-blue-600">19 zł <span className="text-sm font-medium text-gray-500 line-through">29 zł</span></div>
                           <div className="text-sm text-gray-600">miesięcznie</div>
-                          <div className="text-sm text-green-600 font-medium mt-2">30 dni GRATIS</div>
+                          <div className="text-sm text-green-600 font-medium mt-2">3 miesiące GRATIS</div>
                         </div>
                       </div>
                     </div>
@@ -2517,7 +2518,7 @@ export default function RegisterPage() {
                         <div>
                           <div className="font-medium text-gray-800 text-lg">🏫 Tryb Organizacji</div>
                           <div className="text-sm text-gray-700 mt-1">
-                            Dla szkół/organizacji: gdy masz &gt; 50 aktywnych uczniów lub dodajesz drugiego nauczyciela
+                            Dla szkół/organizacji: gdy masz &gt; 100 aktywnych uczniów lub dodajesz drugiego nauczyciela
                           </div>
                           <div className="text-xs text-gray-600 mt-2">
                             • Wszystkie funkcjonalności<br/>
@@ -2527,9 +2528,9 @@ export default function RegisterPage() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-2xl font-bold text-purple-600">1499 zł</div>
+                          <div className="text-2xl font-bold text-purple-600">1199 zł <span className="text-sm font-medium text-gray-500 line-through">1499 zł</span></div>
                           <div className="text-sm text-gray-600">rocznie</div>
-                          <div className="text-sm text-green-600 font-medium mt-2">30 dni GRATIS</div>
+                          <div className="text-sm text-green-600 font-medium mt-2">3 miesiące GRATIS</div>
                         </div>
                       </div>
                     </div>
@@ -2580,7 +2581,7 @@ export default function RegisterPage() {
                 
                 <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-xs text-blue-700">
-                    ℹ️ <strong>Okres próbny:</strong> Plan zawiera 30-dniowy bezpłatny okres próbny.
+                    ℹ️ <strong>Okres próbny:</strong> Plan zawiera 3-miesięczny bezpłatny okres próbny.
                   </p>
                   <p className="text-xs text-blue-700 mt-1">
                     🔄 <strong>Elastyczność:</strong> Anuluj lub zmień plan w każdej chwili bez opłat za rezygnację.

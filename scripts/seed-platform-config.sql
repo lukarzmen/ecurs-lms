@@ -14,10 +14,10 @@ INSERT INTO platform_fee_configs (
 ) VALUES (
     'Default Platform Fees',
     'Default configuration for platform access fees for teachers',
-    39.00,
-    1499.00,
+    19.00,
+    1199.00,
     'PLN',
-    30,
+    90,
     true,
     NOW(),
     NOW()
