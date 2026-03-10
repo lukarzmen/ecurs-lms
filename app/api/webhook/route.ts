@@ -149,6 +149,33 @@ export async function POST(req: Request) {
         }
     };
 
+    const parseMetadataBoolean = (value: unknown): boolean | null => {
+        if (typeof value === "boolean") {
+            return value;
+        }
+
+        if (typeof value === "string") {
+            const normalized = value.trim().toLowerCase();
+            if (["true", "1", "yes", "on"].includes(normalized)) {
+                return true;
+            }
+            if (["false", "0", "no", "off"].includes(normalized)) {
+                return false;
+            }
+        }
+
+        if (typeof value === "number") {
+            if (value === 1) {
+                return true;
+            }
+            if (value === 0) {
+                return false;
+            }
+        }
+
+        return null;
+    };
+
     // Helper to extract payment data from Stripe objects
     function extractBuyerDetails(stripeObject: any, additionalData?: any): any {
         const metadata = additionalData?.metadata || stripeObject?.metadata || {};
@@ -482,6 +509,7 @@ export async function POST(req: Request) {
             const promoCodeIdNum = promoCodeIdRaw ? Number(promoCodeIdRaw) : NaN;
             baseData.promoCodeId = Number.isFinite(promoCodeIdNum) ? promoCodeIdNum : null;
             baseData.promoCodeCode = stripeData?.metadata?.promoCode || null;
+            baseData.vatInvoiceRequested = parseMetadataBoolean(stripeData?.metadata?.vatInvoiceRequested);
         }
 
         // Get course ID from userCourse and fetch price data
@@ -726,6 +754,7 @@ export async function POST(req: Request) {
             const promoCodeIdNum = promoCodeIdRaw ? Number(promoCodeIdRaw) : NaN;
             baseData.promoCodeId = Number.isFinite(promoCodeIdNum) ? promoCodeIdNum : null;
             baseData.promoCodeCode = stripeData?.metadata?.promoCode || null;
+            baseData.vatInvoiceRequested = parseMetadataBoolean(stripeData?.metadata?.vatInvoiceRequested);
 
             // Prefer Stripe amount when available (keeps discounts), otherwise fallback to price table
             if (stripeData.amount != null) {

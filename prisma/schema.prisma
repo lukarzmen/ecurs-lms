@@ -160,6 +160,7 @@ model EducationalPathPurchase {
   trialStart         DateTime?       @db.Timestamp(6)
   trialEnd           DateTime?       @db.Timestamp(6)
   customerEmail      String?         @db.VarChar(255)
+  vatInvoiceRequested Boolean?
   buyerType          String?         @db.VarChar(30)
   buyerName          String?         @db.VarChar(255)
   buyerCompanyName   String?         @db.VarChar(255)
@@ -383,6 +384,7 @@ model UserCoursePurchase {
   trialStart         DateTime?  @db.Timestamp(6)
   trialEnd           DateTime?  @db.Timestamp(6)
   customerEmail      String?    @db.VarChar(255)
+  vatInvoiceRequested Boolean?
   buyerType          String?    @db.VarChar(30)
   buyerName          String?    @db.VarChar(255)
   buyerCompanyName   String?    @db.VarChar(255)
