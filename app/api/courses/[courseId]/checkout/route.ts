@@ -101,9 +101,8 @@ export async function POST(
         // Faktura tylko gdy: (szkoła wymaga LUB klient zażądał) I szkoła ma NIP
         const shouldCreateInvoice = schoolHasTaxId && (course?.school?.requiresVatInvoices || vatInvoiceRequested);
         
-        // Zbieraj dane do faktury lub gdy kupujący to firma (NIP wymagany)
+        // NIP/VAT ID zbieramy wtedy, gdy ma to sens dla faktury.
         const shouldCollectBillingDetails = shouldCreateInvoice || vatInvoiceRequested || buyerType === "company";
-        const billingAddressCollection = buyerType === "company" ? "required" : "auto";
         
         console.log(`Course data for courseId ${courseId}:`, {
             courseExists: !!course,
@@ -425,13 +424,13 @@ export async function POST(
                 success_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?success=1`,
                 cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?canceled=1`,
                 client_reference_id: String(userCourse.id),
-                // Zbieranie danych do faktury VAT tylko gdy klient chce fakturę i szkoła ma NIP
+                // Wymagane dane do faktury dla kazdego checkoutu: imie i nazwisko oraz adres.
+                customer_update: {
+                    address: 'auto',
+                    name: 'auto',
+                },
+                billing_address_collection: 'required',
                 ...(shouldCollectBillingDetails ? {
-                    customer_update: {
-                        address: 'auto',
-                        name: 'auto',
-                    },
-                    billing_address_collection: billingAddressCollection,
                     tax_id_collection: {
                         enabled: true, // Umożliwia podanie NIP/VAT ID
                     },
@@ -586,13 +585,13 @@ export async function POST(
                 success_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?success=1`,
                 cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}?canceled=1`,
                 client_reference_id: String(userCourse.id),
-                // Zbieranie danych do faktury VAT tylko gdy klient chce fakturę i szkoła ma NIP
+                // Wymagane dane do faktury dla kazdego checkoutu: imie i nazwisko oraz adres.
+                customer_update: {
+                    address: 'auto',
+                    name: 'auto',
+                },
+                billing_address_collection: 'required',
                 ...(shouldCollectBillingDetails ? {
-                    customer_update: {
-                        address: 'auto',
-                        name: 'auto',
-                    },
-                    billing_address_collection: billingAddressCollection,
                     tax_id_collection: {
                         enabled: true, // Umożliwia podanie NIP/VAT ID
                     },

@@ -463,8 +463,9 @@ model PlatformFeeConfig {
   id                    Int     @id @default(autoincrement())
   name                  String  @unique
   description           String?
-  individualMonthlyFee  Decimal @default(19) @db.Decimal(10, 2)
-  schoolYearlyFee       Decimal @default(1199) @db.Decimal(10, 2)
+  individualMonthlyFee  Decimal @default(15.45) @db.Decimal(10, 2)
+  schoolYearlyFee       Decimal @default(974.80) @db.Decimal(10, 2)
+  vatRate               Decimal @default(0.23) @db.Decimal(5, 2)
   currency              String  @default("PLN")
   trialPeriodDays       Int     @default(90)
   isActive              Boolean @default(true)
@@ -478,6 +479,7 @@ model TeacherPlatformSubscription {
   id                     Int      @id @default(autoincrement())
   userId                 Int      @unique
   subscriptionType       String   // "individual" or "school"
+  vatRate                Decimal  @default(0.23) @db.Decimal(5, 2)
   paymentId              String?
   eventType              String?  @db.VarChar(100)
   amount                 Decimal? @db.Decimal(10, 2)

@@ -70,9 +70,21 @@ interface PlatformSubscription {
   currentPeriodEnd?: string;
   subscriptionId?: string;
   amount?: number;
+  vatRate?: number;
   currency?: string;
   trialEnd?: string;
 }
+
+const PLATFORM_VAT_RATE = 0.23;
+const PLATFORM_VAT_PERCENT = 23;
+
+const calculateGrossPrice = (netPrice: number) => Number((netPrice * (1 + PLATFORM_VAT_RATE)).toFixed(2));
+const calculateNetPrice = (grossPrice: number) => Number((grossPrice / (1 + PLATFORM_VAT_RATE)).toFixed(2));
+const normalizeVatRate = (vatRate?: number) => {
+  const raw = vatRate ?? PLATFORM_VAT_RATE;
+  return raw > 1 ? raw / 100 : raw;
+};
+const formatPln = (price: number) => price.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 interface StripeConnectInfo {
   hasAccount: boolean;
@@ -531,10 +543,13 @@ const TeacherSettingsPage = () => {
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-lg">
-                    {platformSubscription.amount ? `${platformSubscription.amount} ${platformSubscription.currency || 'PLN'}` : 'N/A'}
+                    {platformSubscription.amount ? `${formatPln(calculateGrossPrice(platformSubscription.amount))} ${platformSubscription.currency || 'PLN'}` : 'N/A'}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {platformSubscription.subscriptionType === 'individual' ? 'miesięcznie' : 'rocznie'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Kwota brutto (VAT {(normalizeVatRate(platformSubscription.vatRate) * 100).toFixed(0)}%)
                   </p>
                 </div>
               </div>
@@ -581,7 +596,8 @@ const TeacherSettingsPage = () => {
                   <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                     <h4 className="font-semibold">Plan Indywidualny</h4>
                     <p className="text-sm text-muted-foreground mb-2">Do 100 uczniów</p>
-                    <p className="text-2xl font-bold mb-2">19 zł <span className="text-sm font-normal text-muted-foreground line-through">29 zł</span><span className="text-sm font-normal">/miesiąc</span></p>
+                    <p className="text-2xl font-bold mb-1">19,00 zł brutto <span className="text-sm font-normal text-muted-foreground line-through">29,00 zł</span><span className="text-sm font-normal">/miesiąc</span></p>
+                    <p className="text-xs text-muted-foreground mb-2">{formatPln(calculateNetPrice(19))} zł netto + VAT {PLATFORM_VAT_PERCENT}%</p>
                     <p className="text-xs text-green-600 mb-3">3 miesiące gratis</p>
                     <Button onClick={() => subscribeToPlatform('individual')} className="w-full">
                       Wybierz plan
@@ -597,7 +613,8 @@ const TeacherSettingsPage = () => {
                   <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                     <h4 className="font-semibold">Plan Szkolny</h4>
                     <p className="text-sm text-muted-foreground mb-2">Powyżej 100 uczniów</p>
-                    <p className="text-2xl font-bold mb-2">1199 zł <span className="text-sm font-normal text-muted-foreground line-through">1499 zł</span><span className="text-sm font-normal">/rok</span></p>
+                    <p className="text-2xl font-bold mb-1">1 199,00 zł brutto <span className="text-sm font-normal text-muted-foreground line-through">1 499,00 zł</span><span className="text-sm font-normal">/rok</span></p>
+                    <p className="text-xs text-muted-foreground mb-2">{formatPln(calculateNetPrice(1199))} zł netto + VAT {PLATFORM_VAT_PERCENT}%</p>
                     <p className="text-xs text-green-600 mb-3">3 miesiące gratis</p>
                     <Button onClick={() => subscribeToPlatform('school')} className="w-full">
                       Wybierz plan
@@ -659,10 +676,13 @@ const TeacherSettingsPage = () => {
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-lg">
-                    {platformSubscription.amount ? `${platformSubscription.amount} ${platformSubscription.currency || 'PLN'}` : 'N/A'}
+                    {platformSubscription.amount ? `${formatPln(calculateGrossPrice(platformSubscription.amount))} ${platformSubscription.currency || 'PLN'}` : 'N/A'}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {platformSubscription.subscriptionType === 'individual' ? 'miesięcznie' : 'rocznie'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Kwota brutto (VAT {(normalizeVatRate(platformSubscription.vatRate) * 100).toFixed(0)}%)
                   </p>
                 </div>
               </div>

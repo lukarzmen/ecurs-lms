@@ -11,6 +11,22 @@ const TERMS_EFFECTIVE_DATE = "18.10.2025";
 const TERMS_LAST_UPDATE = "18.10.2025";
 
 const TERMS_VERSION = "2025-10-18";
+const PLATFORM_VAT_RATE = 0.23;
+const PLATFORM_VAT_PERCENT = 23;
+
+const calculateGrossPrice = (netPrice: number) => Number((netPrice * (1 + PLATFORM_VAT_RATE)).toFixed(2));
+const calculateNetPrice = (grossPrice: number) => Number((grossPrice / (1 + PLATFORM_VAT_RATE)).toFixed(2));
+const formatPln = (price: number) => price.toLocaleString("pl-PL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const INDIVIDUAL_MONTHLY_GROSS = 19;
+const INDIVIDUAL_MONTHLY_PROMO_GROSS = 29;
+const SCHOOL_YEARLY_GROSS = 1199;
+const SCHOOL_YEARLY_PROMO_GROSS = 1499;
+
+const INDIVIDUAL_MONTHLY_NET = calculateNetPrice(INDIVIDUAL_MONTHLY_GROSS);
+const INDIVIDUAL_MONTHLY_PROMO_NET = calculateNetPrice(INDIVIDUAL_MONTHLY_PROMO_GROSS);
+const SCHOOL_YEARLY_NET = calculateNetPrice(SCHOOL_YEARLY_GROSS);
+const SCHOOL_YEARLY_PROMO_NET = calculateNetPrice(SCHOOL_YEARLY_PROMO_GROSS);
 
 const plDateToIsoDateOnly = (plDate: string) => {
   const [day, month, year] = plDate.split(".");
@@ -212,10 +228,10 @@ const TEACHER_TERMS = (
         Po zakończeniu okresu próbnego (3 miesiące) nauczyciel lub szkoła zobowiązani są do wyboru jednego z planów płatności:
         <ul className="list-disc ml-6 mt-2">
           <li>
-            <b>Plan dla indywidualnych twórców prowadzących do 100 uczniów w zamkniętych kursach:</b> 19 zł za miesiąc (promocja z 29 zł) – pełny dostęp do funkcji, tworzenie interaktywnych kursów, zarządzanie treściami i uczniami, podstawowe wsparcie techniczne.
+            <b>Plan dla indywidualnych twórców prowadzących do 100 uczniów w zamkniętych kursach:</b> {formatPln(INDIVIDUAL_MONTHLY_NET)} zł netto + VAT {PLATFORM_VAT_PERCENT}% (co daje {formatPln(INDIVIDUAL_MONTHLY_GROSS)} zł brutto) za miesiąc; cena promocyjna liczona od {formatPln(INDIVIDUAL_MONTHLY_PROMO_NET)} zł netto ({formatPln(INDIVIDUAL_MONTHLY_PROMO_GROSS)} zł brutto) – pełny dostęp do funkcji, tworzenie interaktywnych kursów, zarządzanie treściami i uczniami, podstawowe wsparcie techniczne.
           </li>
           <li>
-            <b>Tryb Organizacji (szkoły i placówki edukacyjne) lub twórcy posiadający więcej niż 100 uczniów w zamkniętych kursach:</b> 1199 zł za rok (promocja z 1499 zł) – pełny dostęp do wszystkich funkcjonalności, nielimitowani członkowie zespołu, pełne wsparcie techniczne.
+            <b>Tryb Organizacji (szkoły i placówki edukacyjne) lub twórcy posiadający więcej niż 100 uczniów w zamkniętych kursach:</b> {formatPln(SCHOOL_YEARLY_NET)} zł netto + VAT {PLATFORM_VAT_PERCENT}% (co daje {formatPln(SCHOOL_YEARLY_GROSS)} zł brutto) za rok; cena promocyjna liczona od {formatPln(SCHOOL_YEARLY_PROMO_NET)} zł netto ({formatPln(SCHOOL_YEARLY_PROMO_GROSS)} zł brutto) – pełny dostęp do wszystkich funkcjonalności, nielimitowani członkowie zespołu, pełne wsparcie techniczne.
           </li>
           <li>
             <b>Dołączenie do istniejącej szkoły:</b> Nauczyciel, który dołączy do istniejącej szkoły jako członek zespołu, nie płaci za korzystanie z platformy. Subskrypcję platformy opłaca właściciel szkoły, a nauczyciel dołączony do szkoły automatycznie otrzymuje pełny dostęp do wszystkich funkcjonalności platformy.
@@ -1393,9 +1409,9 @@ export default function RegisterPage() {
     setLoadingState("idle");
 
     if (role === "teacher") {
-      toast.success("Wybrano rolę: nauczyciel. Zaakceptuj regulamin, aby kontynuować.");
+      toast.success("Wybrano ścieżkę: chcę uczyć innych. Zaakceptuj regulamin, aby kontynuować.");
     } else {
-      toast.success("Wybrano rolę: uczeń. Zaakceptuj regulamin, aby kontynuować.");
+      toast.success("Wybrano ścieżkę: chcę się uczyć. Zaakceptuj regulamin, aby kontynuować.");
     }
   }, [isLoading, selectedRole, loadingState]);
 
@@ -1749,7 +1765,10 @@ export default function RegisterPage() {
         <div className="w-full">
           {!selectedRole ? (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-700 mb-2">Wybierz swoją rolę:</h2>
+              <h2 className="text-lg font-semibold text-gray-700 mb-1">Chcesz uczyć siebie czy innych?</h2>
+              <p className="text-xs sm:text-sm text-gray-500 mb-2">
+                Wybierz co chcesz robić na platformie
+              </p>
               <div className="flex flex-col gap-3 sm:gap-4">
                 {isMobileDevice ? (
                   // Mobile-optimized divs for better touch handling
@@ -1789,7 +1808,7 @@ export default function RegisterPage() {
                         minHeight: '48px' // Minimum touch target size
                       }}
                     >
-                      👩‍🎓 Uczniem
+                      👩‍🎓 Chcę się uczyć
                     </div>
                     <div
                       className={`w-full py-4 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 transition-colors flex items-center justify-center gap-2 cursor-pointer touch-manipulation select-none
@@ -1826,7 +1845,7 @@ export default function RegisterPage() {
                         minHeight: '48px' // Minimum touch target size
                       }}
                     >
-                      👨‍🏫 Nauczycielem
+                      👨‍🏫 Chcę uczyć innych
                     </div>
                   </>
                 ) : (
@@ -1846,7 +1865,7 @@ export default function RegisterPage() {
                         WebkitTouchCallout: 'none'
                       }}
                     >
-                      👩‍🎓 Uczniem
+                      👩‍🎓 Chcę się uczyć
                     </button>
                     <button
                       type="button"
@@ -1862,7 +1881,7 @@ export default function RegisterPage() {
                         WebkitTouchCallout: 'none'
                       }}
                     >
-                      👨‍🏫 Nauczycielem
+                      👨‍🏫 Chcę uczyć innych
                     </button>
                   </>
                 )}
@@ -2467,8 +2486,9 @@ export default function RegisterPage() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-2xl font-bold text-blue-600">19 zł <span className="text-sm font-medium text-gray-500 line-through">29 zł</span></div>
+                          <div className="text-2xl font-bold text-blue-600">{formatPln(INDIVIDUAL_MONTHLY_GROSS)} zł brutto <span className="text-sm font-medium text-gray-500 line-through">{formatPln(INDIVIDUAL_MONTHLY_PROMO_GROSS)} zł</span></div>
                           <div className="text-sm text-gray-600">miesięcznie</div>
+                          <div className="text-xs text-gray-500">{formatPln(INDIVIDUAL_MONTHLY_NET)} zł netto + VAT {PLATFORM_VAT_PERCENT}%</div>
                           <div className="text-sm text-green-600 font-medium mt-2">3 miesiące GRATIS</div>
                         </div>
                       </div>
@@ -2528,8 +2548,9 @@ export default function RegisterPage() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-2xl font-bold text-purple-600">1199 zł <span className="text-sm font-medium text-gray-500 line-through">1499 zł</span></div>
+                          <div className="text-2xl font-bold text-purple-600">{formatPln(SCHOOL_YEARLY_GROSS)} zł brutto <span className="text-sm font-medium text-gray-500 line-through">{formatPln(SCHOOL_YEARLY_PROMO_GROSS)} zł</span></div>
                           <div className="text-sm text-gray-600">rocznie</div>
+                          <div className="text-xs text-gray-500">{formatPln(SCHOOL_YEARLY_NET)} zł netto + VAT {PLATFORM_VAT_PERCENT}%</div>
                           <div className="text-sm text-green-600 font-medium mt-2">3 miesiące GRATIS</div>
                         </div>
                       </div>

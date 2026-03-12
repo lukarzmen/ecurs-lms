@@ -1246,6 +1246,8 @@ export async function POST(req: Request) {
                     const appUserId = Number(sessMeta.userId);
                     const teacherSubscriptionId = Number(sessMeta.teacherSubscriptionId);
                     const subscriptionType = sessMeta.subscriptionType;
+                    const rawSubscriptionVatRate = Number(sessMeta.vatRate ?? 0.23);
+                    const subscriptionVatRate = rawSubscriptionVatRate > 1 ? rawSubscriptionVatRate / 100 : rawSubscriptionVatRate;
                     
                     if (!appUserId || !teacherSubscriptionId) {
                         logError("CHECKOUT_COMPLETED_PLATFORM_MISSING_META", { eventId: event.id, sessionId: session.id, sessMeta });
@@ -1265,6 +1267,13 @@ export async function POST(req: Request) {
                             customerDetails,
                             customerTaxIds
                         });
+                        const grossAmount = paymentData.amount ? paymentData.amount / 100 : null;
+                        const metadataNetAmount = Number(sessMeta.netAmount);
+                        const netAmount = Number.isFinite(metadataNetAmount)
+                            ? Number(metadataNetAmount.toFixed(2))
+                            : (grossAmount !== null
+                                ? Number((grossAmount / (1 + subscriptionVatRate)).toFixed(2))
+                                : null);
 
                         // Sprawdź czy klient podał NIP/VAT ID podczas checkout
                         let customerTaxId: string | null = null;
@@ -1290,7 +1299,7 @@ export async function POST(req: Request) {
                             data: {
                                 paymentId: session.id,
                                 eventType: event.type,
-                                amount: paymentData.amount ? paymentData.amount / 100 : null,
+                                amount: netAmount,
                                 currency: paymentData.currency?.toUpperCase(),
                                 paymentStatus: paymentData.paymentStatus,
                                 paymentMethod: paymentData.paymentMethod,
@@ -1306,7 +1315,7 @@ export async function POST(req: Request) {
                                 metadata: paymentData.metadata,
                                 stripeCustomerId: paymentData.stripeCustomerId,
                                 updatedAt: new Date(),
-                            },
+                            } as any,
                         });
 
                         // Jeśli to szkoła i podała NIP - ustaw requiresVatInvoices = true
@@ -1730,6 +1739,59 @@ export async function POST(req: Request) {
                     ? (invoice as any).customer_tax_ids
                     : [];
 
+                if (metadata.type === "platform_subscription") {
+                    const teacherSubscriptionId = Number((metadata as any).teacherSubscriptionId);
+                    const rawVatRate = Number((metadata as any).vatRate ?? 0.23);
+                    const vatRate = rawVatRate > 1 ? rawVatRate / 100 : rawVatRate;
+                    const grossAmount = typeof invoice.total === "number" ? Number((invoice.total / 100).toFixed(2)) : null;
+                    const invoiceNetAmountRaw = (invoice as any).subtotal_excluding_tax;
+                    const netAmount = typeof invoiceNetAmountRaw === "number"
+                        ? Number((invoiceNetAmountRaw / 100).toFixed(2))
+                        : (grossAmount !== null
+                            ? Number((grossAmount / (1 + vatRate)).toFixed(2))
+                            : null);
+
+                    const platformUpdateData: any = {
+                        eventType: event.type,
+                        amount: netAmount,
+                        currency: invoice.currency?.toUpperCase() || null,
+                        paymentStatus: invoice.status || "paid",
+                        subscriptionStatus: "active",
+                        subscriptionId: String(subscriptionId),
+                        currentPeriodStart: invoice.period_start ? new Date(invoice.period_start * 1000) : null,
+                        currentPeriodEnd: invoice.period_end ? new Date(invoice.period_end * 1000) : null,
+                        customerEmail: invoice.customer_email || null,
+                        invoiceId: invoice.id || null,
+                        stripeCustomerId: typeof (invoice as any).customer === "string" ? (invoice as any).customer : null,
+                        updatedAt: new Date(),
+                    };
+
+                    try {
+                        if (teacherSubscriptionId) {
+                            await db.teacherPlatformSubscription.update({
+                                where: { id: teacherSubscriptionId },
+                                data: platformUpdateData,
+                            });
+                        } else {
+                            await db.teacherPlatformSubscription.updateMany({
+                                where: { subscriptionId: String(subscriptionId) },
+                                data: platformUpdateData,
+                            });
+                        }
+                        console.log(`[WEBHOOK] Platform subscription invoice recorded (${subscriptionId}) amount net: ${netAmount}`);
+                        return NextResponse.json({ success: true }, { status: 200 });
+                    } catch (platformErr) {
+                        logError("INVOICE_PAID_PLATFORM_UPDATE_ERROR", {
+                            eventId: event.id,
+                            invoiceId: invoice.id,
+                            subscriptionId,
+                            teacherSubscriptionId,
+                            error: String(platformErr),
+                        });
+                        return NextResponse.json({ success: false }, { status: 200 });
+                    }
+                }
+
                 if (metadata.type === "educationalPath") {
                     const appUserId = Number(metadata.userId);
                     const educationalPathId = Number(metadata.educationalPathId);
@@ -2098,7 +2160,34 @@ export async function POST(req: Request) {
             
             if (subscriptionId) {
                 const metadata = await getSubscriptionMetadata(stripeClient, subscriptionId as string, isConnectEvent || undefined);
-                if (metadata.type === "educationalPath") {
+                if (metadata.type === "platform_subscription") {
+                    const teacherSubscriptionId = Number((metadata as any).teacherSubscriptionId);
+                    const platformUpdateData: any = {
+                        eventType: event.type,
+                        paymentStatus: invoice.status || "failed",
+                        subscriptionStatus: "payment_failed",
+                        subscriptionId: String(subscriptionId),
+                        invoiceId: invoice.id || null,
+                        stripeCustomerId: typeof (invoice as any).customer === "string" ? (invoice as any).customer : null,
+                        customerEmail: invoice.customer_email || null,
+                        updatedAt: new Date(),
+                    };
+
+                    if (teacherSubscriptionId) {
+                        await db.teacherPlatformSubscription.update({
+                            where: { id: teacherSubscriptionId },
+                            data: platformUpdateData,
+                        });
+                    } else {
+                        await db.teacherPlatformSubscription.updateMany({
+                            where: { subscriptionId: String(subscriptionId) },
+                            data: platformUpdateData,
+                        });
+                    }
+
+                    console.log(`[WEBHOOK] Platform subscription payment failed (${subscriptionId})`);
+                    return NextResponse.json({ success: true }, { status: 200 });
+                } else if (metadata.type === "educationalPath") {
                     const appUserId = Number(metadata.userId);
                     const educationalPathId = Number(metadata.educationalPathId);
                     const userEducationalPathId = Number(metadata.userEducationalPathId);

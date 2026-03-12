@@ -27,7 +27,10 @@ export async function POST(req: NextRequest) {
                 stripeCustomers: true,
                 teacherPlatformSubscription: true,
                 ownedSchools: {
-                    select: { id: true },
+                    select: {
+                        id: true,
+                        taxId: true,
+                    },
                     take: 1,
                 },
                 schoolMemberships: {
@@ -89,8 +92,9 @@ export async function POST(req: NextRequest) {
                 id: 0,
                 name: 'Default',
                 description: 'Default configuration',
-                individualMonthlyFee: new Decimal(19.00),
-                schoolYearlyFee: new Decimal(1199.00),
+                individualMonthlyFee: new Decimal(15.45),
+                schoolYearlyFee: new Decimal(974.80),
+                vatRate: new Decimal(0.23),
                 currency: 'PLN',
                 trialPeriodDays: 90,
                 isActive: true,
@@ -148,28 +152,41 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        // Calculate price based on subscription type
-        const amount = subscriptionType === "individual" 
+        // Base fee is stored as net value; checkout is created with gross value.
+        const amountNet = subscriptionType === "individual" 
             ? Number(feeConfig.individualMonthlyFee) 
             : Number(feeConfig.schoolYearlyFee);
+        const rawVatRate = Number((feeConfig as any)?.vatRate ?? 0.23);
+        // Backward compatibility for older rows where vatRate might be stored as 23.
+        const vatRate = rawVatRate > 1 ? rawVatRate / 100 : rawVatRate;
+        const amountGross = Number((amountNet * (1 + vatRate)).toFixed(2));
         
         const interval = subscriptionType === "individual" ? "month" : "year";
         const trialPeriodDays = feeConfig.trialPeriodDays;
+        const ownerSchool = user.ownedSchools?.[0];
+        const individualHasTaxId = Boolean(ownerSchool?.taxId?.trim());
+        const shouldCollectTaxId =
+            subscriptionType === "school" ||
+            (subscriptionType === "individual" && individualHasTaxId);
 
         // Create or update teacher platform subscription record
         const teacherSubscription = await db.teacherPlatformSubscription.upsert({
             where: { userId: user.id },
             update: {
                 subscriptionType,
+                amount: new Decimal(amountNet),
+                currency: feeConfig.currency.toUpperCase(),
                 updatedAt: new Date(),
-            },
+            } as any,
             create: {
                 userId: user.id,
                 subscriptionType,
+                amount: new Decimal(amountNet),
+                currency: feeConfig.currency.toUpperCase(),
                 subscriptionStatus: "pending",
                 createdAt: new Date(),
                 updatedAt: new Date(),
-            },
+            } as any,
         });
 
         // Create Stripe checkout session
@@ -184,7 +201,7 @@ export async function POST(req: NextRequest) {
                             name: `Ecurs Platform Access - ${subscriptionType === "individual" ? "Individual" : "School"}`,
                             description: `Access to Ecurs platform for ${subscriptionType === "individual" ? "individual teachers" : "schools"}`,
                         },
-                        unit_amount: Math.round(amount * 100),
+                        unit_amount: Math.round(amountGross * 100),
                         recurring: {
                             interval: interval as "month" | "year",
                         },
@@ -202,15 +219,22 @@ export async function POST(req: NextRequest) {
                 name: 'auto',
             },
             billing_address_collection: 'required',
-            tax_id_collection: {
-                enabled: true,
-                required: 'if_supported', // Wszyscy nauczyciele (JDG i szkoły) mogą podać NIP
-            },
+            ...(shouldCollectTaxId
+                ? {
+                    tax_id_collection: {
+                        enabled: true,
+                        required: 'if_supported',
+                    },
+                }
+                : {}),
             metadata: {
                 teacherSubscriptionId: teacherSubscription.id.toString(),
                 userId: String(user.id),
                 email: email,
                 subscriptionType: subscriptionType,
+                vatRate: String(vatRate),
+                netAmount: amountNet.toFixed(2),
+                grossAmount: amountGross.toFixed(2),
                 type: "platform_subscription",
             },
             subscription_data: {
@@ -220,6 +244,9 @@ export async function POST(req: NextRequest) {
                     userId: user.id,
                     email: email,
                     subscriptionType: subscriptionType,
+                    vatRate: String(vatRate),
+                    netAmount: amountNet.toFixed(2),
+                    grossAmount: amountGross.toFixed(2),
                     type: "platform_subscription",
                 }
             },

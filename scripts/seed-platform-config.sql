@@ -4,25 +4,28 @@
 INSERT INTO platform_fee_configs (
     name, 
     description, 
-    individual_monthly_fee, 
-    school_yearly_fee, 
+    "individualMonthlyFee", 
+    "schoolYearlyFee", 
+    "vatRate",
     currency, 
-    trial_period_days, 
-    is_active, 
-    created_at, 
-    updated_at
+    "trialPeriodDays", 
+    "isActive", 
+    "createdAt", 
+    "updatedAt"
 ) VALUES (
     'Default Platform Fees',
     'Default configuration for platform access fees for teachers',
-    19.00,
-    1199.00,
+    15.45,
+    974.80,
+    0.23,
     'PLN',
     90,
     true,
     NOW(),
     NOW()
 ) ON CONFLICT (name) DO UPDATE SET
-    individual_monthly_fee = EXCLUDED.individual_monthly_fee,
-    school_yearly_fee = EXCLUDED.school_yearly_fee,
-    trial_period_days = EXCLUDED.trial_period_days,
-    updated_at = NOW();
+    "individualMonthlyFee" = EXCLUDED."individualMonthlyFee",
+    "schoolYearlyFee" = EXCLUDED."schoolYearlyFee",
+    "vatRate" = EXCLUDED."vatRate",
+    "trialPeriodDays" = EXCLUDED."trialPeriodDays",
+    "updatedAt" = NOW();

@@ -1,5 +1,15 @@
 import Image from "next/image";
 
 export const Logo = () => {
-  return <Image height={130} width={130} alt="logo" src="/logo.svg" priority />;
+  return (
+    <Image
+      height={72}
+      width={220}
+      alt="eCurs logo"
+      src="/logo-extended.svg"
+      className="h-auto w-full max-w-[220px]"
+      sizes="(max-width: 768px) 180px, 220px"
+      priority
+    />
+  );
 };
