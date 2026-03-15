@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { DataTable } from "./_components/data-table";
 import { columns } from "./_components/columns";
 import { StripeStatusBanner } from "./_components/stripe-status-banner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -146,22 +145,14 @@ const CoursesPage = () => {
           {/* Stripe Status Banner */}
           <StripeStatusBanner />
 
-          {/* Courses Table Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <BookOpen className="h-5 w-5" />
-                <span>Lista kursów</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={columns}
-                data={courses}
-                onCourseDeleted={handleCourseDeleted}
-              />
-            </CardContent>
-          </Card>
+          {/* Courses Table */}
+          <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+            <DataTable
+              columns={columns}
+              data={courses}
+              onCourseDeleted={handleCourseDeleted}
+            />
+          </div>
         </>
       )}
     </div>

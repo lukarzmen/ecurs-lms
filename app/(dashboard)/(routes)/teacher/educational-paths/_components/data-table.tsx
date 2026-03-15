@@ -24,18 +24,18 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, BookOpen } from "lucide-react"
+import { Search, GraduationCap } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
-    onCourseDeleted?: (courseId: unknown) => void
+    onPathDeleted?: (pathId: unknown) => void
 }
 
 export function DataTable<TData, TValue>({
     columns,
     data,
-    onCourseDeleted,
+    onPathDeleted,
 }: DataTableProps<TData, TValue>) {
 
     const [sorting, setSorting] = React.useState<SortingState>([])
@@ -45,7 +45,7 @@ export function DataTable<TData, TValue>({
         data,
         columns,
         meta: {
-            onCourseDeleted,
+            onPathDeleted,
         },
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
@@ -67,7 +67,7 @@ export function DataTable<TData, TValue>({
                 <div className="relative w-full max-w-md">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
-                        placeholder="Wyszukaj kurs..."
+                        placeholder="Wyszukaj ścieżkę edukacyjną..."
                         value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
                         onChange={(event) => {
                             table.getColumn("title")?.setFilterValue(event.target.value)
@@ -76,7 +76,7 @@ export function DataTable<TData, TValue>({
                     />
                 </div>
                 <div className="text-sm text-gray-500">
-                    Znaleziono {table.getFilteredRowModel().rows.length} z {data.length} kursów
+                    Znaleziono {table.getFilteredRowModel().rows.length} z {data.length} ścieżek
                 </div>
             </div>
             {/* Table Section */}
@@ -85,7 +85,7 @@ export function DataTable<TData, TValue>({
                     <TableHeader className="bg-gray-50">
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id} className="hover:bg-gray-50">
-                                {headerGroup.headers.map((header, index) => {
+                                {headerGroup.headers.map((header) => {
                                     return (
                                         <TableHead
                                             key={header.id}
@@ -111,7 +111,7 @@ export function DataTable<TData, TValue>({
                                     data-state={row.getIsSelected() && "selected"}
                                     className="hover:bg-gray-50 transition-colors"
                                 >
-                                    {row.getVisibleCells().map((cell, index) => (
+                                    {row.getVisibleCells().map((cell) => (
                                         <TableCell
                                             key={cell.id}
                                             className={`${cell.column.id === "actions" ? "w-24 text-right" : ""} py-4`}
@@ -125,11 +125,11 @@ export function DataTable<TData, TValue>({
                             <TableRow>
                                 <TableCell colSpan={columns.length} className="h-32 text-center">
                                     <div className="flex flex-col items-center justify-center space-y-3">
-                                        <BookOpen className="h-12 w-12 text-gray-300" />
+                                        <GraduationCap className="h-12 w-12 text-gray-300" />
                                         <div>
-                                            <p className="text-gray-500 font-medium">Brak kursów</p>
+                                            <p className="text-gray-500 font-medium">Brak ścieżek edukacyjnych</p>
                                             <p className="text-gray-400 text-sm mt-1">
-                                                Utwórz swój pierwszy kurs, aby rozpocząć nauczanie
+                                                Utwórz swoją pierwszą ścieżkę edukacyjną, aby zorganizować kursy
                                             </p>
                                         </div>
                                     </div>
