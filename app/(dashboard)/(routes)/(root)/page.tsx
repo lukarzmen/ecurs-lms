@@ -40,7 +40,7 @@ export default async function Home({
       <div className="p-6 space-y-10 bg-gradient-to-b from-gray-50 to-white">
         <section className="max-w-6xl mx-auto rounded-2xl border bg-white p-6 sm:p-10 shadow-sm">
           <div className="space-y-3 text-center">
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-3 mb-8">
               <Image
                 src="/logo.png"
                 alt="Ecurs"
