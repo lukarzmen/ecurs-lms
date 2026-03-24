@@ -7,7 +7,7 @@ import { Category } from "@prisma/client";
 import toast from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
 import next from "next";
-import { ArrowLeft, Loader2, BookOpen, FolderOpen, FileText, DollarSign, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Loader2, BookOpen, FolderOpen, FileText, DollarSign, CheckCircle2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,40 @@ const CreatePage = () => {
   const [trialPeriodDays, setTrialPeriodDays] = useState(0);
   const [trialPeriodEnd, setTrialPeriodEnd] = useState<string>("");
   const [vatRate, setVatRate] = useState<number>(23);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerateAiDescription = async () => {
+    if (isGenerating || isSubmitting) return;
+
+    setIsGenerating(true);
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemPrompt:
+            "Jesteś doświadczonym copywriterem sprzedażowym. Napisz zwięzły, sprzedażowy opis kursu po polsku (2-3 krótkie zdania). Nie używaj emoji. Skup się na konkretnej korzyści dla kupującego i wyniku, który osiągnie. Pisz językiem korzyści, nie funkcji. Bądź konkretny, nie lej wody.",
+          userPrompt:
+            `Napisz krótki, sprzedażowy opis kursu ${title ? `"${title}"` : "(tytuł nieznany)"}. Maksymalnie 2-3 zdania. ${title ? "" : "Jeśli nie znasz tematu, napisz neutralny opis ogólny bez zmyślania faktów."}`,
+        }),
+      });
+
+      if (!response.ok) throw new Error("AI generation failed");
+
+      const text = (await response.text()).trim();
+      if (!text) {
+        toast.error("AI nie zwróciło treści");
+        return;
+      }
+
+      setDescription(text);
+      toast.success("Opis został wygenerowany przez AI");
+    } catch {
+      toast.error("Błąd podczas generowania opisu");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -261,7 +295,7 @@ const CreatePage = () => {
                       id="description"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || isGenerating}
                       placeholder="np. 'Ten kurs obejmuje zaawansowane koncepty programowania web...'"
                       className="border-2 resize-none min-h-[150px]"
                     />
@@ -269,6 +303,24 @@ const CreatePage = () => {
                       {description.length}/500 znaków
                     </p>
                   </div>
+                  <Button
+                    type="button"
+                    onClick={handleGenerateAiDescription}
+                    disabled={isSubmitting || isGenerating}
+                    variant="outline"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generuję...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Generuj AI
+                      </>
+                    )}
+                  </Button>
                   <div className="flex items-center gap-x-2 pt-4">
                     <Button
                       type="button"
