@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import ProgressSpinner from "../TextGeneratorPlugin/ProgressComponent";
 import { Textarea } from "@/components/ui/textarea";
 import { useCourseContext } from "../../context/CourseContext";
+import { useI18n } from "@/hooks/use-i18n";
 
 
 export function InsertQuizDialog({
@@ -29,6 +30,7 @@ export function InsertQuizDialog({
     correctAnswerDescription: null,
   });
   const [step, setStep] = useState(0);
+  const { t } = useI18n();
 
   const defaultContextText = useMemo(() => {
     const parts: string[] = [];
@@ -149,7 +151,7 @@ export function InsertQuizDialog({
     const hasText = Boolean(text);
     const hasContext = Boolean(module?.courseName || module?.moduleName);
     if (!hasText && !hasContext) {
-      toast.error("Zaznacz tekst w edytorze albo uzupełnij kontekst lekcji przed generowaniem quizu.");
+      toast.error(t('ed.provideSource'));
       return;
     }
 
@@ -268,9 +270,9 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
           }
         >
           <div className="flex items-center justify-between gap-3">
-            <div className="font-semibold text-gray-900">Quiz z AI</div>
+            <div className="font-semibold text-gray-900">{t('ed.quizAiTitle')}</div>
             <div className="text-xs font-semibold text-orange-700">
-              {isAiOpen ? "Ukryj" : "Rozwiń"}
+              {isAiOpen ? t('ed.hide') : t('ed.expand')}
             </div>
           </div>
           <div className="mt-1 text-xs text-gray-600">
@@ -303,17 +305,17 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
             />
             {isUsingFullContext && !sourceText.trim() && (
               <div className="text-xs text-gray-500">
-                Brak tekstu — używam całego kontekstu z edytora.
+                {t('ed.noTextCtx')}
               </div>
             )}
             {isUsingFullContext && sourceText.trim() && (
               <div className="text-xs text-gray-500">
-                Brak zaznaczenia — używam całego kontekstu z edytora.
+                {t('ed.noSelectionCtx')}
               </div>
             )}
             <div className="flex flex-wrap items-center gap-3">
               <label className="text-xs font-semibold text-gray-700">
-                Liczba pytań
+                {t('ed.questionCount')}
                 <input
                   type="number"
                   min={1}
@@ -337,7 +339,7 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
                 disabled={isGenerating}
                 className={`px-3 py-2 rounded-md border ${isGenerating ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"}`}
               >
-                Wczytaj zaznaczenie
+                {t('ed.loadSelection')}
               </button>
               <button
                 type="button"
@@ -348,12 +350,12 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
                 {isGenerating ? (
                   <>
                     <ProgressSpinner />
-                    Generowanie...
+                    {t('ed.generating')}
                   </>
                 ) : (
-                  `Wygeneruj ${Number.isFinite(aiQuestionCount)
+                  `${t('ed.generate')} ${Number.isFinite(aiQuestionCount)
                     ? Math.max(1, Math.min(aiQuestionCount, 20))
-                    : 5} pytań`
+                    : 5}`
                 )}
               </button>
             </div>
@@ -362,34 +364,34 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
       </div>
 
       <hr className="border-gray-200" />
-      <div className="mb-2 text-lg font-bold text-orange-700">Pytanie {step + 1}</div>
+      <div className="mb-2 text-lg font-bold text-orange-700">{`${t('ed.quizQuestion')} ${step + 1}`}</div>
       <div className="grid grid-cols-2 gap-4 items-center">
-        <label className="text-sm font-medium text-gray-700">Zadaj pytanie</label>
+        <label className="text-sm font-medium text-gray-700">{t('ed.quizAskQuestion')}</label>
         <textarea
           value={current.question}
           onChange={(e) => setCurrent((prev) => ({ ...prev, question: e.target.value }))}
           className="w-full border border-gray-300 rounded-md p-2"
-          placeholder="Wpisz swoje pytanie"
+          placeholder={t('ed.quizQuestionPlaceholder')}
           rows={3}
         />
 
         {current.answers.map((answer, index) => (
           <React.Fragment key={index}>
             <label className="text-sm font-medium text-gray-700">
-              Odpowiedź {String.fromCharCode(65 + index)}
+              {t('ed.quizAnswer')} {String.fromCharCode(65 + index)}
             </label>
             <input
               type="text"
               value={answer}
               onChange={(e) => onAnswerChange(index, e.target.value)}
               className="w-full border border-gray-300 rounded-md p-2"
-              placeholder={`Odpowiedź ${String.fromCharCode(65 + index)}`}
+              placeholder={`${t('ed.quizAnswer')} ${String.fromCharCode(65 + index)}`}
             />
           </React.Fragment>
         ))}
 
         <label className="text-sm font-medium text-gray-700">
-          Poprawna odpowiedź
+          {t('ed.quizCorrectAnswer')}
         </label>
         <select
           value={current.correctAnswerIndex !== null ? current.correctAnswerIndex.toString() : ""}
@@ -402,7 +404,7 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
           className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-orange-500 focus:outline-none"
         >
           <option value="" disabled>
-            Wybierz poprawną odpowiedź
+            {t('ed.quizSelectCorrect')}
           </option>
           {current.answers.map((_, index) => (
             <option key={index} value={index}>
@@ -412,7 +414,7 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
         </select>
 
         <label className="text-sm font-medium text-gray-700">
-          Opis odpowiedzi (opcjonalnie)
+          {t('ed.quizDescOpt')}
         </label>
         <input
           type="text"
@@ -424,7 +426,7 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
             }))
           }
           className="w-full border border-gray-300 rounded-md p-2"
-          placeholder="Dodatkowe szczegóły dotyczące poprawnej odpowiedzi (opcjonalnie)"
+          placeholder={t('ed.quizDescPlaceholder')}
         />
       </div>
 
@@ -435,7 +437,7 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
           className={`px-4 py-2 rounded-md text-white ${isFormValid ? "bg-orange-600 hover:bg-orange-700" : "bg-gray-400"
             }`}
         >
-          Dodaj kolejne pytanie
+          {t('ed.quizAddQuestion')}
         </button>
         <button
           onClick={handleFinish}
@@ -444,21 +446,21 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
           className={`px-4 py-2 rounded-md text-white ${canFinish ? "bg-green-600 hover:bg-green-700" : "bg-gray-400"
             }`}
         >
-          Zakończ dodawanie i utwórz quiz
+          {t('ed.quizFinish')}
         </button>
         <button
           onClick={onClose}
           className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200"
         >
-          Anuluj
+          {t('ed.cancel')}
         </button>
       </div>
       {tests.length > 0 && (
         <div className="mt-4">
-          <div className="font-semibold mb-2">Dodane pytania:</div>
+          <div className="font-semibold mb-2">{t('ed.addedQuestions')}</div>
           <ul className="list-decimal list-inside space-y-1">
-            {tests.map((t, idx) => (
-              <li key={idx} className="text-sm">{t.question}</li>
+            {tests.map((q, idx) => (
+              <li key={idx} className="text-sm">{q.question}</li>
             ))}
           </ul>
         </div>

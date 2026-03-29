@@ -3,6 +3,7 @@ import { useSwipeable } from "react-swipeable";
 import Confetti from "react-confetti";
 import { ChevronLeft, ChevronRight, Plus, X, Table, Shuffle, BookOpen, Trophy } from "lucide-react";
 import toast from "react-hot-toast";
+import {useI18n} from '@/hooks/use-i18n';
 import ProgressSpinner from "../../plugins/TextGeneratorPlugin/ProgressComponent";
 
 export interface Dictionary {
@@ -25,6 +26,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
   onComplete, // Use callback
   contextText
 }) => {
+  const { t } = useI18n();
   // Derive entries from the dictionary prop instead of keeping separate state
   const currentEntries = useMemo(() => Object.entries(dictionary), [dictionary]);
 
@@ -268,7 +270,7 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
   const handleGenerateFromSource = async () => {
     const text = aiSourceText.trim() || (contextText || '').trim();
     if (!text) {
-      toast.error("Wpisz treść źródłową.");
+      toast.error(t('ed.dictNoSource'));
       return;
     }
 
@@ -320,10 +322,10 @@ ${text}
       const newDictionary = Object.fromEntries(generatedEntries);
 
       onDictionaryChanged(newDictionary);
-      toast.success(`Wygenerowano ${requestedCount} wpisów.`);
+      toast.success(t('ed.dictGenerated'));
     } catch (err) {
       console.error("Dictionary AI generation error:", err);
-      toast.error("Nie udało się wygenerować słowniczka. Spróbuj ponownie.");
+      toast.error(t('ed.dictGenError'));
     } finally {
       setIsGenerating(false);
     }
@@ -364,7 +366,7 @@ ${text}
                     <div className="p-2 rounded-lg bg-primary/10">
                       <Trophy className="h-5 w-5 text-primary" />
                     </div>
-                    <h3 className="text-xl font-semibold">Gra w dopasowywanie</h3>
+                    <h3 className="text-xl font-semibold">{t('ed.dictMatchGame')}</h3>
                   </div>
                   <span className="text-sm font-medium text-muted-foreground">
                     {matchedPairs}/{totalPairs} par
@@ -380,7 +382,7 @@ ${text}
                     />
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground">Dopasuj słowa po lewej stronie do tłumaczeń po prawej</p>
+                <p className="text-sm text-muted-foreground">{t('ed.dictMatchHint')}</p>
               </div>
 
               {/* Game grid */}
@@ -466,13 +468,13 @@ ${text}
                   onClick={initializeMatchGame}
                 >
                   <Shuffle className="h-5 w-5" />
-                  Wylosuj ponownie
+                  {t('ed.dictReshuffle')}
                 </button>
               </div>
             </div>
           ) : (
             <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-8 text-center">
-              <p className="text-muted-foreground">Dodaj wpisy w widoku tabeli, aby zagrać</p>
+              <p className="text-muted-foreground">{t('ed.dictAddEntriesToPlay')}</p>
             </div>
           )}
         </div>
@@ -494,13 +496,13 @@ ${text}
               }
             >
               <div className="flex items-center justify-between gap-3">
-                <div className="font-semibold text-gray-900">Generuj z AI</div>
+                <div className="font-semibold text-gray-900">{t('ed.dictGenAi')}</div>
                 <div className="text-xs font-semibold text-orange-700">
-                  {isAiOpen ? "Ukryj" : "Rozwiń"}
+                  {isAiOpen ? t('ed.collapse') : t('ed.expand')}
                 </div>
               </div>
               <div className="mt-1 text-xs text-gray-600">
-                Wklej tekst źródłowy, a AI zaproponuje hasła i definicje.
+                {t('ed.dictAiDescription')}
               </div>
             </button>
 
@@ -509,31 +511,31 @@ ${text}
                 <textarea
                   value={aiSourceText}
                   onChange={(e) => setAiSourceText(e.target.value)}
-                  placeholder="Wklej treść źródłową..."
+                  placeholder={t('ed.pasteSource')}
                   className="min-h-[120px] w-full rounded-md border border-gray-300 p-2 resize-y"
                   disabled={isGenerating}
                 />
                 {!aiSourceText.trim() && (contextText || '').trim() && (
                   <div className="text-xs text-gray-500">
-                    Brak tekstu — używam całego kontekstu z edytora.
+                    {t('ed.dictNoTextUsingContext')}
                   </div>
                 )}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <label className="text-xs font-semibold text-gray-700">
-                    Co generować
+                    {t('ed.dictWhatGenerate')}
                     <select
                       value={aiOutputType}
                       onChange={(e) => setAiOutputType(e.target.value as "translations" | "definitions" | "mixed")}
                       disabled={isGenerating}
                       className="ml-2 rounded-md border border-gray-300 px-2 py-1 text-sm"
                     >
-                      <option value="translations">Tłumaczenia</option>
-                      <option value="definitions">Krótkie wyjaśnienia</option>
-                      <option value="mixed">Mieszane</option>
+                      <option value="translations">{t('ed.dictTranslations')}</option>
+                      <option value="definitions">{t('ed.dictShortExpl')}</option>
+                      <option value="mixed">{t('ed.dictMixed')}</option>
                     </select>
                   </label>
                   <label className="text-xs font-semibold text-gray-700">
-                    Liczba wpisów
+                    {t('ed.dictEntryCount')}
                     <input
                       type="number"
                       min={1}
@@ -560,10 +562,10 @@ ${text}
                     {isGenerating ? (
                       <>
                         <ProgressSpinner />
-                        Generowanie...
+                        {t('ed.generating')}
                       </>
                     ) : (
-                      "Wygeneruj"
+                      t('ed.generate')
                     )}
                   </button>
                 </div>
@@ -576,14 +578,14 @@ ${text}
               <div className="p-2 rounded-lg bg-primary/10">
                 <Table className="h-5 w-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold">Edycja słowniczka</h3>
+              <h3 className="text-xl font-semibold">{t('ed.dictEditTitle')}</h3>
             </div>
             <button
               onClick={() => handleAddRow(true)}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-200 flex items-center gap-2 shadow-sm active:scale-95"
             >
               <Plus className="h-4 w-4" />
-              <span className="font-medium">Dodaj na górze</span>
+              <span className="font-medium">{t('ed.dictAddTop')}</span>
             </button>
           </div>
 
@@ -593,7 +595,7 @@ ${text}
                 <button
                   onClick={() => handleRemoveRow(index)}
                   className="mt-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 flex-shrink-0 active:scale-95"
-                  title="Usuń wiersz"
+                  title={t('ed.dictRemoveRow')}
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -602,14 +604,14 @@ ${text}
                     type="text"
                     value={keyword}
                     onChange={(e) => handleInputChange(index, 'key', e.target.value)}
-                    placeholder="Słowo kluczowe"
+                    placeholder={t('ed.dictKeyword')}
                     className="px-4 py-3 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:border-primary bg-background font-medium transition-all duration-200"
                   />
                   <input
                     type="text"
                     value={definition}
                     onChange={(e) => handleInputChange(index, 'value', e.target.value)}
-                    placeholder="Definicja / tłumaczenie"
+                    placeholder={t('ed.dictDefinition')}
                     className="px-4 py-3 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:border-primary bg-background font-medium transition-all duration-200"
                   />
                 </div>
@@ -622,7 +624,7 @@ ${text}
             className="w-full py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-200 flex items-center justify-center gap-2 shadow-sm font-semibold active:scale-[0.99]"
           >
             <Plus className="h-5 w-5" />
-            Dodaj wiersz na dole
+            {t('ed.dictAddBottom')}
           </button>
         </div>
       )}
@@ -636,8 +638,8 @@ ${text}
                 <Table className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold">Podgląd słowniczka</h3>
-                <p className="text-sm text-muted-foreground">Widok tylko do odczytu</p>
+                <h3 className="text-xl font-semibold">{t('ed.dictPreview')}</h3>
+                <p className="text-sm text-muted-foreground">{t('ed.dictReadonly')}</p>
               </div>
             </div>
           </div>
@@ -646,17 +648,17 @@ ${text}
             <div className="space-y-3">
               {currentEntries.map(([keyword, definition], index) => (
                 <div key={index} className="rounded-lg border border-border bg-muted/40 p-4">
-                  <div className="text-sm font-semibold text-muted-foreground">Hasło</div>
+                  <div className="text-sm font-semibold text-muted-foreground">{t('ed.dictTerm')}</div>
                   <div className="text-lg font-semibold text-foreground break-words">{keyword || "—"}</div>
                   <div className="h-px w-full bg-border my-3" />
-                  <div className="text-sm font-semibold text-muted-foreground">Tłumaczenie</div>
+                  <div className="text-sm font-semibold text-muted-foreground">{t('ed.dictTranslation')}</div>
                   <div className="text-base text-foreground break-words">{definition || "—"}</div>
                 </div>
               ))}
             </div>
           ) : (
             <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-8 text-center">
-              <p className="text-muted-foreground">Brak wpisów do wyświetlenia</p>
+              <p className="text-muted-foreground">{t('ed.dictNoEntries')}</p>
             </div>
           )}
         </div>
@@ -692,26 +694,26 @@ ${text}
                 <button
                   onClick={handlePrevious}
                   className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-14 p-3 bg-card border-2 border-border rounded-full hover:bg-accent hover:border-primary/50 transition-all duration-200 shadow-lg active:scale-95"
-                  title="Poprzednia fiszka"
+                  title={t('ed.dictPrevCard')}
                 >
                   <ChevronLeft className="h-6 w-6" />
                 </button>
                 <button
                   onClick={handleNext}
                   className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-14 p-3 bg-card border-2 border-border rounded-full hover:bg-accent hover:border-primary/50 transition-all duration-200 shadow-lg active:scale-95"
-                  title="Następna fiszka"
+                  title={t('ed.dictNextCard')}
                 >
                   <ChevronRight className="h-6 w-6" />
                 </button>
               </div>
 
               <p className="text-sm text-muted-foreground mt-6 select-none">
-                Przesuń lub użyj strzałek, aby zmienić fiszkę
+                {t('ed.dictSwipeHint')}
               </p>
             </>
           ) : (
             <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-8 text-center">
-              <p className="text-muted-foreground">Brak fiszek do wyświetlenia</p>
+              <p className="text-muted-foreground">{t('ed.dictNoFlashcards')}</p>
             </div>
           )}
         </div>
@@ -725,7 +727,7 @@ ${text}
                 className="px-6 py-3 bg-card border-2 border-primary text-primary rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-200 flex items-center gap-2 font-semibold shadow-sm active:scale-95"
               >
                 <Table className="h-5 w-5" />
-                Widok tabeli
+                {t('ed.dictTableView')}
               </button>
           )}
           {!isReadonly && view !== "dictionaryView" && (
@@ -734,7 +736,7 @@ ${text}
                 className="px-6 py-3 bg-card border-2 border-primary text-primary rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-200 flex items-center gap-2 font-semibold shadow-sm active:scale-95"
               >
                 <Table className="h-5 w-5" />
-                Widok tabeli
+                {t('ed.dictTableView')}
               </button>
           )}
           {view !== "flashView" && (
@@ -743,7 +745,7 @@ ${text}
                 className="px-6 py-3 bg-card border-2 border-primary text-primary rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-200 flex items-center gap-2 font-semibold shadow-sm active:scale-95"
               >
                 <BookOpen className="h-5 w-5" />
-                Fiszki
+                {t('ed.dictFlashcards')}
               </button>
           )}
           {view !== "matchGameView" && (
@@ -752,7 +754,7 @@ ${text}
                 className="px-6 py-3 bg-card border-2 border-primary text-primary rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-200 flex items-center gap-2 font-semibold shadow-sm active:scale-95"
               >
                 <Trophy className="h-5 w-5" />
-                Gra w dopasowywanie
+                {t('ed.dictMatchGame')}
               </button>
           )}
       </div>

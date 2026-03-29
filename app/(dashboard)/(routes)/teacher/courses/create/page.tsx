@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useI18n } from "@/hooks/use-i18n";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
@@ -33,6 +34,7 @@ const CreatePage = () => {
   const [trialPeriodEnd, setTrialPeriodEnd] = useState<string>("");
   const [vatRate, setVatRate] = useState<number>(23);
   const [isGenerating, setIsGenerating] = useState(false);
+  const { t } = useI18n();
 
   const handleGenerateAiDescription = async () => {
     if (isGenerating || isSubmitting) return;
@@ -54,14 +56,14 @@ const CreatePage = () => {
 
       const text = (await response.text()).trim();
       if (!text) {
-        toast.error("AI nie zwróciło treści");
+        toast.error(t("create.step3.aiEmpty"));
         return;
       }
 
       setDescription(text);
-      toast.success("Opis został wygenerowany przez AI");
+      toast.success(t("create.step3.aiSuccess"));
     } catch {
-      toast.error("Błąd podczas generowania opisu");
+      toast.error(t("create.step3.aiError"));
     } finally {
       setIsGenerating(false);
     }
@@ -100,7 +102,7 @@ const CreatePage = () => {
       });
       router.push(`/teacher/courses/${response.data.id}`);
     } catch (error) {
-      toast.error("Coś poszło nie tak");
+      toast.error(t("common.error"));
     } finally {
       setIsSubmitting(false);
     }
@@ -136,7 +138,7 @@ const CreatePage = () => {
             className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition mb-4 select-none gap-1"
           >
             <ArrowLeft className="h-4 w-4" />
-            Powrót do listy kursów
+            {t("create.backToCourses")}
           </Link>
         </div>
 
@@ -165,23 +167,23 @@ const CreatePage = () => {
             ))}
           </div>
           <p className="text-xs font-medium text-muted-foreground text-center">
-            Krok {step} z 4
+            {t("create.stepOf").replace("{step}", String(step)).replace("{total}", "4")}
           </p>
         </div>
 
         {/* Title */}
         <div className="mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
-            {step === 1 && "🎓 Nazwij swój kurs"}
-            {step === 2 && "📁 Wybierz kategorię"}
-            {step === 3 && "📝 Opisz swój kurs"}
-            {step === 4 && "💰 Ustal cenę"}
+            {step === 1 && t("create.step1.title")}
+            {step === 2 && t("create.step2.title")}
+            {step === 3 && t("create.step3.title")}
+            {step === 4 && t("create.step4.title")}
           </h1>
           <p className="text-muted-foreground mt-2">
-            {step === 1 && "Stwórz przyciągający tytuł dla swojego kursu"}
-            {step === 2 && "Wybierz kategorię, która najlepiej pasuje"}
-            {step === 3 && "Dodaj szczegółowy opis kursu"}
-            {step === 4 && "Zdecyduj o modelu cenowym"}
+            {step === 1 && t("create.step1.subtitle")}
+            {step === 2 && t("create.step2.subtitle")}
+            {step === 3 && t("create.step3.subtitle")}
+            {step === 4 && t("create.step4.subtitle")}
           </p>
         </div>
 
@@ -194,12 +196,12 @@ const CreatePage = () => {
                   <div className="flex items-start gap-4 p-4 bg-primary/5 rounded-lg border border-primary/10">
                     <BookOpen className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
                     <p className="text-sm text-foreground">
-                      Tytuł powinien być jasny, konkretny i przyciągający. To pierwsza rzecz, którą zobaczą potencjalni uczniowie.
+                      {t("create.step1.hint")}
                     </p>
                   </div>
                   <div>
                     <label htmlFor="title" className="block text-sm font-semibold text-foreground mb-2">
-                      Tytuł kursu
+                      {t("create.step1.label")}
                     </label>
                     <Input
                       type="text"
@@ -207,11 +209,11 @@ const CreatePage = () => {
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       disabled={isSubmitting}
-                      placeholder="np. 'Zaawansowane programowanie aplikacji web'"
+                      placeholder={t("create.step1.placeholder")}
                       className="border-2 text-base py-2.5"
                     />
                     <p className="text-xs text-muted-foreground mt-2">
-                      {title.length}/50 znaków
+                      {t("create.step1.charCount").replace("{count}", String(title.length))}
                     </p>
                   </div>
                   <div className="flex items-center gap-x-2 pt-4">
@@ -221,14 +223,14 @@ const CreatePage = () => {
                       onClick={() => router.push("/teacher/courses")}
                       disabled={isSubmitting}
                     >
-                      Anuluj
+                      {t("common.cancel")}
                     </Button>
                     <Button
                       type="button"
                       disabled={!title || isSubmitting}
                       onClick={nextStep}
                     >
-                      Dalej
+                      {t("common.next")}
                     </Button>
                   </div>
                 </div>
@@ -239,16 +241,16 @@ const CreatePage = () => {
                   <div className="flex items-start gap-4 p-4 bg-primary/5 rounded-lg border border-primary/10">
                     <FolderOpen className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
                     <p className="text-sm text-foreground">
-                      Kategoria pomaga użytkownikom znaleźć Twój kurs. Wybierz najlepiej pasującą do treści.
+                      {t("create.step2.hint")}
                     </p>
                   </div>
                   <div>
                     <label htmlFor="category" className="block text-sm font-semibold text-foreground mb-2">
-                      Kategoria
+                      {t("create.step2.label")}
                     </label>
                     <Select value={category} onValueChange={setCategory} disabled={isSubmitting}>
                       <SelectTrigger className="border-2">
-                        <SelectValue placeholder="Wybierz kategorię" />
+                        <SelectValue placeholder={t("create.step2.placeholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         {categories.map((cat) => (
@@ -266,14 +268,14 @@ const CreatePage = () => {
                       onClick={prevStep}
                       disabled={isSubmitting}
                     >
-                      Wstecz
+                      {t("common.back")}
                     </Button>
                     <Button
                       type="button"
                       disabled={isSubmitting}
                       onClick={nextStep}
                     >
-                      Dalej
+                      {t("common.next")}
                     </Button>
                   </div>
                 </div>
@@ -284,23 +286,23 @@ const CreatePage = () => {
                   <div className="flex items-start gap-4 p-4 bg-primary/5 rounded-lg border border-primary/10">
                     <FileText className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
                     <p className="text-sm text-foreground">
-                      Opis powinien być zachęcający i pokazywać wartość, którą otrzymają uczniowie.
+                      {t("create.step3.hint")}
                     </p>
                   </div>
                   <div>
                     <label htmlFor="description" className="block text-sm font-semibold text-foreground mb-2">
-                      Opis kursu
+                      {t("create.step3.label")}
                     </label>
                     <Textarea
                       id="description"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       disabled={isSubmitting || isGenerating}
-                      placeholder="np. 'Ten kurs obejmuje zaawansowane koncepty programowania web...'"
+                      placeholder={t("create.step3.placeholder")}
                       className="border-2 resize-none min-h-[150px]"
                     />
                     <p className="text-xs text-muted-foreground mt-2">
-                      {description.length}/500 znaków
+                      {t("create.step3.charCount").replace("{count}", String(description.length))}
                     </p>
                   </div>
                   <Button
@@ -312,12 +314,12 @@ const CreatePage = () => {
                     {isGenerating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Generuję...
+                        {t("create.step3.generating")}
                       </>
                     ) : (
                       <>
                         <Sparkles className="h-4 w-4 mr-2" />
-                        Generuj AI
+                        {t("create.step3.generateAi")}
                       </>
                     )}
                   </Button>
@@ -328,14 +330,14 @@ const CreatePage = () => {
                       onClick={prevStep}
                       disabled={isSubmitting}
                     >
-                      Wstecz
+                      {t("common.back")}
                     </Button>
                     <Button
                       type="button"
                       disabled={isSubmitting}
                       onClick={nextStep}
                     >
-                      Dalej
+                      {t("common.next")}
                     </Button>
                   </div>
                 </div>
@@ -346,16 +348,16 @@ const CreatePage = () => {
                   <div className="flex items-start gap-4 p-4 bg-primary/5 rounded-lg border border-primary/10">
                     <DollarSign className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
                     <p className="text-sm text-foreground">
-                      Ustaw cenę, która odzwierciedla wartość Twojego kursu. Możesz ją zmienić w dowolnym momencie.
+                      {t("create.step4.hint")}
                     </p>
                   </div>
 
                   {/* Price */}
                   <div className="space-y-3">
                     <label className="block text-sm font-semibold text-foreground">
-                      Cena kursu (brutto)
+                      {t("create.step4.priceLabel")}
                     </label>
-                    <p className="text-xs text-muted-foreground">Podaj cenę, którą zobaczą kupujący (z VAT)</p>
+                    <p className="text-xs text-muted-foreground">{t("create.step4.priceHint")}</p>
                     <div className="grid grid-cols-2 gap-3">
                       <Input
                         type="number"
@@ -384,15 +386,15 @@ const CreatePage = () => {
                   {/* VAT */}
                   <div className="space-y-3">
                     <label className="block text-sm font-semibold text-foreground">
-                      Stawka VAT
+                      {t("create.step4.vatLabel")}
                     </label>
                     <Select value={vatRate.toString()} onValueChange={(value) => setVatRate(Number(value))} disabled={isSubmitting}>
                       <SelectTrigger className="border-2">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="23">23% (standardowa)</SelectItem>
-                        <SelectItem value="0">0% (zwolniona)</SelectItem>
+                        <SelectItem value="23">{t("create.step4.vatStandard")}</SelectItem>
+                        <SelectItem value="0">{t("create.step4.vatExempt")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -410,40 +412,40 @@ const CreatePage = () => {
                         disabled={isSubmitting}
                         className="w-4 h-4 cursor-pointer"
                       />
-                      <span className="text-sm font-medium text-foreground">Opłata cykliczna (subskrypcja)</span>
+                      <span className="text-sm font-medium text-foreground">{t("create.step4.recurring")}</span>
                     </label>
                     {isRecurring && (
                       <div className="space-y-3 mt-4 pt-4 border-t border-border">
                         <div>
-                          <label htmlFor="interval" className="text-sm font-medium text-foreground block mb-2">Okres rozliczenia</label>
+                          <label htmlFor="interval" className="text-sm font-medium text-foreground block mb-2">{t("create.step4.billingPeriod")}</label>
                           <Select value={interval} onValueChange={(value) => setInterval(value as any)} disabled={isSubmitting}>
                             <SelectTrigger className="border-2">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="MONTH">Miesięcznie</SelectItem>
-                              <SelectItem value="YEAR">Rocznie</SelectItem>
+                              <SelectItem value="MONTH">{t("create.step4.monthly")}</SelectItem>
+                              <SelectItem value="YEAR">{t("create.step4.yearly")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-foreground block">Okres próbny</label>
+                          <label className="text-sm font-medium text-foreground block">{t("create.step4.trialPeriod")}</label>
                           <div className="flex gap-4">
                             <label className="flex items-center gap-2 cursor-pointer">
                               <input type="radio" name="trialPeriodType" value="DAYS" checked={trialPeriodType === "DAYS"} onChange={() => setTrialPeriodType("DAYS")} disabled={isSubmitting} className="cursor-pointer" />
-                              <span className="text-sm">Liczba dni</span>
+                              <span className="text-sm">{t("create.step4.trialDays")}</span>
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer">
                               <input type="radio" name="trialPeriodType" value="DATE" checked={trialPeriodType === "DATE"} onChange={() => setTrialPeriodType("DATE")} disabled={isSubmitting} className="cursor-pointer" />
-                              <span className="text-sm">Data zakończenia</span>
+                              <span className="text-sm">{t("create.step4.trialDate")}</span>
                             </label>
                           </div>
                         </div>
 
                         {trialPeriodType === "DAYS" && (
                           <div>
-                            <label htmlFor="trialPeriodDays" className="text-sm font-medium text-foreground block mb-2">Ilość dni próbnych</label>
+                            <label htmlFor="trialPeriodDays" className="text-sm font-medium text-foreground block mb-2">{t("create.step4.trialDaysLabel")}</label>
                             <Input
                               type="number"
                               id="trialPeriodDays"
@@ -459,7 +461,7 @@ const CreatePage = () => {
                         )}
                         {trialPeriodType === "DATE" && (
                           <div>
-                            <label htmlFor="trialPeriodEnd" className="text-sm font-medium text-foreground block mb-2">Data zakończenia okresu próbnego</label>
+                            <label htmlFor="trialPeriodEnd" className="text-sm font-medium text-foreground block mb-2">{t("create.step4.trialEndLabel")}</label>
                             <Input
                               type="date"
                               id="trialPeriodEnd"
@@ -477,16 +479,16 @@ const CreatePage = () => {
 
                   {/* Price Summary */}
                   <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
-                    <p className="text-sm font-medium text-foreground mb-2">Podsumowanie:</p>
+                    <p className="text-sm font-medium text-foreground mb-2">{t("create.step4.summary")}</p>
                     {price === 0 ? (
-                      <p className="text-lg font-bold text-primary">Darmowy 🎁</p>
+                      <p className="text-lg font-bold text-primary">{t("common.free")}</p>
                     ) : (
                       <div className="space-y-1">
-                        <p className="text-sm"><span className="font-semibold text-foreground">{price} {currency}</span> brutto (z VAT {vatRate}%)</p>
-                        <p className="text-sm text-muted-foreground">({(price / (1 + vatRate / 100)).toFixed(2)} {currency} netto)</p>
+                        <p className="text-sm"><span className="font-semibold text-foreground">{price} {currency}</span> {t("create.step4.gross").replace("{vatRate}", String(vatRate))}</p>
+                        <p className="text-sm text-muted-foreground">({(price / (1 + vatRate / 100)).toFixed(2)} {currency} {t("create.step4.net")})</p>
                         {isRecurring && price > 0 && (
                           <p className="text-sm text-primary font-medium mt-1">
-                            {interval === 'YEAR' ? '📅 Płatność co rok' : '📅 Płatność co miesiąc'}
+                            {interval === 'YEAR' ? t("create.step4.paymentYearly") : t("create.step4.paymentMonthly")}
                           </p>
                         )}
                       </div>
@@ -500,7 +502,7 @@ const CreatePage = () => {
                       onClick={prevStep}
                       disabled={isSubmitting}
                     >
-                      Wstecz
+                      {t("common.back")}
                     </Button>
                     <Button
                       type="submit"
@@ -509,7 +511,7 @@ const CreatePage = () => {
                       {isSubmitting ? (
                         <Loader2 className="animate-spin mr-2" size={18} />
                       ) : null}
-                      {isSubmitting ? 'Tworzenie...' : 'Utwórz kurs'}
+                      {isSubmitting ? t("common.creating") : t("create.step4.createCourse")}
                     </Button>
                   </div>
                 </div>

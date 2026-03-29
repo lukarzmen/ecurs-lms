@@ -34,9 +34,9 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="pointer-events-none absolute -bottom-28 -left-28 h-80 w-80 rounded-full bg-orange-200/35 blur-3xl" />
             <div className="relative">{children}</div>
             <div className="relative mx-auto mt-10 flex max-w-6xl flex-wrap items-center justify-center gap-3 px-6 pb-8 text-xs text-slate-500">
-              <Link href="/terms" className="underline hover:text-orange-600">Regulamin</Link>
+              <Link href="/terms" className="underline hover:text-orange-600">{t("footer.terms")}</Link>
               <span className="text-slate-300">•</span>
-              <Link href="/privacy" className="underline hover:text-orange-600">Polityka Prywatności</Link>
+              <Link href="/privacy" className="underline hover:text-orange-600">{t("footer.privacy")}</Link>
             </div>
           </div>
         ) : (
@@ -64,15 +64,15 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                       <div className="flex items-start gap-3 rounded-xl border bg-white/70 p-4 shadow-sm backdrop-blur">
                         <div className="mt-0.5 h-2.5 w-2.5 rounded-full bg-indigo-600" />
                         <div>
-                          <div className="font-medium text-slate-900">Kursy i ścieżki w jednym miejscu</div>
-                          <div className="mt-1 text-slate-600">Przeglądaj ofertę i zapisuj się w kilka sekund.</div>
+                          <div className="font-medium text-slate-900">{t("layout.coursesAndPaths")}</div>
+                          <div className="mt-1 text-slate-600">{t("layout.coursesAndPathsDesc")}</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-3 rounded-xl border bg-white/70 p-4 shadow-sm backdrop-blur">
                         <div className="mt-0.5 h-2.5 w-2.5 rounded-full bg-orange-600" />
                         <div>
-                          <div className="font-medium text-slate-900">Postępy i analityki</div>
-                          <div className="mt-1 text-slate-600">Śledź naukę i wracaj dokładnie tam, gdzie skończyłeś.</div>
+                          <div className="font-medium text-slate-900">{t("layout.progressAndAnalytics")}</div>
+                          <div className="mt-1 text-slate-600">{t("layout.progressAndAnalyticsDesc")}</div>
                         </div>
                       </div>
                     </div>
@@ -124,9 +124,9 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                 </div>
               </div>
               <div className="mt-10 flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500">
-                <Link href="/terms" className="underline hover:text-orange-600">Regulamin</Link>
+                <Link href="/terms" className="underline hover:text-orange-600">{t("footer.terms")}</Link>
                 <span className="text-slate-300">•</span>
-                <Link href="/privacy" className="underline hover:text-orange-600">Polityka Prywatności</Link>
+                <Link href="/privacy" className="underline hover:text-orange-600">{t("footer.privacy")}</Link>
               </div>
             </div>
           </div>

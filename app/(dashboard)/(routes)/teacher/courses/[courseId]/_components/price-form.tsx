@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FormCard } from "@/components/ui/form-card";
 import { Pencil, DollarSign } from "lucide-react";
 import toast from "react-hot-toast";
+import { useI18n } from "@/hooks/use-i18n";
 
 // New price structure: amount, currency, interval, isRecurring
 type Price = {
@@ -18,14 +19,14 @@ type Price = {
 };
 
 const intervalOptions = [
-  { value: "ONE_TIME", label: "Jednorazowo" },
-  { value: "MONTH", label: "Miesięcznie" },
-  { value: "YEAR", label: "Rocznie" },
+  { value: "ONE_TIME", labelKey: "priceForm.oneTime" },
+  { value: "MONTH", labelKey: "priceForm.monthly" },
+  { value: "YEAR", labelKey: "priceForm.yearly" },
 ];
 
-function formatMoney(amount: number, currency: string) {
+function formatMoney(amount: number, currency: string, locale: string) {
   try {
-    return new Intl.NumberFormat("pl-PL", {
+    return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'pl-PL', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
@@ -60,6 +61,7 @@ function toNumber(value: unknown, fallback: number) {
 
 export default function PriceForm({ price, courseId }: { price: Price; courseId: string }) {
   const [isEditing, setIsEditing] = useState(false);
+  const { t, locale } = useI18n();
   // Determine initial trial mode
   const initialTrialMode = price?.trialPeriodEnd ? "end" : (price?.trialPeriodDays ? "days" : "days");
   // Convert trialPeriodEnd to yyyy-mm-dd if needed
@@ -142,33 +144,33 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error();
-      toast.success("Zaktualizowano cenę");
+      toast.success(t('priceForm.priceUpdated'));
       setIsEditing(false);
     } catch {
-      toast.error("Coś poszło nie tak");
+      toast.error(t('courseForm.somethingWrong'));
     }
   };
 
   return (
     <div className="mt-6">
       <FormCard
-        title="Cena kursu"
+        title={t('priceForm.coursePrice')}
         icon={DollarSign}
         status={{
-          label: isEditing ? "Edycja" : (Number(form.amount) === 0 ? "Darmowy" : "Płatny"),
+          label: isEditing ? t('courseForm.editing') : (Number(form.amount) === 0 ? t('priceForm.free') : t('priceForm.paid')),
           variant: isEditing ? "secondary" : (Number(form.amount) === 0 ? "outline" : "default"),
           className: isEditing ? "bg-blue-500 text-white" : (Number(form.amount) === 0 ? "" : "bg-green-500")
         }}
       >
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-muted-foreground">Ustawienia cenowe kursu</span>
+          <span className="text-sm text-muted-foreground">{t('priceForm.priceSettings')}</span>
           <Button onClick={toggleEdit} variant="ghost" size="sm">
             {isEditing ? (
-              <>Anuluj</>
+              <>{t('courseForm.cancel')}</>
             ) : (
               <>
                 <Pencil className="h-4 w-4 mr-2" />
-                Edytuj
+                {t('courseForm.edit')}
               </>
             )}
           </Button>
@@ -176,7 +178,7 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
       {isEditing ? (
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="form-group">
-            <label className="block text-sm font-medium text-gray-700">Kwota brutto</label>
+            <label className="block text-sm font-medium text-gray-700">{t('priceForm.grossAmount')}</label>
             <input
               type="number"
               min={0}
@@ -189,7 +191,7 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
             />
           </div>
           <div className="form-group">
-            <label className="block text-sm font-medium text-gray-700">Waluta</label>
+            <label className="block text-sm font-medium text-gray-700">{t('priceForm.currency')}</label>
             <input
               type="text"
               name="currency"
@@ -199,7 +201,7 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
             />
           </div>
           <div className="form-group">
-            <label className="block text-sm font-medium text-gray-700">Stawka VAT</label>
+            <label className="block text-sm font-medium text-gray-700">{t('priceForm.vatRate')}</label>
             <select
               name="vatRate"
               value={form.vatRate}
@@ -218,12 +220,12 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
               onChange={handleChange}
               id="isRecurring"
             />
-            <label htmlFor="isRecurring" className="text-sm font-medium text-gray-700">Płatność cykliczna</label>
+            <label htmlFor="isRecurring" className="text-sm font-medium text-gray-700">{t('priceForm.recurringPayment')}</label>
           </div>
           {form.isRecurring && (
             <>
               <div className="form-group">
-                <label htmlFor="interval" className="block text-sm font-medium text-gray-700">Okres rozliczenia</label>
+                <label htmlFor="interval" className="block text-sm font-medium text-gray-700">{t('priceForm.billingPeriod')}</label>
                 <select
                   name="interval"
                   id="interval"
@@ -232,24 +234,24 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md"
                 >
                   {intervalOptions.filter(opt => opt.value !== "ONE_TIME").map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    <option key={opt.value} value={opt.value}>{t(opt.labelKey)}</option>
                   ))}
                 </select>
               </div>
               <div className="form-group flex gap-4 items-center mt-2">
-                <label className="text-sm font-medium text-gray-700">Tryb okresu próbnego:</label>
+                <label className="text-sm font-medium text-gray-700">{t('priceForm.trialMode')}</label>
                 <label className="flex items-center gap-1">
                   <input type="radio" name="trialMode" value="days" checked={trialMode === "days"} onChange={() => { setTrialMode("days"); setForm(f => ({ ...f, trialPeriodEnd: "", trialPeriodDays: f.trialPeriodDays ?? 0, trialPeriodType: "DAYS" })); }} />
-                  Dni
+                  {t('priceForm.days')}
                 </label>
                 <label className="flex items-center gap-1">
                   <input type="radio" name="trialMode" value="end" checked={trialMode === "end"} onChange={() => { setTrialMode("end"); setForm(f => ({ ...f, trialPeriodDays: 0, trialPeriodEnd: f.trialPeriodEnd ?? "", trialPeriodType: "DATE" })); }} />
-                  Data zakończenia
+                  {t('priceForm.endDate')}
                 </label>
               </div>
               {trialMode === "days" && (
                 <div className="form-group">
-                  <label htmlFor="trialPeriodDays" className="block text-sm font-medium text-gray-700">Okres próbny (dni)</label>
+                  <label htmlFor="trialPeriodDays" className="block text-sm font-medium text-gray-700">{t('priceForm.trialPeriodDays')}</label>
                   <input
                     type="number"
                     min={0}
@@ -257,14 +259,14 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
                     name="trialPeriodDays"
                     value={form.trialPeriodDays ?? 0}
                     onChange={e => setForm(f => ({ ...f, trialPeriodDays: Number(e.target.value), trialPeriodEnd: "" }))}
-                    placeholder="np. 7"
+                    placeholder={t('priceForm.egDays')}
                     className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md"
                   />
                 </div>
               )}
               {trialMode === "end" && (
                 <div className="form-group">
-                  <label htmlFor="trialPeriodEnd" className="block text-sm font-medium text-gray-700">Data zakończenia okresu próbnego</label>
+                  <label htmlFor="trialPeriodEnd" className="block text-sm font-medium text-gray-700">{t('priceForm.trialPeriodEndDate')}</label>
                   <input
                     type="date"
                     name="trialPeriodEnd"
@@ -279,7 +281,7 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
           )}
           <div className="flex items-center gap-x-2">
             <button type="submit" className="bg-orange-600 text-white font-semibold py-2 px-4 rounded-md">
-              Zapisz
+              {t('courseForm.save')}
             </button>
           </div>
         </form>
@@ -287,29 +289,29 @@ export default function PriceForm({ price, courseId }: { price: Price; courseId:
         <>
           <p className={`text-sm mt-2 ${Number(form.amount) === 0 ? "text-orange-700 font-semibold" : ""}`}>
             {Number(form.amount) === 0 ? (
-              "Darmowy"
+              t('priceForm.free')
             ) : (
               <span className="font-semibold text-orange-700">
-                {formatMoney(form.amount, form.currency)} {form.currency}
+                {formatMoney(form.amount, form.currency, locale)} {form.currency}
                 {form.isRecurring
-                  ? ` / ${form.interval === "MONTH" ? "msc" : form.interval === "YEAR" ? "rok" : "jednorazowo"}`
+                  ? ` / ${form.interval === "MONTH" ? t('priceForm.perMonth') : form.interval === "YEAR" ? t('priceForm.perYear') : t('priceForm.oneTimeSuffix')}`
                   : ""}{" "}
-                brutto
+                {t('priceForm.gross')}
               </span>
             )}
           </p>
 
           {Number(form.amount) > 0 && (
             <p className="text-xs text-muted-foreground mt-1">
-              Netto: {formatMoney(computeNetFromGross(form.amount, toNumber(form.vatRate, 0)), form.currency)} {form.currency} • VAT {toNumber(form.vatRate, 0)}%
+              {t('priceForm.net')}: {formatMoney(computeNetFromGross(form.amount, toNumber(form.vatRate, 0)), form.currency, locale)} {form.currency} • VAT {toNumber(form.vatRate, 0)}%
             </p>
           )}
           {/* Only show trial period if valid */}
           {form.isRecurring && form.trialPeriodType === "DAYS" && form.trialPeriodDays && form.trialPeriodDays > 0 && (
-            <p className="text-xs text-orange-500 mt-1">Okres próbny: {form.trialPeriodDays} dni</p>
+            <p className="text-xs text-orange-500 mt-1">{t('priceForm.trialDays').replace('{days}', String(form.trialPeriodDays))}</p>
           )}
           {form.isRecurring && form.trialPeriodType === "DATE" && form.trialPeriodEnd && form.trialPeriodEnd !== "1970-01-01" && (
-            <p className="text-xs text-orange-500 mt-1">Okres próbny do {new Date(form.trialPeriodEnd).toLocaleDateString()}</p>
+            <p className="text-xs text-orange-500 mt-1">{t('priceForm.trialUntil').replace('{date}', new Date(form.trialPeriodEnd).toLocaleDateString(locale === 'en' ? 'en-US' : 'pl-PL'))}</p>
           )}
         </>
       )}

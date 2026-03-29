@@ -3,6 +3,7 @@ import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { INSERT_QA_COMMAND } from '.';
 import toast from 'react-hot-toast';
+import { useI18n } from '@/hooks/use-i18n';
 import ProgressSpinner from '../TextGeneratorPlugin/ProgressComponent';
 
 
@@ -20,6 +21,7 @@ export function QuestionAnswerDialog({
   const hasValidItems = items.some(
     (item) => item.question.trim() !== '' && item.answer.trim() !== ''
   );
+  const { t } = useI18n();
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [aiSourceText, setAiSourceText] = useState('');
   const [aiItemCount, setAiItemCount] = useState(1);
@@ -111,7 +113,7 @@ export function QuestionAnswerDialog({
   const handleGenerateFromSource = async () => {
     const text = aiSourceText.trim();
     if (!text) {
-      toast.error('Podaj tekst źródłowy lub zaznacz fragment w edytorze.');
+      toast.error(t('ed.provideSource'));
       return;
     }
 
@@ -222,13 +224,13 @@ ${text}
           }
         >
           <div className="flex items-center justify-between gap-3">
-            <div className="font-semibold text-gray-900">Pytania z AI</div>
+            <div className="font-semibold text-gray-900">{t('ed.qaAiTitle')}</div>
             <div className="text-xs font-semibold text-orange-700">
-              {isAiOpen ? "Ukryj" : "Rozwiń"}
+              {isAiOpen ? t('ed.hide') : t('ed.expand')}
             </div>
           </div>
           <div className="mt-1 text-xs text-gray-600">
-            Wklej tekst źródłowy lub pobierz zaznaczenie z edytora.
+            {t('ed.pasteOrLoadHint')}
           </div>
         </button>
 
@@ -240,23 +242,23 @@ ${text}
                 setAiSourceText(e.target.value);
                 setIsUsingFullContext(false);
               }}
-              placeholder="Wklej tekst źródłowy..."
+              placeholder={t('ed.pasteSource')}
               className="min-h-[120px] w-full rounded-md border border-gray-300 p-2 resize-y"
               disabled={isGenerating}
             />
             {isUsingFullContext && !aiSourceText.trim() && (
               <div className="text-xs text-gray-500">
-                Brak tekstu — używam całego kontekstu z edytora.
+                {t('ed.noTextCtx')}
               </div>
             )}
             {isUsingFullContext && aiSourceText.trim() && (
               <div className="text-xs text-gray-500">
-                Brak zaznaczenia — używam całego kontekstu z edytora.
+                {t('ed.noSelectionCtx')}
               </div>
             )}
             <div className="flex flex-wrap items-center gap-3">
               <label className="text-xs font-semibold text-gray-700">
-                Liczba pytań
+                {t('ed.questionCount')}
                 <input
                   type="number"
                   min={1}
@@ -280,7 +282,7 @@ ${text}
                 disabled={isGenerating}
                 className={`px-3 py-2 rounded-md border ${isGenerating ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"}`}
               >
-                Wczytaj zaznaczenie
+                {t('ed.loadSelection')}
               </button>
               <button
                 type="button"
@@ -291,10 +293,10 @@ ${text}
                 {isGenerating ? (
                   <>
                     <ProgressSpinner />
-                    Generowanie...
+                    {t('ed.generating')}
                   </>
                 ) : (
-                  "Wygeneruj"
+                  t('ed.generate')
                 )}
               </button>
             </div>
@@ -305,7 +307,7 @@ ${text}
       <hr className="border-gray-200" />
       <div className="flex items-center justify-between">
         <div className="text-sm font-semibold text-gray-700">
-          Element {currentIndex + 1} z {items.length}
+          {t('ed.qaElement').replace('{current}', String(currentIndex + 1)).replace('{total}', String(items.length))}
         </div>
         <div className="flex gap-2">
           <button
@@ -321,37 +323,37 @@ ${text}
             onClick={handleAddItem}
             className="px-3 py-1.5 rounded-md bg-orange-50 text-orange-700 hover:bg-orange-100"
           >
-            Dodaj
+            {t('ed.add')}
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-[1fr_3fr] gap-4 items-start"> {/* Changed items-center to items-start for better label alignment */}
         {/* Question */}
-        <label className="text-sm font-medium text-gray-700 text-left pt-2">Pytanie:</label> {/* Added pt-2 for alignment */}
+        <label className="text-sm font-medium text-gray-700 text-left pt-2">{t('ed.qaQuestionLabel')}</label> {/* Added pt-2 for alignment */}
         <textarea
           value={currentItem.question}
           onChange={(e) => updateCurrentItem('question', e.target.value)}
           className="w-full border border-gray-300 rounded-md p-2 resize-y min-h-[120px]" // Added resize-y and min-h
-          placeholder="Wpisz swoje pytanie"
+          placeholder={t('ed.qaQuestionPlaceholder')}
           rows={6} // Added rows attribute
         />
         {/* Answer */}
-        <label className="text-sm font-medium text-gray-700 text-left pt-2">Odpowiedź:</label> {/* Added pt-2 for alignment */}
+        <label className="text-sm font-medium text-gray-700 text-left pt-2">{t('ed.qaAnswerLabel')}</label> {/* Added pt-2 for alignment */}
         <textarea
           value={currentItem.answer}
           onChange={(e) => updateCurrentItem('answer', e.target.value)}
           className="w-full border border-gray-300 rounded-md p-2 resize-y min-h-[120px]" // Added resize-y and min-h
-          placeholder="Wpisz poprawną odpowiedź"
+          placeholder={t('ed.qaAnswerPlaceholder')}
           rows={6} // Added rows attribute
         />
          {/* Explanation */}
-        <label className="text-sm font-medium text-gray-700 text-left pt-2">Wyjaśnienie:</label> {/* Added pt-2 for alignment */}
+        <label className="text-sm font-medium text-gray-700 text-left pt-2">{t('ed.qaExplanationLabel')}</label> {/* Added pt-2 for alignment */}
         <textarea
           value={currentItem.explanation}
           onChange={(e) => updateCurrentItem('explanation', e.target.value)}
           className="w-full border border-gray-300 rounded-md p-2 resize-y min-h-[60px]" // Added resize-y and min-h
-          placeholder="Wpisz wyjaśnienie (opcjonalnie)"
+          placeholder={t('ed.qaExplanationPlaceholder')}
           rows={3} // Added rows attribute
         />
       </div>
@@ -364,7 +366,7 @@ ${text}
             disabled={currentIndex === 0}
             className="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
           >
-            Wstecz
+            {t('ed.back')}
           </button>
           <button
             type="button"
@@ -372,10 +374,10 @@ ${text}
             disabled={currentIndex >= items.length - 1}
             className="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
           >
-            Dalej
+            {t('ed.next')}
           </button>
         </div>
-        <div className="text-xs text-gray-500">Kreator elementu</div>
+        <div className="text-xs text-gray-500">{t('ed.qaWizard')}</div>
       </div>
 
       <div className="flex justify-end space-x-4">
@@ -389,14 +391,14 @@ ${text}
               : 'bg-orange-600 hover:bg-orange-700'
           }`}
         >
-          Potwierdź
+          {t('ed.confirm')}
         </button>
         {/* Cancel Button */}
         <button
           onClick={onClose}
           className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200"
         >
-          Anuluj
+          {t('ed.cancel')}
         </button>
       </div>
     </div>

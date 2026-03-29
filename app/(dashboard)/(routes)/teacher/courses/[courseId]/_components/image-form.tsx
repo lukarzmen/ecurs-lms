@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { FormCard, FormActions, FormSection } from "@/components/ui/form-card";
 import toast from "react-hot-toast";
 import Image from "next/image";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface ImageFormProps {
   imageId: string;
@@ -18,6 +19,7 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
   const [isEditing, setIsEditing] = useState(false);
   const [image, setImage] = useState<File | null>(null);
   const router = useRouter();
+  const { t } = useI18n();
   const imageUrl = `/api/image/${imageId}`;
   const toggleEdit = () => {
     setIsEditing((current) => !current);
@@ -49,39 +51,39 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
       const values = { imageId: id };
       await axios.patch(`/api/courses/${courseId}`, values);
 
-      toast.success("Zaktualizowano kurs");
+      toast.success(t('courseForm.courseUpdated'));
       toggleEdit();
       router.refresh();
     } catch (error) {
-      toast.error("Coś poszło nie tak");
+      toast.error(t('courseForm.somethingWrong'));
     }
   };
 
   return (
     <div className="mt-6">
       <FormCard
-        title="Miniatura kursu"
+        title={t('imageForm.courseImage')}
         icon={ImageIcon}
         status={{
-          label: isEditing ? "Edycja" : (imageId ? "Ustawiono" : "Brak miniatury"),
+          label: isEditing ? t('courseForm.editing') : (imageId ? t('imageForm.set') : t('imageForm.noImage')),
           variant: isEditing ? "secondary" : (imageId ? "default" : "outline"),
           className: isEditing ? "bg-blue-500 text-white" : (imageId ? "bg-green-500" : "")
         }}
       >
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-muted-foreground">Obraz przedstawiający kurs</span>
+          <span className="text-sm text-muted-foreground">{t('imageForm.imageDescription')}</span>
           <Button onClick={toggleEdit} variant="ghost" size="sm">
-            {isEditing && <>Anuluj</>}
+            {isEditing && <>{t('courseForm.cancel')}</>}
             {!isEditing && imageId && (
               <>
                 <Pencil className="h-4 w-4 mr-2"></Pencil>
-                Edytuj
+                {t('courseForm.edit')}
               </>
             )}
             {!isEditing && !imageId && (
               <>
                 <PlusCircle className="h-4 w-4 mr-2"></PlusCircle>
-                Dodaj
+                {t('imageForm.add')}
               </>
             )}
           </Button>
@@ -92,8 +94,8 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
             <div className="flex items-center justify-center py-8">
               <div className="text-center">
                 <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm font-medium">Brak miniatury</p>
-                <p className="text-xs text-muted-foreground">Dodaj atrakcyjną miniaturę kursu</p>
+                <p className="text-sm font-medium">{t('imageForm.noImageTitle')}</p>
+                <p className="text-xs text-muted-foreground">{t('imageForm.noImageHint')}</p>
               </div>
             </div>
           </FormSection>
@@ -121,7 +123,7 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
                 <div className="flex items-center justify-center h-full w-full text-center">
                   <div>
                     <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Nie wybrano obrazka</p>
+                    <p className="text-sm text-muted-foreground">{t('imageForm.noImageSelected')}</p>
                   </div>
                 </div>
               )}
@@ -148,7 +150,7 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId: imageId, courseId }) => 
                     disabled={!image}
                     className="flex-1"
                   >
-                    Prześlij
+                    {t('imageForm.upload')}
                   </Button>
                 </FormActions>
               </form>

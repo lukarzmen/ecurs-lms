@@ -4,6 +4,7 @@ import Image from "next/image";
 import { BookOpen, Loader2 } from "lucide-react";
 import { IconBadge } from "../icon-badge";
 import { useState } from "react";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface BaseCourseCardProps {
     id: number;
@@ -54,6 +55,7 @@ export function MarketplaceCourseCard({
     const imageUrl = imageId ? `/api/image/${imageId}` : null;
     const placeholderImageUrl = "/logo.png";
     const [isImageLoading, setIsImageLoading] = useState(true);
+    const { t } = useI18n();
     const linkHref = type === "educationalPath"
         ? `/educational-paths/${id}/enroll`
         : `/courses/${id}/enroll`;
@@ -66,8 +68,8 @@ export function MarketplaceCourseCard({
     const titleColor = type === "educationalPath" ? "text-orange-700" : "text-blue-700";
     // Info line below image
     const infoLine = type === "educationalPath"
-        ? <div className="w-full text-xs font-semibold text-orange-700 py-1">Ścieżka edukacyjna</div>
-        : <div className="w-full text-xs font-semibold text-blue-700 py-1">Kurs</div>;
+        ? <div className="w-full text-xs font-semibold text-orange-700 py-1">{t("course.educationalPath")}</div>
+        : <div className="w-full text-xs font-semibold text-blue-700 py-1">{t("course.type")}</div>;
 
     return (
         <Link href={linkHref}>
@@ -94,7 +96,7 @@ export function MarketplaceCourseCard({
                         {title}
                     </div>
                     <p className="text-xs text-muted-foreground min-h-[1rem]">
-                        {category || "Brak kategorii"}
+                        {category || t("common.noCategory")}
                     </p>
                     <p className="text-xs text-blue-400 min-h-[1rem]">
                         {author}
@@ -103,19 +105,19 @@ export function MarketplaceCourseCard({
                         <div className="text-lg font-bold text-orange-700">
                             {typeof price === "number" ? (
                                 price === 0 ? (
-                                    <span>Darmowy</span>
+                                    <span>{t("marketplace.free")}</span>
                                 ) : (
                                     <span>
                                         {priceGross?.toFixed(2)}
                                         {currency ? ` ${currency}` : " PLN"}
-                                        {isRecurring && interval ? ` / ${interval === 'MONTH' ? 'miesiąc' : interval === 'YEAR' ? 'rok' : interval.toLowerCase()}` : ""}
-                                        <span className="block text-xs text-gray-500 font-normal">brutto (VAT {vatRate}%)</span>
+                                        {isRecurring && interval ? ` / ${interval === 'MONTH' ? t("marketplace.perMonth") : interval === 'YEAR' ? t("marketplace.perYear") : interval.toLowerCase()}` : ""}
+                                        <span className="block text-xs text-gray-500 font-normal">{t("marketplace.gross").replace("{vatRate}", String(vatRate))}</span>
                                         {isRecurring && trialPeriodType === 'DAYS' && trialPeriodDays && trialPeriodDays > 0 ? (
-                                            <span className="block text-xs text-orange-500 font-normal">{trialPeriodDays} dni za darmo!</span>
+                                            <span className="block text-xs text-orange-500 font-normal">{t("marketplace.trialDays").replace("{days}", String(trialPeriodDays))}</span>
                                         ) : null}
                                         {isRecurring && trialPeriodType === 'DATE' && trialPeriodEnd ? (
                                             <span className="block text-xs text-orange-500 font-normal">
-                                                Do {new Date(trialPeriodEnd).toLocaleDateString()} za darmo!
+                                                {t("marketplace.trialUntil").replace("{date}", new Date(trialPeriodEnd).toLocaleDateString())}
                                             </span>
                                         ) : null}
                                     </span>
@@ -125,7 +127,7 @@ export function MarketplaceCourseCard({
                     </div>
                     {enrolled && (
                         <div className="mt-2 text-xs text-green-700 font-semibold">
-                            Posiadasz dostęp do {type === "educationalPath" ? "ścieżki" : "kursu"}
+                            {type === "educationalPath" ? t("marketplace.hasAccessPath") : t("marketplace.hasAccessCourse")}
                         </div>
                     )}
                 </div>

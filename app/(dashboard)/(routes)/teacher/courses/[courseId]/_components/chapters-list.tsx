@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { Module } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface ChaptersListProps {
   items: Module[];
@@ -37,6 +38,7 @@ export const ChaptersList = ({
   const [editingChapterId, setEditingChapterId] = useState<number | null>(null); // State to track the chapter being edited
   const [editingTitleId, setEditingTitleId] = useState<number | null>(null); // State to track title editing
   const [editingTitle, setEditingTitle] = useState<string>(""); // State for the title being edited
+  const { t, locale } = useI18n();
 
   useEffect(() => {
     setIsMounted(true);
@@ -189,9 +191,9 @@ export const ChaptersList = ({
                         {chapter.state === 0 && (
                           <span className="text-xs italic text-gray-500 border border-gray-400/50 rounded px-1 py-0.5 bg-gray-100 whitespace-nowrap">
                             {chapter.publishedAt ? (
-                              `zaplanowane: ${new Date(chapter.publishedAt).toLocaleDateString('pl-PL')}`
+                              t('chaptersList.scheduled').replace('{date}', new Date(chapter.publishedAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'pl-PL'))
                             ) : (
-                              'wersja robocza'
+                              t('chaptersList.draft')
                             )}
                           </span>
                         )}
@@ -224,17 +226,17 @@ export const ChaptersList = ({
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded shadow-lg">
-            <div>Na pewno chcesz usunąć ten moduł?</div>
+            <div>{t('chaptersList.confirmDelete')}</div>
             <div className="flex justify-end mt-4">
               <Button
                 variant="secondary"
                 className="mr-2"
                 onClick={cancelDeletion}
               >
-                Anuluj
+                {t('chaptersList.cancel')}
               </Button>
               <Button variant="destructive" onClick={confirmDeletion}>
-                Usuń
+                {t('chaptersList.delete')}
               </Button>
             </div>
           </div>

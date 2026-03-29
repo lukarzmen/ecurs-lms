@@ -12,6 +12,7 @@ import {useEffect, useMemo, useState} from 'react';
 import {INITIAL_SETTINGS} from './appSettings';
 import {useSettings} from './context/SettingsContext';
 import Switch from './ui/Switch';
+import {useI18n} from '@/hooks/use-i18n';
 
 export default function Settings(): JSX.Element {
   const windowLocation = typeof window !== 'undefined' ? window.location : { search: '' };
@@ -26,6 +27,7 @@ export default function Settings(): JSX.Element {
     },
   } = useSettings();
 
+  const { t } = useI18n();
   const [showSettings, setShowSettings] = useState(false);
 
   return (
@@ -40,19 +42,19 @@ export default function Settings(): JSX.Element {
           <Switch
             onClick={() => setOption('isMaxLength', !isMaxLength)}
             checked={isMaxLength}
-            text="Maksymalna długość"
+            text={t('ed.setMaxLength')}
           />
           <Switch
             onClick={() => setOption('isAutocomplete', !isAutocomplete)}
             checked={isAutocomplete}
-            text="Autouzupełnianie"
+            text={t('ed.setAutocomplete')}
           />
           <Switch
             onClick={() => {
               setOption('showTableOfContents', !showTableOfContents);
             }}
             checked={showTableOfContents}
-            text="Spis treści"
+            text={t('ed.setToc')}
           />
           <Switch
             onClick={() => {
@@ -62,7 +64,7 @@ export default function Settings(): JSX.Element {
               );
             }}
             checked={shouldUseLexicalContextMenu}
-            text="Użyj menu kontekstowego Lexical"
+            text={t('ed.setContextMenu')}
           />
           <Switch
             onClick={() => {
@@ -72,7 +74,7 @@ export default function Settings(): JSX.Element {
               );
             }}
             checked={shouldPreserveNewLinesInMarkdown}
-            text="Zachowaj nowe linie w Markdown"
+            text={t('ed.setNewlines')}
           />
         </div>
       ) : null}

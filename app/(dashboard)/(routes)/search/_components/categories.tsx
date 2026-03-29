@@ -11,6 +11,7 @@ import {
 }from "react-icons/fc";
 import { IconType } from "react-icons/lib";
 import { CategoryItem } from "./category-item";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface Category {
     id: number;
@@ -31,12 +32,13 @@ const iconMap: Record<Category["name"], IconType> = {
 };
 
 export const Categories = ({ items }: CategoriesProps) => {
+    const { t } = useI18n();
 
     return (
         <div className="space-y-4">
             <div>
-                <h2 className="text-lg font-semibold text-gray-900">Kategorie</h2>
-                <p className="text-sm text-gray-600">Przeglądaj kursy według kategorii</p>
+                <h2 className="text-lg font-semibold text-gray-900">{t("categories.title")}</h2>
+                <p className="text-sm text-gray-600">{t("categories.subtitle")}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">            
                 {items.map((category) => (

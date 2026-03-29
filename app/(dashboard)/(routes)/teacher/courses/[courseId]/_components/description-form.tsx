@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FormCard, FormActions, FormSection } from "@/components/ui/form-card";
 import { FileText, Loader2, Pencil, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface DescriptionFormProps {
   description: string;
@@ -21,6 +22,7 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const router = useRouter();
+  const { t } = useI18n();
 
   const toggleEdit = () => {
     setIsEditing((current) => !current);
@@ -35,11 +37,11 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
     setIsSubmitting(true);
     try {
       await axios.patch(`/api/courses/${courseId}`, { description: descriptionValue });
-      toast.success("Zaktualizowano kurs");
+      toast.success(t('courseForm.courseUpdated'));
       toggleEdit();
       router.refresh();
     } catch (error) {
-      toast.error("Coś poszło nie tak");
+      toast.error(t('courseForm.somethingWrong'));
     } finally {
       setIsSubmitting(false);
     }
@@ -67,14 +69,14 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
 
       const text = (await response.text()).trim();
       if (!text) {
-        toast.error("AI nie zwróciło treści");
+        toast.error(t('descForm.aiNoContent'));
         return;
       }
 
       setDescriptionValue(text);
-      toast.success("Opis został wygenerowany przez AI");
+      toast.success(t('descForm.aiGenerated'));
     } catch {
-      toast.error("Błąd podczas generowania opisu");
+      toast.error(t('descForm.aiError'));
     } finally {
       setIsGenerating(false);
     }
@@ -83,23 +85,23 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
   return (
     <div className="mt-6">
       <FormCard
-        title="O kursie"
+        title={t('descForm.aboutCourse')}
         icon={FileText}
         status={{
-          label: isEditing ? "Edycja" : (descriptionValue ? "Zapisano" : "Brak opisu"),
+          label: isEditing ? t('courseForm.editing') : (descriptionValue ? t('courseForm.saved') : t('descForm.noDescription')),
           variant: isEditing ? "secondary" : (descriptionValue ? "default" : "outline"),
           className: isEditing ? "bg-blue-500 text-white" : (descriptionValue ? "bg-green-500" : "")
         }}
       >
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-muted-foreground">Opis kursu</span>
+          <span className="text-sm text-muted-foreground">{t('descForm.courseDescription')}</span>
           <Button onClick={toggleEdit} variant="ghost" size="sm">
             {isEditing ? (
-              <>Anuluj</>
+              <>{t('courseForm.cancel')}</>
             ) : (
               <>
                 <Pencil className="h-4 w-4 mr-2"></Pencil>
-                Edytuj
+                {t('courseForm.edit')}
               </>
             )}
           </Button>
@@ -111,7 +113,7 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
                 value={descriptionValue}
                 onChange={handleChange}
                 disabled={isSubmitting || isGenerating}
-                placeholder="Opisz swój kurs..."
+                placeholder={t('descForm.describeCourse')}
                 rows={4}
               />
             </div>
@@ -126,12 +128,12 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
                 {isGenerating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generuję...
+                    {t('descForm.generating')}
                   </>
                 ) : (
                   <>
                     <Sparkles className="h-4 w-4 mr-2" />
-                    Generuj AI
+                    {t('descForm.generateAi')}
                   </>
                 )}
               </Button>
@@ -140,7 +142,7 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
                 disabled={!descriptionValue?.trim() || isSubmitting || isGenerating}
                 className="flex-1"
               >
-                Zapisz
+                {t('courseForm.save')}
               </Button>
             </FormActions>
           </form>
@@ -153,8 +155,8 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
             ) : (
               <FormSection variant="warning">
                 <p>
-                  <strong>Brak opisu kursu</strong><br />
-                  Dodaj opis aby potencjalni uczestnicy wiedzieli czego się spodziewać
+                  <strong>{t('descForm.noDescriptionTitle')}</strong><br />
+                  {t('descForm.noDescriptionHint')}
                 </p>
               </FormSection>
             )}

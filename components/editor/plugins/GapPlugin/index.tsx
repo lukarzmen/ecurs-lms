@@ -9,12 +9,14 @@ import {
 } from "lexical";
 import { useEffect } from "react";
 import { GapNode } from "../../nodes/GapNode";
+import {useI18n} from '@/hooks/use-i18n';
 import toast from "react-hot-toast";
 
 export const INSERT_GAP_NODE_COMMAND = createCommand("INSERT_GAP_NODE_COMMAND");
 
 export default function InsertGapNodePlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
+  const { t } = useI18n();
 
   useEffect(() => {
     return editor.registerCommand(
@@ -28,7 +30,7 @@ export default function InsertGapNodePlugin(): JSX.Element | null {
             const selectedText = selection.getTextContent();
 
             if (selectedText.trim() === "") {
-                toast.error("Zaznacz tekst, żeby zamienić go na lukę.");
+                toast.error(t('ed.gapSelectText'));
               return false; // Early exit if no text is selected
             }
 

@@ -34,6 +34,7 @@ import {
   Star,
   CheckCircle2
 } from "lucide-react";
+import { useI18n } from "@/hooks/use-i18n";
 
 ChartJS.register(
   CategoryScale, 
@@ -114,6 +115,7 @@ interface StudentAnalyticsData {
 }
 
 const StudentAnalyticsPage = () => {
+  const { t, locale } = useI18n();
   const [analyticsData, setAnalyticsData] = useState<StudentAnalyticsData>({
     enrolledCoursesCount: 0,
     completedCoursesCount: 0,
@@ -195,7 +197,7 @@ const StudentAnalyticsPage = () => {
 
   // Chart data for overall progress
   const progressData = {
-    labels: ["Ukończone", "W trakcie", "Pozostałe"],
+    labels: [t("analytics.chartCompleted"), t("analytics.chartInProgress"), t("analytics.chartRemaining")],
     datasets: [
       {
         data: [
@@ -211,10 +213,10 @@ const StudentAnalyticsPage = () => {
 
   // Weekly activity chart
   const activityData = {
-    labels: ["Ten tydzień", "Ten miesiąc"],
+    labels: [t("analytics.chartThisWeek"), t("analytics.chartThisMonth")],
     datasets: [
       {
-        label: "Ukończone moduły",
+        label: t("analytics.chartCompletedModules"),
         data: [thisWeekActivity, thisMonthActivity],
         backgroundColor: ["#3b82f6", "#8b5cf6"],
         borderRadius: 8,
@@ -228,7 +230,7 @@ const StudentAnalyticsPage = () => {
       course.title.substring(0, 20) + "..." : course.title),
     datasets: [
       {
-        label: "Postęp (%)",
+        label: t("analytics.chartProgress"),
         data: courseProgress.slice(0, 5).map(course => course.progressPercentage),
         backgroundColor: "#3b82f6",
         borderRadius: 8,
@@ -244,16 +246,16 @@ const StudentAnalyticsPage = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            👋 Witaj, {welcomeName}!
+            {t("analytics.welcome").replace("{name}", welcomeName)}
           </h1>
           <p className="text-gray-600 mt-2">
-            Oto Twój postęp w nauce. Świetna robota!
+            {t("analytics.subtitle")}
           </p>
         </div>
         <div className="flex items-center space-x-2">
           <Flame className="h-6 w-6 text-orange-500" />
           <span className="text-2xl font-bold text-orange-600">{currentStreak}</span>
-          <span className="text-gray-600">dni z rzędu</span>
+          <span className="text-gray-600">{t("analytics.streak")}</span>
         </div>
       </div>
 
@@ -262,7 +264,7 @@ const StudentAnalyticsPage = () => {
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Zapisane kursy
+              {t("analytics.enrolledCourses")}
             </CardTitle>
             <BookOpen className="h-4 w-4 text-blue-500" />
           </CardHeader>
@@ -274,7 +276,7 @@ const StudentAnalyticsPage = () => {
         <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Ukończone kursy
+              {t("analytics.completedCourses")}
             </CardTitle>
             <Trophy className="h-4 w-4 text-green-500" />
           </CardHeader>
@@ -286,7 +288,7 @@ const StudentAnalyticsPage = () => {
         <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Ogólny postęp
+              {t("analytics.overallProgress")}
             </CardTitle>
             <Target className="h-4 w-4 text-purple-500" />
           </CardHeader>
@@ -299,7 +301,7 @@ const StudentAnalyticsPage = () => {
         <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Osiągnięcia
+              {t("analytics.achievements")}
             </CardTitle>
             <Award className="h-4 w-4 text-orange-500" />
           </CardHeader>
@@ -315,7 +317,7 @@ const StudentAnalyticsPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <TrendingUp className="h-5 w-5" />
-              <span>Postęp modułów</span>
+              <span>{t("analytics.moduleProgress")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center">
@@ -330,7 +332,7 @@ const StudentAnalyticsPage = () => {
                         label: (context) => {
                           const label = context.label || '';
                           const value = context.parsed;
-                          return `${label}: ${value} modułów`;
+                          return `${label}: ${value} ${t("analytics.modules")}`;
                         }
                       }
                     }
@@ -346,7 +348,7 @@ const StudentAnalyticsPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Calendar className="h-5 w-5" />
-              <span>Aktywność</span>
+              <span>{t("analytics.activity")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -371,15 +373,15 @@ const StudentAnalyticsPage = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <BookOpen className="h-5 w-5" />
-            <span>Postęp w kursach</span>
+            <span>{t("analytics.courseProgress")}</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {courseProgress.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>Nie jesteś zapisany na żadne kursy</p>
-              <p className="text-sm">Rozpocznij swoją przygodę z nauką!</p>
+              <p>{t("analytics.noCourses")}</p>
+              <p className="text-sm">{t("analytics.startLearning")}</p>
             </div>
           ) : (
             courseProgress.map((course) => (
@@ -392,13 +394,13 @@ const StudentAnalyticsPage = () => {
                   {course.isCompleted && (
                     <Badge className="bg-green-100 text-green-800">
                       <CheckCircle2 className="h-4 w-4 mr-1" />
-                      Ukończono
+                      {t("analytics.completed")}
                     </Badge>
                   )}
                 </div>
                 
                 <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span>{course.completedModules}/{course.totalModules} modułów</span>
+                  <span>{course.completedModules}/{course.totalModules} {t("analytics.modules")}</span>
                   <span className="font-semibold">{course.progressPercentage}%</span>
                 </div>
                 
@@ -407,7 +409,7 @@ const StudentAnalyticsPage = () => {
                 {course.nextModule && !course.isCompleted && (
                   <div className="bg-blue-50 p-3 rounded border-l-4 border-l-blue-500">
                     <p className="text-sm font-medium text-blue-800">
-                      Następny moduł: {course.nextModule.title}
+                      {t("analytics.nextModule")} {course.nextModule.title}
                     </p>
                   </div>
                 )}
@@ -423,7 +425,7 @@ const StudentAnalyticsPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Target className="h-5 w-5" />
-              <span>Ścieżki edukacyjne</span>
+              <span>{t("analytics.eduPaths")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -437,13 +439,13 @@ const StudentAnalyticsPage = () => {
                   {path.isCompleted && (
                     <Badge className="bg-green-100 text-green-800">
                       <CheckCircle2 className="h-4 w-4 mr-1" />
-                      Ukończono
+                      {t("analytics.completed")}
                     </Badge>
                   )}
                 </div>
                 
                 <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span>{path.completedModules}/{path.totalModules} modułów z {path.totalCourses} kursów</span>
+                  <span>{path.completedModules}/{path.totalModules} {t("analytics.modulesOfCourses").replace("{courses}", String(path.totalCourses))}</span>
                   <span className="font-semibold">{path.progressPercentage}%</span>
                 </div>
                 
@@ -459,15 +461,15 @@ const StudentAnalyticsPage = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Trophy className="h-5 w-5" />
-            <span>Osiągnięcia</span>
+            <span>{t("analytics.achievements")}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           {achievements.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Trophy className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>Jeszcze nie masz osiągnięć</p>
-              <p className="text-sm">Rozpocznij naukę, aby zdobyć pierwsze!</p>
+              <p>{t("analytics.noAchievements")}</p>
+              <p className="text-sm">{t("analytics.startToUnlock")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -481,7 +483,7 @@ const StudentAnalyticsPage = () => {
                     </div>
                   </div>
                   <Badge variant="outline" className="text-xs">
-                    {new Date(achievement.unlockedAt).toLocaleDateString('pl-PL')}
+                    {new Date(achievement.unlockedAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'pl-PL')}
                   </Badge>
                 </div>
               ))}
@@ -495,15 +497,15 @@ const StudentAnalyticsPage = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Clock className="h-5 w-5" />
-            <span>Ostatnia aktywność</span>
+            <span>{t("analytics.recentActivity")}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           {recentCompletions.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>Brak ostatniej aktywności</p>
-              <p className="text-sm">Ukończ moduł, aby zobaczyć postęp!</p>
+              <p>{t("analytics.noRecentActivity")}</p>
+              <p className="text-sm">{t("analytics.completeModule")}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -515,7 +517,7 @@ const StudentAnalyticsPage = () => {
                     <p className="text-sm text-gray-600">{completion.courseTitle}</p>
                   </div>
                   <span className="text-xs text-gray-500">
-                    {new Date(completion.completedAt).toLocaleDateString('pl-PL')}
+                    {new Date(completion.completedAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'pl-PL')}
                   </span>
                 </div>
               ))}
@@ -528,18 +530,18 @@ const StudentAnalyticsPage = () => {
       <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
         <CardContent className="p-6 text-center">
           <Star className="h-8 w-8 mx-auto mb-4 text-yellow-500" />
-          <h3 className="text-xl font-semibold mb-2">Świetna robota!</h3>
+          <h3 className="text-xl font-semibold mb-2">{t("analytics.greatJob")}</h3>
           <p className="text-gray-600 mb-4">
             {overallProgress > 75 
-              ? "Jesteś już blisko końca! Nie poddawaj się teraz!" 
+              ? t("analytics.motivation75") 
               : overallProgress > 50 
-              ? "Ponad połowa drogi za Tobą. Trzymaj tempo!" 
+              ? t("analytics.motivation50") 
               : overallProgress > 25 
-              ? "Dobry początek! Każdy krok przybliża Cię do celu."
-              : "Każda wielka podróż zaczyna się od pierwszego kroku. Trzymaj się!"}
+              ? t("analytics.motivation25")
+              : t("analytics.motivation0")}
           </p>
           <div className="text-sm text-gray-500">
-            Uczysz się od {new Date(userInfo.memberSince).toLocaleDateString('pl-PL')}
+            {t("analytics.learningSince").replace("{date}", new Date(userInfo.memberSince).toLocaleDateString(locale === 'en' ? 'en-US' : 'pl-PL'))}
           </div>
         </CardContent>
       </Card>

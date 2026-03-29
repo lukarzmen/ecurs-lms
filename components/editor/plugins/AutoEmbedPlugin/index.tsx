@@ -20,6 +20,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
 import useModal from '../../hooks/useModal';
+import {useI18n} from '@/hooks/use-i18n';
 import Button from '../../ui/Button';
 import {DialogActions} from '../../ui/Dialog';
 import {INSERT_YOUTUBE_COMMAND} from '../YouTubePlugin';
@@ -135,6 +136,7 @@ export function AutoEmbedDialog({
   const [text, setText] = useState('');
   const [editor] = useLexicalComposerContext();
   const [embedResult, setEmbedResult] = useState<EmbedMatchResult | null>(null);
+  const { t } = useI18n();
 
   const validateText = useMemo(
     () =>
@@ -181,7 +183,7 @@ export function AutoEmbedDialog({
           disabled={!embedResult}
           onClick={onClick}
           data-test-id={`${embedConfig.type}-embed-modal-submit-btn`}>
-          Wstaw
+          {t('ed.insert')}
         </Button>
       </DialogActions>
     </div>
@@ -190,9 +192,10 @@ export function AutoEmbedDialog({
 
 export default function AutoEmbedPlugin(): JSX.Element {
   const [modal, showModal] = useModal();
+  const { t } = useI18n();
 
   const openEmbedModal = (embedConfig: PlaygroundEmbedConfig) => {
-    showModal(`Wstaw ${embedConfig.contentName}`, (onClose) => (
+    showModal(`${t('ed.insert')} ${embedConfig.contentName}`, (onClose) => (
       <AutoEmbedDialog embedConfig={embedConfig} onClose={onClose} />
     ));
   };
@@ -206,7 +209,7 @@ export default function AutoEmbedPlugin(): JSX.Element {
       new AutoEmbedOption('Odrzuć', {
         onSelect: dismissFn,
       }),
-      new AutoEmbedOption(`Wstaw ${activeEmbedConfig.contentName}`, {
+      new AutoEmbedOption(`${t('ed.insert')} ${activeEmbedConfig.contentName}`, {
         onSelect: embedFn,
       }),
     ];

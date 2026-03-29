@@ -15,20 +15,7 @@ import Switch from '../../ui/Switch';
 import TextInput from '../../ui/TextInput';
 import {INSERT_LAYOUT_COMMAND} from './LayoutPlugin';
 import type {LayoutItemVariant} from '../../nodes/LayoutItemNode';
-
-const LAYOUTS = [
-  {label: '1 kolumna (pełny ekran)', value: '1fr'},
-  {label: '2 kolumny (równa szerokość)', value: '1fr 1fr'},
-  {label: '2 kolumny (25% - 75%)', value: '1fr 3fr'},
-  {label: '3 kolumny (równa szerokość)', value: '1fr 1fr 1fr'},
-  {label: '3 kolumny (25% - 50% - 25%)', value: '1fr 2fr 1fr'},
-  {label: '4 kolumny (równa szerokość)', value: '1fr 1fr 1fr 1fr'},
-];
-
-const MOTIFS: Array<{label: string; value: LayoutItemVariant}> = [
-  {label: 'Ciekawostka', value: 'default'},
-  {label: 'Ważne', value: 'warning'},
-];
+import {useI18n} from '@/hooks/use-i18n';
 
 export default function InsertLayoutDialog({
   activeEditor,
@@ -37,6 +24,22 @@ export default function InsertLayoutDialog({
   activeEditor: LexicalEditor;
   onClose: () => void;
 }): JSX.Element {
+  const { t } = useI18n();
+
+  const LAYOUTS = [
+    {label: t('ed.layoutCol1'), value: '1fr'},
+    {label: t('ed.layoutCol2'), value: '1fr 1fr'},
+    {label: t('ed.layoutCol2_25_75'), value: '1fr 3fr'},
+    {label: t('ed.layoutCol3'), value: '1fr 1fr 1fr'},
+    {label: t('ed.layoutCol3_25_50_25'), value: '1fr 2fr 1fr'},
+    {label: t('ed.layoutCol4'), value: '1fr 1fr 1fr 1fr'},
+  ];
+
+  const MOTIFS: Array<{label: string; value: LayoutItemVariant}> = [
+    {label: t('ed.layoutCuriosity'), value: 'default'},
+    {label: t('ed.layoutImportant'), value: 'warning'},
+  ];
+
   const [layout, setLayout] = useState(LAYOUTS[0].value);
   const [motif, setMotif] = useState<LayoutItemVariant>(MOTIFS[0].value);
   const [showFrame, setShowFrame] = useState<boolean>(true);
@@ -89,18 +92,18 @@ export default function InsertLayoutDialog({
             e.preventDefault();
             setShowFrame((v) => !v);
           }}
-          text="Ramka"
+          text={t('ed.layoutFrame')}
         />
       </div>
       <div className="toolbar-item" style={{padding: '8px 0'}}>
         <TextInput
-          label="Dodatkowy napis (opcjonalnie)"
+          label={t('ed.layoutExtraLabel')}
           value={extraLabel}
           onChange={setExtraLabel}
-          placeholder="np. Wskazówka, Ciekawostka dnia…"
+          placeholder={t('ed.layoutExtraPlaceholder')}
         />
       </div>
-      <Button onClick={onClick}>Wstaw</Button>
+      <Button onClick={onClick}>{t('ed.insert')}</Button>
     </>
   );
 }

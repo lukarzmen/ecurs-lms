@@ -1,6 +1,7 @@
 import { DecoratorNode, DOMExportOutput, SerializedLexicalNode, SerializedTextNode, Spread } from "lexical";
 import React, { useState } from "react";
 import { BookOpen, X, Info } from "lucide-react";
+import {useI18n} from '@/hooks/use-i18n';
 
 export type SerializedDescriptionNode = Spread<
   {
@@ -100,6 +101,7 @@ export type DescriptionComponentProps = {
 };
 
 export function DescriptionComponent({ text, definition }: DescriptionComponentProps) {
+  const { t } = useI18n();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const shortDefinition = definition.split(" ").slice(0, 12).join(" ");
@@ -110,7 +112,7 @@ export function DescriptionComponent({ text, definition }: DescriptionComponentP
       <span
         className="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-blue-100 to-cyan-100 border-2 border-blue-300 cursor-pointer text-blue-700 rounded-lg hover:shadow-md hover:border-blue-400 transition-all duration-200 font-medium text-sm"
         onClick={() => setIsModalOpen(true)}
-        title="Kliknij, aby zobaczyć definicję"
+        title={t('ed.descClickToSee')}
       >
         {text}
         <BookOpen className="h-4 w-4" />
@@ -141,14 +143,14 @@ export function DescriptionComponent({ text, definition }: DescriptionComponentP
                   <BookOpen className="h-5 w-5 text-blue-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Definicja</h3>
+                  <h3 className="text-sm font-semibold text-muted-foreground">{t('ed.descDefinition')}</h3>
                   <h2 className="text-lg font-bold text-foreground break-words">{text}</h2>
                 </div>
               </div>
               <button
                 className="flex-shrink-0 p-1 hover:bg-white rounded-lg transition-colors duration-200 text-muted-foreground hover:text-foreground ml-2"
                 onClick={() => setIsModalOpen(false)}
-                title="Zamknij"
+                title={t('ed.close')}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -165,7 +167,7 @@ export function DescriptionComponent({ text, definition }: DescriptionComponentP
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-200 font-medium active:scale-95"
                 onClick={() => setIsModalOpen(false)}
               >
-                Zamknij
+                {t('ed.close')}
               </button>
             </div>
           </div>

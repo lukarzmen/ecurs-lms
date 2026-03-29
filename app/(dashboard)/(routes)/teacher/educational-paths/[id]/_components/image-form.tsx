@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { FormCard, FormActions, FormSection } from "@/components/ui/form-card";
 import toast from "react-hot-toast";
 import Image from "next/image";
+import { useI18n } from "@/hooks/use-i18n";
 
 
 interface ImageFormProps {
@@ -17,6 +18,7 @@ interface ImageFormProps {
 }
 
 const ImageForm: React.FC<ImageFormProps> = ({ imageId, educationalPathId, onImageChange }) => {
+  const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   const [image, setImage] = useState<File | null>(null);
   const router = useRouter();
@@ -53,39 +55,39 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId, educationalPathId, onIma
       if (onImageChange) {
         onImageChange(id);
       }
-      toast.success("Zaktualizowano ścieżkę edukacyjną");
+      toast.success(t("epImg.updated"));
       toggleEdit();
       router.refresh();
     } catch (error) {
-      toast.error("Coś poszło nie tak");
+      toast.error(t("epImg.error"));
     }
   };
 
   return (
     <div className="mt-6">
       <FormCard
-        title="Miniatura"
+        title={t("epImg.title")}
         icon={ImageIcon}
         status={{
-          label: imageId ? "Obraz dodany" : "Brak obrazu",
+          label: imageId ? t("epImg.imageAdded") : t("epImg.noImage"),
           variant: imageId ? "default" : "outline",
           className: imageId ? "bg-green-500" : ""
         }}
       >
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-muted-foreground">Obraz wyświetlany jako miniatura ścieżki edukacyjnej</span>
+          <span className="text-sm text-muted-foreground">{t("epImg.hint")}</span>
           <Button onClick={toggleEdit} variant="ghost" size="sm">
             {isEditing ? (
-              "Anuluj"
+              t("epImg.cancel")
             ) : imageId ? (
               <>
                 <Pencil className="h-4 w-4 mr-2" />
-                Edytuj
+                {t("epImg.edit")}
               </>
             ) : (
               <>
                 <PlusCircle className="h-4 w-4 mr-2" />
-                Dodaj
+                {t("epImg.add")}
               </>
             )}
           </Button>
@@ -94,8 +96,8 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId, educationalPathId, onIma
           !imageId ? (
             <FormSection variant="warning">
               <p>
-                <strong>Brak miniatury</strong><br />
-                Dodaj obraz, aby zwiększyć atrakcyjność ścieżki edukacyjnej
+                <strong>{t("epImg.noThumbTitle")}</strong><br />
+                {t("epImg.noThumbHint")}
               </p>
             </FormSection>
           ) : (
@@ -135,7 +137,7 @@ const ImageForm: React.FC<ImageFormProps> = ({ imageId, educationalPathId, onIma
                   disabled={!image}
                   className="ml-4"
                 >
-                  Prześlij
+                  {t("epImg.upload")}
                 </Button>
               </form>
             )}

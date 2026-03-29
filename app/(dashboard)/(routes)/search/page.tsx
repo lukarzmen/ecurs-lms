@@ -6,11 +6,16 @@ import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getMessages, getRequestLocale, createTranslator } from "@/lib/i18n/server";
 
 
 const SearchPage = async ({ searchParams }: { searchParams: Promise<{ title?: string; categoryId?: string }> }) => {
   const resolvedSearchParams = await searchParams;
   const { title = '', categoryId = '' } = resolvedSearchParams || {};
+
+  const locale = await getRequestLocale();
+  const messages = await getMessages(locale, "common");
+  const t = createTranslator(messages);
 
   const { userId, sessionId } = await auth();
   if (!userId) {
@@ -20,23 +25,23 @@ const SearchPage = async ({ searchParams }: { searchParams: Promise<{ title?: st
           <div className="max-w-2xl space-y-4">
             <div className="flex items-center gap-3">
               <Search className="h-8 w-8 text-orange-600" />
-              <h1 className="text-3xl font-bold text-gray-900">Wyszukaj kursy</h1>
+              <h1 className="text-3xl font-bold text-gray-900">{t("search.title")}</h1>
             </div>
             <p className="text-gray-600">
-              Zaloguj się lub załóż konto, aby przeglądać kursy, zapisywać je na liście życzeń i kontynuować naukę w jednym miejscu.
+              {t("search.signedOutDesc")}
             </p>
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button asChild>
-                <Link href="/sign-in">Zaloguj się</Link>
+                <Link href="/sign-in">{t("search.signIn")}</Link>
               </Button>
               <Button variant="outline" asChild>
-                <Link href="/sign-up">Załóż konto</Link>
+                <Link href="/sign-up">{t("search.signUp")}</Link>
               </Button>
             </div>
 
             <p className="text-sm text-gray-600">
-              Masz już konto? Kliknij „Zaloguj się”. Nowy użytkownik? „Załóż konto” zajmie chwilę.
+              {t("search.signedOutHint")}
             </p>
           </div>
         </div>
@@ -60,10 +65,10 @@ const SearchPage = async ({ searchParams }: { searchParams: Promise<{ title?: st
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
                 <Search className="h-8 w-8 text-orange-600" />
-                <span>Odkrywaj</span>
+                <span>{t("search.discover")}</span>
               </h1>
               <p className="text-gray-600 mt-2">
-                Znajdź idealny kurs dla siebie z naszej bogatej oferty edukacyjnej
+                {t("search.discoverDesc")}
               </p>
             </div>
           </div>

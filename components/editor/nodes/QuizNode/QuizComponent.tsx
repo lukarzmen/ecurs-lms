@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CheckCircle2, XCircle, ChevronRight } from 'lucide-react';
+import { useI18n } from '@/hooks/use-i18n';
 
 export interface Test {
   question: string;
@@ -19,6 +20,7 @@ export default function QuizComponent({
   onComplete,
   successThreshold = 0.7,
 }: QuizComponentProps) {
+  const { t } = useI18n();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -65,15 +67,15 @@ export default function QuizComponent({
     let emoji = "";
 
     if (rate >= successThreshold) {
-      summaryText = "Gratulacje! Wspaniale Ci poszło!";
+      summaryText = t('ed.quizCompGratz');
       summaryColorClass = "bg-emerald-500";
       emoji = "🎉";
     } else if (rate >= 0.5) {
-      summaryText = "Nieźle! Jeszcze trochę praktyki i będzie perfekcyjnie!";
+      summaryText = t('ed.quizCompNotBad');
       summaryColorClass = "bg-amber-500";
       emoji = "💪";
     } else {
-      summaryText = "Warto poćwiczyć! Następnym razem pójdzie lepiej!";
+      summaryText = t('ed.quizCompPractice');
       summaryColorClass = "bg-slate-500";
       emoji = "📚";
     }
@@ -83,7 +85,7 @@ export default function QuizComponent({
         <div className="text-6xl mb-4">{emoji}</div>
         <h2 className="text-2xl font-semibold mb-2 text-center">{summaryText}</h2>
         <div className="text-lg font-medium mt-4 bg-white/20 px-6 py-3 rounded-lg backdrop-blur-sm">
-          Wynik: {correctCount}/{total} ({Math.round(rate * 100)}%)
+          {t('ed.quizCompScore')} {correctCount}/{total} ({Math.round(rate * 100)}%)
         </div>
       </div>
     );
@@ -97,7 +99,7 @@ export default function QuizComponent({
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-muted-foreground">
-            Pytanie {currentIndex + 1} z {tests.length}
+            {t('ed.quizCompQuestionOf', { current: currentIndex + 1, total: tests.length })}
           </span>
           <span className="text-sm font-medium text-muted-foreground">
             {Math.round(progressPercentage)}%
@@ -119,12 +121,12 @@ export default function QuizComponent({
             {isSelectionCorrect ? (
               <>
                 <CheckCircle2 className="h-5 w-5" />
-                <span className="text-sm font-semibold">Poprawna odpowiedź!</span>
+                <span className="text-sm font-semibold">{t('ed.quizCompCorrect')}</span>
               </>
             ) : (
               <>
                 <XCircle className="h-5 w-5" />
-                <span className="text-sm font-semibold">Niepoprawna odpowiedź</span>
+                <span className="text-sm font-semibold">{t('ed.quizCompIncorrect')}</span>
               </>
             )}
           </div>
@@ -182,7 +184,7 @@ export default function QuizComponent({
         {isSubmitted && currentTest.correctAnswerDescription && (
           <div className="mt-4 p-4 bg-muted/50 rounded-lg border">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              <span className="font-semibold text-foreground">Wyjaśnienie: </span>
+              <span className="font-semibold text-foreground">{t('ed.quizCompExplanation')}: </span>
               {currentTest.correctAnswerDescription}
             </p>
           </div>
@@ -195,7 +197,7 @@ export default function QuizComponent({
               onClick={handleNext}
               className="w-full py-3 px-4 rounded-lg text-primary-foreground font-semibold bg-primary hover:bg-primary/90 shadow-sm transition-all duration-200 flex items-center justify-center gap-2"
             >
-              Następne pytanie
+              {t('ed.quizCompNext')}
               <ChevronRight className="h-5 w-5" />
             </button>
           ) : !isSubmitted ? (
@@ -209,7 +211,7 @@ export default function QuizComponent({
                     : 'bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98]'
                 }`}
             >
-              Sprawdź odpowiedź
+              {t('ed.quizCompCheck')}
             </button>
           ) : null}
         </div>

@@ -20,6 +20,7 @@ import { z } from "zod";
 import { PlusCircle, ExternalLink, Trash2, MessageSquare } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
+import { useI18n } from "@/hooks/use-i18n";
 import { CommunicationPlatform, CourseCommunication } from "@prisma/client";
 import { useRouter } from "next/navigation";
 
@@ -27,9 +28,9 @@ type CommunicationPlatformType = CommunicationPlatform;
 
 const formSchema = z.object({
   platform: z.nativeEnum(CommunicationPlatform, {
-    required_error: "Wybierz platformę",
+    required_error: "commForm.selectPlatform",
   }),
-  link: z.string().min(1, "Link jest wymagany").url("Podaj prawidłowy URL"),
+  link: z.string().min(1, "commForm.linkRequired").url("commForm.invalidUrl"),
   label: z.string().optional(),
   description: z.string().optional(),
 });
@@ -45,7 +46,7 @@ const platformLabels = {
   SLACK: "Slack",
   TEAMS: "Microsoft Teams",
   ZOOM: "Zoom",
-  CUSTOM: "Niestandardowy",
+  CUSTOM: "Custom",
 };
 
 const platformIcons = {
@@ -62,6 +63,7 @@ export const CommunicationLinksForm = ({ courseId }: CommunicationLinksFormProps
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [communicationLinks, setCommunicationLinks] = useState<CourseCommunication[]>([]);
+  const { t } = useI18n();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -82,7 +84,7 @@ export const CommunicationLinksForm = ({ courseId }: CommunicationLinksFormProps
       const response = await axios.get(`/api/courses/${courseId}/communication`);
       setCommunicationLinks(response.data);
     } catch (error) {
-      toast.error("Nie udało się pobrać linków komunikacyjnych");
+      toast.error(t('commForm.fetchError'));
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -103,12 +105,12 @@ export const CommunicationLinksForm = ({ courseId }: CommunicationLinksFormProps
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await axios.post(`/api/courses/${courseId}/communication`, values);
-      toast.success("Link komunikacyjny dodany");
+      toast.success(t('commForm.linkAdded'));
       toggleCreating();
       form.reset();
       fetchCommunicationLinks();
     } catch (error) {
-      toast.error("Coś poszło nie tak");
+      toast.error(t('courseForm.somethingWrong'));
       console.error(error);
     }
   };
@@ -116,10 +118,10 @@ export const CommunicationLinksForm = ({ courseId }: CommunicationLinksFormProps
   const onDelete = async (linkId: number) => {
     try {
       await axios.delete(`/api/courses/${courseId}/communication/${linkId}`);
-      toast.success("Link usunięty");
+      toast.success(t('commForm.linkDeleted'));
       fetchCommunicationLinks();
     } catch (error) {
-      toast.error("Nie udało się usunąć linku");
+      toast.error(t('commForm.linkDeleteError'));
       console.error(error);
     }
   };
@@ -131,23 +133,23 @@ export const CommunicationLinksForm = ({ courseId }: CommunicationLinksFormProps
   return (
     <div className="mt-6">
       <FormCard
-        title="Kanały komunikacji"
+        title={t('commForm.channels')}
         icon={MessageSquare}
         status={{
-          label: isCreating ? "Dodawanie" : (communicationLinks.length > 0 ? `${communicationLinks.length} kanałów` : "Brak kanałów"),
+          label: isCreating ? t('chaptersForm.adding') : (communicationLinks.length > 0 ? t('commForm.channelCount').replace('{count}', String(communicationLinks.length)) : t('commForm.noChannels')),
           variant: isCreating ? "secondary" : (communicationLinks.length > 0 ? "default" : "outline"),
           className: isCreating ? "bg-blue-500 text-white" : (communicationLinks.length > 0 ? "bg-green-500" : "")
         }}
       >
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-muted-foreground">Platformy komunikacji z uczestnikami</span>
+          <span className="text-sm text-muted-foreground">{t('commForm.platformsSubtitle')}</span>
           <Button onClick={toggleCreating} variant="ghost" size="sm">
             {isCreating ? (
-              <>Anuluj</>
+              <>{t('courseForm.cancel')}</>
             ) : (
               <>
                 <PlusCircle className="h-4 w-4 mr-2" />
-                Dodaj kanał
+                {t('commForm.addChannel')}
               </>
             )}
           </Button>
@@ -164,7 +166,7 @@ export const CommunicationLinksForm = ({ courseId }: CommunicationLinksFormProps
               name="platform"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Platforma</FormLabel>
+                  <FormLabel>{t('commForm.platform')}</FormLabel>
                   <FormControl>
                     <select
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -174,7 +176,7 @@ export const CommunicationLinksForm = ({ courseId }: CommunicationLinksFormProps
                     >
                       {Object.entries(platformLabels).map(([value, label]) => (
                         <option key={value} value={value}>
-                          {platformIcons[value as CommunicationPlatformType]} {label}
+                          {platformIcons[value as CommunicationPlatformType]} {value === 'CUSTOM' ? t('commForm.custom') : label}
                         </option>
                       ))}
                     </select>
@@ -189,7 +191,7 @@ export const CommunicationLinksForm = ({ courseId }: CommunicationLinksFormProps
               name="link"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Link</FormLabel>
+                  <FormLabel>{t('commForm.link')}</FormLabel>
                   <FormControl>
                     <Input
                       disabled={isSubmitting}
@@ -207,16 +209,16 @@ export const CommunicationLinksForm = ({ courseId }: CommunicationLinksFormProps
               name="label"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Etykieta (opcjonalnie)</FormLabel>
+                  <FormLabel>{t('commForm.labelOptional')}</FormLabel>
                   <FormControl>
                     <Input
                       disabled={isSubmitting}
-                      placeholder="np. Grupa główna, Q&A"
+                      placeholder={t('commForm.labelPlaceholder')}
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    Nazwa opisująca przeznaczenie kanału
+                    {t('commForm.labelDesc')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -228,11 +230,11 @@ export const CommunicationLinksForm = ({ courseId }: CommunicationLinksFormProps
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Opis (opcjonalnie)</FormLabel>
+                  <FormLabel>{t('commForm.descOptional')}</FormLabel>
                   <FormControl>
                     <Textarea
                       disabled={isSubmitting}
-                      placeholder="Opisz przeznaczenie tego kanału komunikacji..."
+                      placeholder={t('commForm.descPlaceholder')}
                       className="resize-none"
                       {...field}
                     />
@@ -244,7 +246,7 @@ export const CommunicationLinksForm = ({ courseId }: CommunicationLinksFormProps
 
             <div className="flex items-center gap-x-2">
               <Button disabled={!isValid || isSubmitting} type="submit">
-                Dodaj kanał
+                {t('commForm.addChannel')}
               </Button>
             </div>
           </form>
@@ -255,13 +257,13 @@ export const CommunicationLinksForm = ({ courseId }: CommunicationLinksFormProps
         <div>
           {isLoading ? (
             <FormSection variant="info">
-              <p>Ładowanie...</p>
+              <p>{t('commForm.loading')}</p>
             </FormSection>
           ) : communicationLinks.length === 0 ? (
             <FormSection variant="warning">
               <p>
-                <strong>Brak kanałów komunikacji</strong><br />
-                Dodaj pierwszy kanał, aby ułatwić kontakt z uczestnikami
+                <strong>{t('commForm.noChannelsTitle')}</strong><br />
+                {t('commForm.noChannelsHint')}
               </p>
             </FormSection>
           ) : (
@@ -278,7 +280,7 @@ export const CommunicationLinksForm = ({ courseId }: CommunicationLinksFormProps
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">
-                          {platformLabels[link.platform]}
+                          {link.platform === 'CUSTOM' ? t('commForm.custom') : platformLabels[link.platform]}
                         </span>
                         {link.label && (
                           <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">
@@ -319,8 +321,7 @@ export const CommunicationLinksForm = ({ courseId }: CommunicationLinksFormProps
           
           {communicationLinks.length > 0 && (
             <p className="text-xs text-muted-foreground mt-4">
-              💡 Tip: Dodaj różne kanały dla różnych celów - np. główna grupa do dyskusji, 
-              osobny kanał do pytań, czy kanał ogłoszeń.
+              💡 {t('commForm.tip')}
             </p>
           )}
         </div>

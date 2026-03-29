@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, CheckCircle2, Eye, XCircle } from "lucide-react";
+import { useI18n } from '@/hooks/use-i18n';
 
 export interface OrderingItem {
   id: string;
@@ -47,6 +48,7 @@ export default function OrderingComponent({
   initialCompleted,
   onComplete,
 }: OrderingComponentProps) {
+  const { t } = useI18n();
   const correctItems = useMemo(() => normalizeItems(items), [items]);
   const [currentOrder, setCurrentOrder] = useState<OrderingItem[]>([]);
   const [revealed, setRevealed] = useState(false);
@@ -143,29 +145,29 @@ export default function OrderingComponent({
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Ułóż kolejność
+                {t('ed.ordCompTitle')}
               </div>
               <h3 className="mt-2 text-lg font-semibold leading-relaxed">
-                Ustaw elementy w poprawnej kolejności
+                {t('ed.ordCompInstructions')}
               </h3>
             </div>
             {checked && isCorrectNow && (
               <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
                 <CheckCircle2 className="h-4 w-4" />
-                Poprawnie
+                {t('ed.ordCompCorrect')}
               </div>
             )}
             {checked && !isCorrectNow && (
               <div className="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-sm font-semibold text-red-700">
                 <XCircle className="h-4 w-4" />
-                Niepoprawnie
+                {t('ed.ordCompIncorrect')}
               </div>
             )}
           </div>
 
           {currentOrder.length === 0 ? (
             <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground">
-              Brak elementów do ułożenia.
+              {t('ed.ordCompEmpty')}
             </div>
           ) : (
             <div className="space-y-3">
@@ -186,7 +188,7 @@ export default function OrderingComponent({
                       onClick={() => moveItem(index, index - 1)}
                       disabled={isLocked || index === 0}
                       className="rounded-md border px-2 py-1 text-xs font-semibold text-muted-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-                      aria-label="Przesuń w górę"
+                      aria-label={t('ed.ordCompMoveUp')}
                     >
                       <ArrowUp className="h-4 w-4" />
                     </button>
@@ -195,7 +197,7 @@ export default function OrderingComponent({
                       onClick={() => moveItem(index, index + 1)}
                       disabled={isLocked || index === currentOrder.length - 1}
                       className="rounded-md border px-2 py-1 text-xs font-semibold text-muted-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-                      aria-label="Przesuń w dół"
+                      aria-label={t('ed.ordCompMoveDown')}
                     >
                       <ArrowDown className="h-4 w-4" />
                     </button>
@@ -214,7 +216,7 @@ export default function OrderingComponent({
                 className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <CheckCircle2 className="h-4 w-4" />
-                Sprawdź
+                {t('ed.ordCompCheck')}
               </button>
             )}
             {!revealed && (
@@ -225,12 +227,12 @@ export default function OrderingComponent({
                 className="inline-flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Eye className="h-4 w-4" />
-                {showCorrectAnswer ? "Ukryj poprawne" : "Pokaż poprawne"}
+                {showCorrectAnswer ? t('ed.ordCompHideCorrect') : t('ed.ordCompShowCorrect')}
               </button>
             )}
             {!isLocked && (
               <div className="text-xs text-muted-foreground">
-                Ułóż elementy we właściwej kolejności, a następnie kliknij Sprawdź.
+                {t('ed.ordCompCheckHint')}
               </div>
             )}
           </div>
@@ -239,7 +241,7 @@ export default function OrderingComponent({
             <div className="rounded-lg border border-green-200 bg-green-50/50 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <CheckCircle2 className="h-5 w-5 text-green-700" />
-                <div className="font-semibold text-green-900">Poprawna kolejność:</div>
+                <div className="font-semibold text-green-900">{t('ed.ordCompCorrectOrder')}</div>
               </div>
               <div className="space-y-2">
                 {correctItems.map((item, index) => (

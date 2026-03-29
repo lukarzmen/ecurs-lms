@@ -10,6 +10,7 @@ import './fontSize.css';
 
 import {LexicalEditor} from 'lexical';
 import * as React from 'react';
+import {useI18n} from '@/hooks/use-i18n';
 
 import {
   MAX_ALLOWED_FONT_SIZE,
@@ -72,6 +73,7 @@ export default function FontSize({
   const [inputValue, setInputValue] = React.useState<string>(selectionFontSize);
   const [inputChangeFlag, setInputChangeFlag] = React.useState<boolean>(false);
   const [isMouseMode, setIsMouseMode] = React.useState(false);
+  const { t } = useI18n();
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     const inputValueNumber = Number(inputValue);
@@ -148,14 +150,14 @@ export default function FontSize({
           );
         }}
         className="toolbar-item font-decrement"
-        aria-label="Zmniejsz czcionkę"
-        title={`Zmniejsz czcionkę (${SHORTCUTS.DECREASE_FONT_SIZE})`}>
+        aria-label={t('ed.decreaseFont')}
+        title={`${t('ed.decreaseFont')} (${SHORTCUTS.DECREASE_FONT_SIZE})`}>
         <i className="format minus-icon" />
       </button>
 
       <input
         type="number"
-        title="Rozmiar czcionki"
+        title={t('ed.fontSize')}
         value={inputValue}
         disabled={disabled}
         className="toolbar-item font-size-input"
@@ -183,8 +185,8 @@ export default function FontSize({
           );
         }}
         className="toolbar-item font-increment"
-        aria-label="Zwiększ czcionkę"
-        title={`Zwiększ czcionkę (${SHORTCUTS.INCREASE_FONT_SIZE})`}>
+        aria-label={t('ed.increaseFont')}
+        title={`${t('ed.increaseFont')} (${SHORTCUTS.INCREASE_FONT_SIZE})`}>
         <i className="format add-icon" />
       </button>
     </>

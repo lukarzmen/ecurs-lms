@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { CheckCircle2, Circle, ListTodo } from "lucide-react";
+import { useI18n } from "@/hooks/use-i18n";
 
 export interface TodoItem {
   id: string;
@@ -14,6 +15,7 @@ interface TodoComponentProps {
 }
 
 export default function TodoComponent({ title, initialItems, onComplete }: TodoComponentProps) {
+  const { t } = useI18n();
   const [items, setItems] = useState<TodoItem[]>(initialItems);
   const completedOnceRef = useRef(false);
 
@@ -73,7 +75,7 @@ export default function TodoComponent({ title, initialItems, onComplete }: TodoC
           {allCompleted && (
             <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
               <CheckCircle2 className="h-5 w-5" />
-              <span className="text-sm font-semibold">Wszystkie zadania wykonane!</span>
+              <span className="text-sm font-semibold">{t('ed.todoAllDone')}</span>
             </div>
           )}
 

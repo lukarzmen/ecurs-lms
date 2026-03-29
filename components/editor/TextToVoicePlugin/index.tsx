@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CREATE_AUDIO_NODE_COMMAND } from "../plugins/AudioPlugin";
 import ProgressSpinner from "../plugins/TextGeneratorPlugin/ProgressComponent";
 import toast from "react-hot-toast";
+import {useI18n} from '@/hooks/use-i18n';
 
 export const TEXT_TO_VOICE_COMMAND = createCommand(
   "TEXT_TO_VOICE_COMMAND"
@@ -16,6 +17,7 @@ export function TextToVoiceDialog({
   activeEditor: LexicalEditor;
   onClose: () => void;
 }): JSX.Element {
+  const { t } = useI18n();
   const [selectedLanguage, setSelectedLanguage] = useState('russian');
   const [loading, setLoading] = useState(false);
 
@@ -36,7 +38,7 @@ export function TextToVoiceDialog({
           
             if (!response.ok) {
               setLoading(false);
-              throw new Error("Generowanie pliku nie powiodło się");
+              throw new Error(t("ed.ttvFailed"));
             }
           
             const data = await response.json();
@@ -47,15 +49,15 @@ export function TextToVoiceDialog({
             });
             onClose();
             } catch (error) {
-            console.error("Błąd podczas generowania głosu:", error);
+            console.error(t("ed.ttvError"), error);
             } finally {
               setLoading(false);
             }
         } else {
-          toast.error('Nie wybrano tekstu do stworzenia głosu.');
+          toast.error(t('ed.ttvNoText'));
         }
       } else {
-        toast.error('Nie zaznaczono tekstu.');
+        toast.error(t('ed.ttvNoSelection'));
       }
     });
   };
@@ -84,7 +86,7 @@ export function TextToVoiceDialog({
         >
           ✕
         </button>
-        <h2 className="text-xl font-bold mb-4 text-center">Zmień tekst na głos</h2>
+        <h2 className="text-xl font-bold mb-4 text-center">{t("ed.ttvTitle")}</h2>
         
         <div className="flex justify-center space-x-2 mt-8">
           {loading ? (
@@ -95,12 +97,12 @@ export function TextToVoiceDialog({
                 className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md"
                 onClick={onClose}
               >
-                Anuluj
+                {t("ed.cancel")}
               </button>
               <button
                 className="px-4 py-2 bg-orange-500 text-white rounded-md"
                 onClick={handleTextToVoice}>
-                Generuj głos lektora
+                {t("ed.ttvGenerate")}
               </button>
             </>
           )}

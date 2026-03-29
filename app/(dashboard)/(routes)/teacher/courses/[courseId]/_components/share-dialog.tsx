@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { useI18n } from "@/hooks/use-i18n";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ interface ShareDialogProps {
 }
 
 export const ShareDialog: React.FC<ShareDialogProps> = ({ courseIdNumber, apiUrl }) => {
+  const { t, locale } = useI18n();
   const [open, setOpen] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [promoCodes, setPromoCodes] = useState<{ id: number; code: string; discount: number; description?: string; expirationDate?: string }[]>([]);
@@ -85,54 +87,54 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ courseIdNumber, apiUrl
             <circle cx="18" cy="18.5" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
           </svg>
         </span>
-        Udostępnij kurs
+        {t('shareDialog.shareCourse')}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Udostępnij kurs</DialogTitle>
+            <DialogTitle>{t('shareDialog.shareCourse')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
-            <label className="block text-sm font-medium mb-1 mt-2">Kod promocyjny</label>
+            <label className="block text-sm font-medium mb-1 mt-2">{t('shareDialog.promoCode')}</label>
             <select
               className="w-full border rounded px-2 py-2 text-sm"
               value={promoCode}
               onChange={e => setPromoCode(e.target.value)}
             >
-              <option value="">Bez kodu promocyjnego</option>
+              <option value="">{t('shareDialog.noPromoCode')}</option>
               {promoCodes.map(pc => (
                 <option key={pc.id} value={pc.code}>
                   {pc.code} - {pc.discount}%
                   {pc.description ? ` (${pc.description})` : ""}
-                  {pc.expirationDate ? ` ważny do ${new Date(pc.expirationDate).toISOString().slice(0, 10)}` : " bez terminu"}
+                  {pc.expirationDate ? ` ${t('shareDialog.validUntil')} ${new Date(pc.expirationDate).toISOString().slice(0, 10)}` : ` ${t('shareDialog.noExpiry')}`}
                 </option>
               ))}
             </select>
             {basePrice && (
               <div className="mt-2">
-                <label className="block text-sm font-medium mb-1">Cena po rabacie</label>
+                <label className="block text-sm font-medium mb-1">{t('shareDialog.discountedPrice')}</label>
                 <Input value={finalPrice} readOnly className="w-full" />
               </div>
             )}
             {shareLink && (
               <div className="mt-2">
-                <label className="block text-sm font-medium mb-1">Link do kursu</label>
+                <label className="block text-sm font-medium mb-1">{t('shareDialog.courseLink')}</label>
                 <Input value={shareLink} readOnly className="w-full" />
                 <Button
                   type="button"
                   className="mt-2 w-full"
                   onClick={() => {
                     navigator.clipboard.writeText(shareLink);
-                    toast.success("Link skopiowany!");
+                    toast.success(t('shareDialog.linkCopied'));
                   }}
                 >
-                  Kopiuj link
+                  {t('shareDialog.copyLink')}
                 </Button>
               </div>
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Zamknij</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t('shareDialog.close')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

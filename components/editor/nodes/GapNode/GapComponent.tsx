@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useI18n } from '@/hooks/use-i18n';
 
 export type GapComponentProps = {
   hiddenText: string;
@@ -11,6 +12,7 @@ export function GapComponent({
     initialCompleted, // Use initial state
     onComplete // Use callback
 }: GapComponentProps) {
+  const { t } = useI18n();
   const [userInput, setUserInput] = useState("");
   // Local state for immediate UI feedback (correctness based on last check)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(initialCompleted ? true : null);
@@ -60,7 +62,7 @@ export function GapComponent({
                 : "border-red-500" // Only red if attempted and incorrect
           }`}
           style={{ width: "200px" }}
-          placeholder="Wpisz odpowiedź"
+          placeholder={t('ed.gapPlaceholder')}
           disabled={isDisabled} // Disable input if correct
         />
         {!isDisabled && ( // Only show buttons if not disabled
@@ -68,14 +70,14 @@ export function GapComponent({
                 <button
                     onClick={showHint}
                     className="absolute right-8 bg-transparent text-gray-600 hover:text-orange-600 text-xs"
-                    title="Pokaż podpowiedź"
+                    title={t('ed.gapShowHint')}
                 >
                     👁️
                 </button>
                 <button
                     onClick={checkAnswer}
                     className="absolute right-1 bg-transparent text-gray-600 hover:text-green-600 text-xs"
-                    title="Sprawdź odpowiedź"
+                    title={t('ed.gapCheckAnswer')}
                     disabled={!userInput.trim()} // Disable check if input is empty
                 >
                     ❓

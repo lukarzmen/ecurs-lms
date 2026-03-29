@@ -3,6 +3,7 @@ import { CheckCircle2, XCircle, HelpCircle } from "lucide-react";
 import ProgressSpinner from "../../plugins/TextGeneratorPlugin/ProgressComponent";
 import { DoTaskItem } from "../../plugins/TaskPlugin";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/hooks/use-i18n";
 
 // Add props for initial state and callback
 interface DoTaskComponentProps {
@@ -21,6 +22,7 @@ function DoTaskComponent({
     onComplete
 }: DoTaskComponentProps) {
   const answerId = useId();
+  const { t } = useI18n();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userInputs, setUserInputs] = useState<string[]>([]);
   const [correctFlags, setCorrectFlags] = useState<Array<boolean | null>>([]);
@@ -161,12 +163,12 @@ odpowiedź_użytkownika: ${currentAnswer.trim()}
               <div className="flex-1">
                 <div className="text-sm font-semibold">
                   {currentCorrect
-                    ? "Świetnie! Twoje rozwiązanie jest poprawne."
-                    : "Spróbuj ponownie"}
+                    ? t('ed.dtCompCorrect')
+                    : t('ed.dtCompTryAgain')}
                 </div>
                 {!currentCorrect && (
                   <div className="mt-0.5 text-xs text-muted-foreground">
-                    Możesz poprawić odpowiedź i sprawdzić ją ponownie.
+                    {t('ed.dtCompFixRetry')}
                   </div>
                 )}
               </div>
@@ -175,18 +177,18 @@ odpowiedź_użytkownika: ${currentAnswer.trim()}
           {allCorrect && (
             <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-emerald-700">
               <CheckCircle2 className="h-5 w-5" />
-              <span className="text-sm font-semibold">Wszystkie zadania są poprawne!</span>
+              <span className="text-sm font-semibold">{t('ed.dtCompAllCorrect')}</span>
             </div>
           )}
 
           {/* Task */}
           <div>
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Treść zadania
+              {t('ed.dtCompTaskContent')}
             </div>
             {isMulti ? (
               <div className="text-xs font-semibold text-muted-foreground">
-                Zadanie {currentIndex + 1} z {normalizedItems.length}
+                {t('ed.dtCompTaskOf', { current: currentIndex + 1, total: normalizedItems.length })}
               </div>
             ) : null}
             {isMulti ? (
@@ -206,7 +208,7 @@ odpowiedź_użytkownika: ${currentAnswer.trim()}
               htmlFor={answerId}
               className="text-sm font-semibold text-muted-foreground"
             >
-              Twoja odpowiedź
+              {t('ed.dtCompYourAnswer')}
             </label>
             <div className="relative">
               <textarea
@@ -232,7 +234,7 @@ odpowiedź_użytkownika: ${currentAnswer.trim()}
                       ? "border-border bg-background focus:border-primary"
                       : "border-destructive/40 bg-destructive/5 focus:border-destructive"
                 }`}
-                placeholder="Wpisz swoje rozwiązanie…"
+                placeholder={t('ed.dtCompPlaceholder')}
                 rows={6}
                 disabled={isDisabled}
               />
@@ -250,8 +252,8 @@ odpowiedź_użytkownika: ${currentAnswer.trim()}
                       variant={(userInputs[currentIndex] || "").trim() ? "default" : "secondary"}
                       onClick={handleCheck}
                       disabled={!(userInputs[currentIndex] || "").trim()}
-                      title="Sprawdź swoją odpowiedź"
-                      aria-label="Sprawdź odpowiedź"
+                      title={t('ed.dtCompCheckTitle')}
+                      aria-label={t('ed.dtCompCheckAria')}
                       className={!(userInputs[currentIndex] || "").trim() ? "opacity-60" : undefined}
                     >
                       <HelpCircle className="h-5 w-5" />
@@ -268,7 +270,7 @@ odpowiedź_użytkownika: ${currentAnswer.trim()}
               <div className="flex items-start gap-2">
                 <XCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                 <p className="text-sm leading-relaxed">
-                  <span className="font-semibold">Wskazówka od AI: </span>
+                  <span className="font-semibold">{t('ed.dtCompAiHint')} </span>
                   <span className="text-muted-foreground">{llmExplanation}</span>
                 </p>
               </div>
@@ -289,11 +291,11 @@ odpowiedź_użytkownika: ${currentAnswer.trim()}
                   )
                 }
               >
-                {showHintFlags[currentIndex] ? "Ukryj podpowiedź" : "Pokaż podpowiedź"}
+                {showHintFlags[currentIndex] ? t('ed.dtCompHideHint') : t('ed.dtCompShowHint')}
               </button>
               {showHintFlags[currentIndex] && (
                 <p className="mt-2 text-sm leading-relaxed">
-                  <span className="font-semibold text-foreground">Wskazówka: </span>
+                  <span className="font-semibold text-foreground">{t('ed.dtCompHint')} </span>
                   <span className="text-muted-foreground">{isMulti ? currentItem?.hint : hint}</span>
                 </p>
               )}
@@ -309,7 +311,7 @@ odpowiedź_użytkownika: ${currentAnswer.trim()}
                   onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
                   disabled={currentIndex === 0}
                 >
-                  Wstecz
+                  {t('ed.back')}
                 </Button>
                 <Button
                   type="button"
@@ -321,11 +323,11 @@ odpowiedź_użytkownika: ${currentAnswer.trim()}
                   }
                   disabled={currentIndex >= normalizedItems.length - 1}
                 >
-                  Dalej
+                  {t('ed.next')}
                 </Button>
               </div>
               <div className="text-xs text-muted-foreground">
-                Udzielone poprawnie: {correctFlags.filter((flag) => flag === true).length}/{normalizedItems.length}
+                {t('ed.dtCompAnswered')} {correctFlags.filter((flag) => flag === true).length}/{normalizedItems.length}
               </div>
             </div>
           )}

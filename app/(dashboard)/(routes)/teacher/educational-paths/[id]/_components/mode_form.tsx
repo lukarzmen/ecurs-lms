@@ -5,9 +5,11 @@ import { Pencil, Settings } from "lucide-react";
 import { FormCard, FormActions } from "@/components/ui/form-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import toast from "react-hot-toast";
+import { useI18n } from "@/hooks/use-i18n";
 
 
 export default function EduPathModeForm({ educationalPathId: id, mode }: { educationalPathId: string, mode: number }) {
+  const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   const [currentMode, setCurrentMode] = useState(mode);
   const [formMode, setFormMode] = useState(mode);
@@ -33,10 +35,10 @@ export default function EduPathModeForm({ educationalPathId: id, mode }: { educa
       });
       if (!res.ok) throw new Error();
       setCurrentMode(formMode);
-      toast.success("Zaktualizowano tryb kursu");
+      toast.success(t("epMode.updated"));
       setIsEditing(false);
     } catch {
-      toast.error("Coś poszło nie tak");
+      toast.error(t("epMode.error"));
     } finally {
       setIsSubmitting(false);
     }
@@ -45,23 +47,23 @@ export default function EduPathModeForm({ educationalPathId: id, mode }: { educa
   return (
     <div className="mt-6">
       <FormCard
-        title="Tryb ścieżki edukacyjnej"
+        title={t("epMode.title")}
         icon={Settings}
         status={{
-          label: currentMode === 0 ? "Prywatny" : "Publiczny",
+          label: currentMode === 0 ? t("epMode.private") : t("epMode.public"),
           variant: currentMode === 1 ? "default" : "outline",
           className: currentMode === 1 ? "bg-blue-500" : ""
         }}
       >
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-muted-foreground">Określ dostępność ścieżki edukacyjnej</span>
+          <span className="text-sm text-muted-foreground">{t("epMode.hint")}</span>
           <Button onClick={toggleEdit} variant="ghost" size="sm">
             {isEditing ? (
-              "Anuluj"
+              t("epMode.cancel")
             ) : (
               <>
                 <Pencil className="h-4 w-4 mr-2" />
-                Edytuj
+                {t("epMode.edit")}
               </>
             )}
           </Button>
@@ -74,26 +76,26 @@ export default function EduPathModeForm({ educationalPathId: id, mode }: { educa
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">Prywatny (tylko zaproszeni)</SelectItem>
-                <SelectItem value="1">Publiczny (widoczny w marketplace)</SelectItem>
+                <SelectItem value="0">{t("epMode.privateOption")}</SelectItem>
+                <SelectItem value="1">{t("epMode.publicOption")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <FormActions>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Zapisywanie..." : "Zapisz"}
+              {isSubmitting ? t("epMode.saving") : t("epMode.save")}
             </Button>
           </FormActions>
         </form>
       ) : (
         <div className="p-3 bg-muted/50 rounded-md border">
           <span className="font-medium">
-            {currentMode === 0 ? "Prywatny" : "Publiczny"}
+            {currentMode === 0 ? t("epMode.private") : t("epMode.public")}
           </span>
           <span className="text-sm text-muted-foreground ml-2">
             – {currentMode === 0
-              ? "ścieżka widoczna tylko dla zaproszonych użytkowników."
-              : "ścieżka widoczna w marketplace."}
+              ? t("epMode.privateDesc")
+              : t("epMode.publicDesc")}
           </span>
         </div>
       )}

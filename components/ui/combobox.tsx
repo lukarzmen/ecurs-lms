@@ -18,6 +18,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface ComboboxProps {
   options: { label: string; value: string }[];
@@ -27,6 +28,7 @@ interface ComboboxProps {
 
 export function Combobox({ options, value, onChange }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
+  const { t } = useI18n();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -39,15 +41,15 @@ export function Combobox({ options, value, onChange }: ComboboxProps) {
         >
           {value
             ? options.find((option) => option.value === value)?.label
-            : "Wyszukaj kategorię..."}
+            : t("combobox.searchCategory")}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
         <Command>
-          <CommandInput placeholder="Wyszukaj kategorię..." />
+          <CommandInput placeholder={t("combobox.searchCategory")} />
           <CommandList>
-            <CommandEmpty>Nie znaleziono kategorii.</CommandEmpty>
+            <CommandEmpty>{t("combobox.noResults")}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem

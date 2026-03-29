@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
+import { useI18n } from "@/hooks/use-i18n";
 import { UserCourseResponse } from "@/app/api/courses/[courseId]/users/route";
 import { useAuth } from "@clerk/nextjs";
 import { Loader2, PlusCircle, Users } from "lucide-react";
@@ -34,6 +35,7 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
     const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
     const [isInviting, setIsInviting] = useState(false);
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
+    const { t } = useI18n();
 
     useEffect(() => {
         const fetchStudents = async () => {
@@ -44,7 +46,7 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
                 setIsLoading(false);
             } catch (error: any) {
                 toast.error(
-                    error.message || "Wystąpił błąd podczas pobierania studentów."
+                    error.message || t('studentsForm.fetchError')
                 );
                 setIsLoading(false);
             }
@@ -86,7 +88,7 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
                     student.userCourseId === userCourseId ? { ...student, state: state } : student
                 )
             );
-            toast.success(state === 1 ? "Student został aktywowany." : "Student został deaktywowany.");
+            toast.success(state === 1 ? t('studentsForm.studentActivated') : t('studentsForm.studentDeactivated'));
         } catch (error) {
             console.error("Error updating student state:", error);
             toast.error("Error updating student state");
@@ -108,7 +110,7 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
             const res = await axios.post(`/api/courses/${courseId}/users`, {
                 userIds: selectedUsers.map(u => u.id),
             });
-            toast.success(`Dodano ${selectedUsers.length} użytkowników`);
+            toast.success(t('studentsForm.addedUsers').replace('{count}', String(selectedUsers.length)));
             setShowInvite(false);
             setSearch("");
             setSearchResults([]);
@@ -117,7 +119,7 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
             const response = await axios.get(`/api/courses/${courseId}/users?userId=${userId}`);
             setStudents(response.data);
         } catch (error) {
-            toast.error("Nie udało się dodać użytkowników");
+            toast.error(t('studentsForm.failedToAddUsers'));
         } finally {
             setIsInviting(false);
         }
@@ -135,37 +137,37 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
         <>
             <div className="mt-6">
                 <FormCard
-                    title="Uczniowie"
+                    title={t('studentsForm.students')}
                     icon={Users}
                     status={{
-                        label: students.length > 0 ? `${students.length} uczniów` : "Brak uczniów",
+                        label: students.length > 0 ? t('studentsForm.studentCount').replace('{count}', String(students.length)) : t('studentsForm.noStudents'),
                         variant: students.length > 0 ? "default" : "outline",
                         className: students.length > 0 ? "bg-green-500" : ""
                     }}
                     isLoading={isLoading}
-                    loadingMessage="Ładowanie listy uczniów..."
+                    loadingMessage={t('studentsForm.loadingStudents')}
                 >
                     <div className="flex items-center justify-between mb-4">
-                        <span className="text-sm text-muted-foreground">Zarządzanie uczestnikami kursu</span>
+                        <span className="text-sm text-muted-foreground">{t('studentsForm.manageParticipants')}</span>
                         <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => setShowInvite(true)}
                         >
                             <PlusCircle className="mr-2 h-4 w-4" />
-                            Zaproś
+                            {t('studentsForm.invite')}
                         </Button>
                     </div>
                     <div className="space-y-4">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Imię i nazwisko</TableHead>
-                                    <TableHead>Email</TableHead>
-                                    <TableHead>Rola</TableHead>
-                                    <TableHead>Postęp</TableHead>
-                                    <TableHead>Uprawnienia</TableHead>
-                                    <TableHead>Czy opłacony?</TableHead>
+                                    <TableHead>{t('studentsForm.fullName')}</TableHead>
+                                    <TableHead>{t('studentsForm.email')}</TableHead>
+                                    <TableHead>{t('studentsForm.role')}</TableHead>
+                                    <TableHead>{t('studentsForm.progress')}</TableHead>
+                                    <TableHead>{t('studentsForm.permissions')}</TableHead>
+                                    <TableHead>{t('studentsForm.isPaid')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -179,24 +181,24 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
                                             {student.roleId === 0 && (
                                                 student.state === 0 ? (
                                                     <Button className="w-[90px]" onClick={() => handleStateChange(student.userCourseId, activeState)}>
-                                                        Aktywuj
+                                                        {t('studentsForm.activate')}
                                                     </Button>
                                                 ) : (
                                                     <Button className="bg-blue-300 w-[90px]" onClick={() => handleStateChange(student.userCourseId, deactivatedState)}>
-                                                        Deaktywuj
+                                                        {t('studentsForm.deactivate')}
                                                     </Button>
                                                 )
                                             )}
                                         </TableCell>
-                                        <TableCell>TAK</TableCell>
+                                        <TableCell>{t('studentsForm.yes')}</TableCell>
                                     </TableRow>
                                 )) : (
                                     <TableRow>
                                         <TableCell colSpan={6} className="text-center py-8">
                                             <FormSection variant="warning">
                                                 <p>
-                                                    <strong>Brak uczniów w kursie</strong><br />
-                                                    Zaproś pierwszych uczestników
+                                                    <strong>{t('studentsForm.noStudentsTitle')}</strong><br />
+                                                    {t('studentsForm.noStudentsHint')}
                                                 </p>
                                             </FormSection>
                                         </TableCell>
@@ -215,7 +217,7 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
                             <input
                                 type="text"
                                 className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-primary"
-                                placeholder="Wpisz imię, nazwisko lub email"
+                                placeholder={t('studentsForm.searchPlaceholder')}
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                                 autoFocus
@@ -244,7 +246,7 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
                             </ul>
                         )}
                         {!isSearching && search && searchResults.length === 0 && (
-                            <div className="text-sm text-muted-foreground">Brak wyników.</div>
+                            <div className="text-sm text-muted-foreground">{t('studentsForm.noResults')}</div>
                         )}
                         <div className="flex justify-end mt-4 gap-2">
                             <Button
@@ -254,13 +256,13 @@ export const StudentsForm = ({ courseId }: StudentsFormProps) => {
                                     setSelectedUsers([]);
                                 }}
                             >
-                                Zamknij
+                                {t('studentsForm.close')}
                             </Button>
                             <Button
                                 disabled={selectedUsers.length === 0 || isInviting}
                                 onClick={handleInviteConfirm}
                             >
-                                {isInviting ? <Loader2 className="animate-spin" size={20} /> : "Dodaj wybranych"}
+                                {isInviting ? <Loader2 className="animate-spin" size={20} /> : t('studentsForm.addSelected')}
                             </Button>
                         </div>
                     </div>

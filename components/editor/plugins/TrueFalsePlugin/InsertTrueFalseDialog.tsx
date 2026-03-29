@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import ProgressSpinner from "../TextGeneratorPlugin/ProgressComponent";
 import { INSERT_TRUE_FALSE_COMMAND } from ".";
 import { TrueFalseQuestion } from "../../nodes/TrueFalseNode/TrueFalseComponent";
+import { useI18n } from "@/hooks/use-i18n";
 
 const EMPTY_QUESTION: TrueFalseQuestion = {
   question: "",
@@ -25,6 +26,7 @@ export function InsertTrueFalseDialog({
   const [aiQuestionCount, setAiQuestionCount] = useState(5);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUsingFullContext, setIsUsingFullContext] = useState(false);
+  const { t } = useI18n();
 
   const refreshSelectionIntoSource = useCallback(() => {
     activeEditor.getEditorState().read(() => {
@@ -117,7 +119,7 @@ export function InsertTrueFalseDialog({
   const handleGenerateFromSource = async () => {
     const text = aiSourceText.trim();
     if (!text) {
-      toast.error("Podaj tekst źródłowy lub zaznacz fragment w edytorze.");
+      toast.error(t('ed.provideSource'));
       return;
     }
 
@@ -225,13 +227,13 @@ ${text}
           }
         >
           <div className="flex items-center justify-between gap-3">
-            <div className="font-semibold text-gray-900">Prawda/fałsz z AI</div>
+            <div className="font-semibold text-gray-900">{t('ed.tfAiTitle')}</div>
             <div className="text-xs font-semibold text-orange-700">
-              {isAiOpen ? "Ukryj" : "Rozwiń"}
+              {isAiOpen ? t('ed.hide') : t('ed.expand')}
             </div>
           </div>
           <div className="mt-1 text-xs text-gray-600">
-            Wklej tekst źródłowy lub pobierz zaznaczenie z edytora.
+            {t('ed.pasteOrLoadHint')}
           </div>
         </button>
 
@@ -243,23 +245,23 @@ ${text}
                 setAiSourceText(e.target.value);
                 setIsUsingFullContext(false);
               }}
-              placeholder="Wklej tekst źródłowy..."
+              placeholder={t('ed.pasteSource')}
               className="min-h-[120px] w-full rounded-md border border-gray-300 p-2 resize-y"
               disabled={isGenerating}
             />
             {isUsingFullContext && !aiSourceText.trim() && (
               <div className="text-xs text-gray-500">
-                Brak tekstu — używam całego kontekstu z edytora.
+                {t('ed.noTextCtx')}
               </div>
             )}
             {isUsingFullContext && aiSourceText.trim() && (
               <div className="text-xs text-gray-500">
-                Brak zaznaczenia — używam całego kontekstu z edytora.
+                {t('ed.noSelectionCtx')}
               </div>
             )}
             <div className="flex flex-wrap items-center gap-3">
               <label className="text-xs font-semibold text-gray-700">
-                Liczba pytań
+                {t('ed.questionCount')}
                 <input
                   type="number"
                   min={1}
@@ -283,7 +285,7 @@ ${text}
                 disabled={isGenerating}
                 className={`px-3 py-2 rounded-md border ${isGenerating ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"}`}
               >
-                Wczytaj zaznaczenie
+                {t('ed.loadSelection')}
               </button>
               <button
                 type="button"
@@ -294,12 +296,12 @@ ${text}
                 {isGenerating ? (
                   <>
                     <ProgressSpinner />
-                    Generowanie...
+                    {t('ed.generating')}
                   </>
                 ) : (
-                  `Wygeneruj ${Number.isFinite(aiQuestionCount)
+                  t('ed.tfGenerate', { n: Number.isFinite(aiQuestionCount)
                     ? Math.max(1, Math.min(aiQuestionCount, 20))
-                    : 5} pytań`
+                    : 5 })
                 )}
               </button>
             </div>
@@ -309,18 +311,18 @@ ${text}
 
       <hr className="border-gray-200" />
 
-      <div className="mb-2 text-lg font-bold text-orange-700">Pytanie prawda/fałsz</div>
+      <div className="mb-2 text-lg font-bold text-orange-700">{t('ed.tfManualTitle')}</div>
       <div className="grid grid-cols-1 gap-4">
-        <label className="text-sm font-medium text-gray-700">Treść pytania</label>
+        <label className="text-sm font-medium text-gray-700">{t('ed.tfContentLabel')}</label>
         <textarea
           value={current.question}
           onChange={(e) => setCurrent((prev) => ({ ...prev, question: e.target.value }))}
           className="w-full border border-gray-300 rounded-md p-2"
-          placeholder="Wpisz treść pytania"
+          placeholder={t('ed.tfContentPlaceholder')}
           rows={3}
         />
 
-        <label className="text-sm font-medium text-gray-700">Poprawna odpowiedź</label>
+        <label className="text-sm font-medium text-gray-700">{t('ed.tfCorrectAnswer')}</label>
         <div className="flex flex-wrap items-center gap-4">
           <label className="inline-flex items-center gap-2 text-sm font-medium">
             <input
@@ -331,7 +333,7 @@ ${text}
               onChange={() => setCurrent((prev) => ({ ...prev, correctAnswer: true }))}
               className="h-4 w-4"
             />
-            Prawda
+            {t('ed.tfTrue')}
           </label>
           <label className="inline-flex items-center gap-2 text-sm font-medium">
             <input
@@ -342,17 +344,17 @@ ${text}
               onChange={() => setCurrent((prev) => ({ ...prev, correctAnswer: false }))}
               className="h-4 w-4"
             />
-            Fałsz
+            {t('ed.tfFalse')}
           </label>
         </div>
 
-        <label className="text-sm font-medium text-gray-700">Wyjaśnienie (opcjonalnie)</label>
+        <label className="text-sm font-medium text-gray-700">{t('ed.tfExplanationOpt')}</label>
         <input
           type="text"
           value={current.explanation || ""}
           onChange={(e) => setCurrent((prev) => ({ ...prev, explanation: e.target.value }))}
           className="w-full border border-gray-300 rounded-md p-2"
-          placeholder="Dodatkowe wyjaśnienie (opcjonalnie)"
+          placeholder={t('ed.tfExtraExpl')}
         />
       </div>
 
@@ -362,26 +364,26 @@ ${text}
           disabled={!isFormValid}
           className={`px-4 py-2 rounded-md text-white ${isFormValid ? "bg-orange-600 hover:bg-orange-700" : "bg-gray-400"}`}
         >
-          Dodaj kolejne pytanie
+          {t('ed.tfAddNext')}
         </button>
         <button
           onClick={handleFinish}
           disabled={!canFinish}
           className={`px-4 py-2 rounded-md text-white ${canFinish ? "bg-green-600 hover:bg-green-700" : "bg-gray-400"}`}
         >
-          Zakończ dodawanie i utwórz
+          {t('ed.tfFinishCreate')}
         </button>
         <button
           onClick={onClose}
           className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200"
         >
-          Anuluj
+          {t('ed.cancel')}
         </button>
       </div>
 
       {questions.length > 0 && (
         <div className="mt-4">
-          <div className="font-semibold mb-2">Dodane pytania:</div>
+          <div className="font-semibold mb-2">{t('ed.addedQuestions')}</div>
           <div className="space-y-3">
             {questions.map((q, idx) => (
               <div key={idx} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
@@ -396,12 +398,12 @@ ${text}
                         : "bg-red-100 text-red-800"
                     }`}
                   >
-                    {q.correctAnswer ? "Prawda" : "Fałsz"}
+                    {q.correctAnswer ? t('ed.tfTrue') : t('ed.tfFalse')}
                   </div>
                 </div>
                 {q.explanation && (
                   <div className="mt-2 text-xs text-gray-600 italic">
-                    Wyjaśnienie: {q.explanation}
+                    {t('ed.tfExplanation')}{q.explanation}
                   </div>
                 )}
               </div>

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, Loader2, Plus } from "lucide-react";
 import toast from "react-hot-toast";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface School {
   id: number;
@@ -28,6 +29,7 @@ export default function FindSchoolsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [joinStatus, setJoinStatus] = useState<JoinStatus>({});
   const [userBusinessType, setUserBusinessType] = useState<string | null>(null);
+  const { t } = useI18n();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,7 +44,7 @@ export default function FindSchoolsPage() {
 
           // Jeśli nie jest spółką, nie pokazuj tej strony
           if (userData.businessType !== "company") {
-            toast.error("Tylko nauczyciele ze statusem spółki mogą dołączyć do szkoły");
+            toast.error(t("findSchool.companyOnly"));
             return;
           }
         }
@@ -55,7 +57,7 @@ export default function FindSchoolsPage() {
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        toast.error("Nie udało się załadować danych");
+        toast.error(t("findSchool.loadError"));
       } finally {
         setIsLoading(false);
       }
@@ -75,15 +77,15 @@ export default function FindSchoolsPage() {
 
       if (response.ok) {
         setJoinStatus((prev) => ({ ...prev, [schoolId]: "requested" }));
-        toast.success("Prośba o dołączenie wysłana!");
+        toast.success(t("findSchool.joinSent"));
       } else {
         const error = await response.json();
-        toast.error(error.error || "Nie udało się wysłać prośby");
+        toast.error(error.error || t("findSchool.joinError"));
         setJoinStatus((prev) => ({ ...prev, [schoolId]: "error" }));
       }
     } catch (error) {
       console.error("Error sending join request:", error);
-      toast.error("Błąd podczas wysyłania prośby");
+      toast.error(t("findSchool.joinException"));
       setJoinStatus((prev) => ({ ...prev, [schoolId]: "error" }));
     }
   };
@@ -96,7 +98,7 @@ export default function FindSchoolsPage() {
             <div className="flex items-center gap-2 text-amber-900">
               <AlertCircle className="w-4 h-4" />
               <p>
-                Tylko nauczyciele ze statusem spółki mogą dołączyć do szkoły.
+                {t("findSchool.companyOnly")}
               </p>
             </div>
           </CardContent>
@@ -113,8 +115,7 @@ export default function FindSchoolsPage() {
             <div className="flex items-center gap-2 text-amber-900">
               <AlertCircle className="w-4 h-4" />
               <p>
-                Twój typ działalności to: {userBusinessType}. Tylko spółki mogą
-                dołączyć do szkoły.
+                {t("findSchool.businessTypeMsg").replace("{type}", userBusinessType!)}
               </p>
             </div>
           </CardContent>
@@ -134,9 +135,9 @@ export default function FindSchoolsPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Znajdź szkołę</h1>
+        <h1 className="text-3xl font-bold">{t("findSchool.title")}</h1>
         <p className="text-muted-foreground mt-2">
-          Przeglądaj dostępne szkoły i poproś o dołączenie do zespołu
+          {t("findSchool.subtitle")}
         </p>
       </div>
 
@@ -145,7 +146,7 @@ export default function FindSchoolsPage() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-muted-foreground">
               <AlertCircle className="w-4 h-4" />
-              <p>Brak dostępnych szkół</p>
+              <p>{t("findSchool.noSchools")}</p>
             </div>
           </CardContent>
         </Card>
@@ -164,7 +165,7 @@ export default function FindSchoolsPage() {
                   </p>
                 )}
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Członkowie: {school._count.members}</span>
+                  <span>{t("findSchool.members").replace("{count}", String(school._count.members))}</span>
                 </div>
                 <Button
                   onClick={() => handleJoinRequest(school.id)}
@@ -177,11 +178,11 @@ export default function FindSchoolsPage() {
                   {joinStatus[school.id] === "pending" ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : joinStatus[school.id] === "requested" ? (
-                    <span>✓ Prośba wysłana</span>
+                    <span>{t("findSchool.requested")}</span>
                   ) : (
                     <>
                       <Plus className="w-4 h-4" />
-                      Poproś o dołączenie
+                      {t("findSchool.joinRequest")}
                     </>
                   )}
                 </Button>

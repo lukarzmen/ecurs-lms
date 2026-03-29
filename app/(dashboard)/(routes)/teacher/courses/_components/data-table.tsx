@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, BookOpen } from "lucide-react"
+import { useI18n } from "@/hooks/use-i18n"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -40,6 +41,7 @@ export function DataTable<TData, TValue>({
 
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+    const { t } = useI18n()
 
     const table = useReactTable({
         data,
@@ -67,7 +69,7 @@ export function DataTable<TData, TValue>({
                 <div className="relative w-full max-w-md">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
-                        placeholder="Wyszukaj kurs..."
+                        placeholder={t('teacherCourses.searchPlaceholder')}
                         value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
                         onChange={(event) => {
                             table.getColumn("title")?.setFilterValue(event.target.value)
@@ -76,7 +78,7 @@ export function DataTable<TData, TValue>({
                     />
                 </div>
                 <div className="text-sm text-gray-500">
-                    Znaleziono {table.getFilteredRowModel().rows.length} z {data.length} kursów
+                    {t('teacherCourses.foundOf').replace('{found}', String(table.getFilteredRowModel().rows.length)).replace('{total}', String(data.length))}
                 </div>
             </div>
             {/* Table Section */}
@@ -127,9 +129,9 @@ export function DataTable<TData, TValue>({
                                     <div className="flex flex-col items-center justify-center space-y-3">
                                         <BookOpen className="h-12 w-12 text-gray-300" />
                                         <div>
-                                            <p className="text-gray-500 font-medium">Brak kursów</p>
+                                            <p className="text-gray-500 font-medium">{t('teacherCourses.noCourses')}</p>
                                             <p className="text-gray-400 text-sm mt-1">
-                                                Utwórz swój pierwszy kurs, aby rozpocząć nauczanie
+                                                {t('teacherCourses.createFirst')}
                                             </p>
                                         </div>
                                     </div>
@@ -143,7 +145,7 @@ export function DataTable<TData, TValue>({
             {table.getPageCount() > 1 && (
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-500">
-                        Strona {table.getState().pagination.pageIndex + 1} z {table.getPageCount()}
+                        {t('teacherCourses.page').replace('{current}', String(table.getState().pagination.pageIndex + 1)).replace('{total}', String(table.getPageCount()))}
                     </div>
                     <div className="flex items-center space-x-2">
                         <Button
@@ -153,7 +155,7 @@ export function DataTable<TData, TValue>({
                             disabled={!table.getCanPreviousPage()}
                             className="hover:bg-gray-50"
                         >
-                            Poprzednia
+                            {t('teacherCourses.previous')}
                         </Button>
                         <Button
                             variant="outline"
@@ -162,7 +164,7 @@ export function DataTable<TData, TValue>({
                             disabled={!table.getCanNextPage()}
                             className="hover:bg-gray-50"
                         >
-                            Następna
+                            {t('teacherCourses.next')}
                         </Button>
                     </div>
                 </div>

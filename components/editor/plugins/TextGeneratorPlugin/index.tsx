@@ -16,6 +16,7 @@ import { $createListItemNode, $createListNode, ListType } from '@lexical/list';
 import { $createEquationNode } from '../../nodes/EquationNode';
 import { useCourseContext } from '../../context/CourseContext';
 import { Sparkles, X, Edit2, Loader2 } from 'lucide-react';
+import { useI18n } from '@/hooks/use-i18n';
 
 import toast from 'react-hot-toast';
 
@@ -31,13 +32,14 @@ export function TextGeneratorDialog({
   onClose: () => void;
 }): JSX.Element {
   const { module } = useCourseContext();
+  const { t } = useI18n();
 
   type GenerationPresetId = 'lesson' | 'chapter' | 'content';
 
   const generationPresets: Array<{ id: GenerationPresetId; label: string }> = [
-    { id: 'lesson', label: 'Lekcja (domyślnie)' },
-    { id: 'chapter', label: 'Rozdział (tylko jeden)' },
-    { id: 'content', label: 'Tekst o treści' },
+    { id: 'lesson', label: t('ed.genLesson') },
+    { id: 'chapter', label: t('ed.genChapter') },
+    { id: 'content', label: t('ed.genContent') },
   ];
   
   // Create context-aware placeholders and prompts
@@ -157,15 +159,15 @@ export function TextGeneratorDialog({
     const trimmedTopicOrTitle = topicOrTitle.trim();
 
     if (!trimmedUserPrompt) {
-      toast.error("Polecenie użytkownika nie może być puste.");
+      toast.error(t('ed.genPromptEmpty'));
       return;
     }
 
     if ((generationPreset === 'chapter' || generationPreset === 'content') && !trimmedTopicOrTitle) {
       toast.error(
         generationPreset === 'chapter'
-          ? 'Podaj temat lub tytuł rozdziału.'
-          : 'Podaj temat, na który mam napisać tekst.',
+          ? t('ed.genTopicChapterReq')
+          : t('ed.genTopicContentReq'),
       );
       return;
     }
@@ -208,7 +210,7 @@ export function TextGeneratorDialog({
         <div className="bg-gradient-to-r from-orange-50 to-amber-50 px-6 py-4 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-orange-600" />
-            <h2 className="text-lg font-semibold text-foreground">Generator treści</h2>
+            <h2 className="text-lg font-semibold text-foreground">{t('ed.genTitle')}</h2>
           </div>
           <button
             onClick={onClose}
@@ -222,7 +224,7 @@ export function TextGeneratorDialog({
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Tryb generowania
+              {t('ed.genModeLabel')}
             </label>
             <select
               className="w-full px-3 py-2 border-2 border-border rounded-md bg-background text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all"
@@ -241,14 +243,14 @@ export function TextGeneratorDialog({
           {(generationPreset === 'chapter' || generationPreset === 'content') && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                {generationPreset === 'chapter' ? 'Temat / tytuł' : 'Temat'}
+                {generationPreset === 'chapter' ? t('ed.genTopicLabel') : t('ed.genTopic')}
               </label>
               <input
                 className="w-full px-3 py-2 border-2 border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all"
                 placeholder={
                   generationPreset === 'chapter'
-                    ? 'Np. „Wprowadzenie do ułamków”'
-                    : 'Np. „Jak działa fotosynteza?”'
+                    ? t('ed.genTopicChapterPlaceholder')
+                    : t('ed.genTopicContentPlaceholder')
                 }
                 value={topicOrTitle}
                 onChange={(e) => setTopicOrTitle(e.target.value)}
@@ -259,12 +261,12 @@ export function TextGeneratorDialog({
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Co chcesz wygenerować?
+              {t('ed.genPromptLabel')}
             </label>
             <textarea
               className="w-full px-3 py-2 border-2 border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all resize-none"
               rows={6}
-              placeholder="Edytuj polecenie lub dodaj szczegóły dotyczące treści, którą chcesz wygenerować..."
+              placeholder={t('ed.genPromptPlaceholder')}
               value={userPrompt}
               onChange={(e) => setUserPrompt(e.target.value)}
               disabled={loading}
@@ -273,7 +275,7 @@ export function TextGeneratorDialog({
 
           <div>
             <label className="flex items-center justify-between text-sm font-medium text-foreground mb-2">
-              <span>Informacje systemowe (kontekstowe) dla AI</span>
+              <span>{t('ed.genSystemLabel')}</span>
               <button
                 onClick={() => setIsSystemPromptEditable(!isSystemPromptEditable)}
                 className={`p-1 rounded-md transition-all ${
@@ -300,7 +302,7 @@ export function TextGeneratorDialog({
             {loading ? (
               <div className="flex items-center gap-2 px-4 py-2 text-muted-foreground">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-sm font-medium">Generuję...</span>
+                <span className="text-sm font-medium">{t('ed.genGenerating')}</span>
               </div>
             ) : (
               <>
@@ -308,7 +310,7 @@ export function TextGeneratorDialog({
                   onClick={onClose}
                   className="px-4 py-2 border border-border rounded-md text-foreground hover:bg-muted transition-colors font-medium text-sm"
                 >
-                  Anuluj
+                  {t('ed.cancel')}
                 </button>
                 <button
                   onClick={handleSubmit}
@@ -316,7 +318,7 @@ export function TextGeneratorDialog({
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-sm flex items-center gap-2"
                 >
                   <Sparkles className="w-4 h-4" />
-                  Generuj
+                  {t('ed.genGenerate')}
                 </button>
               </>
             )}

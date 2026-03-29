@@ -2,6 +2,7 @@ import React, { useId, useState, useEffect } from "react";
 import { CheckCircle2, XCircle, Eye, EyeOff, HelpCircle } from "lucide-react";
 import ProgressSpinner from "../../plugins/TextGeneratorPlugin/ProgressComponent";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/hooks/use-i18n";
 
 export type QAItem = {
   question: string;
@@ -32,6 +33,7 @@ function QuestionAnswerComponent({
   onComplete, // Use callback
 }: QuestionAnswerComponentProps) {
   const answerId = useId();
+  const { t } = useI18n();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userInputs, setUserInputs] = useState<string[]>([]);
   const [correctFlags, setCorrectFlags] = useState<Array<boolean | null>>([]);
@@ -177,12 +179,12 @@ wyjaśnienie: ${currentItem?.explanation ?? "Brak dodatkowego wyjaśnienia dla p
               <div className="flex-1">
                 <div className="text-sm font-semibold">
                   {currentCorrect
-                    ? "Świetnie! Twoja odpowiedź jest poprawna."
-                    : "Spróbuj ponownie"}
+                    ? t('ed.qaCompCorrect')
+                    : t('ed.qaCompTryAgain')}
                 </div>
                 {!currentCorrect && (
                   <div className="mt-0.5 text-xs text-muted-foreground">
-                    Możesz poprawić odpowiedź i sprawdzić ją ponownie.
+                    {t('ed.qaCompFixRetry')}
                   </div>
                 )}
               </div>
@@ -191,18 +193,18 @@ wyjaśnienie: ${currentItem?.explanation ?? "Brak dodatkowego wyjaśnienia dla p
           {allCorrect && (
             <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-emerald-700">
               <CheckCircle2 className="h-5 w-5" />
-              <span className="text-sm font-semibold">Wszystkie odpowiedzi są poprawne!</span>
+              <span className="text-sm font-semibold">{t('ed.qaCompAllCorrect')}</span>
             </div>
           )}
 
           {/* Question */}
           <div>
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Pytanie
+              {t('ed.qaCompQuestion')}
             </div>
             {isMulti ? (
               <div className="text-xs font-semibold text-muted-foreground">
-                Pytanie {currentIndex + 1} z {normalizedItems.length}
+                {t('ed.qaCompQuestionOf', { current: currentIndex + 1, total: normalizedItems.length })}
               </div>
             ) : null}
             {isMulti ? (
@@ -222,7 +224,7 @@ wyjaśnienie: ${currentItem?.explanation ?? "Brak dodatkowego wyjaśnienia dla p
               htmlFor={answerId}
               className="text-sm font-semibold text-muted-foreground"
             >
-              Twoja odpowiedź
+              {t('ed.qaCompYourAnswer')}
             </label>
             <div className="relative">
               <textarea
@@ -262,9 +264,7 @@ wyjaśnienie: ${currentItem?.explanation ?? "Brak dodatkowego wyjaśnienia dla p
                       ? "border-border bg-background focus:border-primary"
                       : "border-destructive/40 bg-destructive/5 focus:border-destructive"
                 }`}
-                placeholder={isMulti
-                  ? "Wpisz odpowiedz dla tego pytania…"
-                  : "Wpisz swoją odpowiedź…"}
+                placeholder={t('ed.qaCompPlaceholder')}
                 disabled={isDisabled}
                 autoComplete="off"
                 rows={5}
@@ -283,8 +283,8 @@ wyjaśnienie: ${currentItem?.explanation ?? "Brak dodatkowego wyjaśnienia dla p
                       variant={(userInputs[currentIndex] || "").trim() ? "default" : "secondary"}
                       onClick={handleCheck}
                       disabled={!(userInputs[currentIndex] || "").trim()}
-                      title="Sprawdź swoją odpowiedź"
-                      aria-label="Sprawdź odpowiedź"
+                      title={t('ed.qaCompCheckTitle')}
+                      aria-label={t('ed.qaCompCheckAria')}
                       className={!(userInputs[currentIndex] || "").trim() ? "opacity-60" : undefined}
                     >
                       <HelpCircle className="h-5 w-5" />
@@ -302,8 +302,8 @@ wyjaśnienie: ${currentItem?.explanation ?? "Brak dodatkowego wyjaśnienia dla p
                       )
                     )
                   }
-                  title={showAnswer ? "Ukryj odpowiedź" : "Pokaż odpowiedź"}
-                  aria-label={showAnswer ? "Ukryj odpowiedź" : "Pokaż odpowiedź"}
+                  title={showAnswer ? t('ed.qaCompHideAnswer') : t('ed.qaCompShowAnswer')}
+                  aria-label={showAnswer ? t('ed.qaCompHideAnswer') : t('ed.qaCompShowAnswer')}
                 >
                   {showAnswer ? (
                     <EyeOff className="h-5 w-5" />
@@ -321,7 +321,7 @@ wyjaśnienie: ${currentItem?.explanation ?? "Brak dodatkowego wyjaśnienia dla p
               <div className="flex items-start gap-2">
                 <XCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                 <p className="text-sm leading-relaxed">
-                  <span className="font-semibold">Wskazówka od AI: </span>
+                  <span className="font-semibold">{t('ed.qaCompAiHint')} </span>
                   <span className="text-muted-foreground">{llmExplanation}</span>
                 </p>
               </div>
@@ -336,12 +336,12 @@ wyjaśnienie: ${currentItem?.explanation ?? "Brak dodatkowego wyjaśnienia dla p
                 {isMulti ? (
                   <div className="text-sm leading-relaxed">
                     <div>
-                      <span className="font-semibold text-foreground">Poprawna odpowiedź: </span>
+                      <span className="font-semibold text-foreground">{t('ed.qaCompCorrectAnswer')} </span>
                       <span className="text-muted-foreground">{currentItem?.answer ?? ""}</span>
                     </div>
                     {currentItem?.explanation && (
                       <div className="mt-2">
-                        <span className="font-semibold text-foreground">Wyjaśnienie: </span>
+                        <span className="font-semibold text-foreground">{t('ed.qaCompExplanation')} </span>
                         <span className="text-muted-foreground">{currentItem.explanation}</span>
                       </div>
                     )}
@@ -349,12 +349,12 @@ wyjaśnienie: ${currentItem?.explanation ?? "Brak dodatkowego wyjaśnienia dla p
                 ) : (
                   <div className="text-sm leading-relaxed">
                     <div>
-                      <span className="font-semibold text-foreground">Poprawna odpowiedź: </span>
+                      <span className="font-semibold text-foreground">{t('ed.qaCompCorrectAnswer')} </span>
                       <span className="text-muted-foreground">{normalizedItems[0]?.answer ?? answer}</span>
                     </div>
                     {(normalizedItems[0]?.explanation ?? explanation) && (
                       <div className="mt-2">
-                        <span className="font-semibold text-foreground">Wyjaśnienie: </span>
+                        <span className="font-semibold text-foreground">{t('ed.qaCompExplanation')} </span>
                         <span className="text-muted-foreground">
                           {normalizedItems[0]?.explanation ?? explanation}
                         </span>
@@ -375,7 +375,7 @@ wyjaśnienie: ${currentItem?.explanation ?? "Brak dodatkowego wyjaśnienia dla p
                   onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
                   disabled={currentIndex === 0}
                 >
-                  Wstecz
+                  {t('ed.back')}
                 </Button>
                 <Button
                   type="button"
@@ -387,11 +387,11 @@ wyjaśnienie: ${currentItem?.explanation ?? "Brak dodatkowego wyjaśnienia dla p
                   }
                   disabled={currentIndex >= normalizedItems.length - 1}
                 >
-                  Dalej
+                  {t('ed.next')}
                 </Button>
               </div>
               <div className="text-xs text-muted-foreground">
-                Udzielone poprawnie: {correctFlags.filter((flag) => flag === true).length}/{normalizedItems.length}
+                {t('ed.qaCompAnswered')} {correctFlags.filter((flag) => flag === true).length}/{normalizedItems.length}
               </div>
             </div>
           )}

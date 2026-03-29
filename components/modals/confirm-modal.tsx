@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface ConfirmModalProps {
   children: React.ReactNode;
@@ -18,19 +19,20 @@ interface ConfirmModalProps {
 }
 
 export const ConfirmModal = ({ children, onConfirm }: ConfirmModalProps) => {
+  const { t } = useI18n();
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogTitle>{t("confirm.title")}</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone.
+            {t("confirm.description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>Confirm</AlertDialogAction>
+          <AlertDialogCancel>{t("confirm.cancel")}</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>{t("confirm.confirm")}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

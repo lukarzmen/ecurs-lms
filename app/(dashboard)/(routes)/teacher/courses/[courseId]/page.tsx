@@ -18,25 +18,29 @@ import { PromoCodesForm } from "./_components/promo-codes-form";
 import { CommunicationLinksForm } from "./_components/communication-links-form";
 import { SignedOut } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
+import { getMessages, getRequestLocale, createTranslator } from "@/lib/i18n/server";
 
 
 const CourseIdPage = async ({ params }: { params: Promise<{ courseId: string }> }) => {
   const { userId } = await auth();
+  const locale = await getRequestLocale();
+  const messages = await getMessages(locale, "common");
+  const t = createTranslator(messages);
   if (!userId) {
     return (
       <SignedOut>
         <div className="p-6">
           <div className="max-w-2xl space-y-4">
-            <h1 className="text-3xl font-bold text-gray-900">Zaloguj się, aby zarządzać kursem</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t('courseDetail.loginRequired')}</h1>
             <p className="text-gray-600">
-              Ten widok jest dostępny po zalogowaniu. Załóż konto lub zaloguj się, aby tworzyć kursy i publikować treści.
+              {t('courseDetail.loginDesc')}
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button asChild>
-                <Link href="/sign-in">Zaloguj się</Link>
+                <Link href="/sign-in">{t('courseDetail.signIn')}</Link>
               </Button>
               <Button asChild variant="outline">
-                <Link href="/sign-up">Załóż konto</Link>
+                <Link href="/sign-up">{t('courseDetail.signUp')}</Link>
               </Button>
             </div>
           </div>
@@ -52,7 +56,7 @@ const CourseIdPage = async ({ params }: { params: Promise<{ courseId: string }> 
   const categoriesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, { next: { revalidate: 60 } });
   const categories = await categoriesResponse.json();
   if (!course) {
-    return <div>Kurs nie znaleziony</div>;
+    return <div>{t('courseDetail.notFound')}</div>;
   }
 
   const courseTitle = course.title;
@@ -68,7 +72,7 @@ const CourseIdPage = async ({ params }: { params: Promise<{ courseId: string }> 
               className="flex items-center text-sm hover:opacity-75 transition pt-4 select-none"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Powrót do listy kursów
+              {t('courseDetail.backToList')}
             </Link>
 
           </div>
@@ -76,7 +80,7 @@ const CourseIdPage = async ({ params }: { params: Promise<{ courseId: string }> 
         <>
                     <div className="flex items-center mb-2 mt-4 gap-2 w-full">
               <h1 className="text-2xl font-bold flex items-center gap-2">
-                <span>📝 Informacje o kursie</span>
+                <span>{t('courseDetail.courseInfo')}</span>
               </h1>
               <div className="flex-1" />
               <div className="flex justify-end">
@@ -120,7 +124,7 @@ const CourseIdPage = async ({ params }: { params: Promise<{ courseId: string }> 
           <div>
             <div className="flex items-center gap-x-2 gap-6 mt-6">
                 <span className="text-xl">🏷️</span>
-                <h2 className="text-xl">Kody promocyjne</h2>
+                <h2 className="text-xl">{t('courseDetail.promoCodes')}</h2>
             </div>
             <div>
               <PromoCodesForm courseId={courseId} />
@@ -129,7 +133,7 @@ const CourseIdPage = async ({ params }: { params: Promise<{ courseId: string }> 
           <div>
             <div className="flex items-center gap-x-2 gap-6 mt-6">
                 <span className="text-xl">💬</span>
-                <h2 className="text-xl">Komunikacja z uczestnikami</h2>
+                <h2 className="text-xl">{t('courseDetail.communication')}</h2>
             </div>
             <div>
               <CommunicationLinksForm courseId={courseId} />
@@ -137,7 +141,7 @@ const CourseIdPage = async ({ params }: { params: Promise<{ courseId: string }> 
           </div>
           <div className="flex items-center gap-x-2 gap-6 mt-6">
             <span className="text-xl">👥</span>
-            <h2 className="text-xl">Uczestnicy</h2>
+            <h2 className="text-xl">{t('courseDetail.participants')}</h2>
           </div>
           <StudentsForm courseId={courseId} />
         </div>

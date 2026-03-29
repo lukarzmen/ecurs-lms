@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { FormCard, FormActions, FormSection } from "@/components/ui/form-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import toast from "react-hot-toast";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface CategoryFormProps {
   categoryId: number;
@@ -17,6 +18,7 @@ interface CategoryFormProps {
 }
 
 const CategoryForm = ({ categoryId, id, options, onCategoryChange }: CategoryFormProps) => {
+  const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   // If categoryId is undefined or null, use empty string for select
   const [categoryIdState, setCategoryIdState] = useState(
@@ -37,7 +39,7 @@ const CategoryForm = ({ categoryId, id, options, onCategoryChange }: CategoryFor
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (categoryIdState === "") {
-      toast.error("Musisz wybrać kategorię przed zapisaniem.");
+      toast.error(t("epCat.selectRequired"));
       return;
     }
     try {
@@ -48,11 +50,11 @@ const CategoryForm = ({ categoryId, id, options, onCategoryChange }: CategoryFor
           onCategoryChange(res.data.categoryId);
         }
       }
-      toast.success("Zaktualizowano kategorię");
+      toast.success(t("epCat.updated"));
       toggleEdit();
       router.refresh();
     } catch (error) {
-      toast.error("Coś poszło nie tak");
+      toast.error(t("epCat.error"));
     }
   };
 
@@ -63,23 +65,23 @@ const CategoryForm = ({ categoryId, id, options, onCategoryChange }: CategoryFor
   return (
     <div className="mt-6">
       <FormCard
-        title="Kategoria"
+        title={t("epCat.title")}
         icon={Tag}
         status={{
-          label: selectedOption ? selectedOption : "Brak kategorii",
+          label: selectedOption ? selectedOption : t("epCat.noCategory"),
           variant: selectedOption ? "default" : "outline",
           className: selectedOption ? "bg-blue-500" : ""
         }}
       >
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-muted-foreground">Przypisz ścieżkę edukacyjną do odpowiedniej kategorii</span>
+          <span className="text-sm text-muted-foreground">{t("epCat.hint")}</span>
           <Button onClick={toggleEdit} variant="ghost" size="sm">
             {isEditing ? (
-              "Anuluj"
+              t("epCat.cancel")
             ) : (
               <>
                 <Pencil className="h-4 w-4 mr-2" />
-                Edytuj
+                {t("epCat.edit")}
               </>
             )}
           </Button>
@@ -92,7 +94,7 @@ const CategoryForm = ({ categoryId, id, options, onCategoryChange }: CategoryFor
               onValueChange={(value) => setCategoryIdState(Number(value))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Wybierz kategorię..." />
+                <SelectValue placeholder={t("epCat.selectPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {options.map((option) => (
@@ -104,15 +106,15 @@ const CategoryForm = ({ categoryId, id, options, onCategoryChange }: CategoryFor
             </Select>
             <FormActions>
               <Button type="submit" disabled={categoryIdState === ""}>
-                Zapisz
+                {t("epCat.save")}
               </Button>
             </FormActions>
           </form>
         ) : !selectedOption ? (
           <FormSection variant="warning">
             <p>
-              <strong>Brak kategorii</strong><br />
-              Przypisz kategorię aby ułatwić znalezienie ścieżki uczniom
+              <strong>{t("epCat.noCategoryTitle")}</strong><br />
+              {t("epCat.noCategoryHint")}
             </p>
           </FormSection>
         ) : (

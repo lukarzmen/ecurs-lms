@@ -22,6 +22,7 @@ import { useState } from "react";
 import { useFieldArray } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { useI18n } from "@/hooks/use-i18n";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { ChaptersList } from "./chapters-list";
@@ -54,6 +55,7 @@ export const ChaptersForm = ({ chapters, courseId, courseTitle }: ModulesFormPro
   const [showAIModal, setShowAIModal] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [editableCourseTitle, setEditableCourseTitle] = useState(courseTitle || "");
+  const { t } = useI18n();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -83,7 +85,7 @@ export const ChaptersForm = ({ chapters, courseId, courseTitle }: ModulesFormPro
 
   const generateLessonsWithAI = async () => {
     if (!aiPrompt.trim()) {
-      toast.error("Wprowadź opis kursu do wygenerowania lekcji");
+      toast.error(t('chaptersForm.aiEnterPrompt'));
       return;
     }
 
@@ -120,7 +122,7 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
       
       if (!generatedText || typeof generatedText !== 'string') {
         console.error('Invalid response from API:', generatedText);
-        toast.error("Otrzymano nieprawidłową odpowiedź z API");
+        toast.error(t('chaptersForm.aiInvalidResponse'));
         return;
       }
       
@@ -132,7 +134,7 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
         .slice(0, 15); // Limit to 15 titles
 
       if (titles.length === 0) {
-        toast.error("Nie udało się wygenerować tytułów lekcji");
+        toast.error(t('chaptersForm.aiGenerationFailed'));
         return;
       }
 
@@ -146,17 +148,17 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
       setAiPrompt("");
       
       const message = hasExistingChapters 
-        ? `Wygenerowano ${titles.length} nowych tytułów lekcji uzupełniających istniejące`
-        : `Wygenerowano ${titles.length} tytułów lekcji`;
+        ? t('chaptersForm.aiGeneratedNew').replace('{count}', String(titles.length))
+        : t('chaptersForm.aiGenerated').replace('{count}', String(titles.length));
       toast.success(message);
     } catch (error) {
       console.error('Error generating lessons:', error);
       if (axios.isAxiosError(error)) {
         console.error('Response data:', error.response?.data);
         console.error('Response status:', error.response?.status);
-        toast.error(`Błąd API: ${error.response?.data || error.message}`);
+        toast.error(t('chaptersForm.apiError').replace('{error}', error.response?.data || error.message));
       } else {
-        toast.error("Błąd podczas generowania lekcji");
+        toast.error(t('chaptersForm.generationError'));
       }
     } finally {
       setIsGeneratingAI(false);
@@ -166,16 +168,16 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
     try {
       const titles = values.titles.map((t) => t.trim()).filter((t) => t.length > 0);
       if (titles.length === 0) {
-        toast.error("Podaj przynajmniej jeden tytuł");
+        toast.error(t('chaptersForm.atLeastOneTitle'));
         return;
       }
       await axios.post(`/api/courses/${courseId}/chapters`, { titles });
-      toast.success("Moduły utworzone");
+      toast.success(t('chaptersForm.modulesCreated'));
       toogleCreating();
       form.reset({ titles: [""] });
       router.refresh();
     } catch (error) {
-      toast.error("Coś poszło nie tak");
+      toast.error(t('courseForm.somethingWrong'));
     }
   };
   const onReorder = async (updateData: { id: number; position: number }[]) => {
@@ -184,12 +186,12 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
       await axios.put(`/api/courses/${courseId}/chapters/reorder`, {
         list: updateData,
       });
-      toast.success("Zmieniono kolejność modułów");
+      toast.success(t('chaptersForm.reorderSuccess'));
       setIsUpdating(false);
       router.refresh();
     } catch (error) {
       setIsUpdating(false);
-      toast.error("Coś poszło nie tak");
+      toast.error(t('courseForm.somethingWrong'));
       console.error(error);
     }
   };
@@ -203,11 +205,11 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
       await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}`, {
         title: newTitle
       });
-      toast.success("Nazwa lekcji zaktualizowana");
+      toast.success(t('chaptersForm.titleUpdated'));
       router.refresh();
     } catch (error) {
       console.error('Error updating chapter title:', error);
-      toast.error("Błąd podczas aktualizacji nazwy lekcji");
+      toast.error(t('chaptersForm.titleUpdateError'));
     }
   };
 
@@ -216,29 +218,29 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
     axios
       .delete(`/api/courses/${courseId}/chapters/${chapterId}`)
       .then(() => {
-        toast.success("Moduł usunięty");
+        toast.success(t('chaptersForm.moduleDeleted'));
         router.refresh();
       })
       .catch(() => {
-        toast.error("Coś poszło nie tak");
+        toast.error(t('courseForm.somethingWrong'));
       });
   }
 
   return (
     <div className="mt-6">
       <FormCard
-        title="Lekcje kursu"
+        title={t('chaptersForm.courseLessons')}
         icon={BookOpen}
         status={{
-          label: isCreating ? "Dodawanie" : (chapters.length > 0 ? `${chapters.length} lekcji` : "Brak lekcji"),
+          label: isCreating ? t('chaptersForm.adding') : (chapters.length > 0 ? t('chaptersForm.lessonsCount').replace('{count}', String(chapters.length)) : t('chaptersForm.noLessons')),
           variant: isCreating ? "secondary" : (chapters.length > 0 ? "default" : "outline"),
           className: isCreating ? "bg-blue-500 text-white" : (chapters.length > 0 ? "bg-green-500" : "")
         }}
         isLoading={isUpdating}
-        loadingMessage="Aktualizowanie kolejności..."
+        loadingMessage={t('chaptersForm.updatingOrder')}
       >
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-muted-foreground">Zarządzanie lekcjami kursu</span>
+          <span className="text-sm text-muted-foreground">{t('chaptersForm.manageLessons')}</span>
           <div className="flex gap-2">
           <Dialog open={showAIModal} onOpenChange={setShowAIModal}>
             <DialogTrigger asChild>
@@ -248,41 +250,41 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
                 disabled={isCreating || isUpdating}
               >
                 <Wand2 className="h-4 w-4 mr-2" />
-                Generuj AI
+                {t('chaptersForm.generateAI')}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
-                <DialogTitle>Wygeneruj lekcje za pomocą AI</DialogTitle>
+                <DialogTitle>{t('chaptersForm.aiDialogTitle')}</DialogTitle>
                 <DialogDescription>
                   {chapters.length > 0 
-                    ? "AI wygeneruje nowe lekcje i dodaj je do istniejących." 
-                    : "Opisz kurs, a AI wygeneruje dla Ciebie listę lekcji."
+                    ? t('chaptersForm.aiDialogDescExisting')
+                    : t('chaptersForm.aiDialogDescNew')
                   }
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
                   <label htmlFor="courseTitle" className="text-sm font-medium">
-                    Nazwa kursu
+                    {t('chaptersForm.courseTitle')}
                   </label>
                   <Input
                     id="courseTitle"
                     value={editableCourseTitle}
                     onChange={(e) => setEditableCourseTitle(e.target.value)}
-                    placeholder="Wprowadź nazwę kursu"
+                    placeholder={t('chaptersForm.courseTitlePlaceholder')}
                     disabled={isGeneratingAI}
                   />
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="aiPrompt" className="text-sm font-medium">
-                    Opis kursu
+                    {t('chaptersForm.courseDescription')}
                   </label>
                   <Textarea
                     id="aiPrompt"
                     value={aiPrompt}
                     onChange={(e) => setAiPrompt(e.target.value)}
-                    placeholder="Np. Kurs geografii na poziomie maturalnym, obejmujący geografię fizyczną, społeczno-ekonomiczną, regiony świata..." 
+                    placeholder={t('chaptersForm.courseDescPlaceholder')} 
                     className="min-h-[120px]"
                     disabled={isGeneratingAI}
                   />
@@ -294,7 +296,7 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
                   onClick={() => setShowAIModal(false)}
                   disabled={isGeneratingAI}
                 >
-                  Anuluj
+                  {t('courseForm.cancel')}
                 </Button>
                 <Button
                   onClick={generateLessonsWithAI}
@@ -304,12 +306,12 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
                   {isGeneratingAI ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generowanie...
+                      {t('chaptersForm.generating')}
                     </>
                   ) : (
                     <>
                       <Wand2 className="h-4 w-4 mr-2" />
-                      Wygeneruj lekcje
+                      {t('chaptersForm.generateLessons')}
                     </>
                   )}
                 </Button>
@@ -318,11 +320,11 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
           </Dialog>
           <Button onClick={toogleCreating} variant="ghost" disabled={isUpdating}>
             {isCreating ? (
-              <>Anuluj</>
+              <>{t('courseForm.cancel')}</>
             ) : (
               <>
                 <PlusCircle className="h-4 w-4 mr-2"></PlusCircle>
-                Dodaj
+                {t('chaptersForm.add')}
               </>
             )}
           </Button>
@@ -346,7 +348,7 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
                       <Input
                         type="text"
                         className="flex-1"
-                        placeholder={`Tytuł modułu #${idx + 1}`}
+                        placeholder={t('chaptersForm.modulePlaceholder').replace('{num}', String(idx + 1))}
                         disabled={isSubmitting}
                         {...field}
                       />
@@ -373,10 +375,10 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
                 onClick={() => append("")}
                 disabled={isSubmitting}
               >
-                Dodaj kolejny moduł
+                {t('chaptersForm.addAnother')}
               </Button>
               <Button disabled={!isValid || isSubmitting} type="submit">
-                Dodaj wszystkie
+                {t('chaptersForm.addAll')}
               </Button>
             </div>
           </form>
@@ -394,13 +396,13 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
             ) : (
               <FormSection variant="warning">
                 <p>
-                  <strong>Brak lekcji w tym kursie</strong><br />
-                  Dodaj pierwszą lekcję aby rozpocząć budowę kursu
+                  <strong>{t('chaptersForm.noLessonsTitle')}</strong><br />
+                  {t('chaptersForm.noLessonsHint')}
                 </p>
               </FormSection>
             )}
             <p className="text-sm text-muted-foreground mt-4">
-              Przeciągnij i upuść, aby zmienić kolejność
+              {t('chaptersForm.dragReorder')}
             </p>
           </div>
         )}

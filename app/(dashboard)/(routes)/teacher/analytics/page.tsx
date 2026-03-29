@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+import { useI18n } from "@/hooks/use-i18n";
 import { Bar, Doughnut } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -140,6 +141,7 @@ const AnalyticsPage = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [studentsLoading, setStudentsLoading] = useState(false);
   const { userId } = useAuth();
+  const { t, locale } = useI18n();
 
   useEffect(() => {
     const fetchDataSequentially = async () => {
@@ -288,14 +290,14 @@ const AnalyticsPage = () => {
   // Chart data
   const barData = {
     labels: [
-      "Wszyscy kursanci",
-      "Aktywni (7 dni)",
-      "Powracający",
-      "Nowi (miesiąc)",
+      t("anal.chartAllStudents"),
+      t("anal.chartActive7d"),
+      t("anal.chartReturning"),
+      t("anal.chartNewMonth"),
     ],
     datasets: [
       {
-        label: "Użytkownicy",
+        label: t("anal.chartUsers"),
         data: [
           userCount,
           activeUserCount,
@@ -314,7 +316,7 @@ const AnalyticsPage = () => {
   };
 
   const doughnutData = {
-    labels: ["Wszystkie kursy", "Nowe kursy (miesiąc)"],
+    labels: [t("anal.chartAllCourses"), t("anal.chartNewCourses")],
     datasets: [
       {
         data: [coursesCount, newCoursesLastMonth || 0],
@@ -330,18 +332,18 @@ const AnalyticsPage = () => {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            📊 {viewMode === "teacher" ? "Panel analityczny nauczyciela" : "Statystyki szkoły"}
+            📊 {viewMode === "teacher" ? t("anal.titleTeacher") : t("anal.titleSchool")}
           </h1>
           <p className="text-gray-600 mt-2">
             {viewMode === "teacher" 
-              ? "Przegląd statystyk Twoich kursów i aktywności studentów"
-              : "Przegląd statystyk całej szkoły i aktywności wszystkich nauczycieli"}
+              ? t("anal.subtitleTeacher")
+              : t("anal.subtitleSchool")}
           </p>
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <TrendingUp className="h-6 w-6 text-green-500" />
-            <span className="text-sm text-gray-600">Dane w czasie rzeczywistym</span>
+            <span className="text-sm text-gray-600">{t("anal.realtime")}</span>
           </div>
           {schoolId && (
             <div className="flex gap-2">
@@ -351,7 +353,7 @@ const AnalyticsPage = () => {
                 size="sm"
               >
                 <Users className="w-4 h-4 mr-2" />
-                Moje statystyki
+                {t("anal.myStats")}
               </Button>
               <Button
                 variant={viewMode === "school" ? "default" : "outline"}
@@ -359,7 +361,7 @@ const AnalyticsPage = () => {
                 size="sm"
               >
                 <Building2 className="w-4 h-4 mr-2" />
-                Szkoła
+                {t("anal.school")}
               </Button>
             </div>
           )}
@@ -382,7 +384,7 @@ const AnalyticsPage = () => {
       {schoolError && viewMode === "school" && (
         <Card className="bg-red-50 border-red-200">
           <CardContent className="p-6 text-center">
-            <div className="text-red-700 font-semibold">Błąd podczas ładowania statystyk szkoły</div>
+            <div className="text-red-700 font-semibold">{t("anal.schoolError")}</div>
             <div className="text-sm text-red-600 mt-2">{schoolError}</div>
           </CardContent>
         </Card>
@@ -390,7 +392,7 @@ const AnalyticsPage = () => {
 
       {/* Show content based on view mode */}
       {!schoolLoading && viewMode === "school" && schoolAnalyticsData && (
-        <SchoolAnalyticsSection data={schoolAnalyticsData} />
+        <SchoolAnalyticsSection data={schoolAnalyticsData} t={t} locale={locale} />
       )}
 
       {viewMode === "teacher" && (
@@ -400,7 +402,7 @@ const AnalyticsPage = () => {
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Łączna liczba kursów
+              {t("anal.totalCourses")}
             </CardTitle>
             <BookOpen className="h-4 w-4 text-blue-500" />
           </CardHeader>
@@ -412,7 +414,7 @@ const AnalyticsPage = () => {
         <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Wszyscy kursanci
+              {t("anal.allStudents")}
             </CardTitle>
             <Users className="h-4 w-4 text-green-500" />
           </CardHeader>
@@ -424,7 +426,7 @@ const AnalyticsPage = () => {
         <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Wszystkie moduły
+              {t("anal.allModules")}
             </CardTitle>
             <GraduationCap className="h-4 w-4 text-purple-500" />
           </CardHeader>
@@ -436,7 +438,7 @@ const AnalyticsPage = () => {
         <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Średnie ukończenie
+              {t("anal.avgCompletion")}
             </CardTitle>
             <Target className="h-4 w-4 text-orange-500" />
           </CardHeader>
@@ -452,7 +454,7 @@ const AnalyticsPage = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Aktywni (7 dni)
+              {t("anal.active7d")}
             </CardTitle>
             <Activity className="h-4 w-4 text-emerald-500" />
           </CardHeader>
@@ -464,7 +466,7 @@ const AnalyticsPage = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Powracający użytkownicy
+              {t("anal.returningUsers")}
             </CardTitle>
             <UserCheck className="h-4 w-4 text-blue-500" />
           </CardHeader>
@@ -476,7 +478,7 @@ const AnalyticsPage = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Nowi użytkownicy (miesiąc)
+              {t("anal.newUsersMonth")}
             </CardTitle>
             <UserPlus className="h-4 w-4 text-green-500" />
           </CardHeader>
@@ -488,7 +490,7 @@ const AnalyticsPage = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Nowe kursy (miesiąc)
+              {t("anal.newCoursesMonth")}
             </CardTitle>
             <BookOpen className="h-4 w-4 text-purple-500" />
           </CardHeader>
@@ -504,7 +506,7 @@ const AnalyticsPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <BarChart3 className="h-5 w-5" />
-              <span>Aktywność użytkowników</span>
+              <span>{t("anal.userActivity")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -519,7 +521,7 @@ const AnalyticsPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Calendar className="h-5 w-5" />
-              <span>Statystyki kursów</span>
+              <span>{t("anal.courseStats")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center">
@@ -540,7 +542,7 @@ const AnalyticsPage = () => {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-blue-800">
                 <Star className="h-5 w-5" />
-                <span>Najpopularniejszy kurs</span>
+                <span>{t("anal.mostPopularCourse")}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -554,7 +556,7 @@ const AnalyticsPage = () => {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-green-800">
                 <Award className="h-5 w-5" />
-                <span>Najbardziej aktywny student</span>
+                <span>{t("anal.mostActiveStudent")}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -568,7 +570,7 @@ const AnalyticsPage = () => {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-purple-800">
                 <Trophy className="h-5 w-5" />
-                <span>Student z największą liczbą kursów</span>
+                <span>{t("anal.studentMostCourses")}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -583,26 +585,26 @@ const AnalyticsPage = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Target className="h-5 w-5" />
-            <span>Statystyki ścieżek edukacyjnych</span>
+            <span>{t("anal.eduPathsStats")}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">{pathsCount || 0}</div>
-              <div className="text-sm text-blue-800">Ścieżki edukacyjne</div>
+              <div className="text-sm text-blue-800">{t("anal.pathsCount")}</div>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <div className="text-2xl font-bold text-green-600">{pathUserCount || 0}</div>
-              <div className="text-sm text-green-800">Użytkownicy ścieżek</div>
+              <div className="text-sm text-green-800">{t("anal.pathUsers")}</div>
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg">
               <div className="text-2xl font-bold text-purple-600">{pathCoursesCount || 0}</div>
-              <div className="text-sm text-purple-800">Kursy w ścieżkach</div>
+              <div className="text-sm text-purple-800">{t("anal.pathCourses")}</div>
             </div>
             <div className="text-center p-4 bg-orange-50 rounded-lg">
               <div className="text-2xl font-bold text-orange-600">{averagePathCompletionRate || "0%"}</div>
-              <div className="text-sm text-orange-800">Średnie ukończenie</div>
+              <div className="text-sm text-orange-800">{t("anal.avgCompletion")}</div>
             </div>
           </div>
         </CardContent>
@@ -613,7 +615,7 @@ const AnalyticsPage = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <BookOpen className="h-5 w-5" />
-            <span>Szczegółowe statystyki kursów</span>
+            <span>{t("anal.courseDetails")}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -622,25 +624,25 @@ const AnalyticsPage = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nazwa kursu
+                    {t("anal.thCourseName")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Kursanci
+                    {t("anal.thStudents")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Moduły
+                    {t("anal.thModules")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Śr. ukończenia
+                    {t("anal.thAvgCompletion")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Najbardziej aktywny
+                    {t("anal.thMostActive")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ostatnio aktywny
+                    {t("anal.thLastActive")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Data aktywności
+                    {t("anal.thActivityDate")}
                   </th>
                 </tr>
               </thead>
@@ -649,8 +651,8 @@ const AnalyticsPage = () => {
                   <tr>
                     <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
                       <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                      <p>Brak danych o kursach</p>
-                      <p className="text-sm">Utwórz pierwszy kurs, aby zobaczyć statystyki</p>
+                      <p>{t("anal.noCourseData")}</p>
+                      <p className="text-sm">{t("anal.createFirstCourse")}</p>
                     </td>
                   </tr>
                 ) : (
@@ -688,8 +690,8 @@ const AnalyticsPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {course.lastActiveDate
-                          ? new Date(course.lastActiveDate).toLocaleString("pl-PL")
-                          : "Brak"}
+                          ? new Date(course.lastActiveDate).toLocaleString(locale === 'en' ? 'en-US' : 'pl-PL')
+                          : t("anal.noDate")}
                       </td>
                     </tr>
                   ))
@@ -705,7 +707,7 @@ const AnalyticsPage = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Target className="h-5 w-5" />
-            <span>Szczegółowe statystyki ścieżek edukacyjnych</span>
+            <span>{t("anal.pathDetails")}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -714,16 +716,16 @@ const AnalyticsPage = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nazwa ścieżki
+                    {t("anal.thPathName")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Użytkownicy
+                    {t("anal.thPathUsers")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Kursy w ścieżce
+                    {t("anal.thPathCourses")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Śr. ukończenia
+                    {t("anal.thAvgCompletion")}
                   </th>
                 </tr>
               </thead>
@@ -732,8 +734,8 @@ const AnalyticsPage = () => {
                   <tr>
                     <td colSpan={4} className="px-6 py-12 text-center text-gray-400">
                       <Target className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                      <p>Brak danych o ścieżkach edukacyjnych</p>
-                      <p className="text-sm">Utwórz pierwszą ścieżkę, aby zobaczyć statystyki</p>
+                      <p>{t("anal.noPathData")}</p>
+                      <p className="text-sm">{t("anal.createFirstPath")}</p>
                     </td>
                   </tr>
                 ) : (
@@ -776,9 +778,9 @@ const AnalyticsPage = () => {
       <Card className="bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200">
         <CardContent className="p-6 text-center">
           <BarChart3 className="h-8 w-8 mx-auto mb-4 text-orange-500" />
-          <h3 className="text-xl font-semibold mb-2 text-orange-800">Wskazówka</h3>
+          <h3 className="text-xl font-semibold mb-2 text-orange-800">{t("anal.tipTitle")}</h3>
           <p className="text-orange-700">
-            Kliknij na kurs, aby zobaczyć szczegółowe statystyki i przeanalizować postęp studentów.
+            {t("anal.tipText")}
           </p>
         </CardContent>
       </Card>
@@ -789,7 +791,7 @@ const AnalyticsPage = () => {
 };
 
 // School Analytics Section Component
-const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
+const SchoolAnalyticsSection = ({ data, t, locale }: { data: SchoolAnalyticsData; t: (key: string) => string; locale: string }) => {
   const {
     totalStudentsCount,
     totalCoursesCount,
@@ -821,14 +823,14 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
   // Chart data
   const barData = {
     labels: [
-      "Wszyscy studenci",
-      "Aktywni (7 dni)",
-      "Powracający",
-      "Nowi (miesiąc)",
+      t("anal.chartAllStudentsSchool"),
+      t("anal.chartActive7d"),
+      t("anal.chartReturning"),
+      t("anal.chartNewMonth"),
     ],
     datasets: [
       {
-        label: "Studenci",
+        label: t("anal.chartStudents"),
         data: [
           totalStudentsCount,
           activeStudentsCount,
@@ -847,7 +849,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
   };
 
   const doughnutData = {
-    labels: ["Wszystkie kursy", "Nowe kursy (miesiąc)"],
+    labels: [t("anal.chartAllCourses"), t("anal.chartNewCourses")],
     datasets: [
       {
         data: [totalCoursesCount, newCoursesLastMonth || 0],
@@ -864,7 +866,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Łączna liczba kursów
+              {t("anal.totalCourses")}
             </CardTitle>
             <BookOpen className="h-4 w-4 text-blue-500" />
           </CardHeader>
@@ -876,7 +878,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
         <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Wszyscy studenci
+              {t("anal.allStudentsSchool")}
             </CardTitle>
             <Users className="h-4 w-4 text-green-500" />
           </CardHeader>
@@ -888,7 +890,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
         <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Wszystkie moduły
+              {t("anal.allModules")}
             </CardTitle>
             <GraduationCap className="h-4 w-4 text-purple-500" />
           </CardHeader>
@@ -900,7 +902,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
         <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Średnie ukończenie
+              {t("anal.avgCompletion")}
             </CardTitle>
             <Target className="h-4 w-4 text-orange-500" />
           </CardHeader>
@@ -916,7 +918,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
         <Card className="border-l-4 border-l-indigo-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Nauczyciele
+              {t("anal.teachers")}
             </CardTitle>
             <Award className="h-4 w-4 text-indigo-500" />
           </CardHeader>
@@ -928,7 +930,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
         <Card className="border-l-4 border-l-cyan-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Ścieżki edukacyjne
+              {t("anal.eduPaths")}
             </CardTitle>
             <Target className="h-4 w-4 text-cyan-500" />
           </CardHeader>
@@ -940,7 +942,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
         <Card className="border-l-4 border-l-pink-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Studenci (ścieżki)
+              {t("anal.pathStudents")}
             </CardTitle>
             <Users className="h-4 w-4 text-pink-500" />
           </CardHeader>
@@ -955,7 +957,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Aktywni (7 dni)
+              {t("anal.active7d")}
             </CardTitle>
             <Activity className="h-4 w-4 text-emerald-500" />
           </CardHeader>
@@ -967,7 +969,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Powracający studenci
+              {t("anal.returningStudents")}
             </CardTitle>
             <UserCheck className="h-4 w-4 text-blue-500" />
           </CardHeader>
@@ -979,7 +981,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Nowi studenci (miesiąc)
+              {t("anal.newStudentsMonth")}
             </CardTitle>
             <UserPlus className="h-4 w-4 text-green-500" />
           </CardHeader>
@@ -991,7 +993,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Nowe kursy (miesiąc)
+              {t("anal.newCoursesMonth")}
             </CardTitle>
             <BookOpen className="h-4 w-4 text-purple-500" />
           </CardHeader>
@@ -1007,7 +1009,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <BarChart3 className="h-5 w-5" />
-              <span>Aktywność studentów</span>
+              <span>{t("anal.studentActivity")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -1022,7 +1024,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Calendar className="h-5 w-5" />
-              <span>Statystyki kursów</span>
+              <span>{t("anal.courseStats")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center">
@@ -1043,7 +1045,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-blue-800">
                 <Star className="h-5 w-5" />
-                <span>Najpopularniejszy kurs</span>
+                <span>{t("anal.mostPopularCourse")}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -1057,7 +1059,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-green-800">
                 <Award className="h-5 w-5" />
-                <span>Najbardziej aktywny student</span>
+                <span>{t("anal.mostActiveStudent")}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -1071,7 +1073,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-purple-800">
                 <Trophy className="h-5 w-5" />
-                <span>Najbardziej aktywny nauczyciel</span>
+                <span>{t("anal.mostActiveTeacher")}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -1086,26 +1088,26 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Target className="h-5 w-5" />
-            <span>Statystyki ścieżek edukacyjnych</span>
+            <span>{t("anal.eduPathsStats")}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">{totalPathsCount || 0}</div>
-              <div className="text-sm text-blue-800">Ścieżki edukacyjne</div>
+              <div className="text-sm text-blue-800">{t("anal.pathsCount")}</div>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <div className="text-2xl font-bold text-green-600">{pathStudentsCount || 0}</div>
-              <div className="text-sm text-green-800">Studenci ścieżek</div>
+              <div className="text-sm text-green-800">{t("anal.pathStudentsCount")}</div>
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg">
               <div className="text-2xl font-bold text-purple-600">{totalPathCoursesCount || 0}</div>
-              <div className="text-sm text-purple-800">Kursy w ścieżkach</div>
+              <div className="text-sm text-purple-800">{t("anal.pathCourses")}</div>
             </div>
             <div className="text-center p-4 bg-orange-50 rounded-lg">
               <div className="text-2xl font-bold text-orange-600">{averagePathCompletionRate || "0%"}</div>
-              <div className="text-sm text-orange-800">Średnie ukończenie</div>
+              <div className="text-sm text-orange-800">{t("anal.avgCompletion")}</div>
             </div>
           </div>
         </CardContent>
@@ -1116,7 +1118,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <BookOpen className="h-5 w-5" />
-            <span>Szczegółowe statystyki kursów (szkoła)</span>
+            <span>{t("anal.courseDetailsSchool")}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -1125,19 +1127,19 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nazwa kursu
+                    {t("anal.thCourseName")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nauczyciel
+                    {t("anal.thTeacher")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Studenci
+                    {t("anal.thStudentsSchool")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Moduły
+                    {t("anal.thModules")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Śr. ukończenia
+                    {t("anal.thAvgCompletion")}
                   </th>
                 </tr>
               </thead>
@@ -1146,8 +1148,8 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
                       <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                      <p>Brak danych o kursach</p>
-                      <p className="text-sm">Szkoła nie ma jeszcze żadnych kursów</p>
+                      <p>{t("anal.noCourseData")}</p>
+                      <p className="text-sm">{t("anal.schoolNoCourses")}</p>
                     </td>
                   </tr>
                 ) : (
@@ -1194,7 +1196,7 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Target className="h-5 w-5" />
-            <span>Szczegółowe statystyki ścieżek edukacyjnych</span>
+            <span>{t("anal.pathDetails")}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -1203,16 +1205,16 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nazwa ścieżki
+                    {t("anal.thPathName")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Studenci
+                    {t("anal.thStudentsSchool")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Kursy w ścieżce
+                    {t("anal.thPathCourses")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Śr. ukończenia
+                    {t("anal.thAvgCompletion")}
                   </th>
                 </tr>
               </thead>
@@ -1221,8 +1223,8 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
                   <tr>
                     <td colSpan={4} className="px-6 py-12 text-center text-gray-400">
                       <Target className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                      <p>Brak danych o ścieżkach edukacyjnych</p>
-                      <p className="text-sm">Szkoła nie ma jeszcze żadnych ścieżek edukacyjnych</p>
+                      <p>{t("anal.noPathData")}</p>
+                      <p className="text-sm">{t("anal.schoolNoPaths")}</p>
                     </td>
                   </tr>
                 ) : (
@@ -1265,9 +1267,9 @@ const SchoolAnalyticsSection = ({ data }: { data: SchoolAnalyticsData }) => {
       <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
         <CardContent className="p-6 text-center">
           <Building2 className="h-8 w-8 mx-auto mb-4 text-blue-500" />
-          <h3 className="text-xl font-semibold mb-2 text-blue-800">Statystyki szkoły</h3>
+          <h3 className="text-xl font-semibold mb-2 text-blue-800">{t("anal.schoolStatsTitle")}</h3>
           <p className="text-blue-700">
-            Tutaj widzisz łączne statystyki całej szkoły. Dane obejmują wszystkich nauczycieli, studentów i kursy.
+            {t("anal.schoolStatsText")}
           </p>
         </CardContent>
       </Card>

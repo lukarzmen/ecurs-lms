@@ -7,6 +7,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface EducationalPath {
   id: number;
@@ -24,9 +25,10 @@ function PathActionsCell({
   onPathDeleted?: (pathId: unknown) => void;
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { t } = useI18n();
 
   const handleConfirmDelete = async () => {
-    const deleted = await handleDelete(path.id);
+    const deleted = await handleDelete(path.id, t);
     setIsModalOpen(false);
     if (deleted) {
       onPathDeleted?.(path.id);
@@ -60,11 +62,9 @@ function PathActionsCell({
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full mx-4 text-left">
-            <h3 className="text-base font-semibold text-gray-900 mb-1">Usuń ścieżkę edukacyjną</h3>
+            <h3 className="text-base font-semibold text-gray-900 mb-1">{t("epCols.deleteTitle")}</h3>
             <p className="text-sm text-gray-600 mb-5">
-              Czy na pewno chcesz usunąć ścieżkę{" "}
-              <span className="font-medium text-gray-900">&bdquo;{path.title}&rdquo;</span>?
-              {" "}Ta operacja jest nieodwracalna.
+              {t("epCols.deleteConfirm").replace("{title}", path.title)}
             </p>
             <div className="flex justify-end gap-2">
               <Button
@@ -75,7 +75,7 @@ function PathActionsCell({
                   setIsModalOpen(false);
                 }}
               >
-                Anuluj
+                {t("epCols.cancel")}
               </Button>
               <Button
                 variant="destructive"
@@ -85,7 +85,7 @@ function PathActionsCell({
                   handleConfirmDelete();
                 }}
               >
-                Usuń
+                {t("epCols.delete")}
               </Button>
             </div>
           </div>
@@ -95,7 +95,7 @@ function PathActionsCell({
   );
 }
 
-const handleDelete = async (id: number): Promise<boolean> => {
+const handleDelete = async (id: number, t: (key: string) => string): Promise<boolean> => {
   try {
     const response = await fetch(`/api/educational-paths/${id}`, {
       method: "DELETE",
@@ -103,19 +103,19 @@ const handleDelete = async (id: number): Promise<boolean> => {
       body: JSON.stringify({ id }),
     });
     if (response.ok) {
-      toast.success("Ścieżka edukacyjna została usunięta");
+      toast.success(t("epCols.deleted"));
       return true;
     } else {
-      toast.error("Nie udało się usunąć ścieżki edukacyjnej");
+      toast.error(t("epCols.deleteError"));
       return false;
     }
   } catch (error) {
-    toast.error("Wystąpił błąd podczas usuwania ścieżki");
+    toast.error(t("epCols.deleteException"));
     return false;
   }
 };
 
-export const columns: ColumnDef<EducationalPath>[] = [
+export const getColumns = (t: (key: string) => string): ColumnDef<EducationalPath>[] => [
   {
     accessorKey: "title",
     header: ({ column }) => (
@@ -124,7 +124,7 @@ export const columns: ColumnDef<EducationalPath>[] = [
         className="px-0 font-semibold text-gray-700"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Nazwa ścieżki
+        {t("epCols.pathName")}
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
@@ -147,11 +147,11 @@ export const columns: ColumnDef<EducationalPath>[] = [
       const state = row.original.state;
       return state === 1 ? (
         <Badge className="bg-green-100 text-green-700 border border-green-200 hover:bg-green-100 font-medium shadow-none">
-          Opublikowana
+          {t("epCols.published")}
         </Badge>
       ) : (
         <Badge variant="outline" className="text-gray-500 border-gray-300 font-medium">
-          Szkic
+          {t("epCols.draft")}
         </Badge>
       );
     },
@@ -164,7 +164,7 @@ export const columns: ColumnDef<EducationalPath>[] = [
         className="px-0 font-semibold text-gray-700"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Data utworzenia
+        {t("epCols.createdAt")}
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),

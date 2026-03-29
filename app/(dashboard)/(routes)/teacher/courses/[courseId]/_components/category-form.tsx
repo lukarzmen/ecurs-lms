@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FormCard, FormActions, FormSection } from "@/components/ui/form-card";
 import toast from "react-hot-toast";
+import { useI18n } from "@/hooks/use-i18n";
 
 const CategoryForm = ({ categoryId, courseId, options }: { categoryId: number; courseId: number; options: { label: string; value: number; }[] }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [categoryIdState, setCategoryIdState] = useState(categoryId);
   const router = useRouter();
+  const { t } = useI18n();
 
   const toggleEdit = () => {
     setIsEditing((current) => !current);
@@ -22,11 +24,11 @@ const CategoryForm = ({ categoryId, courseId, options }: { categoryId: number; c
     e.preventDefault();
     try {
       await axios.patch(`/api/courses/${courseId}`, { categoryId: categoryIdState });
-      toast.success("Zaktualizowano kategorię");
+      toast.success(t('categoryForm.categoryUpdated'));
       toggleEdit();
       router.refresh();
     } catch (error) {
-      toast.error("Coś poszło nie tak");
+      toast.error(t('courseForm.somethingWrong'));
     }
   };
 
@@ -37,23 +39,23 @@ const CategoryForm = ({ categoryId, courseId, options }: { categoryId: number; c
   return (
     <div className="mt-6">
       <FormCard
-        title="Kategoria kursu"
+        title={t('categoryForm.courseCategory')}
         icon={Tag}
         status={{
-          label: isEditing ? "Edycja" : (selectedOption ? "Ustawiono" : "Brak kategorii"),
+          label: isEditing ? t('courseForm.editing') : (selectedOption ? t('categoryForm.set') : t('categoryForm.noCategory')),
           variant: isEditing ? "secondary" : (selectedOption ? "default" : "outline"),
           className: isEditing ? "bg-blue-500 text-white" : (selectedOption ? "bg-green-500" : "")
         }}
       >
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-muted-foreground">Kategoria tematyczna kursu</span>
+          <span className="text-sm text-muted-foreground">{t('categoryForm.themeCategory')}</span>
           <Button onClick={toggleEdit} variant="ghost" size="sm">
             {isEditing ? (
-              <>Anuluj</>
+              <>{t('courseForm.cancel')}</>
             ) : (
               <>
                 <Pencil className="h-4 w-4 mr-2"></Pencil>
-                Edytuj
+                {t('courseForm.edit')}
               </>
             )}
           </Button>
@@ -66,7 +68,7 @@ const CategoryForm = ({ categoryId, courseId, options }: { categoryId: number; c
                 onValueChange={(value) => setCategoryIdState(Number(value))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Wybierz kategorię" />
+                  <SelectValue placeholder={t('categoryForm.selectCategory')} />
                 </SelectTrigger>
                 <SelectContent>
                   {options.map((option) => (
@@ -79,7 +81,7 @@ const CategoryForm = ({ categoryId, courseId, options }: { categoryId: number; c
             </div>
             <FormActions>
               <Button type="submit" className="flex-1">
-                Zapisz
+                {t('courseForm.save')}
               </Button>
             </FormActions>
           </form>
@@ -92,8 +94,8 @@ const CategoryForm = ({ categoryId, courseId, options }: { categoryId: number; c
             ) : (
               <FormSection variant="warning">
                 <p>
-                  <strong>Brak wybranej kategorii</strong><br />
-                  Wybierz kategorię aby ułatwić znajdowanie kursu
+                  <strong>{t('categoryForm.noCategoryTitle')}</strong><br />
+                  {t('categoryForm.noCategoryHint')}
                 </p>
               </FormSection>
             )}

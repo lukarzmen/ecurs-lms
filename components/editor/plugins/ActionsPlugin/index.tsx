@@ -50,6 +50,7 @@ import Button from '../../ui/Button';
 import { docFromHash } from '../../utils/docSerialization';
 import { PLAYGROUND_TRANSFORMERS } from '../MarkdownTransformers';
 import toast from 'react-hot-toast';
+import { useI18n } from '@/hooks/use-i18n';
 // import {
 //   SPEECH_TO_TEXT_COMMAND,
 //   SUPPORT_SPEECH_RECOGNITION,
@@ -272,21 +273,22 @@ export default function ActionsPlugin({
 }
 
 function ShareEditorDialog({ hash, onClose }: { hash: string; onClose: () => void }): JSX.Element {
+  const { t } = useI18n();
   const shareUrl = `${window.location.origin}/editor/${hash}`;
-  const title = 'Masz nowe zadanie!';
+  const title = t('ed.shareTitle');
   const exampleImage = 'https://via.placeholder.com/150';
   return (
     <div className="flex flex-col items-start border p-4 rounded w-full max-w-lg mx-auto">
       <div className="text-center w-full break-words">
-        Udostępnij ten link: {shareUrl}
+        {t('ed.shareLink')} {shareUrl}
         <button
           onClick={() => {
             navigator.clipboard.writeText(shareUrl);
-            toast.success('Skopiowano link do schowka');
+            toast.success(t('ed.shareCopied'));
           }}
           className="ml-2 border border-gray-300 rounded px-2 py-1"
         >
-          Kopiuj
+          {t('ed.shareCopy')}
         </button>
       </div>
       <div className="flex flex-wrap gap-2 justify-center mt-4 w-full">
@@ -352,9 +354,10 @@ function ShowClearDialog({
   editor: LexicalEditor;
   onClose: () => void;
 }): JSX.Element {
+  const { t } = useI18n();
   return (
     <>
-      Czy na pewno chcesz wyczyścić obszar roboczy?
+      {t('ed.clearConfirm')}
       <div className="Modal__content">
         <Button
           onClick={() => {
@@ -362,14 +365,14 @@ function ShowClearDialog({
             editor.focus();
             onClose();
           }}>
-          Wyczyść
+          {t('ed.clear')}
         </Button>{' '}
         <Button
           onClick={() => {
             editor.focus();
             onClose();
           }}>
-          Anuluj
+          {t('ed.cancel')}
         </Button>
       </div>
     </>

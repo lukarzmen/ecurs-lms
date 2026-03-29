@@ -15,6 +15,7 @@ import React from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { PromoCodesForm } from "./_components/promo-codes-form";
 import { useParams } from "next/navigation";
+import { useI18n } from "@/hooks/use-i18n";
 
 const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id: pathId } = React.use(params);
@@ -29,6 +30,7 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
   const [description, setDescription] = useState("");
   const [imageId, setImageId] = useState<string>("");
   const {userId} = useAuth();
+  const { t } = useI18n();
   useEffect(() => {
     const fetchDetails = async () => {
       setLoading(true);
@@ -55,7 +57,7 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
         const categoriesData = await categoriesResponse.json();
         setCategories(categoriesData);
       } catch {
-        toast.error("Nie udało się pobrać szczegółów ścieżki");
+        toast.error(t("epDetail.fetchError"));
       } finally {
         setLoading(false);
       }
@@ -71,10 +73,10 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
         body: JSON.stringify({ title }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Zaktualizowano nazwę ścieżki");
+      toast.success(t("epDetail.titleUpdated"));
       setEditTitle(false);
     } catch {
-      toast.error("Nie udało się zapisać");
+      toast.error(t("epDetail.saveFailed"));
     }
   };
 
@@ -86,10 +88,10 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
         body: JSON.stringify({ description }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Zaktualizowano opis ścieżki");
+      toast.success(t("epDetail.descUpdated"));
       setEditDescription(false);
     } catch {
-      toast.error("Nie udało się zapisać");
+      toast.error(t("epDetail.saveFailed"));
     }
   };
 
@@ -104,9 +106,9 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
       });
       if (!res.ok) throw new Error();
       setCourses(courses.filter((c) => c.courseId !== courseId));
-      toast.success("Usunięto kurs ze ścieżki");
+      toast.success(t("epDetail.courseRemoved"));
     } catch {
-      toast.error("Nie udało się usunąć kursu");
+      toast.error(t("epDetail.courseRemoveError"));
     }
   };
 
@@ -123,9 +125,9 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
         // Add with correct structure matching the API response format
         setCourses([...courses, { courseId: courseToAdd.id, title: courseToAdd.title, position: courses.length + 1 }]);
       }
-      toast.success("Dodano kurs do ścieżki");
+      toast.success(t("epDetail.courseAdded"));
     } catch {
-      toast.error("Nie udało się dodać kursu");
+      toast.error(t("epDetail.courseAddError"));
     }
   };
 
@@ -142,9 +144,9 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
         body: JSON.stringify({ order: reordered.map((c) => c.courseId) }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Zmieniono kolejność kursów");
+      toast.success(t("epDetail.reordered"));
     } catch {
-      toast.error("Nie udało się zmienić kolejności");
+      toast.error(t("epDetail.reorderError"));
     }
   };
 
@@ -164,10 +166,10 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
           className="flex items-center text-sm hover:opacity-75 transition pt-4 select-none"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Powrót do listy ścieżek
+          {t("epDetail.back")}
         </Link>
         <Link href="/teacher/courses/create">
-          <Button className="mt-4" variant="default">Utwórz nowy kurs</Button>
+          <Button className="mt-4" variant="default">{t("epDetail.newCourse")}</Button>
         </Link>
       </div>
 
@@ -181,16 +183,16 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
         <div className="md:w-1/2 w-full">
           <div className="mt-6 bg-card border rounded-md p-4 shadow-sm">
             <div className="font-medium flex items-center justify-between mb-2">
-              <span className="flex items-center gap-2"><span className="text-2xl">🛤️</span>Tytuł</span>
+              <span className="flex items-center gap-2"><span className="text-2xl">🛤️</span>{t("epDetail.titleSection")}</span>
               <Button onClick={() => setEditTitle((v) => !v)} variant="ghost">
-                {editTitle ? "Anuluj" : <><span className="mr-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>Edytuj</>}
+                {editTitle ? t("epDetail.cancel") : <><span className="mr-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>{t("epDetail.edit")}</>}
               </Button>
             </div>
             {editTitle ? (
               <div className="space-y-4 mt-4">
                 <Input value={title} onChange={e => setTitle(e.target.value)} className="w-full text-base" />
                 <div className="flex items-center gap-x-2">
-                  <Button onClick={handleTitleSave} disabled={!title.trim()} type="button">Zapisz</Button>
+                  <Button onClick={handleTitleSave} disabled={!title.trim()} type="button">{t("epDetail.save")}</Button>
                 </div>
               </div>
             ) : (
@@ -202,16 +204,16 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
         <div className="md:w-1/2 w-full">
           <div className="mt-6 bg-card border rounded-md p-4 shadow-sm">
             <div className="font-medium flex items-center justify-between mb-2">
-              <span className="flex items-center gap-2"><span className="text-lg">📝</span>Opis</span>
+              <span className="flex items-center gap-2"><span className="text-lg">📝</span>{t("epDetail.descSection")}</span>
               <Button onClick={() => setEditDescription((v) => !v)} variant="ghost">
-                {editDescription ? "Anuluj" : <><span className="mr-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>Edytuj</>}
+                {editDescription ? t("epDetail.cancel") : <><span className="mr-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>{t("epDetail.edit")}</>}
               </Button>
             </div>
             {editDescription ? (
               <div className="space-y-4 mt-4">
                 <Input value={description} onChange={e => setDescription(e.target.value)} className="w-full text-base" />
                 <div className="flex items-center gap-x-2">
-                  <Button onClick={handleDescriptionSave} disabled={description === undefined} type="button">Zapisz</Button>
+                  <Button onClick={handleDescriptionSave} disabled={description === undefined} type="button">{t("epDetail.save")}</Button>
                 </div>
               </div>
             ) : (
@@ -254,7 +256,7 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
       <div className="bg-card border rounded-md p-4 mb-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl">📚</span>
-          <h2 className="text-xl font-semibold">Kursy w ścieżce</h2>
+          <h2 className="text-xl font-semibold">{t("epDetail.coursesTitle")}</h2>
         </div>
         <ul className="space-y-2 mb-4">
           {courses.map((course, idx) => (
@@ -264,7 +266,7 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
               </Link>
               <Button size="sm" variant="ghost" onClick={() => handleReorder(idx, idx - 1)} disabled={idx === 0}>↑</Button>
               <Button size="sm" variant="ghost" onClick={() => handleReorder(idx, idx + 1)} disabled={idx === courses.length - 1}>↓</Button>
-              <Button size="sm" variant="destructive" onClick={() => handleCourseRemove(course.courseId)}>Usuń</Button>
+              <Button size="sm" variant="destructive" onClick={() => handleCourseRemove(course.courseId)}>{t("epDetail.remove")}</Button>
             </li>
           ))}
         </ul>
@@ -272,7 +274,7 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
         <div className="mt-2">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-lg">➕</span>
-            <h3 className="font-semibold">Dodaj kurs do ścieżki</h3>
+            <h3 className="font-semibold">{t("epDetail.addCourseTitle")}</h3>
           </div>
           <div className="flex gap-2">
             <select
@@ -280,7 +282,7 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
               id="add-course-select"
               defaultValue=""
             >
-              <option value="" disabled>Wybierz kurs</option>
+              <option value="" disabled>{t("epDetail.selectCourse")}</option>
               {allCourses.filter(c => !courses.some(cc => cc.courseId === c.id)).map(c => (
                 <option key={c.id} value={c.id}>{c.title}</option>
               ))}
@@ -295,13 +297,13 @@ const EducationalPathDetailsPage = ({ params }: { params: Promise<{ id: string }
                 }
               }}
               disabled={allCourses.filter(c => !courses.some(cc => cc.courseId === c.id)).length === 0}
-            >Dodaj</Button>
+            >{t("epDetail.add")}</Button>
           </div>
         </div>
       </div>
 
       <div className="mt-12">
-        <h2 className="text-2xl font-bold mb-4">Zarządzaj kodami promocyjnymi</h2>
+        <h2 className="text-2xl font-bold mb-4">{t("epDetail.promoTitle")}</h2>
         <PromoCodesForm educationalPathId={pathId} />
       </div>
     </div>

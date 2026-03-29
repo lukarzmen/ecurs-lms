@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react';
 import * as React from 'react';
 import ProgressSpinner from '../TextGeneratorPlugin/ProgressComponent';
 import toast from 'react-hot-toast';
+import { useI18n } from '@/hooks/use-i18n';
 
 export const TRANSLATE_TEXT_COMMAND: LexicalCommand<LLMPrompt> = createCommand('TRANSLATE_TEXT_COMMAND');
 
@@ -22,6 +23,7 @@ export function LanguageSelectorDialog({
   activeEditor: LexicalEditor;
   onClose: () => void;
 }): JSX.Element {
+  const { t } = useI18n();
   const [selectedLanguage, setSelectedLanguage] = useState('polish');
   const [loading, setLoading] = useState(false);
 
@@ -39,10 +41,10 @@ export function LanguageSelectorDialog({
             systemPrompt: `translate to ${selectedLanguage}`,
           });
         } else {
-          toast.error('Nie wybrano tekstu do tłumaczenia.');
+          toast.error(t('ed.transNoText'));
         }
       } else {
-        toast.error('Nie zaznaczono tekstu.');
+        toast.error(t('ed.transNoSelection'));
       }
     });
   };
@@ -71,18 +73,18 @@ export function LanguageSelectorDialog({
         >
           ✕
         </button>
-        <h2 className="text-xl font-bold mb-4">Tłumaczenie tekstu</h2>
+        <h2 className="text-xl font-bold mb-4">{t('ed.transTitle')}</h2>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Wybierz język
+          {t('ed.transSelectLang')}
         </label>
         <select
           className="w-full p-2 border border-gray-300 rounded-md mb-4"
           value={selectedLanguage}
           onChange={(e) => setSelectedLanguage(e.target.value)}
         >
-          <option value="polish">Polski</option>
-          <option value="english">Angielski</option>
-          <option value="russian">Rosyjski</option>
+          <option value="polish">{t('ed.transPolish')}</option>
+          <option value="english">{t('ed.transEnglish')}</option>
+          <option value="russian">{t('ed.transRussian')}</option>
         </select>
         <div className="flex justify-end space-x-2">
           {loading ? (
@@ -93,13 +95,13 @@ export function LanguageSelectorDialog({
                 className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md"
                 onClick={onClose}
               >
-                Anuluj
+                {t('ed.cancel')}
               </button>
               <button
                 className="px-4 py-2 bg-orange-500 text-white rounded-md"
                 onClick={handleTranslate}
               >
-                Tłumacz
+                {t('ed.transTranslate')}
               </button>
             </>
           )}

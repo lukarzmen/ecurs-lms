@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { FormCard, FormSection } from "@/components/ui/form-card";
 import toast from "react-hot-toast";
 import { PlusCircle, Percent, Trash2 } from "lucide-react";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface PromoCode {
   id: number;
@@ -22,7 +23,7 @@ interface PromoCodesFormProps {
 }
 
 export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ educationalPathId }) => {
-
+  const { t, locale } = useI18n();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [code, setCode] = useState("");
   const [discount, setDiscount] = useState("");
@@ -53,7 +54,7 @@ export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ educationalPathI
         description,
         expirationDate,
       });
-      toast.success("Kod promocyjny dodany");
+      toast.success(t("epPromo.added"));
       setIsModalOpen(false);
       setCode("");
       setDiscount("");
@@ -61,7 +62,7 @@ export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ educationalPathI
       setExpirationDate("");
       fetchPromoCodes();
     } catch (error) {
-      toast.error("Błąd dodawania kodu");
+      toast.error(t("epPromo.addError"));
     }
     setLoading(false);
   };
@@ -70,10 +71,10 @@ export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ educationalPathI
     setLoading(true);
     try {
       await axios.delete(`/api/educational-paths/${educationalPathId}/promocode/${code}`);
-      toast.success("Kod promocyjny usunięty");
+      toast.success(t("epPromo.deleted"));
       fetchPromoCodes();
     } catch (error) {
-      toast.error("Błąd usuwania kodu");
+      toast.error(t("epPromo.deleteError"));
     }
     setLoading(false);
   };
@@ -82,19 +83,19 @@ export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ educationalPathI
     <>
       <div className="mt-6">
         <FormCard
-          title="Kody promocyjne"
+          title={t("epPromo.title")}
           icon={Percent}
           status={{
-            label: promoCodes.length > 0 ? `${promoCodes.length} kodów` : "Brak kodów",
+            label: promoCodes.length > 0 ? t("epPromo.codesCount").replace("{count}", String(promoCodes.length)) : t("epPromo.noCodes"),
             variant: promoCodes.length > 0 ? "default" : "outline",
             className: promoCodes.length > 0 ? "bg-purple-500" : ""
           }}
         >
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm text-muted-foreground">Zarządzaj kodami rabatowymi dla ścieżki edukacyjnej</span>
+            <span className="text-sm text-muted-foreground">{t("epPromo.hint")}</span>
             <Button onClick={() => setIsModalOpen(true)} variant="ghost" size="sm">
               <PlusCircle className="h-4 w-4 mr-2" />
-              Dodaj kod
+              {t("epPromo.addCode")}
             </Button>
           </div>
           
@@ -113,7 +114,7 @@ export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ educationalPathI
                       <p className="text-sm text-muted-foreground mt-1">{promo.description}</p>
                     )}
                     <p className="text-xs text-muted-foreground mt-1">
-                      {promo.expirationDate ? `Ważny do: ${new Date(promo.expirationDate).toISOString().slice(0, 10)}` : 'Bez terminu'}
+                      {promo.expirationDate ? t("epPromo.validUntil").replace("{date}", new Date(promo.expirationDate).toLocaleDateString(locale === "en" ? "en-US" : "pl-PL")) : t("epPromo.noExpiry")}
                     </p>
                   </div>
                   <Button
@@ -130,8 +131,8 @@ export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ educationalPathI
           ) : (
             <FormSection variant="warning">
               <p>
-                <strong>Brak kodów promocyjnych</strong><br />
-                Dodaj pierwszy kod rabatowy aby zwiększyć atrakcyjność ścieżki
+                <strong>{t("epPromo.noCodesTitle")}</strong><br />
+                {t("epPromo.noCodesHint")}
               </p>
             </FormSection>
           )}
@@ -141,17 +142,17 @@ export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ educationalPathI
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Dodaj kod promocyjny</DialogTitle>
+            <DialogTitle>{t("epPromo.dialogTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
             <Input
-              placeholder="Kod promocyjny"
+              placeholder={t("epPromo.codePlaceholder")}
               value={code}
               onChange={e => setCode(e.target.value)}
               disabled={loading}
             />
             <Input
-              placeholder="Zniżka (%)"
+              placeholder={t("epPromo.discountPlaceholder")}
               type="number"
               min="0"
               max="100"
@@ -160,24 +161,24 @@ export const PromoCodesForm: React.FC<PromoCodesFormProps> = ({ educationalPathI
               disabled={loading}
             />
             <Input
-              placeholder="Opis zniżki (opcjonalnie)"
+              placeholder={t("epPromo.descPlaceholder")}
               value={description}
               onChange={e => setDescription(e.target.value)}
               disabled={loading}
             />
             <Input
-              placeholder={expirationDate ? "Data wygaśnięcia (YYYY-MM-DD)" : "Bez terminu"}
+              placeholder={expirationDate ? undefined : t("epPromo.datePlaceholder")}
               type="date"
               value={expirationDate}
               onChange={e => setExpirationDate(e.target.value)}
               disabled={loading}
             />
             <Button onClick={handleAddPromo} type="button" className="w-full" disabled={loading || !code || !discount}>
-              Dodaj
+              {t("epPromo.addBtn")}
             </Button>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={loading}>Anuluj</Button>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={loading}>{t("epPromo.cancelBtn")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { authorizeUser, AuthState } from "@/hooks/use-auth";
 import { UserResponse } from "@/app/api/user/route";
 import { useEffect, useState } from "react";
+import { useI18n } from "@/hooks/use-i18n";
 
 export const NavbarRoutes = () => {
   const pathName = usePathname();
@@ -18,6 +19,7 @@ export const NavbarRoutes = () => {
   const { userId, sessionId } = clerkAuth;
   const [userResponse, setUserResponse] = useState<UserResponse | null>(null);
   const [authState, setAuthState] = useState<AuthState>("notAuthorized");
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!userId) {
@@ -49,14 +51,14 @@ export const NavbarRoutes = () => {
           <Link href="/">
             <Button size="sm" variant="ghost" className="select-none ">
               <User2 className="h-4 w-4 mr-2" />
-              Przejdź do trybu ucznia
+              {t("nav.studentMode")}
             </Button>
           </Link>
         ) : isTeacher ? (
           <Link href="/teacher/courses">
             <Button size="sm" variant="ghost" className="select-none">
               <GraduationCap className="h-4 w-4 mr-2" />
-              Przejdź do trybu nauczyciela
+              {t("nav.teacherMode")}
             </Button>
           </Link>
         ) : null}

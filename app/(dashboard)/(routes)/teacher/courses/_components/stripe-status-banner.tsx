@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle, Clock, CreditCard } from "lucide-react";
 import toast from "react-hot-toast";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface StripeStatusProps {
   className?: string;
@@ -31,6 +32,7 @@ export function StripeStatusBanner({ className = "" }: StripeStatusProps) {
   const [accountDetails, setAccountDetails] = useState<StripeAccountDetails | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const [schoolStatus, setSchoolStatus] = useState<TeacherSchoolStatus | null>(null);
+  const { t } = useI18n();
 
   useEffect(() => {
     checkTeacherSchoolStatus();
@@ -62,7 +64,7 @@ export function StripeStatusBanner({ className = "" }: StripeStatusProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Nie udało się sprawdzić statusu konta");
+        throw new Error(t('stripe.checkError'));
       }
 
       const result: StripeAccountDetails = await response.json();
@@ -93,20 +95,20 @@ export function StripeStatusBanner({ className = "" }: StripeStatusProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Nie udało się rozpocząć konfiguracji konta");
+        throw new Error(t('stripe.startError'));
       }
 
       const result = await response.json();
       
       if (result.onboardingUrl) {
-        toast.success("Przekierowujemy do konfiguracji konta płatności...");
+        toast.success(t('stripe.redirecting'));
         window.location.href = result.onboardingUrl;
       } else {
-        throw new Error("Nie otrzymano linku do konfiguracji");
+        throw new Error(t('stripe.noLink'));
       }
     } catch (error) {
       console.error("Error starting onboarding:", error);
-      toast.error(error instanceof Error ? error.message : "Nie udało się rozpocząć konfiguracji");
+      toast.error(error instanceof Error ? error.message : t('stripe.startFailed'));
     } finally {
       setIsRetrying(false);
     }
@@ -129,7 +131,7 @@ export function StripeStatusBanner({ className = "" }: StripeStatusProps) {
       <div className={`bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 ${className}`}>
         <div className="flex items-center space-x-2">
           <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-400 border-t-transparent"></div>
-          <span className="text-sm text-gray-600">Sprawdzamy status konta płatności...</span>
+          <span className="text-sm text-gray-600">{t('stripe.checking')}</span>
         </div>
       </div>
     );
@@ -140,41 +142,41 @@ export function StripeStatusBanner({ className = "" }: StripeStatusProps) {
       case "no-account":
         return {
           icon: <CreditCard className="text-blue-600" size={20} />,
-          title: "Wymagana konfiguracja konta płatności",
-          description: "Aby otrzymywać płatności od uczniów, musisz skonfigurować konto płatności Stripe.",
+          title: t('stripe.noAccount.title'),
+          description: t('stripe.noAccount.desc'),
           bgColor: "bg-blue-50",
           borderColor: "border-blue-200",
-          buttonText: "Skonfiguruj konto płatności",
+          buttonText: t('stripe.noAccount.button'),
           buttonColor: "bg-blue-600 hover:bg-blue-700"
         };
       case "incomplete":
         return {
           icon: <Clock className="text-yellow-600" size={20} />,
-          title: "Dokończ konfigurację konta płatności",
-          description: "Konfiguracja konta nie została ukończona. Dokończ proces, aby móc otrzymywać płatności.",
+          title: t('stripe.incomplete.title'),
+          description: t('stripe.incomplete.desc'),
           bgColor: "bg-yellow-50",
           borderColor: "border-yellow-200",
-          buttonText: "Dokończ konfigurację",
+          buttonText: t('stripe.incomplete.button'),
           buttonColor: "bg-yellow-600 hover:bg-yellow-700"
         };
       case "error":
         return {
           icon: <AlertCircle className="text-red-600" size={20} />,
-          title: "Błąd podczas sprawdzania konta",
-          description: "Nie udało się sprawdzić statusu konta płatności. Spróbuj ponownie lub skontaktuj się z wsparciem.",
+          title: t('stripe.error.title'),
+          description: t('stripe.error.desc'),
           bgColor: "bg-red-50",
           borderColor: "border-red-200",
-          buttonText: "Spróbuj ponownie",
+          buttonText: t('stripe.error.button'),
           buttonColor: "bg-red-600 hover:bg-red-700"
         };
       default:
         return {
           icon: <AlertCircle className="text-gray-600" size={20} />,
-          title: "Status nieznany",
-          description: "Nie można określić statusu konta płatności.",
+          title: t('stripe.unknown.title'),
+          description: t('stripe.unknown.desc'),
           bgColor: "bg-gray-50",
           borderColor: "border-gray-200",
-          buttonText: "Sprawdź ponownie",
+          buttonText: t('stripe.unknown.button'),
           buttonColor: "bg-gray-600 hover:bg-gray-700"
         };
     }
@@ -202,19 +204,19 @@ export function StripeStatusBanner({ className = "" }: StripeStatusProps) {
                 <span className={accountDetails.details.details_submitted ? "text-green-600" : "text-yellow-600"}>
                   {accountDetails.details.details_submitted ? "✓" : "○"}
                 </span>
-                <span>Dane podstawowe: {accountDetails.details.details_submitted ? "Ukończone" : "Wymagane"}</span>
+                <span>{t('stripe.basicData')} {accountDetails.details.details_submitted ? t('stripe.completed') : t('stripe.required')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <span className={accountDetails.details.charges_enabled ? "text-green-600" : "text-yellow-600"}>
                   {accountDetails.details.charges_enabled ? "✓" : "○"}
                 </span>
-                <span>Przyjmowanie płatności: {accountDetails.details.charges_enabled ? "Aktywne" : "Nieaktywne"}</span>
+                <span>{t('stripe.acceptPayments')} {accountDetails.details.charges_enabled ? t('stripe.active') : t('stripe.inactive')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <span className={accountDetails.details.payouts_enabled ? "text-green-600" : "text-yellow-600"}>
                   {accountDetails.details.payouts_enabled ? "✓" : "○"}
                 </span>
-                <span>Wypłaty: {accountDetails.details.payouts_enabled ? "Aktywne" : "Nieaktywne"}</span>
+                <span>{t('stripe.payouts')} {accountDetails.details.payouts_enabled ? t('stripe.active') : t('stripe.inactive')}</span>
               </div>
             </div>
           )}
@@ -227,7 +229,7 @@ export function StripeStatusBanner({ className = "" }: StripeStatusProps) {
             {isRetrying ? (
               <>
                 <div className="animate-spin rounded-full h-3 w-3 border border-white border-t-transparent mr-2"></div>
-                Przetwarzanie...
+                {t('stripe.processing')}
               </>
             ) : (
               config.buttonText

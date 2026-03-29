@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { DescriptionNode } from "../../nodes/DictionaryNode/DescriptionNode";
 import toast from "react-hot-toast";
 import { Loader2, X, BookOpen, Sparkles } from "lucide-react";
+import {useI18n} from '@/hooks/use-i18n';
 
 export const INSERT_DEFINITION_NODE_COMMAND = createCommand("INSERT_DEFINITION_NODE_COMMAND");
 
@@ -23,6 +24,7 @@ function DefinitionModal({
   onSubmit: (term: string, definition: string) => void;
   selectedText: string;
 }) {
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const [term, setTerm] = useState("");
   const [definition, setDefinition] = useState("");
@@ -37,7 +39,7 @@ function DefinitionModal({
     const trimmedTerm = term.trim();
     const trimmedDefinition = definition.trim();
     if (!trimmedTerm) {
-      toast.error("Hasło nie może być puste.");
+      toast.error(t('ed.descTermEmpty'));
       return;
     }
     if (trimmedDefinition) {
@@ -45,7 +47,7 @@ function DefinitionModal({
       setDefinition("");
       onClose();
     } else {
-      toast.error("Definicja nie może być pusta.");
+      toast.error(t('ed.descDefEmpty'));
     }
   };
   
@@ -57,7 +59,7 @@ function DefinitionModal({
   const handleGenerateAI = () => {
     const trimmedTerm = term.trim();
     if (!trimmedTerm) {
-      toast.error("Hasło nie może być puste.");
+      toast.error(t('ed.descTermEmpty'));
       return;
     }
     setIsLoading(true);
@@ -74,10 +76,10 @@ function DefinitionModal({
       .then((response) => response.text())
       .then((data) => {
         setDefinition(data);
-        toast.success("Definicja została wygenerowana przez AI.");
+        toast.success(t('ed.descAiGenerated'));
       })
       .catch(() => {
-        toast.error("Błąd podczas generowania definicji.");
+        toast.error(t('ed.descAiError'));
       })
       .finally(() => {
         setIsLoading(false);
@@ -96,14 +98,14 @@ function DefinitionModal({
               <BookOpen className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-muted-foreground">Nowa definicja</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground">{t('ed.descNewDef')}</h3>
               <h2 className="text-lg font-bold text-foreground">{selectedText}</h2>
             </div>
           </div>
           <button
             className="p-1 hover:bg-white rounded-lg transition-colors duration-200 text-muted-foreground hover:text-foreground"
             onClick={handleClose}
-            title="Zamknij"
+            title={t('ed.close')}
           >
             <X className="h-5 w-5" />
           </button>
@@ -112,29 +114,29 @@ function DefinitionModal({
         {/* Content */}
         <div className="px-6 py-4">
           <label className="block text-sm font-semibold text-foreground mb-2">
-            Hasło
+            {t('ed.descTerm')}
           </label>
           <input
             className="w-full p-3 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:border-primary bg-background font-medium text-foreground transition-all duration-200"
-            placeholder="Wpisz hasło"
+            placeholder={t('ed.descTermPlaceholder')}
             value={term}
             onChange={(e) => setTerm(e.target.value)}
             disabled={isLoading}
           />
           <div className="h-4" />
           <label className="block text-sm font-semibold text-foreground mb-2">
-            Definicja
+            {t('ed.descDefLabel')}
           </label>
           <textarea
             className="w-full p-3 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:border-primary bg-background font-medium text-foreground resize-none transition-all duration-200"
             rows={5}
-            placeholder="Wpisz definicję lub wygeneruj przy pomocy AI..."
+            placeholder={t('ed.descDefPlaceholder')}
             value={definition}
             onChange={(e) => setDefinition(e.target.value)}
             disabled={isLoading}
           />
           <p className="text-xs text-muted-foreground mt-2">
-            {definition.length} / 500 znaków
+            {definition.length} / 500 {t('ed.descChars')}
           </p>
         </div>
 
@@ -145,23 +147,23 @@ function DefinitionModal({
             onClick={handleClose}
             disabled={isLoading}
           >
-            Anuluj
+            {t('ed.cancel')}
           </button>
           <button
             className="px-4 py-2 bg-card border-2 border-primary text-primary rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-200 font-semibold flex items-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleGenerateAI}
             disabled={isLoading}
-            title="Wygeneruj definicję przy pomocy AI"
+            title={t('ed.descAiTitle')}
           >
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Generuję...
+                {t('ed.descGenerating')}
               </>
             ) : (
               <>
                 <Sparkles className="h-4 w-4" />
-                Generuj AI
+                {t('ed.descGenAi')}
               </>
             )}
           </button>
@@ -169,9 +171,9 @@ function DefinitionModal({
             className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-200 font-semibold active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleSubmit}
             disabled={!definition.trim() || isLoading}
-            title="Zatwierdź definicję"
+            title={t('ed.descApprove')}
           >
-            Zatwierdź
+            {t('ed.descApprove')}
           </button>
         </div>
       </div>
@@ -194,7 +196,7 @@ export default function DescriptionPlugin(): JSX.Element | null {
           if ($isRangeSelection(selection)) {
             const textContent = selection.getTextContent().trim();
             if (!textContent) {
-              toast.error("Zaznacz tekst, aby dodać definicję.");
+              toast.error(t('ed.descSelectText'));
               return false;
             }
 

@@ -5,59 +5,60 @@ import { SidebarItem } from "./sidebar-item";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+import { useI18n } from "@/hooks/use-i18n";
 
-const guestRoutes = [
+const getGuestRoutes = (t: (key: string) => string) => [
   {
     icon: Layout,
-    label: "Twoja edukacja",
+    label: t("sidebar.yourEducation"),
     href: "/",
   },
   {
     icon: Compass,
-    label: "Odkrywaj",
+    label: t("sidebar.discover"),
     href: "/search",
   },
   {
     icon: BarChart,
-    label: "Mój postęp",
+    label: t("sidebar.myProgress"),
     href: "/analytics",
   },
   {
     icon: Settings,
-    label: "Ustawienia",
+    label: t("sidebar.settings"),
     href: "/settings",
   },
 ];
 
-const teacherRoutes = [
+const getTeacherRoutes = (t: (key: string) => string) => [
   {
     icon: List,
-    label: "Kursy",
+    label: t("sidebar.courses"),
     href: "/teacher/courses",
   },
   {
     icon: Compass,
-    label: "Ścieżki edukacyjne",
+    label: t("sidebar.educationalPaths"),
     href: "/teacher/educational-paths",
   },
   {
     icon: BarChart,
-    label: "Statystyki",
+    label: t("sidebar.statistics"),
     href: "/teacher/analytics",
   },
   {
     icon: GroupIcon,
-    label: "Kursanci",
+    label: t("sidebar.students"),
     href: "/teacher/students",
   },
   {
     icon: Layout,
-    label: "Powiadomienia",
+    label: t("sidebar.notifications"),
     href: "/teacher/notifications",
   },
   {
     icon: Settings,
-    label: "Ustawienia",
+    label: t("sidebar.settings"),
     href: "/teacher/settings",
   },
 ];
@@ -70,6 +71,7 @@ interface OwnedSchool {
 export const SidebarRoutes = () => {
   const pathName = usePathname();
   const { userId } = useAuth();
+  const { t } = useI18n();
   const [hasSchool, setHasSchool] = useState(false);
 
   useEffect(() => {
@@ -92,23 +94,25 @@ export const SidebarRoutes = () => {
 
   const isTeacherPage = pathName?.startsWith("/teacher");
 
+  const guestRoutes = getGuestRoutes(t);
+  const teacherRoutes = getTeacherRoutes(t);
   let routes = isTeacherPage ? teacherRoutes : guestRoutes;
 
   // Filter teacher routes based on school ownership
   if (isTeacherPage) {
     // Remove notifications for teachers who don't own a school
     routes = routes.filter(route => {
-      if (route.label === "Powiadomienia" && !hasSchool) {
+      if (route.href === "/teacher/notifications" && !hasSchool) {
         return false; // Hide notifications if not school owner
       }
       return true;
     });
     
-    // Add "Twoja szkoła" before settings if user owns a school
+    // Add school management before settings if user owns a school
     if (hasSchool) {
       routes = [...routes.slice(0, -1), {
         icon: Users,
-        label: "Twoja szkoła",
+        label: t("sidebar.yourSchool"),
         href: "/teacher/school/manage",
       }, routes[routes.length - 1]];
     }

@@ -5,6 +5,7 @@ import { IconBadge } from "../icon-badge";
 import { BookOpen, Loader2 } from "lucide-react";
 import { CourseInfoCardProps } from "./marketplace-course-card";
 import { useState } from "react";
+import { useI18n } from "@/hooks/use-i18n";
 
 export const CourseInfoCard = ({
     id,
@@ -22,6 +23,7 @@ export const CourseInfoCard = ({
     const placeholderImageUrl = "/logo.png";
     const [isImageLoading, setIsImageLoading] = useState(true);
     const linkHref = type === "educationalPath" ? `/educational-paths/${id}` : `/courses/${id}`;
+    const { t } = useI18n();
     
     // Wyświetl nazwę szkoły jeśli kurs należy do szkoły, inaczej wyświetl autora
     const displayAuthor = schoolId && schoolName ? schoolName : author;
@@ -33,9 +35,9 @@ export const CourseInfoCard = ({
                 <div className="relative w-full aspect-square rounded-md overflow-hidden bg-gray-200">
                     {/* Info line for course or educational path */}
                     {type === "educationalPath" ? (
-                        <div className="absolute top-2 left-2 bg-orange-600 text-white text-xs px-2 py-1 rounded shadow">Ścieżka edukacyjna</div>
+                        <div className="absolute top-2 left-2 bg-orange-600 text-white text-xs px-2 py-1 rounded shadow">{t("course.educationalPath")}</div>
                     ) : (
-                        <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded shadow">Kurs</div>
+                        <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded shadow">{t("course.type")}</div>
                     )}
                     {isImageLoading && (
                         <div className="absolute inset-0 flex items-center justify-center">
@@ -57,7 +59,7 @@ export const CourseInfoCard = ({
                         {title}
                     </div>
                     <p className="text-xs text-muted-foreground min-h-[1rem]">
-                        {category || "Brak kategorii"}
+                        {category || t("common.noCategory")}
                     </p>
                     <p className="text-xs text-blue-400 min-h-[1rem]">
                         {displayAuthor}
@@ -66,18 +68,18 @@ export const CourseInfoCard = ({
                         {type === "educationalPath" ? (
                             <div className="flex items-center gap-x-2 text-orange-500">
                                 <IconBadge size="sm" icon={BookOpen} />
-                                <span>{modulesCount ?? 0} {modulesCount === 1 ? "kurs" : "kursy"}</span>
+                                <span>{modulesCount ?? 0} {modulesCount === 1 ? t("course.course") : t("course.courses")}</span>
                             </div>
                         ) : (
                             <div className="flex items-center gap-x-2 text-orange-500">
                                 <IconBadge size="sm" icon={BookOpen} />
-                                <span>{modulesCount} {modulesCount === 1 ? "lekcja" : "lekcje"}</span>
+                                <span>{modulesCount} {modulesCount === 1 ? t("course.lesson") : t("course.lessons")}</span>
                             </div>
                         )}
                     </div>
                     {isCompleted && (
                         <div className="mt-2 text-xs text-orange-700 font-semibold">
-                            Ukończony
+                            {t("common.completed")}
                         </div>
                     )}
                 </div>

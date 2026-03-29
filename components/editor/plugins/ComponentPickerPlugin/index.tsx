@@ -36,6 +36,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
 import useModal from '../../hooks/useModal';
+import {useI18n} from '@/hooks/use-i18n';
 import catTypingGif from '../../images/cat-typing.gif';
 import {EmbedConfigs} from '../AutoEmbedPlugin';
 import {INSERT_COLLAPSIBLE_COMMAND} from '../CollapsiblePlugin';
@@ -143,7 +144,7 @@ function getDynamicOptions(editor: LexicalEditor, queryString: string) {
 
 type ShowModal = ReturnType<typeof useModal>[1];
 
-function getBaseOptions(editor: LexicalEditor, showModal: ShowModal) {
+function getBaseOptions(editor: LexicalEditor, showModal: ShowModal, t: (key: string) => string) {
   return [
     new ComponentPickerOption('Paragraph', {
       icon: <i className="icon paragraph" />,
@@ -284,11 +285,11 @@ function getBaseOptions(editor: LexicalEditor, showModal: ShowModal) {
       onSelect: () =>
         editor.dispatchCommand(INSERT_COLLAPSIBLE_COMMAND, undefined),
     }),
-    new ComponentPickerOption('Bloki w kolumnach', {
+    new ComponentPickerOption(t('ed.pickerColumns'), {
       icon: <i className="icon columns" />,
       keywords: ['columns', 'layout', 'grid'],
       onSelect: () =>
-        showModal('Wstaw bloki w kolumnach', (onClose) => (
+        showModal(t('ed.pickerInsertColumns'), (onClose) => (
           <InsertLayoutDialog activeEditor={editor} onClose={onClose} />
         )),
     }),
@@ -307,6 +308,7 @@ function getBaseOptions(editor: LexicalEditor, showModal: ShowModal) {
 export default function ComponentPickerMenuPlugin(): JSX.Element {
   const [editor] = useLexicalComposerContext();
   const [modal, showModal] = useModal();
+  const { t } = useI18n();
   const [queryString, setQueryString] = useState<string | null>(null);
 
   const checkForTriggerMatch = useBasicTypeaheadTriggerMatch('/', {
@@ -314,7 +316,7 @@ export default function ComponentPickerMenuPlugin(): JSX.Element {
   });
 
   const options = useMemo(() => {
-    const baseOptions = getBaseOptions(editor, showModal);
+    const baseOptions = getBaseOptions(editor, showModal, t);
 
     if (!queryString) {
       return baseOptions;

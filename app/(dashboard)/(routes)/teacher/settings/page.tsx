@@ -10,6 +10,7 @@ import { Trash2, CreditCard, Settings, User, Building } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface UserCourse {
   id: number;
@@ -84,7 +85,7 @@ const normalizeVatRate = (vatRate?: number) => {
   const raw = vatRate ?? PLATFORM_VAT_RATE;
   return raw > 1 ? raw / 100 : raw;
 };
-const formatPln = (price: number) => price.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatPln = (price: number, locale: string) => price.toLocaleString(locale === 'en' ? 'en-US' : 'pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 interface StripeConnectInfo {
   hasAccount: boolean;
@@ -95,6 +96,7 @@ interface StripeConnectInfo {
 
 const TeacherSettingsPage = () => {
   const { userId, sessionId } = useAuth();
+  const { t, locale } = useI18n();
   const [userCourses, setUserCourses] = useState<UserCourse[]>([]);
   const [educationalPathPurchases, setEducationalPathPurchases] = useState<EducationalPathPurchase[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -166,7 +168,7 @@ const TeacherSettingsPage = () => {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('Błąd podczas ładowania danych');
+      toast.error(t("tSet.loadError"));
     } finally {
       setIsLoading(false);
     }
@@ -186,13 +188,13 @@ const TeacherSettingsPage = () => {
       if (response.ok) {
         const updatedData = await response.json();
         setUserProfile(updatedData);
-        toast.success('Profil został zaktualizowany');
+        toast.success(t("tSet.profileUpdated"));
       } else {
-        toast.error('Błąd podczas aktualizacji profilu');
+        toast.error(t("tSet.profileUpdateError"));
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error('Błąd podczas aktualizacji profilu');
+      toast.error(t("tSet.profileUpdateError"));
     } finally {
       setIsSaving(false);
     }
@@ -209,14 +211,14 @@ const TeacherSettingsPage = () => {
       });
 
       if (response.ok) {
-        toast.success('Subskrypcja kursu została anulowana');
+        toast.success(t("tSet.courseSubCancelled"));
         fetchData(); // Refresh the data
       } else {
-        toast.error('Błąd podczas anulowania subskrypcji kursu');
+        toast.error(t("tSet.courseSubCancelError"));
       }
     } catch (error) {
       console.error('Error cancelling course subscription:', error);
-      toast.error('Błąd podczas anulowania subskrypcji kursu');
+      toast.error(t("tSet.courseSubCancelError"));
     }
   };
 
@@ -231,14 +233,14 @@ const TeacherSettingsPage = () => {
       });
 
       if (response.ok) {
-        toast.success('Subskrypcja ścieżki edukacyjnej została anulowana');
+        toast.success(t("tSet.pathSubCancelled"));
         fetchData(); // Refresh the data
       } else {
-        toast.error('Błąd podczas anulowania subskrypcji ścieżki edukacyjnej');
+        toast.error(t("tSet.pathSubCancelError"));
       }
     } catch (error) {
       console.error('Error cancelling educational path subscription:', error);
-      toast.error('Błąd podczas anulowania subskrypcji ścieżki edukacyjnej');
+      toast.error(t("tSet.pathSubCancelError"));
     }
   };
 
@@ -261,11 +263,11 @@ const TeacherSettingsPage = () => {
           window.location.href = result.sessionUrl;
         }
       } else {
-        toast.error('Błąd podczas tworzenia subskrypcji platformy');
+        toast.error(t("tSet.platformSubError"));
       }
     } catch (error) {
       console.error('Error creating platform subscription:', error);
-      toast.error('Błąd podczas tworzenia subskrypcji platformy');
+      toast.error(t("tSet.platformSubError"));
     }
   };
 
@@ -282,21 +284,21 @@ const TeacherSettingsPage = () => {
       });
 
       if (response.ok) {
-        toast.success('Subskrypcja platformy zostanie anulowana na koniec okresu rozliczeniowego');
+        toast.success(t("tSet.platformSubCancelled"));
         fetchData(); // Refresh the data
       } else {
-        toast.error('Błąd podczas anulowania subskrypcji platformy');
+        toast.error(t("tSet.platformSubCancelError"));
       }
     } catch (error) {
       console.error('Error cancelling platform subscription:', error);
-      toast.error('Błąd podczas anulowania subskrypcji platformy');
+      toast.error(t("tSet.platformSubCancelError"));
     }
   };
 
   const recreateStripeAccountAsCompany = async () => {
     try {
       if (!stripeRecreateConfirm) {
-        toast.error("Zaznacz potwierdzenie przed kontynuacją");
+        toast.error(t("tSet.confirmRequired"));
         return;
       }
 
@@ -311,21 +313,21 @@ const TeacherSettingsPage = () => {
       const result = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        const msg = result?.error || "Nie udało się utworzyć nowego konta Stripe";
+        const msg = result?.error || t("tSet.stripeCreateFailed");
         toast.error(msg);
         return;
       }
 
       if (result?.onboardingUrl) {
-        toast.success("Tworzymy nowe konto Stripe jako firma. Przekierowujemy do konfiguracji...");
+        toast.success(t("tSet.stripeCreating"));
         window.location.href = result.onboardingUrl;
         return;
       }
 
-      toast.error("Nie otrzymano linku do konfiguracji Stripe");
+      toast.error(t("tSet.stripeNoLink"));
     } catch (error) {
       console.error("Error recreating Stripe account:", error);
-      toast.error(error instanceof Error ? error.message : "Wystąpił błąd");
+      toast.error(error instanceof Error ? error.message : t("tSet.genericError"));
     } finally {
       setIsRecreatingStripe(false);
     }
@@ -349,8 +351,8 @@ const TeacherSettingsPage = () => {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">⚙️ Ustawienia nauczyciela</h1>
-        <p className="text-muted-foreground">Zarządzaj swoimi ustawieniami konta, subskrypcjami i preferencjami</p>
+        <h1 className="text-2xl font-bold">{t("tSet.pageTitle")}</h1>
+        <p className="text-muted-foreground">{t("tSet.pageDesc")}</p>
       </div>
 
 
@@ -361,16 +363,16 @@ const TeacherSettingsPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              Profil użytkownika
+              {t("tSet.profileTitle")}
             </CardTitle>
             <CardDescription>
-              Zarządzaj swoimi danymi osobowymi i ustawieniami konta
+              {t("tSet.profileDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="firstName">Imię</Label>
+                <Label htmlFor="firstName">{t("tSet.firstName")}</Label>
                 <Input
                   id="firstName"
                   value={userProfile.firstName || ''}
@@ -378,7 +380,7 @@ const TeacherSettingsPage = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="lastName">Nazwisko</Label>
+                <Label htmlFor="lastName">{t("tSet.lastName")}</Label>
                 <Input
                   id="lastName"
                   value={userProfile.lastName || ''}
@@ -388,7 +390,7 @@ const TeacherSettingsPage = () => {
             </div>
             
             <div>
-              <Label htmlFor="displayName">Nazwa wyświetlana</Label>
+              <Label htmlFor="displayName">{t("tSet.displayName")}</Label>
               <Input
                 id="displayName"
                 value={userProfile.displayName || ''}
@@ -397,13 +399,13 @@ const TeacherSettingsPage = () => {
             </div>
 
             <div>
-              <Label htmlFor="businessType">Typ działalności</Label>
+              <Label htmlFor="businessType">{t("tSet.businessType")}</Label>
               <div className="p-2 border rounded-md bg-gray-50 flex items-center justify-between">
                 <span className="text-sm">
-                  {userProfile.businessType === 'individual' ? 'Osoba fizyczna' : 'Firma'}
+                  {userProfile.businessType === 'individual' ? t("tSet.individual") : t("tSet.company")}
                 </span>
                 {userProfile.businessType === 'individual' && (
-                  <span className="text-xs text-gray-500">Upgrade w sekcji powyżej</span>
+                  <span className="text-xs text-gray-500">{t("tSet.upgradeHint")}</span>
                 )}
               </div>
             </div>
@@ -418,11 +420,11 @@ const TeacherSettingsPage = () => {
                   setUserProfile({...userProfile, requiresVatInvoices: !!checked})
                 }
               />
-              <Label htmlFor="requiresVatInvoices">Wymaga faktur VAT</Label>
+              <Label htmlFor="requiresVatInvoices">{t("tSet.requiresVat")}</Label>
             </div>
 
             <Button onClick={() => updateProfile(userProfile)} disabled={isSaving}>
-              {isSaving ? 'Zapisywanie...' : 'Zapisz zmiany'}
+              {isSaving ? t("tSet.saving") : t("tSet.saveChanges")}
             </Button>
           </CardContent>
         </Card>
@@ -434,29 +436,29 @@ const TeacherSettingsPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building className="h-5 w-5" />
-              Status konta Stripe
+              {t("tSet.stripeTitle")}
             </CardTitle>
             <CardDescription>
-              Status Twojego konta płatniczego
+              {t("tSet.stripeDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">Status konta: {userProfile.stripeAccountStatus}</p>
+                <p className="font-medium">{t("tSet.accountStatus")}: {userProfile.stripeAccountStatus}</p>
                 <p className="text-sm text-muted-foreground">
-                  Onboarding: {userProfile.stripeOnboardingComplete ? 'Zakończony' : 'W trakcie'}
+                  {t("tSet.onboarding")}: {userProfile.stripeOnboardingComplete ? t("tSet.onboardingDone") : t("tSet.onboardingPending")}
                 </p>
                 {stripeConnectInfo?.stripeBusinessType && (
                   <p className="text-sm text-muted-foreground">
-                    Typ konta Stripe: {stripeConnectInfo.stripeBusinessType === 'company' ? 'Firma' : 'Individual'}
+                    {t("tSet.stripeAccountType")}: {stripeConnectInfo.stripeBusinessType === 'company' ? t("tSet.company") : 'Individual'}
                   </p>
                 )}
               </div>
               {!userProfile.stripeOnboardingComplete && userProfile.stripeAccountStatus && (
                 <Button asChild>
                   <a href="/api/stripe/create-account-link" target="_blank">
-                    Dokończ konfigurację
+                    {t("tSet.finishSetup")}
                   </a>
                 </Button>
               )}
@@ -470,12 +472,10 @@ const TeacherSettingsPage = () => {
               (stripeConnectInfo?.stripeBusinessType === 'individual' || stripeConnectInfo?.stripeBusinessType == null) && (
                 <div className="mt-6 space-y-3 rounded-lg border p-4">
                   <p className="text-sm font-medium">
-                    Faktury VAT (JDG): konto Stripe jako firma
+                    {t("tSet.vatJdgTitle")}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Jeśli Twoje konto Stripe zostało założone jako &quot;individual&quot;, Stripe może nie
-                    pozwolić na wystawianie faktur VAT. Ta opcja utworzy nowe konto Stripe Connect
-                    typu &quot;company&quot; i podmieni je w Twojej szkole. Stare konto nie zostanie usunięte.
+                    {t("tSet.vatJdgDesc")}
                   </p>
 
                   <div className="flex items-center space-x-2">
@@ -485,7 +485,7 @@ const TeacherSettingsPage = () => {
                       onCheckedChange={(checked) => setStripeRecreateConfirm(!!checked)}
                     />
                     <Label htmlFor="stripeRecreateConfirm">
-                      Rozumiem, że muszę ponownie przejść onboarding w Stripe
+                      {t("tSet.stripeRecreateConfirm")}
                     </Label>
                   </div>
 
@@ -494,7 +494,7 @@ const TeacherSettingsPage = () => {
                     onClick={recreateStripeAccountAsCompany}
                     disabled={!stripeRecreateConfirm || isRecreatingStripe}
                   >
-                    {isRecreatingStripe ? "Tworzenie konta..." : "Utwórz nowe konto Stripe jako firma"}
+                    {isRecreatingStripe ? t("tSet.stripeRecreating") : t("tSet.stripeRecreateBtn")}
                   </Button>
                 </div>
               )}
@@ -508,10 +508,10 @@ const TeacherSettingsPage = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
-            Subskrypcja platformy
+            {t("tSet.platformSubTitle")}
           </CardTitle>
           <CardDescription>
-            Zarządzaj dostępem do platformy Ecurs
+            {t("tSet.platformSubDesc")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -520,36 +520,36 @@ const TeacherSettingsPage = () => {
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                   <p className="font-medium">
-                    Plan: {platformSubscription.subscriptionType === 'individual' ? 'Indywidualny' : 'Szkolny'}
+                    {t("tSet.plan")}: {platformSubscription.subscriptionType === 'individual' ? t("tSet.planIndividual") : t("tSet.planSchool")}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Status: {platformSubscription.subscriptionStatus === 'active' ? 'Aktywny' : 
-                             platformSubscription.subscriptionStatus === 'cancel_at_period_end' ? 'Zostanie anulowany' :
-                             platformSubscription.subscriptionStatus || 'Nieznany'}
+                    {t("tSet.status")}: {platformSubscription.subscriptionStatus === 'active' ? t("tSet.statusActive") : 
+                             platformSubscription.subscriptionStatus === 'cancel_at_period_end' ? t("tSet.statusCancelling") :
+                             platformSubscription.subscriptionStatus || t("tSet.statusUnknown")}
                   </p>
                   {platformSubscription.currentPeriodEnd && (
                     <p className="text-sm text-muted-foreground">
                       {platformSubscription.subscriptionStatus === 'cancel_at_period_end' 
-                        ? 'Anulowanie: ' 
-                        : 'Następna płatność: '}
-                      {new Date(platformSubscription.currentPeriodEnd).toLocaleDateString('pl-PL')}
+                        ? t("tSet.cancellation") 
+                        : t("tSet.nextPayment")}
+                      {new Date(platformSubscription.currentPeriodEnd).toLocaleDateString(locale === 'en' ? 'en-US' : 'pl-PL')}
                     </p>
                   )}
                   {platformSubscription.trialEnd && new Date(platformSubscription.trialEnd) > new Date() && (
                     <p className="text-sm text-green-600">
-                      Okres próbny do: {new Date(platformSubscription.trialEnd).toLocaleDateString('pl-PL')}
+                      {t("tSet.trialUntil")}{new Date(platformSubscription.trialEnd).toLocaleDateString(locale === 'en' ? 'en-US' : 'pl-PL')}
                     </p>
                   )}
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-lg">
-                    {platformSubscription.amount ? `${formatPln(calculateGrossPrice(platformSubscription.amount))} ${platformSubscription.currency || 'PLN'}` : 'N/A'}
+                    {platformSubscription.amount ? `${formatPln(calculateGrossPrice(platformSubscription.amount), locale)} ${platformSubscription.currency || 'PLN'}` : 'N/A'}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {platformSubscription.subscriptionType === 'individual' ? 'miesięcznie' : 'rocznie'}
+                    {platformSubscription.subscriptionType === 'individual' ? t("tSet.monthly") : t("tSet.yearly")}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Kwota brutto (VAT {(normalizeVatRate(platformSubscription.vatRate) * 100).toFixed(0)}%)
+                    {t("tSet.grossAmount").replace("{percent}", (normalizeVatRate(platformSubscription.vatRate) * 100).toFixed(0))}
                   </p>
                 </div>
               </div>
@@ -559,22 +559,20 @@ const TeacherSettingsPage = () => {
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" className="w-full">
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Anuluj subskrypcję platformy
+                      {t("tSet.cancelPlatformSub")}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Czy na pewno chcesz anulować subskrypcję platformy?</AlertDialogTitle>
+                      <AlertDialogTitle>{t("tSet.cancelPlatformConfirmTitle")}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Subskrypcja zostanie anulowana na koniec bieżącego okresu rozliczeniowego. 
-                        Do tego czasu zachowasz dostęp do wszystkich funkcji platformy.
-                        Po anulowaniu nie będziesz mógł tworzyć nowych kursów ani zarządzać istniejącymi.
+                        {t("tSet.cancelPlatformConfirmDesc")}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                      <AlertDialogCancel>{t("tSet.cancelBtn")}</AlertDialogCancel>
                       <AlertDialogAction onClick={cancelPlatformSubscription}>
-                        Potwierdź anulowanie
+                        {t("tSet.confirmCancel")}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -584,7 +582,7 @@ const TeacherSettingsPage = () => {
           ) : (
             <div className="text-center space-y-4">
               <p className="text-muted-foreground">
-                Nie masz aktywnej subskrypcji platformy. Wybierz plan aby uzyskać pełny dostęp do funkcji nauczycielskich.
+                {t("tSet.noActiveSub")}
               </p>
               <div className="space-y-4">
                 {(
@@ -594,13 +592,13 @@ const TeacherSettingsPage = () => {
                   (userProfile?.isSchoolOwner && userProfile?.ownerSchoolType === 'individual')
                 ) && (
                   <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <h4 className="font-semibold">Plan Indywidualny</h4>
-                    <p className="text-sm text-muted-foreground mb-2">Do 100 uczniów</p>
-                    <p className="text-2xl font-bold mb-1">19,00 zł brutto <span className="text-sm font-normal text-muted-foreground line-through">29,00 zł</span><span className="text-sm font-normal">/miesiąc</span></p>
-                    <p className="text-xs text-muted-foreground mb-2">{formatPln(calculateNetPrice(19))} zł netto + VAT {PLATFORM_VAT_PERCENT}%</p>
-                    <p className="text-xs text-green-600 mb-3">3 miesiące gratis</p>
+                    <h4 className="font-semibold">{t("tSet.planIndividualTitle")}</h4>
+                    <p className="text-sm text-muted-foreground mb-2">{t("tSet.upTo100")}</p>
+                    <p className="text-2xl font-bold mb-1">{formatPln(19, locale)} zł brutto <span className="text-sm font-normal text-muted-foreground line-through">{formatPln(29, locale)} zł</span><span className="text-sm font-normal">/{t("tSet.monthly")}</span></p>
+                    <p className="text-xs text-muted-foreground mb-2">{formatPln(calculateNetPrice(19), locale)} zł netto + VAT {PLATFORM_VAT_PERCENT}%</p>
+                    <p className="text-xs text-green-600 mb-3">{t("tSet.freeMonths")}</p>
                     <Button onClick={() => subscribeToPlatform('individual')} className="w-full">
-                      Wybierz plan
+                      {t("tSet.choosePlan")}
                     </Button>
                   </div>
                 )}
@@ -611,13 +609,13 @@ const TeacherSettingsPage = () => {
                   (userProfile?.isSchoolOwner && userProfile?.ownerSchoolType === 'business')
                 ) && (
                   <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <h4 className="font-semibold">Plan Szkolny</h4>
-                    <p className="text-sm text-muted-foreground mb-2">Powyżej 100 uczniów</p>
-                    <p className="text-2xl font-bold mb-1">1 199,00 zł brutto <span className="text-sm font-normal text-muted-foreground line-through">1 499,00 zł</span><span className="text-sm font-normal">/rok</span></p>
-                    <p className="text-xs text-muted-foreground mb-2">{formatPln(calculateNetPrice(1199))} zł netto + VAT {PLATFORM_VAT_PERCENT}%</p>
-                    <p className="text-xs text-green-600 mb-3">3 miesiące gratis</p>
+                    <h4 className="font-semibold">{t("tSet.planSchoolTitle")}</h4>
+                    <p className="text-sm text-muted-foreground mb-2">{t("tSet.over100")}</p>
+                    <p className="text-2xl font-bold mb-1">{formatPln(1199, locale)} zł brutto <span className="text-sm font-normal text-muted-foreground line-through">{formatPln(1499, locale)} zł</span><span className="text-sm font-normal">/{t("tSet.yearly")}</span></p>
+                    <p className="text-xs text-muted-foreground mb-2">{formatPln(calculateNetPrice(1199), locale)} zł netto + VAT {PLATFORM_VAT_PERCENT}%</p>
+                    <p className="text-xs text-green-600 mb-3">{t("tSet.freeMonths")}</p>
                     <Button onClick={() => subscribeToPlatform('school')} className="w-full">
-                      Wybierz plan
+                      {t("tSet.choosePlan")}
                     </Button>
                   </div>
                 )}
@@ -634,10 +632,10 @@ const TeacherSettingsPage = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building className="h-5 w-5" />
-            Subskrypcja szkoły
+            {t("tSet.schoolSubTitle")}
           </CardTitle>
           <CardDescription>
-            Dostęp do platformy opłacany przez szkołę
+            {t("tSet.schoolSubDesc")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -645,44 +643,44 @@ const TeacherSettingsPage = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
                 <div>
-                  <p className="font-medium text-blue-900">Jesteś członkiem szkoły</p>
+                  <p className="font-medium text-blue-900">{t("tSet.schoolMember")}</p>
                   <p className="text-sm text-blue-700 mt-1">{userProfile.memberSchool.name}</p>
-                  <p className="text-xs text-blue-600 mt-2">Subskrypcja platformy jest opłacana przez Twoją szkołę. Nie musisz płacić osobno.</p>
+                  <p className="text-xs text-blue-600 mt-2">{t("tSet.schoolPays")}</p>
                 </div>
               </div>
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                   <p className="font-medium">
-                    Plan: {platformSubscription.subscriptionType === 'individual' ? 'Indywidualny' : 'Szkolny'}
+                    {t("tSet.plan")}: {platformSubscription.subscriptionType === 'individual' ? t("tSet.planIndividual") : t("tSet.planSchool")}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Status: {platformSubscription.subscriptionStatus === 'active' ? 'Aktywny' : 
-                             platformSubscription.subscriptionStatus === 'cancel_at_period_end' ? 'Zostanie anulowany' :
-                             platformSubscription.subscriptionStatus || 'Nieznany'}
+                    {t("tSet.status")}: {platformSubscription.subscriptionStatus === 'active' ? t("tSet.statusActive") : 
+                             platformSubscription.subscriptionStatus === 'cancel_at_period_end' ? t("tSet.statusCancelling") :
+                             platformSubscription.subscriptionStatus || t("tSet.statusUnknown")}
                   </p>
                   {platformSubscription.currentPeriodEnd && (
                     <p className="text-sm text-muted-foreground">
                       {platformSubscription.subscriptionStatus === 'cancel_at_period_end' 
-                        ? 'Anulowanie: ' 
-                        : 'Następna płatność: '}
-                      {new Date(platformSubscription.currentPeriodEnd).toLocaleDateString('pl-PL')}
+                        ? t("tSet.cancellation") 
+                        : t("tSet.nextPayment")}
+                      {new Date(platformSubscription.currentPeriodEnd).toLocaleDateString(locale === 'en' ? 'en-US' : 'pl-PL')}
                     </p>
                   )}
                   {platformSubscription.trialEnd && new Date(platformSubscription.trialEnd) > new Date() && (
                     <p className="text-sm text-green-600">
-                      Okres próbny do: {new Date(platformSubscription.trialEnd).toLocaleDateString('pl-PL')}
+                      {t("tSet.trialUntil")}{new Date(platformSubscription.trialEnd).toLocaleDateString(locale === 'en' ? 'en-US' : 'pl-PL')}
                     </p>
                   )}
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-lg">
-                    {platformSubscription.amount ? `${formatPln(calculateGrossPrice(platformSubscription.amount))} ${platformSubscription.currency || 'PLN'}` : 'N/A'}
+                    {platformSubscription.amount ? `${formatPln(calculateGrossPrice(platformSubscription.amount), locale)} ${platformSubscription.currency || 'PLN'}` : 'N/A'}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {platformSubscription.subscriptionType === 'individual' ? 'miesięcznie' : 'rocznie'}
+                    {platformSubscription.subscriptionType === 'individual' ? t("tSet.monthly") : t("tSet.yearly")}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Kwota brutto (VAT {(normalizeVatRate(platformSubscription.vatRate) * 100).toFixed(0)}%)
+                    {t("tSet.grossAmount").replace("{percent}", (normalizeVatRate(platformSubscription.vatRate) * 100).toFixed(0))}
                   </p>
                 </div>
               </div>
@@ -691,13 +689,13 @@ const TeacherSettingsPage = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
                 <div>
-                  <p className="font-medium text-blue-900">Jesteś członkiem szkoły</p>
+                  <p className="font-medium text-blue-900">{t("tSet.schoolMember")}</p>
                   <p className="text-sm text-blue-700 mt-1">{userProfile.memberSchool.name}</p>
-                  <p className="text-xs text-blue-600 mt-2">Szkoła nie ma jeszcze aktywnej subskrypcji platformy.</p>
+                  <p className="text-xs text-blue-600 mt-2">{t("tSet.schoolNoSub")}</p>
                 </div>
               </div>
               <p className="text-muted-foreground text-center">
-                Poproś właściciela szkoły, aby skonfigurował subskrypcję platformy.
+                {t("tSet.askOwner")}
               </p>
             </div>
           )}

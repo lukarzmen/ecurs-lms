@@ -18,6 +18,7 @@ import {
 } from "lexical";
 import { AudioNode } from "../../nodes/AudioNode"; // Ensure AudioNode is imported if needed for instanceof, though not directly used in this snippet
 import ProgressSpinner from "../TextGeneratorPlugin/ProgressComponent";
+import { useI18n } from '@/hooks/use-i18n';
 
 
 export const CREATE_AUDIO_NODE_COMMAND: LexicalCommand<{ audioSrc: string; transcription?: string }> = createCommand(
@@ -46,6 +47,7 @@ export function TranscriptionDialog({
   activeEditor: LexicalEditor;
   onClose: () => void;
 }): JSX.Element {
+  const { t } = useI18n();
   const [uploadType, setUploadType] = useState<"url" | "record" | "file" | null>(null);
   const [audioUrl, setAudioUrl] = useState(""); // Will store Base64 data URL or external URL
   const [recordingUrl, setRecordingAudioUrl] = useState(""); // For live preview of recording (can still be object URL)
@@ -167,23 +169,23 @@ export function TranscriptionDialog({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative">
         <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-700" onClick={onClose}>✕</button>
-        <h2 className="text-xl font-bold mb-4">Wybierz sposób przesyłania</h2>
+        <h2 className="text-xl font-bold mb-4">{t('ed.audioTitle')}</h2>
         <div className="flex flex-col space-y-2 mb-4">
           <button className="px-4 py-2 bg-orange-500 text-white rounded-md" onClick={() => setUploadType("url")}>
-            Wprowadź URL źródła
+            {t('ed.audioUrlBtn')}
           </button>
           <button className="px-4 py-2 bg-green-500 text-white rounded-md" onClick={() => setUploadType("record")}>
-            Nagraj dźwięk
+            {t('ed.audioRecordBtn')}
           </button>
           <button className="px-4 py-2 bg-gray-500 text-white rounded-md" onClick={() => setUploadType("file")}>
-            Prześlij plik
+            {t('ed.audioFileBtn')}
           </button>
         </div>
         {uploadType === "url" && (
           <input
             type="text"
             className="w-full p-2 border border-gray-300 rounded-md mb-4"
-            placeholder="Wprowadź URL źródła audio..."
+            placeholder={t('ed.audioUrlPlaceholder')}
             value={audioUrl}
             onChange={(e) => setAudioUrl(e.target.value)}
           />
@@ -191,15 +193,15 @@ export function TranscriptionDialog({
         {uploadType === "record" && (
           <>
             <button className={`px-4 py-2 ${isRecording ? "bg-red-500" : "bg-green-500"} text-white rounded-md`} onClick={handleRecord}>
-              {isRecording ? "Zatrzymaj nagrywanie" : "Rozpocznij nagrywanie"}
+              {isRecording ? t('ed.audioStopRec') : t('ed.audioStartRec')}
             </button>
             {recordingUrl && (
               <div className="mt-4">
                 <audio controls src={recordingUrl}> {/* Use src attribute directly for preview */}
-                  Twoja przeglądarka nie obsługuje tagu audio.
+                  {t('ed.audioNotSupported')}
                 </audio>
                 <button className="px-4 py-2 bg-orange-500 text-white rounded-md mt-2" onClick={handleUploadRecorded} disabled={loading || !file}>
-                  {loading ? "Przetwarzanie..." : "Użyj tego nagrania"}
+                  {loading ? t('ed.audioProcessing') : t('ed.audioUseRec')}
                 </button>
               </div>
             )}
@@ -218,11 +220,11 @@ export function TranscriptionDialog({
               }
             }} />
             <button className="px-4 py-2 bg-orange-500 text-white rounded-md mt-2" onClick={handleUpload} disabled={!file || loading}>
-              {loading ? "Przetwarzanie..." : "Użyj tego pliku"}
+              {loading ? t('ed.audioProcessing') : t('ed.audioUseFile')}
             </button>
             {file && ( // Show preview if a file is selected
               <audio controls className="mt-4" src={URL.createObjectURL(file)}>
-                Twoja przeglądarka nie obsługuje tagu audio.
+                {t('ed.audioNotSupported')}
               </audio>
             )}
           </>
@@ -235,13 +237,13 @@ export function TranscriptionDialog({
             onChange={() => setGenerateTranscription(!generateTranscription)}
             className="mr-2"
           />
-          <label htmlFor="generateTranscription" className="text-gray-800">Generuj transkrypcję</label>
+          <label htmlFor="generateTranscription" className="text-gray-800">{t('ed.audioTranscription')}</label>
         </div>
         <div className="flex justify-end space-x-2 mt-4">
-          <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md" onClick={onClose}>Anuluj</button>
+          <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md" onClick={onClose}>{t('ed.cancel')}</button>
           {(audioUrl && !loading) ? (
             <button className="px-4 py-2 bg-orange-500 text-white rounded-md" onClick={handleGenerate}>
-              Zatwierdź
+              {t('ed.audioApprove')}
             </button>
           ) : null}
         </div>

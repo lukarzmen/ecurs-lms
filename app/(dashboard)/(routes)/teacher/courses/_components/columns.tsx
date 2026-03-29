@@ -8,6 +8,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { useI18n } from "@/hooks/use-i18n";
 
 function CourseActionsCell({
   course,
@@ -17,6 +18,25 @@ function CourseActionsCell({
   onCourseDeleted?: (courseId: unknown) => void;
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { t } = useI18n();
+
+  const handleDelete = async (id: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`/api/courses/${id}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        toast.success(t('teacherCourses.deleteSuccess'));
+        return true;
+      } else {
+        toast.error(t('teacherCourses.deleteError'));
+        return false;
+      }
+    } catch (error) {
+      toast.error(t('teacherCourses.deleteException'));
+      return false;
+    }
+  };
 
   const handleConfirmDelete = async () => {
     const deleted = await handleDelete(course.id.toString());
@@ -53,11 +73,9 @@ function CourseActionsCell({
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full mx-4 text-left">
-            <h3 className="text-base font-semibold text-gray-900 mb-1">Usuń kurs</h3>
+            <h3 className="text-base font-semibold text-gray-900 mb-1">{t('teacherCourses.deleteCourse')}</h3>
             <p className="text-sm text-gray-600 mb-5">
-              Czy na pewno chcesz usunąć kurs{" "}
-              <span className="font-medium text-gray-900">„{course.title}"</span>?
-              {" "}Ta operacja jest nieodwracalna.
+              {t('teacherCourses.deleteConfirm').replace('{title}', course.title)}
             </p>
             <div className="flex justify-end gap-2">
               <Button
@@ -68,7 +86,7 @@ function CourseActionsCell({
                   setIsModalOpen(false);
                 }}
               >
-                Anuluj
+                {t('teacherCourses.cancel')}
               </Button>
               <Button
                 variant="destructive"
@@ -78,7 +96,7 @@ function CourseActionsCell({
                   handleConfirmDelete();
                 }}
               >
-                Usuń kurs
+                {t('teacherCourses.deleteCourse')}
               </Button>
             </div>
           </div>
@@ -88,25 +106,9 @@ function CourseActionsCell({
   );
 }
 
-const handleDelete = async (id: string): Promise<boolean> => {
-  try {
-    const response = await fetch(`/api/courses/${id}`, {
-      method: "DELETE",
-    });
-    if (response.ok) {
-      toast.success("Kurs został pomyślnie usunięty");
-      return true;
-    } else {
-      toast.error("Nie udało się usunąć kursu");
-      return false;
-    }
-  } catch (error) {
-    toast.error("Wystąpił błąd podczas usuwania kursu");
-    return false;
-  }
-};
 
-export const columns: ColumnDef<Course>[] = [
+
+export const getColumns = (t: (key: string) => string, locale: string): ColumnDef<Course>[] => [
   {
     accessorKey: "title",
     header: ({ column }) => (
@@ -115,7 +117,7 @@ export const columns: ColumnDef<Course>[] = [
         className="px-0 font-semibold text-gray-700"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Nazwa kursu
+        {t('teacherCourses.courseName')}
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
@@ -138,11 +140,11 @@ export const columns: ColumnDef<Course>[] = [
       const state = row.original.state;
       return state === 1 ? (
         <Badge className="bg-green-100 text-green-700 border border-green-200 hover:bg-green-100 font-medium shadow-none">
-          Opublikowany
+          {t('teacherCourses.published')}
         </Badge>
       ) : (
         <Badge variant="outline" className="text-gray-500 border-gray-300 font-medium">
-          Szkic
+          {t('teacherCourses.draft')}
         </Badge>
       );
     },
@@ -155,7 +157,7 @@ export const columns: ColumnDef<Course>[] = [
         className="px-0 font-semibold text-gray-700"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Data utworzenia
+        {t('teacherCourses.createdAt')}
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
@@ -163,7 +165,7 @@ export const columns: ColumnDef<Course>[] = [
       const date = new Date(row.original.createdAt);
       return (
         <span className="text-sm text-gray-500">
-          {date.toLocaleDateString("pl-PL", {
+          {date.toLocaleDateString(locale === 'en' ? 'en-US' : 'pl-PL', {
             day: "2-digit",
             month: "short",
             year: "numeric",

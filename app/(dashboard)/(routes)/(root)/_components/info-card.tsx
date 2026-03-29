@@ -6,9 +6,11 @@ interface InfoCardProps {
     variant?: "default" | "success" | "course" | "path";
     label: string;
     icon: LucideIcon;
+    itemLabels?: [string, string, string];
 }
 
-export const InfoCard = ({numberOfItems, variant, label, icon }: InfoCardProps) => {
+export const InfoCard = ({numberOfItems, variant, label, icon, itemLabels }: InfoCardProps) => {
+    const [item1, items24, items5plus] = itemLabels || ["sztuka", "sztuki", "sztuk"];
     let cardStyle = "border rounded-md flex items-center gap-x-2 p-3 ";
     let labelColor = "";
     let countColor = "text-gray-500";
@@ -37,7 +39,7 @@ export const InfoCard = ({numberOfItems, variant, label, icon }: InfoCardProps) 
             <div className="font-medium">
                 <p className={labelColor}>{label}</p>
                 <p className={`text-sm ${countColor}`}>
-                    {numberOfItems} {numberOfItems === 1 ? "sztuka" : (numberOfItems >= 2 && numberOfItems <= 4 ? "sztuki" : "sztuk")}
+                    {numberOfItems} {numberOfItems === 1 ? item1 : (numberOfItems >= 2 && numberOfItems <= 4 ? items24 : items5plus)}
                 </p>
             </div>
         </div>

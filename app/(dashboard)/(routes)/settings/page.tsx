@@ -7,6 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { Trash2, CreditCard, Settings } from "lucide-react";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface UserCourse {
   id: number;
@@ -49,6 +50,7 @@ interface EducationalPathPurchase {
 
 const SettingsPage = () => {
   const { userId, sessionId } = useAuth();
+  const { t, locale } = useI18n();
   const [userCourses, setUserCourses] = useState<UserCourse[]>([]);
   const [educationalPathPurchases, setEducationalPathPurchases] = useState<EducationalPathPurchase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,7 +89,7 @@ const SettingsPage = () => {
       }
     } catch (error) {
       console.error('Error fetching subscriptions:', error);
-      toast.error('Błąd podczas ładowania subskrypcji');
+      toast.error(t('settings.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -104,14 +106,14 @@ const SettingsPage = () => {
       });
 
       if (response.ok) {
-        toast.success('Subskrypcja kursu zostanie anulowana na koniec okresu rozliczeniowego');
+        toast.success(t('settings.courseCancelSuccess'));
         fetchSubscriptions(); // Refresh the list
       } else {
-        toast.error('Błąd podczas anulowania subskrypcji kursu');
+        toast.error(t('settings.courseCancelError'));
       }
     } catch (error) {
       console.error('Error cancelling course subscription:', error);
-      toast.error('Błąd podczas anulowania subskrypcji kursu');
+      toast.error(t('settings.courseCancelError'));
     }
   };
 
@@ -126,14 +128,14 @@ const SettingsPage = () => {
       });
 
       if (response.ok) {
-        toast.success('Subskrypcja ścieżki edukacyjnej zostanie anulowana na koniec okresu rozliczeniowego');
+        toast.success(t('settings.pathCancelSuccess'));
         fetchSubscriptions(); // Refresh the list
       } else {
-        toast.error('Błąd podczas anulowania subskrypcji ścieżki edukacyjnej');
+        toast.error(t('settings.pathCancelError'));
       }
     } catch (error) {
       console.error('Error cancelling educational path subscription:', error);
-      toast.error('Błąd podczas anulowania subskrypcji ścieżki edukacyjnej');
+      toast.error(t('settings.pathCancelError'));
     }
   };
 
@@ -158,10 +160,10 @@ const SettingsPage = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
             <Settings className="h-8 w-8 text-orange-600" />
-            <span>Ustawienia</span>
+            <span>{t('settings.title')}</span>
           </h1>
           <p className="text-gray-600 mt-2">
-            Zarządzaj swoimi subskrypcjami i ustawieniami konta
+            {t('settings.subtitle')}
           </p>
         </div>
       </div>
@@ -171,15 +173,15 @@ const SettingsPage = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-orange-600" />
-            Zakupione kursy
+            {t('settings.purchasedCourses')}
           </CardTitle>
           <CardDescription>
-            Przegląd wszystkich zakupionych kursów i aktywnych subskrypcji
+            {t('settings.purchasedCoursesDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {userCourses.length === 0 ? (
-            <p className="text-muted-foreground">Nie masz zakupionych kursów</p>
+            <p className="text-muted-foreground">{t('settings.noPurchasedCourses')}</p>
           ) : (
             <div className="space-y-4">
               {userCourses.map((userCourse) => (
@@ -189,21 +191,21 @@ const SettingsPage = () => {
                     <div className="text-sm text-muted-foreground space-y-1">
                       {userCourse.purchase ? (
                         <>
-                          <p>Typ: {userCourse.purchase.isRecurring ? 'Subskrypcja' : 'Jednorazowy zakup'}</p>
-                          <p>Status płatności: {userCourse.purchase.subscriptionStatus || 'N/A'}</p>
-                          <p>ID subskrypcji: {userCourse.purchase.subscriptionId || 'Brak'}</p>
+                          <p>{t('settings.type')} {userCourse.purchase.isRecurring ? t('settings.subscription') : t('settings.oneTimePurchase')}</p>
+                          <p>{t('settings.paymentStatus')} {userCourse.purchase.subscriptionStatus || 'N/A'}</p>
+                          <p>{t('settings.subscriptionId')} {userCourse.purchase.subscriptionId || t('settings.none')}</p>
                           {userCourse.purchase.currentPeriodEnd && (
                             <p>
-                              {userCourse.purchase.subscriptionStatus === 'cancel_at_period_end' ? 'Anulowanie: ' : 'Odnowienie: '}
-                              {new Date(userCourse.purchase.currentPeriodEnd).toLocaleDateString('pl-PL')}
+                              {userCourse.purchase.subscriptionStatus === 'cancel_at_period_end' ? t('settings.cancellation') + ' ' : t('settings.renewal') + ' '}
+                              {new Date(userCourse.purchase.currentPeriodEnd).toLocaleDateString(locale === 'en' ? 'en-US' : 'pl-PL')}
                             </p>
                           )}
                           {userCourse.purchase.amount && (
-                            <p>Kwota: {userCourse.purchase.amount} {userCourse.purchase.currency}</p>
+                            <p>{t('settings.amount')} {userCourse.purchase.amount} {userCourse.purchase.currency}</p>
                           )}
                         </>
                       ) : (
-                        <p>Brak danych o zakupie</p>
+                        <p>{t('settings.noPurchaseData')}</p>
                       )}
                     </div>
                   </div>
@@ -213,33 +215,32 @@ const SettingsPage = () => {
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">
                           <Trash2 className="h-4 w-4 mr-2" />
-                          Anuluj subskrypcję
+                          {t('settings.cancelSubscription')}
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Anulować subskrypcję?</AlertDialogTitle>
+                          <AlertDialogTitle>{t('settings.cancelSubscriptionTitle')}</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Czy na pewno chcesz anulować subskrypcję kursu &quot;{userCourse.course.title}&quot;? 
-                            Ta akcja jest nieodwracalna i stracisz dostęp do kursu po zakończeniu bieżącego okresu rozliczeniowego.
+                            {t('settings.cancelCourseDesc').replace('{title}', userCourse.course.title)}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                          <AlertDialogCancel>{t('settings.keepSubscription')}</AlertDialogCancel>
                           <AlertDialogAction 
                             onClick={() => cancelCourseSubscription(userCourse.id, userCourse.purchase?.subscriptionId)}
                             className="bg-red-600 text-white hover:bg-red-700"
                           >
-                            Anuluj subskrypcję
+                            {t('settings.cancelSubscription')}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
                   ) : (
                     <div className="text-sm text-muted-foreground px-3 py-2 bg-gray-50 rounded">
-                      {userCourse.purchase?.subscriptionStatus === 'canceled' ? 'Subskrypcja anulowana' :
-                       userCourse.purchase?.subscriptionStatus === 'cancel_at_period_end' ? 'Anulowanie zaplanowane' :
-                       !userCourse.purchase?.subscriptionId ? 'Jednorazowy zakup' : 'Nieaktywna subskrypcja'}
+                      {userCourse.purchase?.subscriptionStatus === 'canceled' ? t('settings.subscriptionCanceled') :
+                       userCourse.purchase?.subscriptionStatus === 'cancel_at_period_end' ? t('settings.cancellationScheduled') :
+                       !userCourse.purchase?.subscriptionId ? t('settings.oneTimePurchase') : t('settings.inactiveSubscription')}
                     </div>
                   )}
                 </div>
@@ -254,15 +255,15 @@ const SettingsPage = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-orange-600" />
-            Zakupione ścieżki edukacyjne
+            {t('settings.purchasedPaths')}
           </CardTitle>
           <CardDescription>
-            Przegląd wszystkich zakupionych ścieżek edukacyjnych i aktywnych subskrypcji
+            {t('settings.purchasedPathsDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {educationalPathPurchases.length === 0 ? (
-            <p className="text-muted-foreground">Nie masz zakupionych ścieżek edukacyjnych</p>
+            <p className="text-muted-foreground">{t('settings.noPurchasedPaths')}</p>
           ) : (
             <div className="space-y-4">
               {educationalPathPurchases.map((purchase) => (
@@ -270,17 +271,17 @@ const SettingsPage = () => {
                   <div>
                     <h3 className="font-medium">{purchase.educationalPath.title}</h3>
                     <div className="text-sm text-muted-foreground space-y-1">
-                      <p>Typ: {purchase.isRecurring ? 'Subskrypcja' : 'Jednorazowy zakup'}</p>
-                      <p>Status płatności: {purchase.subscriptionStatus || 'N/A'}</p>
-                      <p>ID subskrypcji: {purchase.subscriptionId || 'Brak'}</p>
+                      <p>{t('settings.type')} {purchase.isRecurring ? t('settings.subscription') : t('settings.oneTimePurchase')}</p>
+                      <p>{t('settings.paymentStatus')} {purchase.subscriptionStatus || 'N/A'}</p>
+                      <p>{t('settings.subscriptionId')} {purchase.subscriptionId || t('settings.none')}</p>
                       {purchase.currentPeriodEnd && (
                         <p>
-                          {purchase.subscriptionStatus === 'cancel_at_period_end' ? 'Anulowanie: ' : 'Odnowienie: '}
-                          {new Date(purchase.currentPeriodEnd).toLocaleDateString('pl-PL')}
+                          {purchase.subscriptionStatus === 'cancel_at_period_end' ? t('settings.cancellation') + ' ' : t('settings.renewal') + ' '}
+                          {new Date(purchase.currentPeriodEnd).toLocaleDateString(locale === 'en' ? 'en-US' : 'pl-PL')}
                         </p>
                       )}
                       {purchase.amount && (
-                        <p>Kwota: {purchase.amount} {purchase.currency}</p>
+                        <p>{t('settings.amount')} {purchase.amount} {purchase.currency}</p>
                       )}
                     </div>
                   </div>
@@ -290,33 +291,32 @@ const SettingsPage = () => {
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">
                           <Trash2 className="h-4 w-4 mr-2" />
-                          Anuluj subskrypcję
+                          {t('settings.cancelSubscription')}
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Anulować subskrypcję?</AlertDialogTitle>
+                          <AlertDialogTitle>{t('settings.cancelSubscriptionTitle')}</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Czy na pewno chcesz anulować subskrypcję ścieżki edukacyjnej &quot;{purchase.educationalPath.title}&quot;? 
-                            Ta akcja jest nieodwracalna i stracisz dostęp do ścieżki po zakończeniu bieżącego okresu rozliczeniowego.
+                            {t('settings.cancelPathDesc').replace('{title}', purchase.educationalPath.title)}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                          <AlertDialogCancel>{t('settings.keepSubscription')}</AlertDialogCancel>
                           <AlertDialogAction 
                             onClick={() => cancelEducationalPathSubscription(purchase.id, purchase.subscriptionId)}
                             className="bg-red-600 text-white hover:bg-red-700"
                           >
-                            Anuluj subskrypcję
+                            {t('settings.cancelSubscription')}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
                   ) : (
                     <div className="text-sm text-muted-foreground px-3 py-2 bg-gray-50 rounded">
-                      {purchase.subscriptionStatus === 'canceled' ? 'Subskrypcja anulowana' :
-                       purchase.subscriptionStatus === 'cancel_at_period_end' ? 'Anulowanie zaplanowane' :
-                       !purchase.subscriptionId ? 'Jednorazowy zakup' : 'Nieaktywna subskrypcja'}
+                      {purchase.subscriptionStatus === 'canceled' ? t('settings.subscriptionCanceled') :
+                       purchase.subscriptionStatus === 'cancel_at_period_end' ? t('settings.cancellationScheduled') :
+                       !purchase.subscriptionId ? t('settings.oneTimePurchase') : t('settings.inactiveSubscription')}
                     </div>
                   )}
                 </div>

@@ -3,6 +3,7 @@
 import axios from "axios";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+
 import {
   Form,
   FormControl,
@@ -21,19 +22,25 @@ import { Pencil, BookOpen } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { useI18n } from "@/hooks/use-i18n";
 
-const formSchema = z.object({
-  title: z.string().min(1, {
-    message: "Nazwa jest wymagana",
-  }),
-});
+
+
 
 interface TitleFormProps {
   title: string;
   courseId: string;
 }
 export const TitleForm = ({ title, courseId }: TitleFormProps) => {
+  const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
+  
+  const formSchema = z.object({
+  title: z.string().min(1, {
+    message: t('courseForm.nameRequired'),
+  }),
+});
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -49,33 +56,33 @@ export const TitleForm = ({ title, courseId }: TitleFormProps) => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await axios.patch(`/api/courses/${courseId}`, values);
-      toast.success("Zaktualizowano kurs");
+      toast.success(t('courseForm.courseUpdated'));
       toogleEdit();
       router.refresh();
     } catch (error) {
-      toast.error("Coś poszło nie tak");
+      toast.error(t('courseForm.somethingWrong'));
     }
   };
 
   return (
     <div className="mt-6">
       <FormCard
-        title="Nazwa kursu"
+        title={t('courseForm.courseName')}
         icon={BookOpen}
         status={{
-          label: isEditing ? "Edycja" : "Zapisano",
+          label: isEditing ? t('courseForm.editing') : t('courseForm.saved'),
           variant: isEditing ? "secondary" : "outline"
         }}
       >
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-muted-foreground">Tytuł kursu</span>
+          <span className="text-sm text-muted-foreground">{t('courseForm.courseTitle')}</span>
           <Button onClick={toogleEdit} variant="ghost" size="sm">
             {isEditing ? (
-              <>Anuluj</>
+              <>{t('courseForm.cancel')}</>
             ) : (
               <>
                 <Pencil className="h-4 w-4 mr-2"></Pencil>
-                Edytuj
+                {t('courseForm.edit')}
               </>
             )}
           </Button>
@@ -104,7 +111,7 @@ export const TitleForm = ({ title, courseId }: TitleFormProps) => {
               ></FormField>
               <FormActions>
                 <Button disabled={!isValid || isSubmitting} type="submit" className="flex-1">
-                  Zapisz
+                  {t('courseForm.save')}
                 </Button>
               </FormActions>
             </form>

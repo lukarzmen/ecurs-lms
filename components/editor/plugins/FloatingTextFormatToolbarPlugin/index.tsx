@@ -29,6 +29,7 @@ import {Dispatch, useCallback, useEffect, useRef, useState} from 'react';
 import * as React from 'react';
 import {createPortal} from 'react-dom';
 
+import {useI18n} from '@/hooks/use-i18n';
 import {getDOMRangeRect} from '../../utils/getDOMRangeRect';
 import {getSelectedNode} from '../../utils/getSelectedNode';
 import {setFloatingElemPosition} from '../../utils/setFloatingElemPosition';
@@ -65,6 +66,7 @@ function TextFormatFloatingToolbar({
   isUnderline: boolean;
   setIsLinkEditMode: Dispatch<boolean>;
 }): JSX.Element {
+  const { t } = useI18n();
   const popupCharStylesEditorRef = useRef<HTMLDivElement | null>(null);
 
   const insertLink = useCallback(() => {
@@ -201,8 +203,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
             }}
             className={'popup-item spaced ' + (isBold ? 'active' : '')}
-            title="Pogrubienie"
-            aria-label="Formatuj tekst jako pogrubiony">
+            title={t('ed.bold')}
+            aria-label={t('ed.fmtBoldAria')}>
             <i className="format bold" />
           </button>
           <button
@@ -211,8 +213,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
             }}
             className={'popup-item spaced ' + (isItalic ? 'active' : '')}
-            title="Kursywa"
-            aria-label="Formatuj tekst jako kursywa">
+            title={t('ed.italic')}
+            aria-label={t('ed.fmtItalicAria')}>
             <i className="format italic" />
           </button>
           <button
@@ -221,8 +223,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
             }}
             className={'popup-item spaced ' + (isUnderline ? 'active' : '')}
-            title="Podkreślenie"
-            aria-label="Formatuj tekst jako podkreślony">
+            title={t('ed.underline')}
+            aria-label={t('ed.fmtUnderlineAria')}>
             <i className="format underline" />
           </button>
           <button
@@ -231,8 +233,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
             }}
             className={'popup-item spaced ' + (isStrikethrough ? 'active' : '')}
-            title="Przekreślenie"
-            aria-label="Formatuj tekst z przekreśleniem">
+            title={t('ed.strikethrough')}
+            aria-label={t('ed.fmtStrikeAria')}>
             <i className="format strikethrough" />
           </button>
           <button
@@ -241,8 +243,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'subscript');
             }}
             className={'popup-item spaced ' + (isSubscript ? 'active' : '')}
-            title="Indeks dolny"
-            aria-label="Formatuj jako indeks dolny">
+            title={t('ed.subscript')}
+            aria-label={t('ed.fmtSubAria')}>
             <i className="format subscript" />
           </button>
           <button
@@ -251,8 +253,8 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'superscript');
             }}
             className={'popup-item spaced ' + (isSuperscript ? 'active' : '')}
-            title="Indeks górny"
-            aria-label="Formatuj jako indeks górny">
+            title={t('ed.superscript')}
+            aria-label={t('ed.fmtSupAria')}>
             <i className="format superscript" />
           </button>
           {/* <button
@@ -291,16 +293,16 @@ function TextFormatFloatingToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code');
             }}
             className={'popup-item spaced ' + (isCode ? 'active' : '')}
-            title="Wstaw blok kodu"
-            aria-label="Wstaw blok kodu">
+            title={t('ed.codeBlock')}
+            aria-label={t('ed.codeBlock')}>
             <i className="format code" />
           </button>
           <button
             type="button"
             onClick={insertLink}
             className={'popup-item spaced ' + (isLink ? 'active' : '')}
-            title="Wstaw link"
-            aria-label="Wstaw link">
+            title={t('ed.link')}
+            aria-label={t('ed.link')}>
             <i className="format link" />
           </button>
         </>

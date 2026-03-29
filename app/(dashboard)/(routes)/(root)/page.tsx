@@ -11,6 +11,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Categories } from "@/app/(dashboard)/(routes)/search/_components/categories";
 import { MarketplaceCoursesList } from "@/components/ui/marketplace-list";
+import { getMessages, getRequestLocale, createTranslator } from "@/lib/i18n/server";
 
 export default async function Home({
   searchParams,
@@ -21,6 +22,9 @@ export default async function Home({
   let eduPathFinishedCount = 0;
   let eduPathUnfinishedCount = 0;
   const { userId, sessionId } = await auth();
+  const locale = await getRequestLocale();
+  const messages = await getMessages(locale, "common");
+  const t = createTranslator(messages);
   if (!userId) {
     const resolvedSearchParams = searchParams ? await searchParams : undefined;
     const { title = "", categoryId = "" } = resolvedSearchParams || {};
@@ -50,29 +54,29 @@ export default async function Home({
                 priority
               />
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
-              Ecurs — uczysz się skuteczniej
+              {t("home.hero.title")}
               </h1>
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 text-center">
               <div className="rounded-xl border bg-gray-50 p-4">
                 <div className="text-base sm:text-lg font-semibold text-gray-900">
                   <span className="underline underline-offset-4 decoration-4 decoration-orange-600">
-                    Jesteś uczniem?
+                    {t("home.hero.areYouStudent")}
                   </span>
                 </div>
                 <p className="mt-2 text-gray-600 text-sm sm:text-base">
-                  Ucz się we własnym tempie i miej postępy zawsze pod ręką.
+                  {t("home.hero.studentDesc")}
                 </p>
               </div>
 
               <div className="rounded-xl border bg-gray-50 p-4">
                 <div className="text-base sm:text-lg font-semibold text-gray-900">
                   <span className="underline underline-offset-4 decoration-4 decoration-orange-600">
-                    Jesteś nauczycielem?
+                    {t("home.hero.areYouTeacher")}
                   </span>
                 </div>
                 <p className="mt-2 text-gray-600 text-sm sm:text-base">
-                  Twórz kursy i ścieżki w jednym miejscu, a AI niech pomoże Ci przygotować materiały szybciej i lepiej.
+                  {t("home.hero.teacherDesc")}
                 </p>
               </div>
             </div>
@@ -80,81 +84,81 @@ export default async function Home({
 
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl border bg-gray-50 p-4 transition-colors hover:bg-white">
-              <div className="font-semibold text-gray-900">🎓 Dla uczniów</div>
+              <div className="font-semibold text-gray-900">{t("home.hero.forStudents")}</div>
               <div className="mt-1 text-sm text-gray-600 leading-relaxed">
-                Dostawaj lekcje, zadania i jasny plan nauki, który napędza do działania.
+                {t("home.hero.forStudentsDesc")}
               </div>
             </div>
             <div className="rounded-xl border bg-gray-50 p-4 transition-colors hover:bg-white">
-              <div className="font-semibold text-gray-900">🧑‍🏫 Dla nauczycieli</div>
+              <div className="font-semibold text-gray-900">{t("home.hero.forTeachers")}</div>
               <div className="mt-1 text-sm text-gray-600 leading-relaxed">
-                Twórz kursy, ścieżki i materiały w jednym panelu, gotowe do sprzedaży i pracy z grupą.
+                {t("home.hero.forTeachersDesc")}
               </div>
             </div>
             <div className="rounded-xl border bg-gray-50 p-4 transition-colors hover:bg-white">
-              <div className="font-semibold text-gray-900">🤖 Wsparcie AI</div>
+              <div className="font-semibold text-gray-900">{t("home.hero.aiSupport")}</div>
               <div className="mt-1 text-sm text-gray-600 leading-relaxed">
-                AI pomaga w tworzeniu treści i wspiera uczniów w rozwoju.
+                {t("home.hero.aiSupportDesc")}
               </div>
             </div>
           </div>
 
           <div className="mt-8 rounded-2xl border bg-gray-50 p-4 sm:p-6">
             <div className="text-center text-sm sm:text-base font-semibold text-gray-900">
-              Na platformie znajdziesz
+              {t("home.hero.platformFeatures")}
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
               <div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm text-gray-700 shadow-sm">
                 <span className="text-lg">🎯</span>
-                <span>Ścieżki edukacyjne</span>
+                <span>{t("home.hero.featureEduPaths")}</span>
               </div>
               <div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm text-gray-700 shadow-sm">
                 <span className="text-lg">⚡</span>
-                <span>Kursy</span>
+                <span>{t("home.hero.featureCourses")}</span>
               </div>
               <div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm text-gray-700 shadow-sm">
                 <span className="text-lg">🧩</span>
-                <span>Interaktywne zadania</span>
+                <span>{t("home.hero.featureTasks")}</span>
               </div>
               <div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm text-gray-700 shadow-sm">
                 <span className="text-lg">🔔</span>
-                <span>Powiadomienia</span>
+                <span>{t("home.hero.featureNotifications")}</span>
               </div>
               <div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm text-gray-700 shadow-sm">
                 <span className="text-lg">📈</span>
-                <span>Analityki postępów</span>
+                <span>{t("home.hero.featureAnalytics")}</span>
               </div>
               <div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm text-gray-700 shadow-sm">
                 <span className="text-lg">💳</span>
-                <span>Płatności i sprzedaż</span>
+                <span>{t("home.hero.featurePayments")}</span>
               </div>
             </div>
           </div>
         </section>
         <section className="max-w-6xl mx-auto rounded-2xl border bg-white p-6 sm:p-10 shadow-sm">
           <div className="text-center space-y-2">
-            <h2 className="text-2xl font-semibold text-gray-900">Dołącz do platformy i zacznij od razu ✨</h2>
+            <h2 className="text-2xl font-semibold text-gray-900">{t("home.hero.joinTitle")}</h2>
             <p className="text-gray-600">
-              <span className="block">Wybierz kurs i zacznij od razu.</span>
-              <span className="block">Jeśli uczysz innych — twórz własne programy i obserwuj realne postępy grupy.</span>
+              <span className="block">{t("home.hero.joinDesc1")}</span>
+              <span className="block">{t("home.hero.joinDesc2")}</span>
             </p>
           </div>
 
           <div className="mt-6 flex flex-col gap-3 max-w-sm mx-auto">
             <Button asChild className="w-full h-12 text-base">
-              <Link href={`/sign-in?redirectUrl=${encodeURIComponent("/")}`}>Zaloguj się</Link>
+              <Link href={`/sign-in?redirectUrl=${encodeURIComponent("/")}`}>{t("home.hero.signIn")}</Link>
             </Button>
             <Button asChild variant="outline" className="w-full h-12 text-base">
-              <Link href={`/sign-up?redirectUrl=${encodeURIComponent("/")}`}>Dołącz teraz ✨</Link>
+              <Link href={`/sign-up?redirectUrl=${encodeURIComponent("/")}`}>{t("home.hero.joinNow")}</Link>
             </Button>
           </div>
         </section>
 
         <section className="max-w-6xl mx-auto rounded-2xl border bg-white p-6 sm:p-10 shadow-sm">
           <div className="text-center space-y-2">
-            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Kursy czekają na Ciebie 👇</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">{t("home.hero.coursesTitle")}</h2>
             <p className="text-gray-600">
-              Wybierz temat i zacznij naukę od razu 🛫
+              {t("home.hero.coursesDesc")}
             </p>
           </div>
 
@@ -222,17 +226,17 @@ export default async function Home({
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
             <HomeIcon className="h-8 w-8 text-orange-600" />
-            <span>Panel główny</span>
+            <span>{t("home.dashboard.title")}</span>
           </h1>
           <p className="text-gray-600 mt-2">
-            Witaj ponownie! Śledź swoje postępy i kontynuuj naukę
+            {t("home.dashboard.subtitle")}
           </p>
         </div>
       </div>
 
       {fetchError && ( // Conditionally render an error message
         <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200" role="alert">
-          <span className="font-medium">Błąd!</span> Nie udało się załadować kursów: {fetchError}
+          <span className="font-medium">{t("home.dashboard.errorTitle")}</span> {t("home.dashboard.errorCourses")} {fetchError}
         </div>
       )}
 
@@ -240,13 +244,13 @@ export default async function Home({
         <section className="rounded-xl border bg-white p-6">
           <div className="text-center space-y-3">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
-              Nie dołączyłeś jeszcze do żadnego kursu ani ścieżki
+              {t("home.dashboard.noCourses")}
             </h2>
             <p className="text-gray-600">
-              Aby wyszukać kursy i ścieżki, przejdź do zakładki Odkrywaj.
+              {t("home.dashboard.noCoursesDesc")}
             </p>
             <Button asChild className="h-11">
-              <Link href="/search">Odkrywaj</Link>
+              <Link href="/search">{t("home.dashboard.discover")}</Link>
             </Button>
           </div>
         </section>
@@ -257,10 +261,10 @@ export default async function Home({
         <div className="mb-8">
           <h2 className="text-3xl font-bold mb-2 text-gray-900 flex items-center gap-3">
         <CheckCircle className="h-8 w-8 text-orange-600" />
-        Twoje postępy
+        {t("home.dashboard.yourProgress")}
           </h2>
           <p className="text-gray-600">
-        Śledź swoje osiągnięcia w ścieżkach edukacyjnych i kursach
+        {t("home.dashboard.progressDesc")}
           </p>
         </div>
         
@@ -268,11 +272,11 @@ export default async function Home({
         <div className="mb-10">
           <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
         <GraduationCap className="h-5 w-5 text-orange-600" />
-        Ścieżki edukacyjne
+        {t("home.dashboard.eduPaths")}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <InfoCard icon={Clock} label="Ścieżki w trakcie" numberOfItems={eduPathUnfinishedCount} variant="path" />
-        <InfoCard icon={CheckCircle} label="Ścieżki ukończone" numberOfItems={eduPathFinishedCount} variant="path" />
+        <InfoCard icon={Clock} label={t("home.dashboard.pathsInProgress")} numberOfItems={eduPathUnfinishedCount} variant="path" itemLabels={[t("infoCard.item1"), t("infoCard.items24"), t("infoCard.items5plus")]} />
+        <InfoCard icon={CheckCircle} label={t("home.dashboard.pathsCompleted")} numberOfItems={eduPathFinishedCount} variant="path" itemLabels={[t("infoCard.item1"), t("infoCard.items24"), t("infoCard.items5plus")]} />
           </div>
         </div>
         
@@ -280,11 +284,11 @@ export default async function Home({
         <div>
           <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
         <BookOpen className="h-5 w-5 text-orange-600" />
-        Kursy
+        {t("home.dashboard.courses")}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <InfoCard icon={Clock} label="Kursy w trakcie" numberOfItems={unfinishedCount} variant="course" />
-        <InfoCard icon={CheckCircle} label="Kursy ukończone" numberOfItems={finishedCount} variant="course" />
+        <InfoCard icon={Clock} label={t("home.dashboard.coursesInProgress")} numberOfItems={unfinishedCount} variant="course" itemLabels={[t("infoCard.item1"), t("infoCard.items24"), t("infoCard.items5plus")]} />
+        <InfoCard icon={CheckCircle} label={t("home.dashboard.coursesCompleted")} numberOfItems={finishedCount} variant="course" itemLabels={[t("infoCard.item1"), t("infoCard.items24"), t("infoCard.items5plus")]} />
           </div>
         </div>
       </section>
@@ -293,7 +297,7 @@ export default async function Home({
       <section>
         <h2 className="text-xl font-semibold mb-6 text-gray-900 flex items-center gap-2">
           <GraduationCap className="h-6 w-6 text-orange-600" />
-          Twoje ścieżki edukacyjne
+          {t("home.dashboard.yourEduPaths")}
         </h2>
         <EnrolledEduPathList items={educationalPaths} />
       </section>
@@ -302,7 +306,7 @@ export default async function Home({
       <section>
         <h2 className="text-xl font-semibold mb-6 text-gray-900 flex items-center gap-2">
           <BookOpen className="h-6 w-6 text-orange-600" />
-          Twoje kursy
+          {t("home.dashboard.yourCourses")}
         </h2>
         <EnrolledEduList items={courses} />
       </section>

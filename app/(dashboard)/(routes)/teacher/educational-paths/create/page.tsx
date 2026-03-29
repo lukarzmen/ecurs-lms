@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useI18n } from "@/hooks/use-i18n";
 
 
 const CreateEducationalPathPage = () => {
@@ -21,6 +22,7 @@ const CreateEducationalPathPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const { userId } = useAuth();
+  const { t } = useI18n();
 
   useEffect(() => {
     // Fetch teacher's courses using userId from useAuth
@@ -47,7 +49,7 @@ const CreateEducationalPathPage = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      if (!userId) throw new Error("Brak użytkownika");
+      if (!userId) throw new Error(t("epCreate.noUser"));
       const res = await fetch("/api/educational-paths", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -58,12 +60,12 @@ const CreateEducationalPathPage = () => {
           userProviderId: userId,
         }),
       });
-      if (!res.ok) throw new Error("Błąd tworzenia ścieżki edukacyjnej");
+      if (!res.ok) throw new Error(t("epCreate.createError"));
       const data = await res.json();
-      toast.success("Ścieżka edukacyjna utworzona!");
+      toast.success(t("epCreate.created"));
       router.push(`/teacher/educational-paths/${data.id}`);
     } catch (error) {
-      toast.error("Coś poszło nie tak");
+      toast.error(t("epCreate.genericError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -79,17 +81,17 @@ const CreateEducationalPathPage = () => {
             className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition mb-4 select-none gap-1"
           >
             <ArrowLeft className="h-4 w-4" />
-            Powrót do listy ścieżek
+            {t("epCreate.back")}
           </Link>
         </div>
 
         {/* Title */}
         <div className="mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
-            📚 Utwórz ścieżkę edukacyjną
+            {t("epCreate.heading")}
           </h1>
           <p className="text-muted-foreground mt-2">
-            Połącz wiele kursów w logiczną sekwencję nauki dla uczniów
+            {t("epCreate.subtitle")}
           </p>
         </div>
 
@@ -102,24 +104,24 @@ const CreateEducationalPathPage = () => {
                 <div className="flex items-start gap-4 p-4 bg-primary/5 rounded-lg border border-primary/10">
                   <BookMarked className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
                   <p className="text-sm text-foreground">
-                    Tytuł powinien być wyraźny i opisywać cel nauki. To będzie pierwszy kontakt ucznia ze ścieżką.
+                    {t("epCreate.titleHint")}
                   </p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-2">
-                    Tytuł ścieżki edukacyjnej
+                    {t("epCreate.titleLabel")}
                   </label>
                   <Input
                     type="text"
                     value={title}
                     onChange={e => setTitle(e.target.value)}
                     disabled={isSubmitting}
-                    placeholder="np. 'Fundamenty programowania web'"
+                    placeholder={t("epCreate.titlePlaceholder")}
                     className="border-2 text-base py-2.5"
                     required
                   />
                   <p className="text-xs text-muted-foreground mt-2">
-                    {title.length}/100 znaków
+                    {t("epCreate.charCount").replace("{count}", String(title.length))}
                   </p>
                 </div>
               </div>
@@ -129,22 +131,22 @@ const CreateEducationalPathPage = () => {
                 <div className="flex items-start gap-4 p-4 bg-primary/5 rounded-lg border border-primary/10">
                   <FileText className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
                   <p className="text-sm text-foreground">
-                    Opisz, jakie umiejętności uczniowie zdobędą oraz jaki jest cel tej ścieżki.
+                    {t("epCreate.descHint")}
                   </p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-2">
-                    Opis ścieżki
+                    {t("epCreate.descLabel")}
                   </label>
                   <Textarea
                     value={description}
                     onChange={e => setDescription(e.target.value)}
                     disabled={isSubmitting}
-                    placeholder="np. 'Ta ścieżka obejmuje wszystko, co potrzebujesz, aby zacząć programować aplikacje web...'"
+                    placeholder={t("epCreate.descPlaceholder")}
                     className="border-2 resize-none min-h-[150px]"
                   />
                   <p className="text-xs text-muted-foreground mt-2">
-                    {description.length}/500 znaków
+                    {t("epCreate.descCharCount").replace("{count}", String(description.length))}
                   </p>
                 </div>
               </div>
@@ -154,16 +156,16 @@ const CreateEducationalPathPage = () => {
                 <div className="flex items-start gap-4 p-4 bg-primary/5 rounded-lg border border-primary/10">
                   <BookMarked className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
                   <p className="text-sm text-foreground">
-                    Dodaj kursy w kolejności, w której uczniowie powinni je ukończyć. Kolejność jest ważna!
+                    {t("epCreate.coursesHint")}
                   </p>
                 </div>
                 <label className="block text-sm font-semibold text-foreground mb-3">
-                  Wybrane kursy ({selectedCourses.length})
+                  {t("epCreate.selectedCourses").replace("{count}", String(selectedCourses.length))}
                 </label>
                 {coursesLoading ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Ładowanie kursów...
+                    {t("epCreate.loadingCourses")}
                   </div>
                 ) : (
                   <>
@@ -184,7 +186,7 @@ const CreateEducationalPathPage = () => {
                                 type="button"
                                 className="p-1 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded transition"
                                 onClick={() => setSelectedCourses(selectedCourses.filter(id => id !== courseId))}
-                                aria-label="Usuń kurs"
+                                aria-label={t("epCreate.removeCourse")}
                               >
                                 <X className="w-4 h-4" />
                               </button>
@@ -195,7 +197,7 @@ const CreateEducationalPathPage = () => {
                     )}
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-2">
-                        Dodaj kurs
+                        {t("epCreate.addCourse")}
                       </label>
                       <Combobox
                         options={courses
@@ -221,7 +223,7 @@ const CreateEducationalPathPage = () => {
                   onClick={() => router.push("/teacher/educational-paths")}
                   disabled={isSubmitting}
                 >
-                  Anuluj
+                  {t("epCreate.cancel")}
                 </Button>
                 <Button
                   type="submit"
@@ -230,7 +232,7 @@ const CreateEducationalPathPage = () => {
                   {isSubmitting ? (
                     <Loader2 className="animate-spin mr-2" size={18} />
                   ) : null}
-                  {isSubmitting ? 'Tworzenie...' : 'Utwórz ścieżkę'}
+                  {isSubmitting ? t("epCreate.creating") : t("epCreate.submit")}
                 </Button>
               </div>
             </form>
