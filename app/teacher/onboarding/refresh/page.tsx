@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { useI18n } from "@/hooks/use-i18n";
 
 export default function OnboardingRefreshPage() {
+  const { t } = useI18n();
   const [isRedirecting, setIsRedirecting] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -21,23 +23,23 @@ export default function OnboardingRefreshPage() {
         });
 
         if (!response.ok) {
-          throw new Error("Nie udało się odświeżyć linku do konfiguracji");
+          throw new Error(t("onboarding.refresh.error.refreshFailed"));
         }
 
         const result = await response.json();
         
         if (result.onboardingUrl) {
-          toast.success("Odświeżono link do konfiguracji, przekierowujemy...");
+          toast.success(t("onboarding.refresh.toast.refreshed"));
           // Small delay to show the message
           setTimeout(() => {
             window.location.href = result.onboardingUrl;
           }, 1500);
         } else {
-          throw new Error("Nie otrzymano nowego linku do konfiguracji");
+          throw new Error(t("onboarding.refresh.error.noNewLink"));
         }
       } catch (err) {
         console.error("Error refreshing onboarding:", err);
-        setError(err instanceof Error ? err.message : "Wystąpił nieoczekiwany błąd");
+        setError(err instanceof Error ? err.message : t("onboarding.refresh.error.unexpected"));
         setIsRedirecting(false);
         
         // Redirect to teacher dashboard after 5 seconds on error
@@ -48,7 +50,7 @@ export default function OnboardingRefreshPage() {
     };
 
     refreshOnboarding();
-  }, [router]);
+  }, [router, t]);
 
   const manualRetry = async () => {
     setError(null);
@@ -62,20 +64,20 @@ export default function OnboardingRefreshPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Nie udało się utworzyć nowego linku do konfiguracji");
+        throw new Error(t("onboarding.refresh.error.createNewLinkFailed"));
       }
 
       const result = await response.json();
       
       if (result.onboardingUrl) {
-        toast.success("Przekierowujemy do konfiguracji...");
+        toast.success(t("onboarding.refresh.toast.redirectingToSetup"));
         window.location.href = result.onboardingUrl;
       } else {
-        throw new Error("Nie otrzymano linku do konfiguracji");
+        throw new Error(t("onboarding.refresh.error.noLink"));
       }
     } catch (err) {
       console.error("Manual retry error:", err);
-      setError(err instanceof Error ? err.message : "Nie udało się rozpocząć konfiguracji");
+      setError(err instanceof Error ? err.message : t("onboarding.refresh.error.startFailed"));
       setIsRedirecting(false);
     }
   };
@@ -89,16 +91,14 @@ export default function OnboardingRefreshPage() {
             <div className="flex justify-center">
               <RefreshCw className="animate-spin text-orange-600" size={48} />
             </div>
-            <h1 className="text-2xl font-bold text-orange-700">Odświeżanie konfiguracji</h1>
+            <h1 className="text-2xl font-bold text-orange-700">{t("onboarding.refresh.title")}</h1>
             <p className="text-gray-600">
-              Przygotowujemy nowy link do konfiguracji konta płatności. 
-              Za chwilę zostaniesz przekierowany do Stripe.
+              {t("onboarding.refresh.description")}
             </p>
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
               <p className="text-xs text-orange-700">
-                <strong>Dlaczego to się dzieje?</strong><br />
-                Link do konfiguracji wygasł lub nastąpił błąd podczas procesu. 
-                Tworzymy nowy, bezpieczny link.
+                <strong>{t("onboarding.refresh.whyTitle")}</strong><br />
+                {t("onboarding.refresh.whyBody")}
               </p>
             </div>
           </>
@@ -109,7 +109,7 @@ export default function OnboardingRefreshPage() {
             <div className="flex justify-center">
               <AlertCircle className="text-red-600" size={48} />
             </div>
-            <h1 className="text-2xl font-bold text-red-700">Problem z odświeżeniem</h1>
+            <h1 className="text-2xl font-bold text-red-700">{t("onboarding.refresh.errorTitle")}</h1>
             <div className="space-y-4">
               <p className="text-gray-700">{error}</p>
               
@@ -122,10 +122,10 @@ export default function OnboardingRefreshPage() {
                   {isRedirecting ? (
                     <div className="flex items-center justify-center space-x-2">
                       <Loader2 className="animate-spin" size={16} />
-                      <span>Próbuję ponownie...</span>
+                      <span>{t("onboarding.refresh.retrying")}</span>
                     </div>
                   ) : (
-                    "Spróbuj ponownie"
+                    t("onboarding.refresh.retry")
                   )}
                 </button>
                 
@@ -133,12 +133,12 @@ export default function OnboardingRefreshPage() {
                   onClick={() => router.push("/teacher/courses")}
                   className="w-full py-2 px-4 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                 >
-                  Przejdź do panelu nauczyciela
+                  {t("onboarding.refresh.goDashboard")}
                 </button>
               </div>
 
               <p className="text-xs text-gray-500">
-                Możesz dokończyć konfigurację później z panelu nauczyciela.
+                {t("onboarding.refresh.hint")}
               </p>
             </div>
           </>

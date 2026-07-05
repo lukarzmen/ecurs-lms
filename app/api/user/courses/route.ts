@@ -21,6 +21,8 @@ export type CourseDetails = Omit<Course, 'userModules'> & {
     category: Category | null;
     school: { id: number; name: string } | null;
     modulesCount: number;
+    completedModulesCount: number;
+    nextModuleId: number | null;
     isCompleted: boolean;
     author: {
         firstName: string | null;
@@ -131,6 +133,16 @@ export async function GET(req: Request): Promise<NextResponse<DashboardCoursesRe
         // Prepare the detailed course object for the response
         const { modules, ...courseBaseData } = course;
         const closeCourseCompleted = allModulesFinished && state === 1;
+
+        // Find first unfinished module for "Continue" button
+        const completedModulesCount = course.modules.filter(
+            m => m.userModules.length > 0 && m.userModules[0].isFinished
+        ).length;
+        const nextModule = course.modules.find(
+            m => !(m.userModules.length > 0 && m.userModules[0].isFinished)
+        );
+        const nextModuleId = !closeCourseCompleted && nextModule ? nextModule.id : null;
+
         const courseDetail: CourseDetails = {
             ...courseBaseData,
             author: course.author
@@ -146,6 +158,8 @@ export async function GET(req: Request): Promise<NextResponse<DashboardCoursesRe
             category: course.category,
             type: "course",
             modulesCount: totalModules,
+            completedModulesCount,
+            nextModuleId,
             isCompleted: closeCourseCompleted,
             enrolled: false,
         };

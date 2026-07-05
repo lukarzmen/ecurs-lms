@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
+import { useI18n } from "@/hooks/use-i18n";
 
 const TERMS_EFFECTIVE_DATE = "18.10.2025";
 const TERMS_LAST_UPDATE = "18.10.2025";
@@ -352,6 +353,7 @@ interface BusinessTypeData {
 
 export default function RegisterPage() {
   const { isSignedIn, userId, sessionId } = useAuth();
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const [loadingState, setLoadingState] = useState<LoadingState>("idle");
   const [currentStep, setCurrentStep] = useState<RegistrationStep>("role-selection");
@@ -1706,18 +1708,18 @@ export default function RegisterPage() {
               <Loader2 className="animate-spin mx-auto" size={40} />
             </div>
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              {loadingState === "redirecting-to-stripe" ? "Przygotowywanie przekierowania..." : loadingState === "creating-platform-subscription" ? "Przetwarzanie płatności..." : "Finalizowanie rejestracji..."}
+              {loadingState === "redirecting-to-stripe" ? t("register.overlay.preparingRedirect") : loadingState === "creating-platform-subscription" ? t("register.overlay.processingPayment") : t("register.overlay.finalizingRegistration")}
             </h3>
             <p className="text-sm text-gray-600 mb-4">
               {loadingState === "redirecting-to-stripe" 
-                ? "Za chwilę zostaniesz przekierowany na bezpieczną stronę Stripe do konfiguracji konta płatności."
+                ? t("register.overlay.redirectStripeInfo")
                 : loadingState === "creating-platform-subscription"
-                ? "Przekierowujemy Cię do systemu płatności platformy..."
-                : "Przekierowujemy Cię do panelu nauczyciela..."}
+                ? t("register.overlay.redirectPlatformPayment")
+                : t("register.overlay.redirectTeacherDashboard")}
             </p>
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
               <p className="text-xs text-yellow-700">
-                ⚠️ Proszę nie zamykać tej strony i nie korzystać z przeglądarki podczas przekierowywania.
+                {t("register.overlay.warning")}
               </p>
             </div>
           </div>
@@ -1726,9 +1728,9 @@ export default function RegisterPage() {
       
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-white p-2 sm:p-4">
         <div className="registration-container flex flex-col items-center w-full max-w-sm sm:max-w-lg mx-auto text-center p-3 sm:p-6 space-y-3 sm:space-y-6 bg-white rounded-lg sm:rounded-xl shadow-lg border border-orange-100">
-        <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-orange-700 leading-tight">Witamy w Ecurs!</h1>
+        <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-orange-700 leading-tight">{t("register.welcome.title")}</h1>
         <p className="text-sm sm:text-base text-gray-600 px-1 sm:px-2 leading-relaxed">
-          Dołącz do naszej platformy edukacyjnej, aby uzyskać dostęp do wszystkich kursów, zasobów i spersonalizowanych doświadczeń edukacyjnych.
+          {t("register.welcome.description")}
         </p>
         <div className="w-12 sm:w-16 h-1 bg-orange-500 mx-auto my-1 sm:my-2 rounded"></div>
         
@@ -1767,7 +1769,7 @@ export default function RegisterPage() {
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-gray-700 mb-1">Chcesz uczyć siebie czy innych?</h2>
               <p className="text-xs sm:text-sm text-gray-500 mb-2">
-                Wybierz co chcesz robić na platformie
+                {t("register.roleSelection.subtitle")}
               </p>
               <div className="flex flex-col gap-3 sm:gap-4">
                 {isMobileDevice ? (
@@ -1808,7 +1810,7 @@ export default function RegisterPage() {
                         minHeight: '48px' // Minimum touch target size
                       }}
                     >
-                      👩‍🎓 Chcę się uczyć
+                      {t("register.roleSelection.student")}
                     </div>
                     <div
                       className={`w-full py-4 px-4 sm:px-8 rounded-lg font-medium text-white text-base sm:text-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 transition-colors flex items-center justify-center gap-2 cursor-pointer touch-manipulation select-none
@@ -1845,7 +1847,7 @@ export default function RegisterPage() {
                         minHeight: '48px' // Minimum touch target size
                       }}
                     >
-                      👨‍🏫 Chcę uczyć innych
+                      {t("register.roleSelection.teacher")}
                     </div>
                   </>
                 ) : (
@@ -1865,7 +1867,7 @@ export default function RegisterPage() {
                         WebkitTouchCallout: 'none'
                       }}
                     >
-                      👩‍🎓 Chcę się uczyć
+                      {t("register.roleSelection.student")}
                     </button>
                     <button
                       type="button"
@@ -1881,7 +1883,7 @@ export default function RegisterPage() {
                         WebkitTouchCallout: 'none'
                       }}
                     >
-                      👨‍🏫 Chcę uczyć innych
+                      {t("register.roleSelection.teacher")}
                     </button>
                   </>
                 )}
@@ -1891,19 +1893,19 @@ export default function RegisterPage() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="flex items-center gap-2 text-base sm:text-lg font-semibold text-blue-600">
-                  👨‍🏫 Typ działalności
+                  {t("register.businessType.title")}
                 </span>
                 <button
                   onClick={handleBackToRoleSelection}
                   className={`text-xs sm:text-sm text-gray-500 hover:text-gray-700 transition-colors ${(isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none opacity-50" : ""}`}
                   disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                 >
-                  ← Zmień rolę
+                  {t("register.actions.changeRole")}
                 </button>
               </div>
 
               <div className="space-y-3 sm:space-y-4">
-                <h3 className="text-sm sm:text-md font-semibold text-gray-700">Wybierz typ swojej działalności:</h3>
+                <h3 className="text-sm sm:text-md font-semibold text-gray-700">{t("register.businessType.select")}</h3>
                 
                 <div className="space-y-2 sm:space-y-3">
                   <label className="flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 md:p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
@@ -1927,16 +1929,16 @@ export default function RegisterPage() {
                       disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-700 text-sm sm:text-base">🧑‍💼 Indywidualny nauczyciel</div>
+                      <div className="font-medium text-gray-700 text-sm sm:text-base">{t("register.businessType.individual.title")}</div>
                       <div className="text-xs sm:text-sm text-gray-600 mt-1 leading-tight">
-                        Osoba fizyczna lub JDG - możesz wybrać czy chcesz wystawiać faktury VAT
+                        {t("register.businessType.individual.description")}
                       </div>
                     </div>
                   </label>
 
                   {businessData.businessType === "individual" && (
                     <div className="ml-8 sm:ml-10 mt-2 space-y-3 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <h4 className="font-medium text-green-800 text-sm sm:text-base">Dodatkowe opcje:</h4>
+                      <h4 className="font-medium text-green-800 text-sm sm:text-base">{t("register.businessType.additionalOptions")}</h4>
                       
                       <label className="flex items-start space-x-2 sm:space-x-3 cursor-pointer">
                         <input
@@ -1954,15 +1956,15 @@ export default function RegisterPage() {
                           disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                         />
                         <div className="text-xs sm:text-sm">
-                          <div className="font-medium text-gray-700">Prowadzę JDG i chcę wystawiać faktury VAT</div>
-                          <div className="text-gray-600">Zaznacz, jeśli prowadzisz jednoosobową działalność gospodarczą i chcesz wystawiać faktury VAT uczniom</div>
+                          <div className="font-medium text-gray-700">{t("register.businessType.vatCheckbox.title")}</div>
+                          <div className="text-gray-600">{t("register.businessType.vatCheckbox.description")}</div>
                         </div>
                       </label>
 
                       {businessData.requiresVatInvoices && (
                         <div className="mt-3">
                           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                            NIP * (wymagany dla JDG)
+                            {t("register.businessType.taxIdRequired")}
                           </label>
                           <input
                             type="text"
@@ -1972,12 +1974,12 @@ export default function RegisterPage() {
                               setBusinessData(prev => ({ ...prev, taxId: e.target.value }))
                             }}
                             className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                            placeholder="np. 1234567890"
+                            placeholder={t("register.businessType.taxIdPlaceholder")}
                             disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                             required
                           />
                           <p className="text-xs text-gray-600 mt-1">
-                            NIP jest wymagany do wystawiania faktur VAT. W Stripe będzie użyty jako VAT ID w formacie &quot;PL&quot; + NIP
+                            {t("register.businessType.taxIdHint")}
                           </p>
                         </div>
                       )}
@@ -2004,9 +2006,9 @@ export default function RegisterPage() {
                       disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-700 text-sm sm:text-base">🏢 Tryb Organizacji (nowa szkoła/placówka)</div>
+                      <div className="font-medium text-gray-700 text-sm sm:text-base">{t("register.businessType.company.title")}</div>
                       <div className="text-xs sm:text-sm text-gray-600 mt-1 leading-tight">
-                        Sp. z o.o., fundacja, stowarzyszenie - wymaga dokumentów firmy w Stripe
+                        {t("register.businessType.company.description")}
                       </div>
                     </div>
                   </label>
@@ -2032,9 +2034,9 @@ export default function RegisterPage() {
                       disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-700 text-sm sm:text-base">🔗 Dołącz do szkoły</div>
+                      <div className="font-medium text-gray-700 text-sm sm:text-base">{t("register.businessType.joinSchool.title")}</div>
                       <div className="text-xs sm:text-sm text-gray-600 mt-1 leading-tight">
-                        Chcesz pracować w istniejącej szkole - szkoła opłaca dostęp dla wszystkich nauczycieli
+                        {t("register.businessType.joinSchool.description")}
                       </div>
                     </div>
                   </label>
@@ -2042,11 +2044,11 @@ export default function RegisterPage() {
 
                 {businessData.businessType === "company" && (
                   <div className="mt-3 sm:mt-4 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h4 className="font-medium text-blue-800 text-sm sm:text-base">Dane firmy:</h4>
+                    <h4 className="font-medium text-blue-800 text-sm sm:text-base">{t("register.businessType.companyData")}</h4>
                     
                     <div>
                       <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                        Nazwa szkoły/placówki *
+                        {t("register.businessType.schoolNameLabel")}
                       </label>
                       <input
                         type="text"
@@ -2056,14 +2058,14 @@ export default function RegisterPage() {
                           setBusinessData(prev => ({ ...prev, schoolName: e.target.value }))
                         }}
                         className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="np. Szkoła Podstawowa nr 1"
+                        placeholder={t("register.businessType.schoolNamePlaceholder")}
                         disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                       />
                     </div>
 
                     <div>
                       <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                        Nazwa firmy *
+                        {t("register.businessType.companyNameLabel")}
                       </label>
                       <input
                         type="text"
@@ -2073,14 +2075,14 @@ export default function RegisterPage() {
                           setBusinessData(prev => ({ ...prev, companyName: e.target.value }))
                         }}
                         className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="np. Przykładowa Sp. z o.o."
+                        placeholder={t("register.businessType.companyNamePlaceholder")}
                         disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                       />
                     </div>
 
                     <div>
                       <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                        NIP *
+                        {t("register.businessType.taxIdLabel")}
                       </label>
                       <input
                         type="text"
@@ -2090,7 +2092,7 @@ export default function RegisterPage() {
                           setBusinessData(prev => ({ ...prev, taxId: e.target.value }))
                         }}
                         className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="np. 1234567890"
+                        placeholder={t("register.businessType.taxIdPlaceholder")}
                         disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                       />
                     </div>
@@ -2107,8 +2109,8 @@ export default function RegisterPage() {
                         disabled={true} // Zawsze disabled - szkoły z NIP zawsze wystawiają faktury
                       />
                       <div className="text-xs sm:text-sm">
-                        <div className="font-medium text-gray-700">Wymagam wystawiania faktur VAT ✓</div>
-                        <div className="text-gray-600">Szkoły z NIP automatycznie wystawiają faktury VAT uczniom</div>
+                        <div className="font-medium text-gray-700">{t("register.businessType.vatRequired")}</div>
+                        <div className="text-gray-600">{t("register.businessType.vatRequiredHint")}</div>
                       </div>
                     </label>
                   </div>
@@ -2126,10 +2128,10 @@ export default function RegisterPage() {
                   {isLoading ? (
                     <div className="flex items-center justify-center space-x-2">
                       <Loader2 className="animate-spin" size={18} />
-                      <span className="text-sm">Zapisywanie...</span>
+                      <span className="text-sm">{t("register.loading.saving")}</span>
                     </div>
                   ) : (
-                    "Kontynuuj"
+                    t("register.actions.continue")
                   )}
                 </button>
               </div>
@@ -2138,19 +2140,19 @@ export default function RegisterPage() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="flex items-center gap-2 text-base sm:text-lg font-semibold text-blue-600">
-                  🏫 Wybierz opcję szkoły
+                  {t("register.schoolChoice.title")}
                 </span>
                 <button
                   onClick={handleBackToBusinessType}
                   className={`text-xs sm:text-sm text-gray-500 hover:text-gray-700 transition-colors ${(isLoading || loadingState === "redirecting-to-stripe") ? "pointer-events-none opacity-50" : ""}`}
                   disabled={isLoading}
                 >
-                  ← Wróć
+                  {t("register.actions.back")}
                 </button>
               </div>
 
               <div className="space-y-3 sm:space-y-4">
-                <h3 className="text-sm sm:text-md font-semibold text-gray-700">Co chcesz zrobić?</h3>
+                <h3 className="text-sm sm:text-md font-semibold text-gray-700">{t("register.schoolChoice.question")}</h3>
                 
                 <div className="grid gap-3 sm:gap-4">
                   <button
@@ -2162,9 +2164,9 @@ export default function RegisterPage() {
                         : "border-gray-200 hover:border-gray-300"
                       }`}
                   >
-                    <div className="font-semibold text-gray-800 mb-2">📘 Założę własną szkołę</div>
+                    <div className="font-semibold text-gray-800 mb-2">{t("register.schoolChoice.ownSchoolTitle")}</div>
                     <div className="text-sm text-gray-600">
-                      Będę rejestrow Stripe i płacić za platformę. Będę mógł zapraszać nauczycieli do mojej szkoły.
+                      {t("register.schoolChoice.ownSchoolDescription")}
                     </div>
                   </button>
 
@@ -2177,9 +2179,9 @@ export default function RegisterPage() {
                         : "border-gray-200 hover:border-gray-300"
                       }`}
                   >
-                    <div className="font-semibold text-gray-800 mb-2">👥 Dołączę do istniejącej szkoły</div>
+                    <div className="font-semibold text-gray-800 mb-2">{t("register.schoolChoice.joinExistingTitle")}</div>
                     <div className="text-sm text-gray-600">
-                      Szkoła zajmuje się rejestracją Stripe i płatnościami. Ja skupiam się na nauczaniu.
+                      {t("register.schoolChoice.joinExistingDescription")}
                     </div>
                   </button>
                 </div>
@@ -2189,14 +2191,14 @@ export default function RegisterPage() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="flex items-center gap-2 text-base sm:text-lg font-semibold text-blue-600">
-                  🔍 Znajdź szkołę
+                  {t("register.findSchool.title")}
                 </span>
                 <button
                   onClick={() => setCurrentStep("school-choice")}
                   className={`text-xs sm:text-sm text-gray-500 hover:text-gray-700 transition-colors ${(isLoading || schoolsLoading) ? "pointer-events-none opacity-50" : ""}`}
                   disabled={isLoading || schoolsLoading}
                 >
-                  ← Wróć
+                  {t("register.actions.back")}
                 </button>
               </div>
 
@@ -2204,12 +2206,12 @@ export default function RegisterPage() {
                 {schoolsLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="animate-spin" size={24} />
-                    <span className="ml-2 text-gray-600">Ładowanie list szkoł...</span>
+                    <span className="ml-2 text-gray-600">{t("register.findSchool.loading")}</span>
                   </div>
                 ) : schools.length === 0 ? (
                   <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="text-sm text-yellow-700">
-                      Brak dostępnych szkół. Spróbuj założyć własną szkołę.
+                      {t("register.findSchool.empty")}
                     </p>
                   </div>
                 ) : (
@@ -2217,7 +2219,7 @@ export default function RegisterPage() {
                     <div className="relative">
                       <input
                         type="text"
-                        placeholder="Wyszukaj szkołę po nazwie..."
+                        placeholder={t("register.findSchool.searchPlaceholder")}
                         value={schoolSearchTerm}
                         onChange={(e) => setSchoolSearchTerm(e.target.value)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
@@ -2226,7 +2228,7 @@ export default function RegisterPage() {
                     </div>
                     {schoolSearchTerm && (
                       <>
-                        <p className="text-sm text-gray-600">Wybierz szkołę, do której chcesz dołączyć:</p>
+                        <p className="text-sm text-gray-600">{t("register.findSchool.selectSchool")}</p>
                         <div className="grid gap-3 max-h-96 overflow-y-auto">
                           {schools
                             .filter((school) =>
@@ -2250,7 +2252,7 @@ export default function RegisterPage() {
                                   <p className="text-sm text-gray-600">{school.companyName}</p>
                                 </div>
                                 <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                                  {school._count.members} nauczycieli
+                                  {t("register.findSchool.teachersCount").replace("{count}", String(school._count.members))}
                                 </span>
                               </div>
                               {school.description && (
@@ -2265,7 +2267,7 @@ export default function RegisterPage() {
                           ).length === 0 && (
                             <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
                               <p className="text-sm text-gray-600">
-                                Nie znaleziono szkoły zawierającej &quot;{schoolSearchTerm}&quot;.
+                                {t("register.findSchool.noResults").replace("{query}", schoolSearchTerm)}
                               </p>
                             </div>
                           )}
@@ -2276,7 +2278,7 @@ export default function RegisterPage() {
                       <div className="space-y-3">
                         {schools.find(s => s.id === selectedSchoolId) && (
                           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                            <p className="text-xs text-blue-600 font-medium mb-1">✓ Wybrana szkoła:</p>
+                            <p className="text-xs text-blue-600 font-medium mb-1">{t("register.findSchool.selected")}</p>
                             <p className="text-sm font-semibold text-blue-900">{schools.find(s => s.id === selectedSchoolId)?.name}</p>
                           </div>
                         )}
@@ -2285,7 +2287,7 @@ export default function RegisterPage() {
                           disabled={isLoading}
                           className="w-full py-2 px-4 text-sm font-semibold rounded transition-colors bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Wybierz tę szkołę i przejdź dalej
+                          {t("register.findSchool.chooseAndContinue")}
                         </button>
                       </div>
                     )}
@@ -2297,35 +2299,34 @@ export default function RegisterPage() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="flex items-center gap-2 text-base sm:text-lg font-semibold text-blue-600">
-                  💳 Konfiguracja płatności Stripe
+                  {t("register.stripeSetup.title")}
                 </span>
               </div>
               
               <div className="space-y-4">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-800 mb-2">Konfiguracja konta płatności</h3>
+                  <h3 className="font-semibold text-blue-800 mb-2">{t("register.stripeSetup.cardTitle")}</h3>
                   <p className="text-sm text-blue-700 mb-3">
-                    Aby sprzedawać kursy na platformie, potrzebujesz skonfigurowanego konta płatności Stripe Connect. 
-                    Proces obejmuje:
+                    {t("register.stripeSetup.cardDescription")}
                   </p>
                   <ul className="text-sm text-blue-700 space-y-1 ml-4">
-                    <li>• Weryfikację tożsamości i danych biznesowych</li>
-                    <li>• Podanie danych bankowych do wypłat</li>
-                    <li>• Akceptację regulaminu Stripe Connect</li>
-                    <li>• Ustawienie metod płatności</li>
+                    <li>{t("register.stripeSetup.list.identity")}</li>
+                    <li>{t("register.stripeSetup.list.bank")}</li>
+                    <li>{t("register.stripeSetup.list.terms")}</li>
+                    <li>{t("register.stripeSetup.list.methods")}</li>
                   </ul>
                 </div>
 
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Wymagane informacje</h4>
+                  <h4 className="font-semibold text-yellow-800 mb-2">{t("register.stripeSetup.required.title")}</h4>
                   <p className="text-sm text-yellow-700 mb-2">
-                    Przygotuj następujące dane przed kontynuowaniem:
+                    {t("register.stripeSetup.required.description")}
                   </p>
                   <ul className="text-sm text-yellow-700 space-y-1 ml-4">
-                    <li>• Dowód osobisty lub paszport</li>
-                    <li>• Numer rachunku bankowego</li>
-                    <li>• {businessData.businessType === "company" ? "Dane firmy (NIP, REGON, adres)" : "Adres zamieszkania"}</li>
-                    <li>• Numer telefonu</li>
+                    <li>{t("register.stripeSetup.required.identity")}</li>
+                    <li>{t("register.stripeSetup.required.bank")}</li>
+                    <li>{businessData.businessType === "company" ? t("register.stripeSetup.required.companyData") : t("register.stripeSetup.required.homeAddress")}</li>
+                    <li>{t("register.stripeSetup.required.phone")}</li>
                   </ul>
                 </div>
 
@@ -2340,10 +2341,10 @@ export default function RegisterPage() {
                     />
                     <div className="text-sm">
                       <div className="font-medium text-gray-700">
-                        Akceptuję <a href="https://stripe.com/connect-account/legal" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Regulamin Stripe Connect</a>
+                        {t("register.stripeSetup.acceptStripeTerms")} <a href="https://stripe.com/connect-account/legal" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{t("register.stripeSetup.stripeTermsLink")}</a>
                       </div>
                       <div className="text-gray-600 mt-1">
-                        Wymagane do przetwarzania płatności jako sprzedawca
+                        {t("register.stripeSetup.acceptStripeTermsHint")}
                       </div>
                     </div>
                   </label>
@@ -2358,10 +2359,10 @@ export default function RegisterPage() {
                     />
                     <div className="text-sm">
                       <div className="font-medium text-gray-700">
-                        Wyrażam zgodę na przetwarzanie danych przez Stripe
+                        {t("register.stripeSetup.acceptData")}
                       </div>
                       <div className="text-gray-600 mt-1">
-                        Stripe będzie przetwarzać dane w celu obsługi płatności zgodnie z <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Polityką Prywatności</a>
+                        {t("register.stripeSetup.acceptDataHint")} <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{t("register.links.privacy")}</a>
                       </div>
                     </div>
                   </label>
@@ -2370,7 +2371,7 @@ export default function RegisterPage() {
                 <button
                   onClick={() => {
                     if (!businessData.acceptStripeTerms || !businessData.acceptDataProcessing) {
-                      toast.error("Musisz zaakceptować wszystkie wymagane zgody");
+                      toast.error(t("register.stripeSetup.toast.acceptAllRequired"));
                       return;
                     }
                     handleStripeSetup();
@@ -2385,17 +2386,17 @@ export default function RegisterPage() {
                   {isLoading ? (
                     <div className="flex items-center justify-center space-x-2">
                       <Loader2 className="animate-spin" size={18} />
-                      <span className="text-sm">Konfigurowanie konta...</span>
+                      <span className="text-sm">{t("register.stripeSetup.configuring")}</span>
                     </div>
                   ) : (
-                    "Przejdź do konfiguracji Stripe"
+                    t("register.stripeSetup.goToStripe")
                   )}
                 </button>
 
                 <button
                   onClick={() => {
                     setCurrentStep("platform-subscription");
-                    toast("Pamiętaj: Konto Stripe jest wymagane do przyjmowania płatności od uczniów. Skonfiguruj je później w ustawieniach.", {
+                    toast(t("register.stripeSetup.toast.rememberStripeRequired"), {
                       icon: "ℹ️",
                       duration: 5000
                     });
@@ -2403,7 +2404,7 @@ export default function RegisterPage() {
                   disabled={isLoading}
                   className="w-full py-2 px-4 rounded-lg font-medium text-gray-600 text-sm border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
-                  Przejdź do wyboru planu (Stripe można skonfigurować później)
+                  {t("register.stripeSetup.goPlanLater")}
                 </button>
               </div>
             </div>
@@ -2411,17 +2412,17 @@ export default function RegisterPage() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="flex items-center gap-2 text-base sm:text-lg font-semibold text-blue-600">
-                  💳 Subskrypcja platformy
+                  {t("register.subscription.title")}
                 </span>
               </div>
               
               <div className="space-y-4">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                   <p className="text-sm text-blue-800 font-medium flex items-center gap-2">
-                    ℹ️ <span>Wymagane: Konto Stripe + Subskrypcja platformy</span>
+                    ℹ️ <span>{t("register.subscription.requiredTitle")}</span>
                   </p>
                   <p className="text-xs text-blue-700 mt-1">
-                    Aby prowadzić kursy, musisz mieć zarówno skonfigurowane konto Stripe (do przyjmowania płatności od uczniów), jak i aktywną subskrypcję platformy.
+                    {t("register.subscription.requiredDescription")}
                   </p>
                 </div>
                 
@@ -2429,16 +2430,16 @@ export default function RegisterPage() {
                   // User is joining existing school - no subscription needed
                   <div className="text-center space-y-4">
                     <div className="bg-green-50 border-2 border-green-300 rounded-lg p-6">
-                      <p className="text-lg font-semibold text-green-800 mb-2">✅ Dołączasz do istniejącej szkoły</p>
+                      <p className="text-lg font-semibold text-green-800 mb-2">{t("register.subscription.joinSchoolTitle")}</p>
                       <p className="text-sm text-green-700">
-                        Subskrypcję platformy opłaca właściciel szkoły. Ty masz automatycznie dostęp do wszystkich funkcji!
+                        {t("register.subscription.joinSchoolDescription")}
                       </p>
                     </div>
 
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                       <p className="text-sm text-blue-700">
-                        <strong>Co dalej?</strong><br/>
-                        Twoja prośba o dołączenie została wysłana do właściciela szkoły. Po zatwierdzeniu będziesz mieć pełny dostęp do platformy.
+                        <strong>{t("register.subscription.whatsNext")}</strong><br/>
+                        {t("register.subscription.joinRequestSent")}
                       </p>
                     </div>
 
@@ -2451,7 +2452,7 @@ export default function RegisterPage() {
                         setIsLoading(true);
                         setLoadingState("completing-registration");
                         setCurrentStep("completed");
-                        toast.success("Rejestracja zakończona! Czekaj na zatwierdzenie przez właściciela szkoły.", {
+                        toast.success(t("register.subscription.toast.waitForApproval"), {
                           duration: 6000
                         });
                         
@@ -2462,34 +2463,34 @@ export default function RegisterPage() {
                       disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                       className={`w-full py-3 px-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${(loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none" : ""}`}
                     >
-                      Ukończ rejestrację
+                      {t("register.subscription.completeRegistration")}
                     </button>
                   </div>
                 ) : (currentSchoolType === "individual" && (businessData.joinSchoolMode === "own-school" || businessData.joinSchoolMode === undefined)) ? (
                   // Show only Individual Plan (for individual teachers not owning a school)
                   <div>
-                    <h3 className="text-md font-semibold text-gray-700 mb-3">Twój plan dostępu:</h3>
+                    <h3 className="text-md font-semibold text-gray-700 mb-3">{t("register.subscription.yourPlan")}</h3>
                     
                     <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300 rounded-lg p-4 mb-4">
                       <div className="flex justify-between items-start">
                         <div>
-                          <div className="font-medium text-gray-800 text-lg">🧑‍💼 Plan Indywidualny</div>
+                          <div className="font-medium text-gray-800 text-lg">{t("register.subscription.individualPlan.title")}</div>
                           <div className="text-sm text-gray-700 mt-1">
-                            Idealny dla nauczycieli pracujących indywidualnie
+                            {t("register.subscription.individualPlan.subtitle")}
                           </div>
                           <div className="text-xs text-gray-600 mt-2">
-                            • Pełny dostęp do funkcji<br/>
-                            • Tworzenie interaktywnych kursów<br/>
-                            • Do 100 uczniów<br/>
-                            • Podstawowe wsparcie techniczne<br/>
-                            • <span className="text-green-600 font-medium">Anulowanie w każdej chwili</span>
+                            {t("register.subscription.individualPlan.feature1")}<br/>
+                            {t("register.subscription.individualPlan.feature2")}<br/>
+                            {t("register.subscription.individualPlan.feature3")}<br/>
+                            {t("register.subscription.individualPlan.feature4")}<br/>
+                            <span className="text-green-600 font-medium">{t("register.subscription.cancelAnytime")}</span>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-2xl font-bold text-blue-600">{formatPln(INDIVIDUAL_MONTHLY_GROSS)} zł brutto <span className="text-sm font-medium text-gray-500 line-through">{formatPln(INDIVIDUAL_MONTHLY_PROMO_GROSS)} zł</span></div>
-                          <div className="text-sm text-gray-600">miesięcznie</div>
-                          <div className="text-xs text-gray-500">{formatPln(INDIVIDUAL_MONTHLY_NET)} zł netto + VAT {PLATFORM_VAT_PERCENT}%</div>
-                          <div className="text-sm text-green-600 font-medium mt-2">3 miesiące GRATIS</div>
+                          <div className="text-2xl font-bold text-blue-600">{formatPln(INDIVIDUAL_MONTHLY_GROSS)} {t("register.subscription.currencyGross")} <span className="text-sm font-medium text-gray-500 line-through">{formatPln(INDIVIDUAL_MONTHLY_PROMO_GROSS)} {t("register.subscription.currencyShort")}</span></div>
+                          <div className="text-sm text-gray-600">{t("register.subscription.monthly")}</div>
+                          <div className="text-xs text-gray-500">{formatPln(INDIVIDUAL_MONTHLY_NET)} {t("register.subscription.netVat").replace("{vat}", String(PLATFORM_VAT_PERCENT))}</div>
+                          <div className="text-sm text-green-600 font-medium mt-2">{t("register.subscription.trial3Months")}</div>
                         </div>
                       </div>
                     </div>
@@ -2500,7 +2501,7 @@ export default function RegisterPage() {
                         disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                         className={`w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${(loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none" : ""}`}
                       >
-                        Przejdź do płatności
+                        {t("register.subscription.goToPayment")}
                       </button>
                       
                       <button
@@ -2512,7 +2513,7 @@ export default function RegisterPage() {
                           setIsLoading(true);
                           setLoadingState("completing-registration");
                           setCurrentStep("completed");
-                          toast("Rejestracja zakończona! Pamiętaj: Musisz aktywować subskrypcję, aby sprzedawać kursy.", {
+                          toast(t("register.subscription.toast.activateNeeded"), {
                             icon: "ℹ️",
                             duration: 6000
                           });
@@ -2524,34 +2525,34 @@ export default function RegisterPage() {
                         disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                         className={`w-full py-2 px-4 rounded-lg font-medium text-gray-600 text-sm border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 ${(loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none" : ""}`}
                       >
-                        Pomiń teraz (dokończę konfigurację później)
+                        {t("register.subscription.skipNow")}
                       </button>
                     </div>
                   </div>
                 ) : (currentSchoolType === "business" || businessData.joinSchoolMode === "own-school") ? (
                   // Show only School Plan (for business school type or "own-school" mode)
                   <div>
-                    <h3 className="text-md font-semibold text-gray-700 mb-3">Twój plan dostępu:</h3>
+                    <h3 className="text-md font-semibold text-gray-700 mb-3">{t("register.subscription.yourPlan")}</h3>
                     
                     <div className="bg-gradient-to-r from-purple-50 to-purple-100 border-2 border-purple-300 rounded-lg p-4 mb-4">
                       <div className="flex justify-between items-start">
                         <div>
-                          <div className="font-medium text-gray-800 text-lg">🏫 Tryb Organizacji</div>
+                          <div className="font-medium text-gray-800 text-lg">{t("register.subscription.organizationPlan.title")}</div>
                           <div className="text-sm text-gray-700 mt-1">
-                            Dla szkół/organizacji: gdy masz &gt; 100 aktywnych uczniów lub dodajesz drugiego nauczyciela
+                            {t("register.subscription.organizationPlan.subtitle")}
                           </div>
                           <div className="text-xs text-gray-600 mt-2">
-                            • Wszystkie funkcjonalności<br/>
-                            • Nielimitowani członkowie zespołu<br/>
-                            • Pełne wsparcie techniczne<br/>
-                            • <span className="text-green-600 font-medium">Anulowanie w każdej chwili</span>
+                            {t("register.subscription.organizationPlan.feature1")}<br/>
+                            {t("register.subscription.organizationPlan.feature2")}<br/>
+                            {t("register.subscription.organizationPlan.feature3")}<br/>
+                            <span className="text-green-600 font-medium">{t("register.subscription.cancelAnytime")}</span>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-2xl font-bold text-purple-600">{formatPln(SCHOOL_YEARLY_GROSS)} zł brutto <span className="text-sm font-medium text-gray-500 line-through">{formatPln(SCHOOL_YEARLY_PROMO_GROSS)} zł</span></div>
-                          <div className="text-sm text-gray-600">rocznie</div>
-                          <div className="text-xs text-gray-500">{formatPln(SCHOOL_YEARLY_NET)} zł netto + VAT {PLATFORM_VAT_PERCENT}%</div>
-                          <div className="text-sm text-green-600 font-medium mt-2">3 miesiące GRATIS</div>
+                          <div className="text-2xl font-bold text-purple-600">{formatPln(SCHOOL_YEARLY_GROSS)} {t("register.subscription.currencyGross")} <span className="text-sm font-medium text-gray-500 line-through">{formatPln(SCHOOL_YEARLY_PROMO_GROSS)} {t("register.subscription.currencyShort")}</span></div>
+                          <div className="text-sm text-gray-600">{t("register.subscription.yearly")}</div>
+                          <div className="text-xs text-gray-500">{formatPln(SCHOOL_YEARLY_NET)} {t("register.subscription.netVat").replace("{vat}", String(PLATFORM_VAT_PERCENT))}</div>
+                          <div className="text-sm text-green-600 font-medium mt-2">{t("register.subscription.trial3Months")}</div>
                         </div>
                       </div>
                     </div>
@@ -2562,7 +2563,7 @@ export default function RegisterPage() {
                         disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                         className={`w-full py-3 px-4 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${(loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none" : ""}`}
                       >
-                        Przejdź do płatności
+                        {t("register.subscription.goToPayment")}
                       </button>
                       
                       <button
@@ -2574,7 +2575,7 @@ export default function RegisterPage() {
                           setIsLoading(true);
                           setLoadingState("completing-registration");
                           setCurrentStep("completed");
-                          toast("Rejestracja zakończona! Pamiętaj: Musisz aktywować subskrypcję, aby sprzedawać kursy.", {
+                          toast(t("register.subscription.toast.activateNeeded"), {
                             icon: "ℹ️",
                             duration: 6000
                           });
@@ -2586,7 +2587,7 @@ export default function RegisterPage() {
                         disabled={isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration"}
                         className={`w-full py-2 px-4 rounded-lg font-medium text-gray-600 text-sm border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 ${(loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none" : ""}`}
                       >
-                        Pomiń teraz (dokończę konfigurację później)
+                        {t("register.subscription.skipNow")}
                       </button>
                     </div>
                   </div>
@@ -2602,16 +2603,16 @@ export default function RegisterPage() {
                 
                 <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-xs text-blue-700">
-                    ℹ️ <strong>Okres próbny:</strong> Plan zawiera 3-miesięczny bezpłatny okres próbny.
+                    ℹ️ <strong>{t("register.subscription.trialLabel")}</strong> {t("register.subscription.trialDescription")}
                   </p>
                   <p className="text-xs text-blue-700 mt-1">
-                    🔄 <strong>Elastyczność:</strong> Anuluj lub zmień plan w każdej chwili bez opłat za rezygnację.
+                    🔄 <strong>{t("register.subscription.flexibilityLabel")}</strong> {t("register.subscription.flexibilityDescription")}
                   </p>
                 </div>
 
                 <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                   <p className="text-xs text-amber-700">
-                    ⚠️ <strong>Ważne:</strong> Subskrypcja platformy jest wymagana, aby móc publikować i sprzedawać kursy.
+                    ⚠️ <strong>{t("register.subscription.importantLabel")}</strong> {t("register.subscription.importantDescription")}
                   </p>
                 </div>
               </div>
@@ -2619,9 +2620,9 @@ export default function RegisterPage() {
           ) : currentStep === "completed" ? (
             <div className="text-center space-y-4">
               <div className="bg-green-50 border-2 border-green-300 rounded-lg p-6">
-                <p className="text-lg font-semibold text-green-800 mb-2">✅ Wszystkie kroki zostały wykonane</p>
+                <p className="text-lg font-semibold text-green-800 mb-2">{t("register.status.allStepsDone")}</p>
                 <p className="text-sm text-green-700">
-                  Rejestracja zakończona. Kliknij przycisk poniżej, aby przejść do platformy.
+                  {t("register.status.studentDone")}
                 </p>
               </div>
 
@@ -2640,14 +2641,14 @@ export default function RegisterPage() {
                     : "bg-green-600 hover:bg-green-700 hover:shadow-lg"
                   }`}
               >
-                Przejdź do platformy
+                {t("register.actions.goToPlatform")}
               </button>
             </div>
           ) : currentStep === "terms-consent" ? (
             <div>
               <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <span className={`flex items-center gap-1 sm:gap-2 text-sm sm:text-base lg:text-lg font-semibold ${selectedRole === "student" ? "text-orange-600" : "text-blue-600"}`}>
-                  {selectedRole === "student" ? "👩‍🎓 Regulamin ucznia" : "👨‍🏫 Regulamin nauczyciela"}
+                  {selectedRole === "student" ? t("register.terms.studentTitle") : t("register.terms.teacherTitle")}
                 </span>
                 <button
                   className={`text-xs sm:text-sm text-gray-500 underline hover:text-orange-700 transition disabled:opacity-50 px-1 py-1 ${(isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none opacity-50" : ""}`}
@@ -2679,10 +2680,10 @@ export default function RegisterPage() {
                   className={`form-checkbox h-4 w-4 mt-0.5 flex-shrink-0 ${selectedRole === "student" ? "accent-orange-500" : "accent-blue-500"} disabled:opacity-50`}
                 />
                 <span className={`ml-2 text-xs sm:text-sm leading-tight ${isLoading ? "text-gray-400" : "text-gray-700"}`}>
-                  Akceptuję
-                  <Link href="/terms" className="ml-1 underline hover:text-orange-600">Regulamin</Link>
-                  <span className="mx-1">oraz</span>
-                  <Link href="/privacy" className="underline hover:text-orange-600">Politykę Prywatności</Link>
+                  {t("register.terms.accept")}
+                  <Link href="/terms" className="ml-1 underline hover:text-orange-600">{t("register.links.terms")}</Link>
+                  <span className="mx-1">{t("register.terms.and")}</span>
+                  <Link href="/privacy" className="underline hover:text-orange-600">{t("register.links.privacy")}</Link>
                 </span>
               </label>
 
@@ -2690,8 +2691,8 @@ export default function RegisterPage() {
                 type="button"
                 onClick={() => {
                   if (!acceptTerms) {
-                    setRegistrationError("Aby kontynuować, musisz zaakceptować regulamin");
-                    toast.error("Aby kontynuować, musisz zaakceptować regulamin.");
+                    setRegistrationError(t("register.terms.mustAccept"));
+                    toast.error(t("register.terms.mustAccept"));
                     return;
                   }
                   setRegistrationError(null);
@@ -2708,14 +2709,14 @@ export default function RegisterPage() {
                         : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg")
                   }`}
               >
-                Kontynuuj
+                {t("register.actions.continue")}
               </button>
             </div>
           ) : (
             <div>
               <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <span className={`flex items-center gap-1 sm:gap-2 text-sm sm:text-base lg:text-lg font-semibold ${selectedRole === "student" ? "text-orange-600" : "text-blue-600"}`}>
-                  {selectedRole === "student" ? "👩‍🎓 Rejestracja ucznia" : "👨‍🏫 Rejestracja nauczyciela"}
+                  {selectedRole === "student" ? t("register.registration.studentTitle") : t("register.registration.teacherTitle")}
                 </span>
                 <button
                   className={`text-xs sm:text-sm text-gray-500 underline hover:text-orange-700 transition disabled:opacity-50 px-1 py-1 ${(isLoading || loadingState === "redirecting-to-stripe" || loadingState === "creating-platform-subscription" || loadingState === "completing-registration") ? "pointer-events-none opacity-50" : ""}`}
@@ -2728,14 +2729,14 @@ export default function RegisterPage() {
               </div>
               <div className={`p-3 sm:p-4 rounded-lg border ${selectedRole === "student" ? "bg-orange-50 border-orange-200" : "bg-blue-50 border-blue-200"}`}>
                 <p className={`text-sm font-semibold ${selectedRole === "student" ? "text-orange-800" : "text-blue-800"}`}>
-                  {selectedRole === "teacher" ? "✅ Konto zostało utworzone" : "✅ Wszystkie kroki zostały wykonane"}
+                  {selectedRole === "teacher" ? t("register.status.teacherCreated") : t("register.status.allStepsDone")}
                 </p>
                 <p className={`text-xs sm:text-sm mt-1 leading-tight ${selectedRole === "student" ? "text-orange-700" : "text-blue-700"}`}>
                   {selectedRole === "teacher"
                     ? (businessData.joinSchoolMode === "join-existing-school"
-                        ? "Możesz przejść do platformy. Szkoła zajmuje się płatnościami."
-                        : "Możesz kontynuować. Pozostała konfiguracja płatności (Stripe).")
-                    : "Rejestracja zakończona. Kliknij przycisk poniżej, aby przejść do platformy."}
+                        ? t("register.status.teacherJoinSchool")
+                        : t("register.status.teacherStripePending"))
+                    : t("register.status.studentDone")}
                 </p>
               </div>
               
@@ -2744,11 +2745,11 @@ export default function RegisterPage() {
                   <p className="text-xs sm:text-sm text-blue-700 font-medium">ℹ️ Następny krok:</p>
                   {businessData.joinSchoolMode === "join-existing-school" ? (
                     <p className="text-xs text-blue-600 mt-1 leading-tight">
-                      Po kliknięciu &quot;Przejdź do platformy&quot; zostaniesz zalogowany. Szkoła zajmuje się wszystkimi płatnościami.
+                      {t("register.nextStep.goToPlatform")}
                     </p>
                   ) : (
                     <p className="text-xs text-blue-600 mt-1 leading-tight">
-                      Po kliknięciu &quot;Kontynuuj&quot; rozpoczniesz konfigurację konta płatności w Stripe.
+                      {t("register.nextStep.continueStripe")}
                     </p>
                   )}
                 </div>
@@ -2771,19 +2772,19 @@ export default function RegisterPage() {
                   <div className="flex items-center justify-center space-x-2">
                     <Loader2 className="animate-spin" size={18} />
                     <span className="text-sm">
-                      {loadingState === "creating-user" && "Tworzenie konta..."}
-                      {loadingState === "creating-stripe-account" && "Konfiguracja płatności..."}
-                      {loadingState === "updating-user" && "Aktualizacja danych..."}
-                      {loadingState === "redirecting-to-stripe" && "Przekierowywanie..."}
-                      {loadingState === "idle" && "Przetwarzanie..."}
+                      {loadingState === "creating-user" && t("register.loading.creatingUser")}
+                      {loadingState === "creating-stripe-account" && t("register.loading.settingPayments")}
+                      {loadingState === "updating-user" && t("register.loading.updatingData")}
+                      {loadingState === "redirecting-to-stripe" && t("register.loading.redirecting")}
+                      {loadingState === "idle" && t("register.loading.processing")}
                     </span>
                   </div>
                 ) : selectedRole === "student" ? (
-                  "Przejdź do platformy"
+                  t("register.actions.goToPlatform")
                 ) : businessData.joinSchoolMode === "join-existing-school" ? (
-                  "Przejdź do platformy"
+                  t("register.actions.goToPlatform")
                 ) : (
-                  "Kontynuuj (następny krok: konfiguracja płatności)"
+                  t("register.actions.continueWithStripe")
                 )}
               </button>
             </div>
@@ -2791,13 +2792,13 @@ export default function RegisterPage() {
         </div>
         {!isSignedIn && (
           <p className="text-sm text-amber-600">
-            Proszę najpierw się zalogować, aby zakończyć rejestrację
+            {t("register.signInRequired")}
           </p>
         )}
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs text-gray-500">
-          <Link href="/terms" className="underline hover:text-orange-600">Regulamin</Link>
+          <Link href="/terms" className="underline hover:text-orange-600">{t("register.links.terms")}</Link>
           <span className="text-gray-300">•</span>
-          <Link href="/privacy" className="underline hover:text-orange-600">Polityka Prywatności</Link>
+          <Link href="/privacy" className="underline hover:text-orange-600">{t("register.links.privacy")}</Link>
         </div>
         </div>
       </div>

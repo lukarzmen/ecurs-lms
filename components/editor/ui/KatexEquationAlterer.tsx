@@ -4,6 +4,7 @@ import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import * as React from 'react';
 import {useCallback, useState} from 'react';
 import {ErrorBoundary} from 'react-error-boundary';
+import {useI18n} from '@/hooks/use-i18n';
 
 import Button from '../ui/Button';
 import KatexRenderer from './KatexRenderer';
@@ -18,6 +19,7 @@ export default function KatexEquationAlterer({
   initialEquation = '',
 }: Props): JSX.Element {
   const [editor] = useLexicalComposerContext();
+  const {t} = useI18n();
   const [equation, setEquation] = useState<string>(initialEquation);
   const [inline, setInline] = useState<boolean>(true);
 
@@ -32,15 +34,15 @@ export default function KatexEquationAlterer({
   return (
     <div className="KatexEquationAlterer_container">
       <div className="KatexEquationAlterer_header">
-        <h3 className="KatexEquationAlterer_title">Wstaw równanie matematyczne</h3>
-        <p className="KatexEquationAlterer_subtitle">Użyj składni LaTeX do utworzenia równania</p>
+        <h3 className="KatexEquationAlterer_title">{t('ed.katexTitle')}</h3>
+        <p className="KatexEquationAlterer_subtitle">{t('ed.katexSubtitle')}</p>
       </div>
       
       <div className="KatexEquationAlterer_section">
         <label className="KatexEquationAlterer_label">
           <div className="KatexEquationAlterer_labelText">
             <span className="KatexEquationAlterer_labelIcon">📐</span>
-            Tryb wyświetlania
+            {t('ed.katexDisplayMode')}
           </div>
           <label className="KatexEquationAlterer_checkboxWrapper">
             <input
@@ -50,7 +52,7 @@ export default function KatexEquationAlterer({
               className="KatexEquationAlterer_checkbox"
             />
             <span className="KatexEquationAlterer_checkboxLabel">
-              {inline ? 'W linii tekstu' : 'Wycentrowane (blok)'}
+              {inline ? t('ed.katexInlineMode') : t('ed.katexBlockMode')}
             </span>
           </label>
         </label>
@@ -60,7 +62,7 @@ export default function KatexEquationAlterer({
         <label className="KatexEquationAlterer_label">
           <div className="KatexEquationAlterer_labelText">
             <span className="KatexEquationAlterer_labelIcon">✏️</span>
-            Równanie (LaTeX)
+            {t('ed.katexEquationLabel')}
           </div>
           {inline ? (
             <input
@@ -68,7 +70,7 @@ export default function KatexEquationAlterer({
                 setEquation(event.target.value);
               }}
               value={equation}
-              placeholder="np. E = mc^2"
+              placeholder={t('ed.katexInlinePlaceholder')}
               className="KatexEquationAlterer_input"
               autoFocus
             />
@@ -78,7 +80,7 @@ export default function KatexEquationAlterer({
                 setEquation(event.target.value);
               }}
               value={equation}
-              placeholder="np. \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}"
+              placeholder={t('ed.katexBlockPlaceholder')}
               className="KatexEquationAlterer_textarea"
               rows={4}
               autoFocus
@@ -91,12 +93,12 @@ export default function KatexEquationAlterer({
         <div className="KatexEquationAlterer_label">
           <div className="KatexEquationAlterer_labelText">
             <span className="KatexEquationAlterer_labelIcon">👁️</span>
-            Podgląd na żywo
+            {t('ed.katexLivePreview')}
           </div>
           <div className="KatexEquationAlterer_preview">
             <ErrorBoundary 
               onError={(e) => editor._onError(e)} 
-              fallback={<div className="KatexEquationAlterer_error">❌ Błąd w składni LaTeX</div>}
+              fallback={<div className="KatexEquationAlterer_error">{t('ed.katexSyntaxError')}</div>}
             >
               {equation ? (
                 <KatexRenderer
@@ -105,7 +107,7 @@ export default function KatexEquationAlterer({
                   onDoubleClick={() => null}
                 />
               ) : (
-                <div className="KatexEquationAlterer_placeholder">Wpisz równanie, aby zobaczyć podgląd</div>
+                <div className="KatexEquationAlterer_placeholder">{t('ed.katexPreviewPlaceholder')}</div>
               )}
             </ErrorBoundary>
           </div>
@@ -114,7 +116,7 @@ export default function KatexEquationAlterer({
       
       <div className="KatexEquationAlterer_footer">
         <Button onClick={onClick} className="KatexEquationAlterer_confirmButton">
-          ✓ Wstaw wzór
+          {t('ed.katexInsertFormula')}
         </Button>
       </div>
     </div>

@@ -52,6 +52,7 @@ import {createPortal} from 'react-dom';
 import useModal from '../../hooks/useModal';
 import ColorPicker from '../../ui/ColorPicker';
 import DropDown, {DropDownItem} from '../../ui/DropDown';
+import {useI18n} from '@/hooks/use-i18n';
 
 function computeSelectionCount(selection: TableSelection): {
   columns: number;
@@ -122,6 +123,7 @@ function TableActionMenu({
   showColorPickerModal,
 }: TableCellActionMenuProps) {
   const [editor] = useLexicalComposerContext();
+  const {t} = useI18n();
   const dropDownRef = useRef<HTMLDivElement | null>(null);
   const [tableCellNode, updateTableCellNode] = useState(_tableCellNode);
   const [selectionCounts, updateSelectionCounts] = useState({
@@ -132,6 +134,16 @@ function TableActionMenu({
   const [canUnmergeCell, setCanUnmergeCell] = useState(false);
   const [backgroundColor, setBackgroundColor] = useState(
     () => currentCellBackgroundColor(editor) || '',
+  );
+
+  const formatMessage = useCallback(
+    (key: string, replacements: Record<string, string | number> = {}) => {
+      return Object.entries(replacements).reduce(
+        (message, [token, value]) => message.replaceAll(`{${token}}`, String(value)),
+        t(key),
+      );
+    },
+    [t],
   );
 
   useEffect(() => {
@@ -479,7 +491,7 @@ function TableActionMenu({
           className="item"
           onClick={() => mergeTableCellsAtSelection()}
           data-test-id="table-merge-cells">
-          <span className="text">Scal komórki</span>
+          <span className="text">{t('tableAction.mergeCells')}</span>
         </button>
       );
     } else if (canUnmergeCell) {
@@ -489,7 +501,7 @@ function TableActionMenu({
           className="item"
           onClick={() => unmergeTableCellsAtSelection()}
           data-test-id="table-unmerge-cells">
-          <span className="text">Rozdziel komórki</span>
+          <span className="text">{t('tableAction.unmergeCells')}</span>
         </button>
       );
     }
@@ -508,7 +520,7 @@ function TableActionMenu({
         type="button"
         className="item"
         onClick={() =>
-          showColorPickerModal('Kolor tła komórki', () => (
+          showColorPickerModal(t('tableAction.cellBackgroundColorTitle'), () => (
             <ColorPicker
               color={backgroundColor}
               onChange={handleCellBackgroundColor}
@@ -516,19 +528,19 @@ function TableActionMenu({
           ))
         }
         data-test-id="table-background-color">
-        <span className="text">Kolor tła</span>
+        <span className="text">{t('tableAction.backgroundColor')}</span>
       </button>
       <button
         type="button"
         className="item"
         onClick={() => toggleRowStriping()}
         data-test-id="table-row-striping">
-        <span className="text">Przełącz paskowanie wierszy</span>
+        <span className="text">{t('tableAction.toggleRowStriping')}</span>
       </button>
       <DropDown
-        buttonLabel="Wyrównanie pionowe"
+        buttonLabel={t('tableAction.verticalAlign')}
         buttonClassName="item"
-        buttonAriaLabel="Opcje formatowania dla wyrównania pionowego">
+        buttonAriaLabel={t('tableAction.verticalAlignAria')}>
         <DropDownItem
           onClick={() => {
             formatVerticalAlign('top');
@@ -536,7 +548,7 @@ function TableActionMenu({
           className="item wide">
           <div className="icon-text-container">
             <i className="icon vertical-top" />
-            <span className="text">Wyrównaj do góry</span>
+            <span className="text">{t('tableAction.alignTop')}</span>
           </div>
         </DropDownItem>
         <DropDownItem
@@ -546,7 +558,7 @@ function TableActionMenu({
           className="item wide">
           <div className="icon-text-container">
             <i className="icon vertical-middle" />
-            <span className="text">Wyśrodkuj</span>
+            <span className="text">{t('tableAction.alignMiddle')}</span>
           </div>
         </DropDownItem>
         <DropDownItem
@@ -556,7 +568,7 @@ function TableActionMenu({
           className="item wide">
           <div className="icon-text-container">
             <i className="icon vertical-bottom" />
-            <span className="text">Wyrównaj na dół</span>
+            <span className="text">{t('tableAction.alignBottom')}</span>
           </div>
         </DropDownItem>
       </DropDown>
@@ -565,14 +577,14 @@ function TableActionMenu({
         className="item"
         onClick={() => toggleFirstRowFreeze()}
         data-test-id="table-freeze-first-row">
-        <span className="text">Przełącz zamrożenie pierwszego wiersza</span>
+        <span className="text">{t('tableAction.toggleFreezeFirstRow')}</span>
       </button>
       <button
         type="button"
         className="item"
         onClick={() => toggleFirstColumnFreeze()}
         data-test-id="table-freeze-first-column">
-        <span className="text">Przełącz zamrożenie pierwszej kolumny</span>
+        <span className="text">{t('tableAction.toggleFreezeFirstColumn')}</span>
       </button>
       <hr />
       <button
@@ -581,9 +593,9 @@ function TableActionMenu({
         onClick={() => insertTableRowAtSelection(false)}
         data-test-id="table-insert-row-above">
         <span className="text">
-          Wstaw{' '}
-          {selectionCounts.rows === 1 ? 'wiersz' : `${selectionCounts.rows} wierszy`}{' '}
-          powyżej
+          {selectionCounts.rows === 1
+            ? t('tableAction.insertRowAboveSingle')
+            : formatMessage('tableAction.insertRowsAboveMany', {count: selectionCounts.rows})}
         </span>
       </button>
       <button
@@ -592,9 +604,9 @@ function TableActionMenu({
         onClick={() => insertTableRowAtSelection(true)}
         data-test-id="table-insert-row-below">
         <span className="text">
-          Wstaw{' '}
-          {selectionCounts.rows === 1 ? 'wiersz' : `${selectionCounts.rows} wierszy`}{' '}
-          poniżej
+          {selectionCounts.rows === 1
+            ? t('tableAction.insertRowBelowSingle')
+            : formatMessage('tableAction.insertRowsBelowMany', {count: selectionCounts.rows})}
         </span>
       </button>
       <hr />
@@ -604,11 +616,9 @@ function TableActionMenu({
         onClick={() => insertTableColumnAtSelection(false)}
         data-test-id="table-insert-column-before">
         <span className="text">
-          Wstaw{' '}
           {selectionCounts.columns === 1
-            ? 'kolumnę'
-            : `${selectionCounts.columns} kolumn`}{' '}
-          na lewo
+            ? t('tableAction.insertColumnLeftSingle')
+            : formatMessage('tableAction.insertColumnsLeftMany', {count: selectionCounts.columns})}
         </span>
       </button>
       <button
@@ -617,11 +627,9 @@ function TableActionMenu({
         onClick={() => insertTableColumnAtSelection(true)}
         data-test-id="table-insert-column-after">
         <span className="text">
-          Wstaw{' '}
           {selectionCounts.columns === 1
-            ? 'kolumnę'
-            : `${selectionCounts.columns} kolumn`}{' '}
-          na prawo
+            ? t('tableAction.insertColumnRightSingle')
+            : formatMessage('tableAction.insertColumnsRightMany', {count: selectionCounts.columns})}
         </span>
       </button>
       <hr />
@@ -630,21 +638,21 @@ function TableActionMenu({
         className="item"
         onClick={() => deleteTableColumnAtSelection()}
         data-test-id="table-delete-columns">
-        <span className="text">Usuń kolumnę</span>
+        <span className="text">{t('tableAction.deleteColumn')}</span>
       </button>
       <button
         type="button"
         className="item"
         onClick={() => deleteTableRowAtSelection()}
         data-test-id="table-delete-rows">
-        <span className="text">Usuń wiersz</span>
+        <span className="text">{t('tableAction.deleteRow')}</span>
       </button>
       <button
         type="button"
         className="item"
         onClick={() => deleteTableAtSelection()}
         data-test-id="table-delete">
-        <span className="text">Usuń tabelę</span>
+        <span className="text">{t('tableAction.deleteTable')}</span>
       </button>
       <hr />
       <button
@@ -655,9 +663,9 @@ function TableActionMenu({
         <span className="text">
           {(tableCellNode.__headerState & TableCellHeaderStates.ROW) ===
           TableCellHeaderStates.ROW
-            ? 'Usuń'
-            : 'Dodaj'}{' '}
-          nagłówek wiersza
+            ? t('tableAction.remove')
+            : t('tableAction.add')}{' '}
+          {t('tableAction.rowHeader')}
         </span>
       </button>
       <button
@@ -668,9 +676,9 @@ function TableActionMenu({
         <span className="text">
           {(tableCellNode.__headerState & TableCellHeaderStates.COLUMN) ===
           TableCellHeaderStates.COLUMN
-            ? 'Usuń'
-            : 'Dodaj'}{' '}
-          nagłówek kolumny
+            ? t('tableAction.remove')
+            : t('tableAction.add')}{' '}
+          {t('tableAction.columnHeader')}
         </span>
       </button>
     </div>,

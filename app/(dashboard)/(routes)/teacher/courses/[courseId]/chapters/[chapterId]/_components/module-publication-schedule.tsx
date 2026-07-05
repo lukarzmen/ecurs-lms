@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, X, Check } from "lucide-react";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface ModulePublicationScheduleProps {
   courseId: string;
@@ -31,6 +32,7 @@ export const ModulePublicationSchedule = ({
   courseId, 
   chapterId 
 }: ModulePublicationScheduleProps) => {
+  const { t } = useI18n();
   const [publicationData, setPublicationData] = useState<PublicationData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,11 +53,11 @@ export const ModulePublicationSchedule = ({
       }
     } catch (error) {
       console.error('Error loading publication data:', error);
-      toast.error('Błąd podczas ładowania danych publikacji');
+      toast.error(t('modulePublicationSchedule.loadError'));
     } finally {
       setIsLoading(false);
     }
-  }, [courseId, chapterId]);
+  }, [courseId, chapterId, t]);
 
   useEffect(() => {
     loadPublicationData();
@@ -64,14 +66,14 @@ export const ModulePublicationSchedule = ({
   // Schedule publication
   const schedulePublication = async () => {
     if (!scheduledDate || !scheduledTime) {
-      toast.error('Wybierz datę i godzinę publikacji');
+      toast.error(t('modulePublicationSchedule.pickDateTime'));
       return;
     }
 
     const publishDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
     
     if (publishDateTime <= new Date()) {
-      toast.error('Data publikacji musi być w przyszłości');
+      toast.error(t('modulePublicationSchedule.futureDate'));
       return;
     }
 
@@ -81,11 +83,11 @@ export const ModulePublicationSchedule = ({
         publishedAt: publishDateTime.toISOString(),
       });
       
-      toast.success('Zaplanowano publikację modułu');
+      toast.success(t('modulePublicationSchedule.scheduled'));
       await loadPublicationData();
     } catch (error) {
       console.error('Error scheduling publication:', error);
-      toast.error('Błąd podczas planowania publikacji');
+      toast.error(t('modulePublicationSchedule.scheduleError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -97,13 +99,13 @@ export const ModulePublicationSchedule = ({
     try {
       await axios.delete(`/api/courses/${courseId}/chapters/${chapterId}/schedule`);
       
-      toast.success('Anulowano zaplanowaną publikację');
+      toast.success(t('modulePublicationSchedule.scheduleCancelled'));
       setScheduledDate('');
       setScheduledTime('');
       await loadPublicationData();
     } catch (error) {
       console.error('Error cancelling publication:', error);
-      toast.error('Błąd podczas anulowania publikacji');
+      toast.error(t('modulePublicationSchedule.cancelError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -117,11 +119,11 @@ export const ModulePublicationSchedule = ({
         state: 1, // Published state
       });
       
-      toast.success('Moduł został opublikowany');
+      toast.success(t('modulePublicationSchedule.published'));
       await loadPublicationData();
     } catch (error) {
       console.error('Error publishing immediately:', error);
-      toast.error('Błąd podczas publikowania');
+      toast.error(t('modulePublicationSchedule.publishError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -135,11 +137,11 @@ export const ModulePublicationSchedule = ({
         state: 0, // Draft state
       });
       
-      toast.success('Moduł został wycofany z publikacji');
+      toast.success(t('modulePublicationSchedule.unpublished'));
       await loadPublicationData();
     } catch (error) {
       console.error('Error unpublishing:', error);
-      toast.error('Błąd podczas wycofywania publikacji');
+      toast.error(t('modulePublicationSchedule.unpublishError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -151,11 +153,11 @@ export const ModulePublicationSchedule = ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Publikacja modułu
+            {t('modulePublicationSchedule.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p>Ładowanie...</p>
+          <p>{t('common.loading')}</p>
         </CardContent>
       </Card>
     );
@@ -173,24 +175,24 @@ export const ModulePublicationSchedule = ({
         <CardTitle className="flex items-center gap-2 justify-between">
           <div className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Publikacja modułu
+            {t('modulePublicationSchedule.title')}
           </div>
           <div>
             {isPublished && (
               <Badge variant="default" className="bg-green-500">
                 <Check className="h-3 w-3 mr-1" />
-                Opublikowany
+                {t('modulePublicationSchedule.publishedBadge')}
               </Badge>
             )}
             {isScheduled && !isPublished && (
               <Badge variant="secondary" className="bg-blue-500 text-white">
                 <Clock className="h-3 w-3 mr-1" />
-                Zaplanowany
+                {t('modulePublicationSchedule.scheduledBadge')}
               </Badge>
             )}
             {!isPublished && !isScheduled && (
               <Badge variant="outline">
-                Wersja robocza
+                {t('modulePublicationSchedule.draftBadge')}
               </Badge>
             )}
           </div>
@@ -201,8 +203,8 @@ export const ModulePublicationSchedule = ({
           <div className="space-y-3">
             <div className="p-3 bg-green-50 border border-green-200 rounded-md">
               <p className="text-sm text-green-800">
-                <strong>Moduł jest opublikowany</strong><br />
-                Dostępny dla uczestników kursu
+                <strong>{t('modulePublicationSchedule.publishedTitle')}</strong><br />
+                {t('modulePublicationSchedule.publishedDesc')}
               </p>
             </div>
             <Button 
@@ -212,14 +214,14 @@ export const ModulePublicationSchedule = ({
               className="w-full border-yellow-500 text-yellow-700 hover:bg-yellow-50"
             >
               <X className="h-4 w-4 mr-2" />
-              Wycofaj z publikacji (wróć do szkicu)
+              {t('modulePublicationSchedule.unpublishButton')}
             </Button>
           </div>
         ) : isScheduled ? (
           <div className="space-y-3">
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
               <p className="text-sm text-blue-800">
-                <strong>Zaplanowana publikacja:</strong><br />
+                <strong>{t('modulePublicationSchedule.scheduledTitle')}:</strong><br />
                 {module.publishedAt && new Date(module.publishedAt).toLocaleString('pl-PL')}
               </p>
             </div>
@@ -230,21 +232,21 @@ export const ModulePublicationSchedule = ({
               className="w-full"
             >
               <X className="h-4 w-4 mr-2" />
-              Anuluj zaplanowaną publikację
+              {t('modulePublicationSchedule.cancelScheduledButton')}
             </Button>
           </div>
         ) : (
           <div className="space-y-4">
             <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
               <p className="text-sm text-yellow-800">
-                <strong>Moduł jest w przygotowaniu (szkic)</strong><br />
-                Nie jest jeszcze dostępny dla uczestników
+                <strong>{t('modulePublicationSchedule.draftTitle')}</strong><br />
+                {t('modulePublicationSchedule.draftDesc')}
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label htmlFor="scheduledDate">Data publikacji</Label>
+                <Label htmlFor="scheduledDate">{t('modulePublicationSchedule.dateLabel')}</Label>
                 <Input
                   id="scheduledDate"
                   type="date"
@@ -254,7 +256,7 @@ export const ModulePublicationSchedule = ({
                 />
               </div>
               <div>
-                <Label htmlFor="scheduledTime">Godzina publikacji</Label>
+                <Label htmlFor="scheduledTime">{t('modulePublicationSchedule.timeLabel')}</Label>
                 <Input
                   id="scheduledTime"
                   type="time"
@@ -271,7 +273,7 @@ export const ModulePublicationSchedule = ({
                 className="flex-1 bg-orange-600 hover:bg-orange-700"
               >
                 <Check className="h-4 w-4 mr-2" />
-                Publikuj teraz
+                {t('modulePublicationSchedule.publishNow')}
               </Button>
               <Button 
                 variant="outline"
@@ -280,12 +282,12 @@ export const ModulePublicationSchedule = ({
                 className="flex-1"
               >
                 <Clock className="h-4 w-4 mr-2" />
-                Zaplanuj publikację
+                {t('modulePublicationSchedule.schedule')}
               </Button>
             </div>
             
             <p className="text-xs text-gray-500 text-center">
-              Zaplanowane moduły zostaną automatycznie opublikowane przez system o wybranej dacie i godzinie
+              {t('modulePublicationSchedule.autoPublishNote')}
             </p>
           </div>
         )}

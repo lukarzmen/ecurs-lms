@@ -9,9 +9,10 @@ import toast from 'react-hot-toast';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useI18n } from '@/hooks/use-i18n';
 
 import type { SortingState, ColumnFiltersState } from "@tanstack/react-table";
-const columns = [
+const createColumns = (t: (key: string) => string) => [
     {
         header: (row: any) => (
             <input
@@ -34,7 +35,7 @@ const columns = [
         meta: { style: "w-12" },
     },
     {
-        header: "Id użytkownika",
+        header: t("teacherStudents.table.userId"),
         accessorKey: "id",
         cell: (row: any) => <span className="font-mono">{row.getValue()}</span>,
         // Even less width for ID (3 chars)
@@ -42,28 +43,28 @@ const columns = [
         meta: { style: "w-12" }, // much less width
     },
     {
-        header: "Imię",
+        header: t("teacherStudents.table.firstName"),
         accessorKey: "firstName",
         cell: (row: any) => row.getValue() || "-",
         size: 160,
         meta: { style: "w-40" },
     },
     {
-        header: "Nazwisko",
+        header: t("teacherStudents.table.lastName"),
         accessorKey: "lastName",
         cell: (row: any) => row.getValue() || "-",
         size: 160,
         meta: { style: "w-40" },
     },
     {
-        header: "Email",
+        header: t("teacherStudents.table.email"),
         accessorKey: "email",
         cell: (row: any) => (
             <span className="inline-flex items-center gap-1">
                 <span>{row.getValue()}</span>
                 <button
                     className="ml-2 text-orange-600 hover:text-orange-800 transition"
-                    title="Wyślij wiadomość"
+                    title={t("teacherStudents.table.sendMessage")}
                     onClick={() => row.table.options.meta?.handleContact(row.getValue())}
                 >
                     <Mail size={18} />
@@ -73,7 +74,7 @@ const columns = [
         meta: { style: "w-56" },
     },
     {
-        header: "Dołączył",
+        header: t("teacherStudents.table.joined"),
         accessorKey: "createdAt",
         cell: (row: any) => {
             const createdAt = row.getValue() instanceof Date
@@ -86,21 +87,21 @@ const columns = [
                 <span>
                     <span className="font-mono">{createdAt.toISOString().slice(0, 10)}</span>
                     <br />
-                    <span className="text-xs text-gray-500 ml-1">({diffDays} dni)</span>
+                    <span className="text-xs text-gray-500 ml-1">{t("teacherStudents.table.days").replace("{days}", String(diffDays))}</span>
                 </span>
             );
         },
         meta: { style: "w-40" },
     },
     {
-        header: "Akcja",
+        header: t("teacherStudents.table.action"),
         id: "action",
         cell: (row: any) => (
             <Button
                 className="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-1 rounded shadow font-semibold transition"
                 onClick={() => row.table.options.meta?.handleContact(row.row.original.email)}
             >
-                Napisz
+                {t("teacherStudents.table.write")}
             </Button>
         ),
         meta: { style: "w-32" },
@@ -118,6 +119,8 @@ import {
 } from "@tanstack/react-table";
 
 const StudentsPage: React.FC = () => {
+    const { t } = useI18n();
+    const columns = createColumns(t);
     const [students, setStudents] = useState<User[]>([]);
     const { userId, sessionId } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -168,8 +171,8 @@ const StudentsPage: React.FC = () => {
                 const studentsData = await studentsResponse.json();
                 setStudents(studentsData);
             } catch (error) {
-                console.error('Błąd podczas pobierania studentów:', error);
-                toast.error('Nie udało się pobrać listy studentów.');
+                console.error('Error fetching students:', error);
+                toast.error(t('teacherStudents.toast.fetchError'));
             } finally {
                 setIsLoading(false);
             }
@@ -190,7 +193,7 @@ const StudentsPage: React.FC = () => {
                 .then((result: UserResponse) => setAuthor(result.displayName))
                 .catch((error) => console.error('Error fetching user data:', error));
         }
-    }, [userId, sessionId]);
+    }, [userId, sessionId, t]);
 
     const handleContact = (email: string) => {
         setSelectedEmail(email);
@@ -220,7 +223,7 @@ const StudentsPage: React.FC = () => {
 
     const openBulkModal = () => {
         if (selectedStudents.length === 0) {
-            toast.error('Zaznacz przynajmniej jednego studenta');
+            toast.error(t('teacherStudents.toast.selectOne'));
             return;
         }
         setIsBulkModalOpen(true);
@@ -233,7 +236,7 @@ const StudentsPage: React.FC = () => {
 
     const sendBulkMessage = async () => {
         if (!bulkMessage.trim()) {
-            toast.error('Wpisz treść wiadomości');
+            toast.error(t('teacherStudents.toast.enterMessage'));
             return;
         }
 
@@ -249,8 +252,8 @@ const StudentsPage: React.FC = () => {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             to: email,
-                            subject: `Wiadomość od nauczyciela: ${author}`,
-                            text: `Od: ${author}\n\n${bulkMessage}`,
+                            subject: t('teacherStudents.message.subject').replace('{author}', author),
+                            text: `${t('teacherStudents.message.from').replace('{author}', author)}\n\n${bulkMessage}`,
                             useSSL: true
                         }),
                     });
@@ -267,17 +270,17 @@ const StudentsPage: React.FC = () => {
             }
 
             if (successCount > 0) {
-                toast.success(`Wysłano ${successCount} wiadomości pomyślnie!`);
+                toast.success(t('teacherStudents.toast.bulkSent').replace('{count}', String(successCount)));
             }
             if (failCount > 0) {
-                toast.error(`Nie udało się wysłać ${failCount} wiadomości`);
+                toast.error(t('teacherStudents.toast.bulkFailed').replace('{count}', String(failCount)));
             }
             
             closeBulkModal();
             setSelectedStudents([]);
         } catch (error) {
             console.error('Error sending bulk messages:', error);
-            toast.error('Wystąpił błąd podczas wysyłania wiadomości');
+            toast.error(t('teacherStudents.toast.sendError'));
         } finally {
             setIsSendingBulk(false);
         }
@@ -288,16 +291,16 @@ const StudentsPage: React.FC = () => {
         try {
             const prompts = {
                 motivation: {
-                    systemPrompt: 'Jesteś pomocnym asystentem nauczyciela. Twoim zadaniem jest generowanie motywujących wiadomości dla grupy studentów.',
-                    userPrompt: `Wygeneruj krótką, motywującą wiadomość dla grupy ${selectedStudents.length} studentów. Wiadomość powinna być ciepła, profesjonalna i zachęcająca do dalszej nauki. Długość: 3-4 zdania.`
+                    systemPrompt: t('teacherStudents.aiPrompt.bulk.motivation.system'),
+                    userPrompt: t('teacherStudents.aiPrompt.bulk.motivation.user').replace('{count}', String(selectedStudents.length))
                 },
                 reminder: {
-                    systemPrompt: 'Jesteś pomocnym asystentem nauczyciela. Twoim zadaniem jest generowanie przypomnień dla grupy studentów.',
-                    userPrompt: `Wygeneruj uprzejmą wiadomość przypominającą grupie ${selectedStudents.length} studentów o kontynuowaniu nauki i wykonaniu zadań. Wiadomość powinna być profesjonalna i zachęcająca. Długość: 3-4 zdania.`
+                    systemPrompt: t('teacherStudents.aiPrompt.bulk.reminder.system'),
+                    userPrompt: t('teacherStudents.aiPrompt.bulk.reminder.user').replace('{count}', String(selectedStudents.length))
                 },
                 feedback: {
-                    systemPrompt: 'Jesteś pomocnym asystentem nauczyciela. Twoim zadaniem jest generowanie pozytywnego feedbacku dla grupy studentów.',
-                    userPrompt: `Wygeneruj pozytywną wiadomość z feedbackiem dla grupy ${selectedStudents.length} studentów. Wiadomość powinna doceniać postępy i zachęcać do dalszej pracy. Długość: 3-4 zdania.`
+                    systemPrompt: t('teacherStudents.aiPrompt.bulk.feedback.system'),
+                    userPrompt: t('teacherStudents.aiPrompt.bulk.feedback.user').replace('{count}', String(selectedStudents.length))
                 }
             };
 
@@ -313,10 +316,10 @@ const StudentsPage: React.FC = () => {
 
             const generatedMessage = await response.text();
             setBulkMessage(generatedMessage);
-            toast.success('Wiadomość wygenerowana przez AI!');
+            toast.success(t('teacherStudents.toast.aiGenerated'));
         } catch (error) {
             console.error('Error generating AI message:', error);
-            toast.error('Nie udało się wygenerować wiadomości. Spróbuj ponownie.');
+            toast.error(t('teacherStudents.toast.aiGenerateError'));
         } finally {
             setIsGenerating(false);
         }
@@ -327,16 +330,16 @@ const StudentsPage: React.FC = () => {
         try {
             const prompts = {
                 motivation: {
-                    systemPrompt: 'Jesteś pomocnym asystentem nauczyciela. Twoim zadaniem jest generowanie motywujących wiadomości dla studentów.',
-                    userPrompt: `Wygeneruj krótką, motywującą wiadomość dla studenta (${selectedEmail}). Wiadomość powinna być ciepła, profesjonalna i zachęcająca do dalszej nauki. Długość: 2-3 zdania.`
+                    systemPrompt: t('teacherStudents.aiPrompt.single.motivation.system'),
+                    userPrompt: t('teacherStudents.aiPrompt.single.motivation.user').replace('{email}', selectedEmail)
                 },
                 reminder: {
-                    systemPrompt: 'Jesteś pomocnym asystentem nauczyciela. Twoim zadaniem jest generowanie przypomnień dla studentów.',
-                    userPrompt: `Wygeneruj uprzejmą wiadomość przypominającą studentowi (${selectedEmail}) o kontynuowaniu nauki i wykonaniu zadań. Wiadomość powinna być profesjonalna i zachęcająca. Długość: 2-3 zdania.`
+                    systemPrompt: t('teacherStudents.aiPrompt.single.reminder.system'),
+                    userPrompt: t('teacherStudents.aiPrompt.single.reminder.user').replace('{email}', selectedEmail)
                 },
                 feedback: {
-                    systemPrompt: 'Jesteś pomocnym asystentem nauczyciela. Twoim zadaniem jest generowanie pozytywnego feedbacku dla studentów.',
-                    userPrompt: `Wygeneruj pozytywną wiadomość z feedbackiem dla studenta (${selectedEmail}). Wiadomość powinna doceniać postępy i zachęcać do dalszej pracy. Długość: 2-3 zdania.`
+                    systemPrompt: t('teacherStudents.aiPrompt.single.feedback.system'),
+                    userPrompt: t('teacherStudents.aiPrompt.single.feedback.user').replace('{email}', selectedEmail)
                 }
             };
 
@@ -352,10 +355,10 @@ const StudentsPage: React.FC = () => {
 
             const generatedMessage = await response.text();
             setMessage(generatedMessage);
-            toast.success('Wiadomość wygenerowana przez AI!');
+            toast.success(t('teacherStudents.toast.aiGenerated'));
         } catch (error) {
             console.error('Error generating AI message:', error);
-            toast.error('Nie udało się wygenerować wiadomości. Spróbuj ponownie.');
+            toast.error(t('teacherStudents.toast.aiGenerateError'));
         } finally {
             setIsGenerating(false);
         }
@@ -363,7 +366,7 @@ const StudentsPage: React.FC = () => {
 
     const sendMessage = async () => {
         if (!message.trim()) {
-            toast.error('Wpisz treść wiadomości');
+            toast.error(t('teacherStudents.toast.enterMessage'));
             return;
         }
 
@@ -374,8 +377,8 @@ const StudentsPage: React.FC = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     to: selectedEmail,
-                    subject: `Wiadomość od nauczyciela: ${author}`,
-                    text: `Od: ${author}\n\n${message}`,
+                    subject: t('teacherStudents.message.subject').replace('{author}', author),
+                    text: `${t('teacherStudents.message.from').replace('{author}', author)}\n\n${message}`,
                     useSSL: true
                 }),
             });
@@ -385,11 +388,11 @@ const StudentsPage: React.FC = () => {
                 throw new Error(errorData.error || 'Failed to send message');
             }
 
-            toast.success('Wysłano wiadomość pomyślnie!');
+            toast.success(t('teacherStudents.toast.sent'));
             closeModal();
         } catch (error) {
             console.error('Error sending message:', error);
-            toast.error('Nie udało się wysłać wiadomości. Spróbuj ponownie później.');
+            toast.error(t('teacherStudents.toast.sendLaterError'));
         } finally {
             setIsSending(false);
         }
@@ -433,13 +436,13 @@ const StudentsPage: React.FC = () => {
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
                         <Users className="h-8 w-8 text-orange-600" />
-                        <span>Twoi kursanci</span>
+                        <span>{t('teacherStudents.title')}</span>
                         <span className="text-lg font-normal text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                             {students.length}
                         </span>
                     </h1>
                     <p className="text-gray-600 mt-2">
-                        Zarządzaj swoimi studentami i utrzymuj z nimi kontakt
+                        {t('teacherStudents.subtitle')}
                     </p>
                 </div>
                 {selectedStudents.length > 0 && (
@@ -448,7 +451,7 @@ const StudentsPage: React.FC = () => {
                         className="bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2"
                     >
                         <Mail className="h-4 w-4" />
-                        Wyślij do zaznaczonych ({selectedStudents.length})
+                        {t('teacherStudents.sendSelected').replace('{count}', String(selectedStudents.length))}
                     </Button>
                 )}
             </div>
@@ -458,7 +461,7 @@ const StudentsPage: React.FC = () => {
                 <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                         <Users className="h-5 w-5" />
-                        <span>Lista kursantów</span>
+                        <span>{t('teacherStudents.listTitle')}</span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -468,7 +471,7 @@ const StudentsPage: React.FC = () => {
                             <div className="relative w-full max-w-md">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                                 <Input
-                                    placeholder="Wyszukaj kursanta..."
+                                    placeholder={t('teacherStudents.searchPlaceholder')}
                                     value={(table.getColumn("firstName")?.getFilterValue() as string) ?? ""}
                                     onChange={(event) => {
                                         table.getColumn("firstName")?.setFilterValue(event.target.value)
@@ -477,7 +480,7 @@ const StudentsPage: React.FC = () => {
                                 />
                             </div>
                             <div className="text-sm text-gray-500">
-                                Znaleziono {table.getFilteredRowModel().rows.length} z {students.length} kursantów
+                                {t('teacherStudents.found').replace('{filtered}', String(table.getFilteredRowModel().rows.length)).replace('{total}', String(students.length))}
                             </div>
                         </div>
 
@@ -528,9 +531,9 @@ const StudentsPage: React.FC = () => {
                                                     <div className="flex flex-col items-center justify-center space-y-3">
                                                         <Users className="h-12 w-12 text-gray-300" />
                                                         <div>
-                                                            <p className="text-gray-500 font-medium">Brak kursantów</p>
+                                                            <p className="text-gray-500 font-medium">{t('teacherStudents.emptyTitle')}</p>
                                                             <p className="text-gray-400 text-sm mt-1">
-                                                                Gdy studenci zapiszą się na Twoje kursy, pojawią się tutaj
+                                                                {t('teacherStudents.emptyDescription')}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -546,7 +549,7 @@ const StudentsPage: React.FC = () => {
                         {table.getPageCount() > 1 && (
                             <div className="flex items-center justify-between">
                                 <div className="text-sm text-gray-500">
-                                    Strona {table.getState().pagination.pageIndex + 1} z {table.getPageCount()}
+                                    {t('teacherStudents.pagination').replace('{current}', String(table.getState().pagination.pageIndex + 1)).replace('{total}', String(table.getPageCount()))}
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <Button
@@ -556,7 +559,7 @@ const StudentsPage: React.FC = () => {
                                         disabled={!table.getCanPreviousPage()}
                                         className="hover:bg-gray-50"
                                     >
-                                        Poprzednia
+                                        {t('teacherStudents.previous')}
                                     </Button>
                                     <Button
                                         variant="outline"
@@ -565,7 +568,7 @@ const StudentsPage: React.FC = () => {
                                         disabled={!table.getCanNextPage()}
                                         className="hover:bg-gray-50"
                                     >
-                                        Następna
+                                        {t('teacherStudents.next')}
                                     </Button>
                                 </div>
                             </div>
@@ -579,9 +582,9 @@ const StudentsPage: React.FC = () => {
                 <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
                     <div className="relative w-full max-w-md mx-auto p-6 border shadow-xl rounded-lg bg-white">
                         <div className="text-center">
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">Wyślij wiadomość do wielu studentów</h3>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">{t('teacherStudents.bulkModal.title')}</h3>
                             <p className="text-sm text-gray-500 mb-4">
-                                Wysyłasz do <span className="font-semibold text-orange-600">{selectedStudents.length} studentów</span>
+                                {t('teacherStudents.bulkModal.sendingTo').replace('{count}', String(selectedStudents.length))}
                             </p>
                             
                             {/* AI Buttons */}
@@ -593,7 +596,7 @@ const StudentsPage: React.FC = () => {
                                     disabled={isGenerating}
                                     className="text-xs"
                                 >
-                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '✨'} Motywacja
+                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '✨'} {t('teacherStudents.ai.motivation')}
                                 </Button>
                                 <Button
                                     size="sm"
@@ -602,7 +605,7 @@ const StudentsPage: React.FC = () => {
                                     disabled={isGenerating}
                                     className="text-xs"
                                 >
-                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '🔔'} Przypomnienie
+                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '🔔'} {t('teacherStudents.ai.reminder')}
                                 </Button>
                                 <Button
                                     size="sm"
@@ -611,14 +614,14 @@ const StudentsPage: React.FC = () => {
                                     disabled={isGenerating}
                                     className="text-xs"
                                 >
-                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '💬'} Feedback
+                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '💬'} {t('teacherStudents.ai.feedback')}
                                 </Button>
                             </div>
 
                             <textarea
                                 className="mt-2 w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                                 rows={4}
-                                placeholder="Twoja wiadomość tutaj... lub użyj AI aby wygenerować treść"
+                                placeholder={t('teacherStudents.messagePlaceholder')}
                                 value={bulkMessage}
                                 onChange={(e) => setBulkMessage(e.target.value)}
                                 disabled={isGenerating}
@@ -630,14 +633,14 @@ const StudentsPage: React.FC = () => {
                                     disabled={isSendingBulk || !bulkMessage.trim()}
                                 >
                                     {isSendingBulk && <Loader2 className="h-4 w-4 animate-spin" />}
-                                    {isSendingBulk ? 'Wysyłanie...' : 'Wyślij wszystkim'}
+                                    {isSendingBulk ? t('teacherStudents.sending') : t('teacherStudents.sendAll')}
                                 </button>
                                 <button
                                     className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-md shadow hover:bg-gray-300 transition-colors"
                                     onClick={closeBulkModal}
                                     disabled={isSendingBulk}
                                 >
-                                    Anuluj
+                                    {t('common.cancel')}
                                 </button>
                             </div>
                         </div>
@@ -650,9 +653,9 @@ const StudentsPage: React.FC = () => {
                 <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
                     <div className="relative w-full max-w-md mx-auto p-6 border shadow-xl rounded-lg bg-white">
                         <div className="text-center">
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">Skontaktuj się ze studentem</h3>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">{t('teacherStudents.singleModal.title')}</h3>
                             <p className="text-sm text-gray-500 mb-4">
-                                Napisz wiadomość do <span className="font-semibold text-orange-600">{selectedEmail}</span>:
+                                {t('teacherStudents.singleModal.to').replace('{email}', selectedEmail)}
                             </p>
                             
                             {/* AI Buttons */}
@@ -664,7 +667,7 @@ const StudentsPage: React.FC = () => {
                                     disabled={isGenerating}
                                     className="text-xs"
                                 >
-                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '✨'} Motywacja
+                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '✨'} {t('teacherStudents.ai.motivation')}
                                 </Button>
                                 <Button
                                     size="sm"
@@ -673,7 +676,7 @@ const StudentsPage: React.FC = () => {
                                     disabled={isGenerating}
                                     className="text-xs"
                                 >
-                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '🔔'} Przypomnienie
+                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '🔔'} {t('teacherStudents.ai.reminder')}
                                 </Button>
                                 <Button
                                     size="sm"
@@ -682,14 +685,14 @@ const StudentsPage: React.FC = () => {
                                     disabled={isGenerating}
                                     className="text-xs"
                                 >
-                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '💬'} Feedback
+                                    {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : '💬'} {t('teacherStudents.ai.feedback')}
                                 </Button>
                             </div>
 
                             <textarea
                                 className="mt-2 w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                                 rows={4}
-                                placeholder="Twoja wiadomość tutaj... lub użyj AI aby wygenerować treść"
+                                placeholder={t('teacherStudents.messagePlaceholder')}
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 disabled={isGenerating}
@@ -701,13 +704,13 @@ const StudentsPage: React.FC = () => {
                                     disabled={isSending || !message.trim()}
                                 >
                                     {isSending && <Loader2 className="h-4 w-4 animate-spin" />}
-                                    {isSending ? 'Wysyłanie...' : 'Wyślij wiadomość'}
+                                    {isSending ? t('teacherStudents.sending') : t('teacherStudents.sendMessage')}
                                 </button>
                                 <button
                                     className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-md shadow hover:bg-gray-300 transition-colors"
                                     onClick={closeModal}
                                 >
-                                    Anuluj
+                                    {t('common.cancel')}
                                 </button>
                             </div>
                         </div>

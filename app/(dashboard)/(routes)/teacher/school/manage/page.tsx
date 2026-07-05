@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { AlertCircle, Check, X, Loader2, PlusCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface SchoolData {
   id: number;
@@ -22,6 +23,7 @@ interface SchoolData {
 export default function ManageSchoolPage() {
   const { userId } = useAuth();
   const router = useRouter();
+  const { t, locale } = useI18n();
 
   const [school, setSchool] = useState<SchoolData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,14 +56,14 @@ export default function ManageSchoolPage() {
           setSchool(data.school);
           setEditedSchool(data.school);
         } else if (response.status === 404) {
-          toast.error("Nie masz przypisanej szkoły");
+          toast.error(t("schoolManage.toast.noSchool"));
           setTimeout(() => router.push("/teacher/courses"), 2000);
         } else {
-          toast.error("Nie udało się załadować danych szkoły");
+          toast.error(t("schoolManage.toast.loadFailed"));
         }
       } catch (error) {
         console.error("Error fetching school:", error);
-        toast.error("Błąd podczas ładowania szkoły");
+        toast.error(t("schoolManage.toast.loadError"));
       } finally {
         setIsLoading(false);
       }
@@ -90,7 +92,7 @@ export default function ManageSchoolPage() {
 
     fetchSchool();
     fetchMembers();
-  }, [userId, router]);
+  }, [userId, router, t]);
 
   // Debounced search
   useEffect(() => {
@@ -127,7 +129,7 @@ export default function ManageSchoolPage() {
 
   const handleSaveChanges = async () => {
     if (!school || !editedSchool.name?.trim() || !editedSchool.companyName?.trim() || !editedSchool.taxId?.trim()) {
-      toast.error("Wszystkie pola są wymagane");
+      toast.error(t("schoolManage.toast.requiredFields"));
       return;
     }
 
@@ -149,13 +151,13 @@ export default function ManageSchoolPage() {
         setSchool(data.school);
         setEditedSchool(data.school);
         setHasChanges(false);
-        toast.success("Dane szkoły zostały zaktualizowane");
+        toast.success(t("schoolManage.toast.updated"));
       } else {
-        toast.error("Nie udało się zaktualizować danych szkoły");
+        toast.error(t("schoolManage.toast.updateFailed"));
       }
     } catch (error) {
       console.error("Error saving school:", error);
-      toast.error("Błąd podczas zapisywania zmian");
+      toast.error(t("schoolManage.toast.saveError"));
     } finally {
       setIsSaving(false);
     }
@@ -171,7 +173,7 @@ export default function ManageSchoolPage() {
       });
 
       if (response.ok) {
-        toast.success("Prośba zaakceptowana");
+        toast.success(t("schoolManage.toast.requestAccepted"));
         setPendingRequests((prev) => prev.filter((req) => req.id !== requestId));
         // Odśwież listę członków
         const membersRes = await fetch("/api/schools/my-school/members");
@@ -180,11 +182,11 @@ export default function ManageSchoolPage() {
           setMembers(data.members || []);
         }
       } else {
-        toast.error("Nie udało się zaakceptować prośby");
+        toast.error(t("schoolManage.toast.requestAcceptFailed"));
       }
     } catch (error) {
       console.error("Error accepting request:", error);
-      toast.error("Błąd podczas akceptacji prośby");
+      toast.error(t("schoolManage.toast.requestAcceptError"));
     } finally {
       setProcessingId(null);
     }
@@ -196,18 +198,18 @@ export default function ManageSchoolPage() {
       const response = await fetch(`/api/schools/requests/${requestId}/reject`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: "Odmówiono dostępu" }),
+        body: JSON.stringify({ reason: t("schoolManage.requestDenyReason") }),
       });
 
       if (response.ok) {
-        toast.success("Prośba odrzucona");
+        toast.success(t("schoolManage.toast.requestRejected"));
         setPendingRequests((prev) => prev.filter((req) => req.id !== requestId));
       } else {
-        toast.error("Nie udało się odrzucić prośby");
+        toast.error(t("schoolManage.toast.requestRejectFailed"));
       }
     } catch (error) {
       console.error("Error rejecting request:", error);
-      toast.error("Błąd podczas odrzucania prośby");
+      toast.error(t("schoolManage.toast.requestRejectError"));
     } finally {
       setProcessingId(null);
     }
@@ -228,7 +230,7 @@ export default function ManageSchoolPage() {
       await axios.post(`/api/schools/invite-teachers`, {
         userIds: selectedUsers.map(u => u.id),
       });
-      toast.success(`Zaproszono ${selectedUsers.length} nauczycieli`);
+      toast.success(t("schoolManage.toast.invited").replace("{count}", String(selectedUsers.length)));
       setShowInvite(false);
       setSearch("");
       setSearchResults([]);
@@ -240,14 +242,14 @@ export default function ManageSchoolPage() {
         setPendingRequests(data.requests || []);
       }
     } catch (error) {
-      toast.error("Nie udało się zaprosić nauczycieli");
+      toast.error(t("schoolManage.toast.inviteFailed"));
     } finally {
       setIsInviting(false);
     }
   };
 
   const handleRemoveMember = async (memberId: number) => {
-    if (!confirm("Czy na pewno chcesz usunąć tego nauczyciela ze szkoły?")) return;
+    if (!confirm(t("schoolManage.confirmRemoveMember"))) return;
     
     setProcessingId(memberId);
     try {
@@ -257,14 +259,14 @@ export default function ManageSchoolPage() {
       });
 
       if (response.ok) {
-        toast.success("Nauczyciel został usunięty ze szkoły");
+        toast.success(t("schoolManage.toast.memberRemoved"));
         setMembers((prev) => prev.filter((m) => m.id !== memberId));
       } else {
-        toast.error("Nie udało się usunąć nauczyciela");
+        toast.error(t("schoolManage.toast.memberRemoveFailed"));
       }
     } catch (error) {
       console.error("Error removing member:", error);
-      toast.error("Błąd podczas usuwania nauczyciela");
+      toast.error(t("schoolManage.toast.memberRemoveError"));
     } finally {
       setProcessingId(null);
     }
@@ -285,9 +287,9 @@ export default function ManageSchoolPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Twoja szkoła</h1>
+        <h1 className="text-3xl font-bold">{t("schoolManage.title")}</h1>
         <p className="text-muted-foreground mt-2">
-          Zarządzaj informacjami o swojej szkole i członkami zespołu
+          {t("schoolManage.subtitle")}
         </p>
       </div>
 
@@ -301,7 +303,7 @@ export default function ManageSchoolPage() {
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          Informacje o szkole
+          {t("schoolManage.tabs.info")}
         </button>
         <button
           onClick={() => setActiveTab("members")}
@@ -311,7 +313,7 @@ export default function ManageSchoolPage() {
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          Członkowie ({members.length})
+          {t("schoolManage.tabs.members").replace("{count}", String(members.length))}
         </button>
       </div>
 
@@ -320,33 +322,33 @@ export default function ManageSchoolPage() {
         <div className="pt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Dane szkoły</CardTitle>
+              <CardTitle>{t("schoolManage.infoCard.title")}</CardTitle>
               <CardDescription>
-                Edytuj informacje o swojej szkole
+                {t("schoolManage.infoCard.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nazwa szkoły/placówki *
+                  {t("schoolManage.fields.schoolName")}
                 </label>
                 <Input
                   type="text"
                   value={editedSchool.name || ""}
                   onChange={(e) => handleInputChange("name", e.target.value)}
-                  placeholder="np. Szkoła Podstawowa nr 1"
+                  placeholder={t("schoolManage.fields.schoolNamePlaceholder")}
                   className="w-full"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Opis szkoły
+                  {t("schoolManage.fields.description")}
                 </label>
                 <textarea
                   value={editedSchool.description || ""}
                   onChange={(e) => handleInputChange("description", e.target.value)}
-                  placeholder="Dodaj krótki opis Twojej szkoły..."
+                  placeholder={t("schoolManage.fields.descriptionPlaceholder")}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   rows={4}
                 />
@@ -354,26 +356,26 @@ export default function ManageSchoolPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nazwa firmy *
+                  {t("schoolManage.fields.companyName")}
                 </label>
                 <Input
                   type="text"
                   value={editedSchool.companyName || ""}
                   onChange={(e) => handleInputChange("companyName", e.target.value)}
-                  placeholder="np. Przykładowa Sp. z o.o."
+                  placeholder={t("schoolManage.fields.companyNamePlaceholder")}
                   className="w-full"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  NIP *
+                  {t("schoolManage.fields.taxId")}
                 </label>
                 <Input
                   type="text"
                   value={editedSchool.taxId || ""}
                   onChange={(e) => handleInputChange("taxId", e.target.value)}
-                  placeholder="np. 1234567890"
+                  placeholder={t("schoolManage.fields.taxIdPlaceholder")}
                   className="w-full"
                 />
               </div>
@@ -389,7 +391,7 @@ export default function ManageSchoolPage() {
                   ) : (
                     <Check className="w-4 h-4" />
                   )}
-                  Zapisz zmiany
+                  {t("schoolManage.actions.save")}
                 </Button>
                 <Button
                   onClick={() => {
@@ -399,7 +401,7 @@ export default function ManageSchoolPage() {
                   variant="outline"
                   disabled={!hasChanges}
                 >
-                  Anuluj
+                  {t("common.cancel")}
                 </Button>
               </div>
             </CardContent>
@@ -413,16 +415,16 @@ export default function ManageSchoolPage() {
           {/* Pending Requests */}
           <Card>
             <CardHeader>
-              <CardTitle>Prośby o dołączenie</CardTitle>
+              <CardTitle>{t("schoolManage.requests.title")}</CardTitle>
               <CardDescription>
-                {pendingRequests.length} oczekujące prośby
+                {t("schoolManage.requests.count").replace("{count}", String(pendingRequests.length))}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {pendingRequests.length === 0 ? (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <AlertCircle className="w-4 h-4" />
-                  <p>Brak oczekujących prośb o dołączenie</p>
+                  <p>{t("schoolManage.requests.empty")}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -433,7 +435,7 @@ export default function ManageSchoolPage() {
                     >
                       <div>
                         <h3 className="font-semibold">
-                          {request.teacher.displayName || "Bez nazwy"}
+                          {request.teacher.displayName || t("schoolManage.common.unnamed")}
                         </h3>
                         <p className="text-sm text-muted-foreground">
                           {request.teacher.email}
@@ -456,7 +458,7 @@ export default function ManageSchoolPage() {
                           ) : (
                             <Check className="w-4 h-4" />
                           )}
-                          Zaakceptuj
+                          {t("schoolManage.actions.accept")}
                         </Button>
                         <Button
                           onClick={() => handleRejectRequest(request.id)}
@@ -470,7 +472,7 @@ export default function ManageSchoolPage() {
                           ) : (
                             <X className="w-4 h-4" />
                           )}
-                          Odrzuć
+                          {t("schoolManage.actions.reject")}
                         </Button>
                       </div>
                     </div>
@@ -483,27 +485,27 @@ export default function ManageSchoolPage() {
           {/* Members */}
           <Card>
             <CardHeader>
-              <CardTitle>Członkowie szkoły</CardTitle>
+              <CardTitle>{t("schoolManage.members.title")}</CardTitle>
               <CardDescription>
-                {members.length} członków w zespole
+                {t("schoolManage.members.count").replace("{count}", String(members.length))}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm text-muted-foreground">Nauczyciele zatrudnieni w Twojej szkole</span>
+                <span className="text-sm text-muted-foreground">{t("schoolManage.members.hint")}</span>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowInvite(true)}
                 >
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  Zaproś nauczyciela
+                  {t("schoolManage.actions.inviteTeacher")}
                 </Button>
               </div>
               {members.length === 0 ? (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <AlertCircle className="w-4 h-4" />
-                  <p>Brak członków szkoły</p>
+                  <p>{t("schoolManage.members.empty")}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -514,7 +516,7 @@ export default function ManageSchoolPage() {
                     >
                       <div>
                         <h3 className="font-semibold">
-                          {member.displayName || "Bez nazwy"}
+                          {member.displayName || t("schoolManage.common.unnamed")}
                         </h3>
                         <p className="text-sm text-muted-foreground">
                           {member.email}
@@ -525,15 +527,15 @@ export default function ManageSchoolPage() {
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground mt-1">
-                          Dołączył:{" "}
-                          {new Date(member.createdAt).toLocaleDateString("pl-PL")}
+                          {t("schoolManage.members.joined")}{" "}
+                          {new Date(member.createdAt).toLocaleDateString(locale === "en" ? "en-US" : "pl-PL")}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
                           {member.businessType === "company"
-                            ? "Firma"
-                            : "Osoba fizyczna"}
+                            ? t("schoolManage.members.company")
+                            : t("schoolManage.members.individual")}
                         </span>
                         <Button
                           onClick={() => handleRemoveMember(member.id)}
@@ -547,7 +549,7 @@ export default function ManageSchoolPage() {
                           ) : (
                             <X className="w-4 h-4" />
                           )}
-                          Usuń
+                          {t("schoolManage.actions.remove")}
                         </Button>
                       </div>
                     </div>
@@ -563,12 +565,12 @@ export default function ManageSchoolPage() {
       {showInvite && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
           <div className="bg-background border rounded-lg shadow-lg p-6 min-w-[320px]">
-            <h2 className="text-lg font-semibold mb-4">Zaproś nauczycieli</h2>
+            <h2 className="text-lg font-semibold mb-4">{t("schoolManage.inviteModal.title")}</h2>
             <div className="mb-4">
               <input
                 type="text"
                 className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-primary"
-                placeholder="Wpisz imię, nazwisko lub email"
+                placeholder={t("schoolManage.inviteModal.searchPlaceholder")}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 autoFocus
@@ -597,7 +599,7 @@ export default function ManageSchoolPage() {
               </ul>
             )}
             {!isSearching && search && searchResults.length === 0 && (
-              <div className="text-sm text-muted-foreground">Brak wyników.</div>
+              <div className="text-sm text-muted-foreground">{t("schoolManage.inviteModal.noResults")}</div>
             )}
             <div className="flex justify-end mt-4 gap-2">
               <Button
@@ -607,13 +609,13 @@ export default function ManageSchoolPage() {
                   setSelectedUsers([]);
                 }}
               >
-                Zamknij
+                {t("schoolManage.actions.close")}
               </Button>
               <Button
                 disabled={selectedUsers.length === 0 || isInviting}
                 onClick={handleInviteConfirm}
               >
-                {isInviting ? <Loader2 className="animate-spin" size={20} /> : "Zaproś wybranych"}
+                {isInviting ? <Loader2 className="animate-spin" size={20} /> : t("schoolManage.actions.inviteSelected")}
               </Button>
             </div>
           </div>

@@ -28,6 +28,12 @@ export function InsertTrueFalseDialog({
   const [isUsingFullContext, setIsUsingFullContext] = useState(false);
   const { t } = useI18n();
 
+  const formatMessage = (key: string, replacements: Record<string, string | number> = {}) => {
+    return Object.entries(replacements).reduce((message, [token, value]) => {
+      return message.replaceAll(`{${token}}`, String(value));
+    }, t(key));
+  };
+
   const refreshSelectionIntoSource = useCallback(() => {
     activeEditor.getEditorState().read(() => {
       const selection = $getSelection();
@@ -81,15 +87,15 @@ export function InsertTrueFalseDialog({
 
   function normalizeGeneratedQuestions(payload: unknown, expectedCount: number): TrueFalseQuestion[] {
     if (!Array.isArray(payload)) {
-      throw new Error("Model nie zwrócił tablicy pytań.");
+      throw new Error(t("ed.tfErrorModelNotArray"));
     }
     if (payload.length !== expectedCount) {
-      throw new Error(`Model powinien zwrócić dokładnie ${expectedCount} pytań.`);
+      throw new Error(formatMessage("ed.tfErrorModelExactCount", { count: expectedCount }));
     }
 
     return payload.map((item, idx) => {
       if (!item || typeof item !== "object") {
-        throw new Error(`Niepoprawny format pytania #${idx + 1}.`);
+        throw new Error(formatMessage("ed.tfErrorInvalidQuestionFormat", { index: idx + 1 }));
       }
       const obj = item as Record<string, unknown>;
       const question = typeof obj.question === "string" ? obj.question.trim() : "";
@@ -102,10 +108,10 @@ export function InsertTrueFalseDialog({
             : null;
 
       if (!question) {
-        throw new Error(`Brak treści pytania #${idx + 1}.`);
+        throw new Error(formatMessage("ed.tfErrorMissingQuestionContent", { index: idx + 1 }));
       }
       if (correctAnswer === null) {
-        throw new Error(`Pytanie #${idx + 1} ma niepoprawną wartość correctAnswer.`);
+        throw new Error(formatMessage("ed.tfErrorInvalidCorrectAnswer", { index: idx + 1 }));
       }
 
       return {
@@ -128,23 +134,13 @@ export function InsertTrueFalseDialog({
       const requestedCount = Number.isFinite(aiQuestionCount)
         ? Math.max(1, Math.min(aiQuestionCount, 20))
         : 5;
-      const userPrompt = `Wygeneruj pytania prawda/fałsz: dokładnie ${requestedCount} pytań.
-Zwróć WYŁĄCZNIE poprawny JSON (bez Markdown), w formacie tablicy ${requestedCount} obiektów:
-[
-  {
-    "question": "...",
-    "correctAnswer": true,
-    "explanation": "opcjonalne krótkie wyjaśnienie albo null"
-  }
-]
-
-Tekst źródłowy:
-"""
-${text}
-"""`;
+      const userPrompt = formatMessage("ed.tfPromptUser", {
+        count: requestedCount,
+        text,
+      });
 
       const payload = {
-        systemPrompt: "Tworzysz pytania prawda/fałsz. Zwróć tylko JSON.",
+        systemPrompt: t("ed.tfPromptSystem"),
         userPrompt,
       };
 
@@ -165,10 +161,10 @@ ${text}
       const generatedQuestions = normalizeGeneratedQuestions(parsed, requestedCount);
 
       setQuestions(generatedQuestions);
-      toast.success(`Wygenerowano ${requestedCount} pytań.`);
+      toast.success(formatMessage("ed.tfGeneratedN", { count: requestedCount }));
     } catch (err) {
       console.error("True/False AI generation error:", err);
-      toast.error("Nie udało się wygenerować pytań. Spróbuj ponownie.");
+      toast.error(t("ed.tfGenerateFailed"));
     } finally {
       setIsGenerating(false);
     }
@@ -299,9 +295,11 @@ ${text}
                     {t('ed.generating')}
                   </>
                 ) : (
-                  t('ed.tfGenerate', { n: Number.isFinite(aiQuestionCount)
-                    ? Math.max(1, Math.min(aiQuestionCount, 20))
-                    : 5 })
+                  formatMessage('ed.tfGenerateN', {
+                    n: Number.isFinite(aiQuestionCount)
+                      ? Math.max(1, Math.min(aiQuestionCount, 20))
+                      : 5,
+                  })
                 )}
               </button>
             </div>

@@ -32,12 +32,25 @@ export function InsertQuizDialog({
   const [step, setStep] = useState(0);
   const { t } = useI18n();
 
+  const formatMessage = useCallback(
+    (key: string, replacements: Record<string, string | number> = {}) => {
+      return Object.entries(replacements).reduce((message, [token, value]) => {
+        return message.replaceAll(`{${token}}`, String(value));
+      }, t(key));
+    },
+    [t],
+  );
+
   const defaultContextText = useMemo(() => {
     const parts: string[] = [];
-    if (module?.courseName) parts.push(`Kurs: ${module.courseName}`);
-    if (module?.moduleName) parts.push(`Lekcja/Moduł: ${module.moduleName}`);
+    if (module?.courseName) {
+      parts.push(formatMessage('ed.quizContextCourse', {name: module.courseName}));
+    }
+    if (module?.moduleName) {
+      parts.push(formatMessage('ed.quizContextModule', {name: module.moduleName}));
+    }
     return parts.join("\n");
-  }, [module?.courseName, module?.moduleName]);
+  }, [formatMessage, module?.courseName, module?.moduleName]);
 
   const refreshSelectionIntoSource = useCallback(() => {
     activeEditor.getEditorState().read(() => {
@@ -76,9 +89,8 @@ export function InsertQuizDialog({
   }, [activeEditor, defaultContextText]);
 
   const systemPrompt = useMemo(
-    () =>
-      "Jesteś pomocnym asystentem nauczyciela. Tworzysz krótkie quizy sprawdzające zrozumienie treści. Zwracasz WYŁĄCZNIE poprawny JSON bez Markdown, bez komentarzy.",
-    [],
+    () => t('ed.quizPromptSystem'),
+    [t],
   );
 
   function extractJsonArray(text: string): unknown {
@@ -100,15 +112,15 @@ export function InsertQuizDialog({
 
   function normalizeTests(payload: unknown, expectedCount: number): Test[] {
     if (!Array.isArray(payload)) {
-      throw new Error("Model nie zwrócił tablicy pytań.");
+      throw new Error(t('ed.quizErrorModelNotArray'));
     }
     if (payload.length !== expectedCount) {
-      throw new Error(`Model powinien zwrócić dokładnie ${expectedCount} pytań.`);
+      throw new Error(formatMessage('ed.quizErrorModelExactCount', {count: expectedCount}));
     }
 
     return payload.map((item, idx) => {
       if (!item || typeof item !== "object") {
-        throw new Error(`Niepoprawny format pytania #${idx + 1}.`);
+        throw new Error(formatMessage('ed.quizErrorInvalidQuestionFormat', {index: idx + 1}));
       }
       const obj = item as Record<string, unknown>;
       const question = typeof obj.question === "string" ? obj.question.trim() : "";
@@ -128,13 +140,13 @@ export function InsertQuizDialog({
             : null;
 
       if (!question) {
-        throw new Error(`Brak treści pytania #${idx + 1}.`);
+        throw new Error(formatMessage('ed.quizErrorMissingQuestionContent', {index: idx + 1}));
       }
       if (answers.length !== 4 || answers.some((a) => !a)) {
-        throw new Error(`Pytanie #${idx + 1} musi mieć 4 niepuste odpowiedzi.`);
+        throw new Error(formatMessage('ed.quizErrorQuestionNeedsFourAnswers', {index: idx + 1}));
       }
       if (correctAnswerIndex === null || correctAnswerIndex < 0 || correctAnswerIndex > 3) {
-        throw new Error(`Pytanie #${idx + 1} ma niepoprawny correctAnswerIndex (0-3).`);
+        throw new Error(formatMessage('ed.quizErrorInvalidCorrectIndex', {index: idx + 1}));
       }
 
       return {
@@ -160,25 +172,14 @@ export function InsertQuizDialog({
       const requestedCount = Number.isFinite(aiQuestionCount)
         ? Math.max(1, Math.min(aiQuestionCount, 20))
         : 5;
-      const userPrompt = `Wygeneruj quiz: dokładnie ${requestedCount} pytań, każde z 4 odpowiedziami (A-D).
-  Zwróć WYŁĄCZNIE poprawny JSON (bez Markdown), w formacie tablicy ${requestedCount} obiektów:
-[
-  {
-    "question": "...",
-    "answers": ["A...", "B...", "C...", "D..."],
-    "correctAnswerIndex": 0,
-    "correctAnswerDescription": "opcjonalne krótkie wyjaśnienie albo null"
-  }
-]
-
-Kontekst lekcji (jeśli dostępny):
-Kurs: ${module?.courseName ?? "(brak)"}
-Lekcja/Moduł: ${module?.moduleName ?? "(brak)"}
-
-Tekst źródłowy (jeśli podany):
-"""
-${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
-"""`;
+      const userPrompt = formatMessage('ed.quizPromptUser', {
+        count: requestedCount,
+        courseName: module?.courseName ?? t('ed.quizMissingValue'),
+        moduleName: module?.moduleName ?? t('ed.quizMissingValue'),
+        sourceText: hasText
+          ? text
+          : t('ed.quizNoSourceTextFallback'),
+      });
 
       const payload: LLMPrompt = {
         systemPrompt,
@@ -204,11 +205,11 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
       activeEditor.dispatchCommand(INSERT_TEST_COMMAND, {
         tests: generatedTests,
       });
-      toast.success(`Wygenerowano quiz (${requestedCount} pytań) i wstawiono do edytora.`);
+      toast.success(formatMessage('ed.quizGeneratedAndInserted', {count: requestedCount}));
       onClose();
     } catch (err) {
       console.error("Quiz AI generation error:", err);
-      toast.error("Nie udało się wygenerować quizu. Spróbuj ponownie.");
+      toast.error(t('ed.quizGenerateFailed'));
     } finally {
       setIsGenerating(false);
     }
@@ -277,17 +278,17 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
           </div>
           <div className="mt-1 text-xs text-gray-600">
             {sourceText.trim()
-              ? "Użyje zaznaczenia lub tekstu z pola poniżej."
+              ? t('ed.quizAiHintHasSource')
               : module?.courseName || module?.moduleName
-                ? "Brak zaznaczenia — użyje kontekstu lekcji (możesz też wkleić tekst)."
-                : "Najlepiej zaznacz fragment tekstu w edytorze."}
+                ? t('ed.quizAiHintNoSelectionWithContext')
+                : t('ed.quizAiHintSelectTextBest')}
           </div>
         </button>
 
         {isAiOpen ? (
           <>
             <div className="text-xs text-gray-500">
-              Jeśli masz zaznaczenie w edytorze — pokaże się tutaj. Jeśli nie, możesz wygenerować quiz na podstawie kontekstu lekcji.
+              {t('ed.quizAiInfo')}
             </div>
             <Textarea
               value={sourceText}
@@ -297,8 +298,8 @@ ${hasText ? text : "(brak - oprzyj pytania na kontekście lekcji)"}
               }}
               placeholder={
                 module?.courseName || module?.moduleName
-                  ? "Brak zaznaczenia — możesz wkleić tekst, albo użyć kontekstu lekcji."
-                  : "Zaznacz tekst w edytorze, żeby wygenerować quiz..."
+                  ? t('ed.quizSourcePlaceholderWithContext')
+                  : t('ed.quizSourcePlaceholderNoContext')
               }
               className="min-h-[120px]"
               disabled={isGenerating}

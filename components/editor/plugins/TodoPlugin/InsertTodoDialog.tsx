@@ -13,7 +13,13 @@ export function InsertTodoDialog({
   activeEditor: LexicalEditor;
   onClose: () => void;
 }): JSX.Element {
-  const [title, setTitle] = useState("Lista zadań");
+  const { t } = useI18n();
+  const formatMessage = (key: string, replacements: Record<string, string | number> = {}) => {
+    return Object.entries(replacements).reduce((message, [token, value]) => {
+      return message.replaceAll(`{${token}}`, String(value));
+    }, t(key));
+  };
+  const [title, setTitle] = useState("");
   const [items, setItems] = useState<TodoItem[]>([]);
   const [newText, setNewText] = useState("");
   const [isAiOpen, setIsAiOpen] = useState(false);
@@ -21,7 +27,10 @@ export function InsertTodoDialog({
   const [aiItemCount, setAiItemCount] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUsingFullContext, setIsUsingFullContext] = useState(false);
-  const { t } = useI18n();
+
+  useEffect(() => {
+    setTitle((currentTitle) => currentTitle.trim() === "" ? t('ed.todoTitle') : currentTitle);
+  }, [t]);
 
   const refreshSelectionIntoSource = useCallback(() => {
     activeEditor.getEditorState().read(() => {
@@ -76,20 +85,20 @@ export function InsertTodoDialog({
 
   function normalizeGeneratedItems(payload: unknown, expectedCount: number): TodoItem[] {
     if (!Array.isArray(payload)) {
-      throw new Error("Model nie zwrócił tablicy zadań.");
+      throw new Error(t("ed.todoErrorModelNotArray"));
     }
     if (payload.length !== expectedCount) {
-      throw new Error(`Model powinien zwrócić dokładnie ${expectedCount} zadań.`);
+      throw new Error(formatMessage("ed.todoErrorModelExactCount", { count: expectedCount }));
     }
 
     return payload.map((item, idx) => {
       if (!item || typeof item !== "object") {
-        throw new Error(`Niepoprawny format zadania #${idx + 1}.`);
+        throw new Error(formatMessage("ed.todoErrorInvalidTaskFormat", { index: idx + 1 }));
       }
       const obj = item as Record<string, unknown>;
       const text = typeof obj.text === "string" ? obj.text.trim() : "";
       if (!text) {
-        throw new Error(`Brak treści zadania #${idx + 1}.`);
+        throw new Error(formatMessage("ed.todoErrorMissingTaskText", { index: idx + 1 }));
       }
       return {
         id: Math.random().toString(36).slice(2),
@@ -111,21 +120,13 @@ export function InsertTodoDialog({
       const requestedCount = Number.isFinite(aiItemCount)
         ? Math.max(1, Math.min(aiItemCount, 20))
         : 1;
-      const userPrompt = `Wygeneruj listę zadań: dokładnie ${requestedCount} elementów.
-Zwróć WYŁĄCZNIE poprawny JSON (bez Markdown), w formacie tablicy ${requestedCount} obiektów:
-[
-  {
-    "text": "..."
-  }
-]
-
-Tekst źródłowy:
-"""
-${text}
-"""`;
+      const userPrompt = formatMessage("ed.todoPromptUser", {
+        count: requestedCount,
+        text,
+      });
 
       const payload = {
-        systemPrompt: "Tworzysz krótkie zadania na podstawie tekstu. Zwracasz tylko JSON.",
+        systemPrompt: t("ed.todoPromptSystem"),
         userPrompt,
       };
 
@@ -146,10 +147,10 @@ ${text}
       const generatedItems = normalizeGeneratedItems(parsed, requestedCount);
 
       setItems(generatedItems);
-      toast.success(`Wygenerowano ${requestedCount} zadań.`);
+      toast.success(formatMessage("ed.todoGeneratedN", { count: requestedCount }));
     } catch (err) {
       console.error("Todo AI generation error:", err);
-      toast.error("Nie udało się wygenerować listy. Spróbuj ponownie.");
+      toast.error(t("ed.todoGenerateFailed"));
     } finally {
       setIsGenerating(false);
     }

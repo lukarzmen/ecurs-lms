@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { AlertTriangle, CheckCircle, CreditCard, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface StripeAccountStatus {
   hasAccount: boolean;
@@ -12,6 +13,7 @@ interface StripeAccountStatus {
 }
 
 export default function StripeConnectStatus() {
+  const { t } = useI18n();
   const [status, setStatus] = useState<StripeAccountStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -27,7 +29,7 @@ export default function StripeConnectStatus() {
       setStatus(data);
     } catch (error) {
       console.error('Error checking Stripe status:', error);
-      toast.error('Błąd podczas sprawdzania statusu konta płatności');
+      toast.error(t("stripeStatus.error.checkFailed"));
     } finally {
       setLoading(false);
     }
@@ -42,14 +44,14 @@ export default function StripeConnectStatus() {
       const data = await response.json();
       
       if (data.onboardingUrl) {
-        toast.success('Przekierowujemy Cię do konfiguracji konta...');
+        toast.success(t("stripeStatus.toast.redirectSetup"));
         window.location.href = data.onboardingUrl;
       } else {
-        toast.error('Błąd podczas tworzenia konta Stripe');
+        toast.error(t("stripeStatus.error.createFailed"));
       }
     } catch (error) {
       console.error('Error setting up Stripe account:', error);
-      toast.error('Błąd podczas konfiguracji konta płatności');
+      toast.error(t("stripeStatus.error.setupFailed"));
     } finally {
       setCreating(false);
     }
@@ -60,7 +62,7 @@ export default function StripeConnectStatus() {
       <div className="bg-white rounded-lg border p-6">
         <div className="flex items-center justify-center">
           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-          <span className="ml-2">Sprawdzanie statusu konta płatności...</span>
+          <span className="ml-2">{t("stripeStatus.loading")}</span>
         </div>
       </div>
     );
@@ -73,10 +75,10 @@ export default function StripeConnectStatus() {
           <AlertTriangle className="w-6 h-6 text-orange-600 mt-0.5" />
           <div className="ml-3 flex-1">
             <h3 className="text-lg font-medium text-orange-800">
-              Konto płatności wymagane
+              {t("stripeStatus.required.title")}
             </h3>
             <p className="mt-1 text-sm text-orange-700">
-              Aby otrzymywać płatności za kursy, musisz skonfigurować konto płatności Stripe.
+              {t("stripeStatus.required.description")}
             </p>
             <button
               onClick={setupStripeAccount}
@@ -86,12 +88,12 @@ export default function StripeConnectStatus() {
               {creating ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Konfigurowanie...
+                  {t("stripeStatus.required.creating")}
                 </>
               ) : (
                 <>
                   <CreditCard className="w-4 h-4 mr-2" />
-                  Skonfiguruj konto płatności
+                  {t("stripeStatus.required.cta")}
                 </>
               )}
             </button>
@@ -108,10 +110,10 @@ export default function StripeConnectStatus() {
           <AlertTriangle className="w-6 h-6 text-yellow-600 mt-0.5" />
           <div className="ml-3 flex-1">
             <h3 className="text-lg font-medium text-yellow-800">
-              Dokończ konfigurację konta płatności
+              {t("stripeStatus.incomplete.title")}
             </h3>
             <p className="mt-1 text-sm text-yellow-700">
-              Twoje konto Stripe wymaga dokończenia konfiguracji, aby móc otrzymywać płatności.
+              {t("stripeStatus.incomplete.description")}
             </p>
             <button
               onClick={setupStripeAccount}
@@ -121,12 +123,12 @@ export default function StripeConnectStatus() {
               {creating ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Przekierowywanie...
+                  {t("stripeStatus.incomplete.redirecting")}
                 </>
               ) : (
                 <>
                   <CreditCard className="w-4 h-4 mr-2" />
-                  Dokończ konfigurację
+                  {t("stripeStatus.incomplete.cta")}
                 </>
               )}
             </button>
@@ -142,14 +144,14 @@ export default function StripeConnectStatus() {
         <CheckCircle className="w-6 h-6 text-green-600 mt-0.5" />
         <div className="ml-3">
           <h3 className="text-lg font-medium text-green-800">
-            Konto płatności skonfigurowane
+            {t("stripeStatus.ready.title")}
           </h3>
           <p className="mt-1 text-sm text-green-700">
-            Twoje konto Stripe jest aktywne i gotowe do przyjmowania płatności.
+            {t("stripeStatus.ready.description")}
           </p>
           {status.accountId && (
             <p className="mt-2 text-xs text-green-600">
-              ID konta: {status.accountId}
+              {t("stripeStatus.ready.accountId").replace("{id}", status.accountId)}
             </p>
           )}
         </div>

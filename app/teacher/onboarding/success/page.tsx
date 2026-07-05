@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { useI18n } from "@/hooks/use-i18n";
 
 type OnboardingStatus = "checking" | "complete" | "incomplete" | "error";
 
 export default function OnboardingSuccessPage() {
+  const { t } = useI18n();
   const [status, setStatus] = useState<OnboardingStatus>("checking");
   const [accountDetails, setAccountDetails] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +31,7 @@ export default function OnboardingSuccessPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Nie udało się sprawdzić statusu konta");
+        throw new Error(t("onboarding.success.error.checkFailed"));
       }
 
       const result = await response.json();
@@ -37,7 +39,7 @@ export default function OnboardingSuccessPage() {
       if (result.hasAccount && result.onboardingComplete) {
         setStatus("complete");
         setAccountDetails(result.details);
-        toast.success("Konfiguracja konta płatności zakończona pomyślnie!");
+        toast.success(t("onboarding.success.toast.completed"));
         
         // Redirect to teacher dashboard after 3 seconds
         setTimeout(() => {
@@ -45,7 +47,7 @@ export default function OnboardingSuccessPage() {
         }, 3000);
       } else if (result.hasAccount && !result.onboardingComplete) {
         setStatus("incomplete");
-        setError("Konfiguracja konta nie została w pełni ukończona. Możesz dokończyć ją później.");
+        setError(t("onboarding.success.error.incomplete"));
         
         // Redirect to teacher dashboard after 5 seconds
         setTimeout(() => {
@@ -53,12 +55,12 @@ export default function OnboardingSuccessPage() {
         }, 5000);
       } else {
         setStatus("error");
-        setError("Nie znaleziono konta płatności. Skontaktuj się z wsparciem technicznym.");
+        setError(t("onboarding.success.error.accountNotFound"));
       }
     } catch (err) {
       console.error("Error checking onboarding status:", err);
       setStatus("error");
-      setError(err instanceof Error ? err.message : "Wystąpił nieoczekiwany błąd");
+      setError(err instanceof Error ? err.message : t("onboarding.success.error.unexpected"));
       
       // Redirect to teacher dashboard after 5 seconds even on error
       setTimeout(() => {
@@ -76,20 +78,20 @@ export default function OnboardingSuccessPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Nie udało się utworzyć nowego linku do konfiguracji");
+        throw new Error(t("onboarding.success.error.newLinkFailed"));
       }
 
       const result = await response.json();
       
       if (result.onboardingUrl) {
-        toast.success("Przekierowujemy do ponownej konfiguracji...");
+        toast.success(t("onboarding.success.toast.redirectingAgain"));
         window.location.href = result.onboardingUrl;
       } else {
-        throw new Error("Nie otrzymano linku do konfiguracji");
+        throw new Error(t("onboarding.success.error.noLink"));
       }
     } catch (err) {
       console.error("Error retrying onboarding:", err);
-      toast.error(err instanceof Error ? err.message : "Nie udało się rozpocząć ponownej konfiguracji");
+      toast.error(err instanceof Error ? err.message : t("onboarding.success.error.retryStartFailed"));
     }
   };
 
@@ -102,9 +104,9 @@ export default function OnboardingSuccessPage() {
             <div className="flex justify-center">
               <Loader2 className="animate-spin text-blue-600" size={48} />
             </div>
-            <h1 className="text-2xl font-bold text-gray-800">Sprawdzanie statusu konfiguracji...</h1>
+            <h1 className="text-2xl font-bold text-gray-800">{t("onboarding.success.checkingTitle")}</h1>
             <p className="text-gray-600">
-              Prosimy o chwilę cierpliwości, sprawdzamy czy konfiguracja Stripe została ukończona pomyślnie.
+              {t("onboarding.success.checkingDescription")}
             </p>
           </>
         )}
@@ -114,23 +116,23 @@ export default function OnboardingSuccessPage() {
             <div className="flex justify-center">
               <CheckCircle className="text-green-600" size={48} />
             </div>
-            <h1 className="text-2xl font-bold text-green-700">Konfiguracja ukończona!</h1>
+            <h1 className="text-2xl font-bold text-green-700">{t("onboarding.success.completeTitle")}</h1>
             <div className="space-y-3">
               <p className="text-gray-700">
-                Twoje konto płatności zostało pomyślnie skonfigurowane. Możesz teraz:
+                {t("onboarding.success.completeDescription")}
               </p>
               <ul className="text-left space-y-2 text-sm text-gray-600">
                 <li className="flex items-center space-x-2">
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  <span>Tworzyć i publikować płatne kursy</span>
+                  <span>{t("onboarding.success.completeItemPublish")}</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  <span>Otrzymywać płatności bezpośrednio na swoje konto</span>
+                  <span>{t("onboarding.success.completeItemReceive")}</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  <span>Zarządzać swoimi finansami przez panel Stripe</span>
+                  <span>{t("onboarding.success.completeItemManage")}</span>
                 </li>
               </ul>
             </div>
@@ -138,17 +140,17 @@ export default function OnboardingSuccessPage() {
             {accountDetails && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                 <p className="text-xs text-green-700">
-                  <strong>Status konta:</strong> {accountDetails.charges_enabled ? "Aktywne" : "W trakcie weryfikacji"}
+                  <strong>{t("onboarding.success.accountStatusLabel")}</strong> {accountDetails.charges_enabled ? t("onboarding.success.accountStatusActive") : t("onboarding.success.accountStatusVerifying")}
                 </p>
               </div>
             )}
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-sm text-blue-700 font-medium">
-                🚀 Przekierowanie w toku...
+                {t("onboarding.success.redirectingTitle")}
               </p>
               <p className="text-xs text-blue-600 mt-1">
-                Zostaniesz automatycznie przekierowany do panelu nauczyciela za 3 sekundy
+                {t("onboarding.success.redirectingIn3")}
               </p>
             </div>
           </>
@@ -159,23 +161,23 @@ export default function OnboardingSuccessPage() {
             <div className="flex justify-center">
               <AlertCircle className="text-yellow-600" size={48} />
             </div>
-            <h1 className="text-2xl font-bold text-yellow-700">Konfiguracja nie ukończona</h1>
+            <h1 className="text-2xl font-bold text-yellow-700">{t("onboarding.success.incompleteTitle")}</h1>
             <div className="space-y-4">
               <p className="text-gray-700">
-                Konfiguracja konta płatności nie została w pełni ukończona. To może oznaczać, że:
+                {t("onboarding.success.incompleteDescription")}
               </p>
               <ul className="text-left space-y-2 text-sm text-gray-600">
                 <li className="flex items-center space-x-2">
                   <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
-                  <span>Nie wypełniono wszystkich wymaganych informacji</span>
+                  <span>{t("onboarding.success.incompleteItemInfo")}</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
-                  <span>Dokumenty są w trakcie weryfikacji</span>
+                  <span>{t("onboarding.success.incompleteItemDocs")}</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
-                  <span>Wymagane dodatkowe potwierdzenia</span>
+                  <span>{t("onboarding.success.incompleteItemExtra")}</span>
                 </li>
               </ul>
 
@@ -183,19 +185,19 @@ export default function OnboardingSuccessPage() {
                 onClick={retryOnboarding}
                 className="w-full py-2 px-4 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
               >
-                Dokończ konfigurację teraz
+                {t("onboarding.success.incompleteCta")}
               </button>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-sm text-blue-700 font-medium">
-                  🚀 Przekierowanie w toku...
+                  {t("onboarding.success.redirectingTitle")}
                 </p>
                 <p className="text-xs text-blue-600">
-                  Zostaniesz przekierowany do panelu nauczyciela za 5 sekund
+                  {t("onboarding.success.redirectingIn5")}
                 </p>
               </div>
               <p className="text-xs text-gray-500">
-                Możesz też dokończyć konfigurację później z panelu nauczyciela.
+                {t("onboarding.success.incompleteHint")}
               </p>
             </div>
           </>
@@ -206,10 +208,10 @@ export default function OnboardingSuccessPage() {
             <div className="flex justify-center">
               <AlertCircle className="text-red-600" size={48} />
             </div>
-            <h1 className="text-2xl font-bold text-red-700">Wystąpił problem</h1>
+            <h1 className="text-2xl font-bold text-red-700">{t("onboarding.success.errorTitle")}</h1>
             <div className="space-y-4">
               <p className="text-gray-700">
-                {error || "Nie udało się sprawdzić statusu konfiguracji konta płatności."}
+                {error || t("onboarding.success.errorFallback")}
               </p>
 
               <div className="space-y-2">
@@ -217,27 +219,27 @@ export default function OnboardingSuccessPage() {
                   onClick={retryOnboarding}
                   className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Spróbuj ponownie skonfigurować konto
+                  {t("onboarding.success.retryCta")}
                 </button>
                 
                 <button
                   onClick={() => router.push("/teacher/courses")}
                   className="w-full py-2 px-4 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                 >
-                  Przejdź do panelu nauczyciela
+                  {t("onboarding.success.goDashboard")}
                 </button>
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
                 <p className="text-sm text-blue-700 font-medium">
-                  🚀 Przekierowanie w toku...
+                  {t("onboarding.success.redirectingTitle")}
                 </p>
                 <p className="text-xs text-blue-600">
-                  Zostaniesz przekierowany do panelu nauczyciela za 5 sekund
+                  {t("onboarding.success.redirectingIn5")}
                 </p>
               </div>
               <p className="text-xs text-gray-500">
-                Jeśli problem się powtarza, skontaktuj się z wsparciem technicznym.
+                {t("onboarding.success.contactSupport")}
               </p>
             </div>
           </>

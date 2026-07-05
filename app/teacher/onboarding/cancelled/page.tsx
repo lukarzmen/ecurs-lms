@@ -4,15 +4,17 @@ import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { XCircle, ArrowLeft, CreditCard } from "lucide-react";
 import toast from "react-hot-toast";
+import { useI18n } from "@/hooks/use-i18n";
 
 function OnboardingCancelledContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useI18n();
 
   useEffect(() => {
     // Show cancellation message
-    toast.error("Konfiguracja konta płatności została anulowana");
-  }, []);
+    toast.error(t("onboarding.cancelled.toast.cancelled"));
+  }, [t]);
 
   const retryOnboarding = async () => {
     try {
@@ -23,20 +25,20 @@ function OnboardingCancelledContent() {
       });
 
       if (!response.ok) {
-        throw new Error("Nie udało się rozpocząć konfiguracji");
+        throw new Error(t("onboarding.cancelled.error.startFailed"));
       }
 
       const result = await response.json();
       
       if (result.onboardingUrl) {
-        toast.success("Przekierowujemy ponownie do konfiguracji...");
+        toast.success(t("onboarding.cancelled.toast.redirecting"));
         window.location.href = result.onboardingUrl;
       } else {
-        throw new Error("Nie otrzymano linku do konfiguracji");
+        throw new Error(t("onboarding.cancelled.error.noLink"));
       }
     } catch (error) {
       console.error("Error retrying onboarding:", error);
-      toast.error(error instanceof Error ? error.message : "Nie udało się rozpocząć konfiguracji");
+      toast.error(error instanceof Error ? error.message : t("onboarding.cancelled.error.startFailed"));
     }
   };
 
@@ -48,31 +50,31 @@ function OnboardingCancelledContent() {
           <XCircle className="text-red-600" size={48} />
         </div>
         
-        <h1 className="text-2xl font-bold text-red-700">Konfiguracja anulowana</h1>
+        <h1 className="text-2xl font-bold text-red-700">{t("onboarding.cancelled.title")}</h1>
         
         <div className="space-y-4">
           <p className="text-gray-700">
-            Konfiguracja konta płatności została anulowana. Bez ukończenia tego procesu nie będziesz mógł:
+            {t("onboarding.cancelled.description")}
           </p>
           
           <ul className="text-left space-y-2 text-sm text-gray-600">
             <li className="flex items-center space-x-2">
               <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-              <span>Publikować płatnych kursów</span>
+              <span>{t("onboarding.cancelled.itemPublish")}</span>
             </li>
             <li className="flex items-center space-x-2">
               <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-              <span>Otrzymywać płatności od uczniów</span>
+              <span>{t("onboarding.cancelled.itemReceive")}</span>
             </li>
             <li className="flex items-center space-x-2">
               <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-              <span>Zarządzać finansami kursu</span>
+              <span>{t("onboarding.cancelled.itemManage")}</span>
             </li>
           </ul>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
             <p className="text-xs text-blue-700">
-              <strong>💡 Pamiętaj:</strong> Możesz dokończyć konfigurację konta płatności w dowolnym momencie z panelu nauczyciela.
+              <strong>{t("onboarding.cancelled.tipLabel")}</strong> {t("onboarding.cancelled.tipText")}
             </p>
           </div>
         </div>
@@ -83,7 +85,7 @@ function OnboardingCancelledContent() {
             className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
           >
             <CreditCard size={20} />
-            <span>Spróbuj ponownie skonfigurować</span>
+            <span>{t("onboarding.cancelled.retry")}</span>
           </button>
           
           <button
@@ -91,12 +93,12 @@ function OnboardingCancelledContent() {
             className="w-full py-2 px-4 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
           >
             <ArrowLeft size={18} />
-            <span>Przejdź do panelu nauczyciela</span>
+            <span>{t("onboarding.cancelled.goDashboard")}</span>
           </button>
         </div>
 
         <p className="text-xs text-gray-500">
-          Konfiguracja konta płatności jest wymagana przez przepisy dotyczące przetwarzania płatności online.
+          {t("onboarding.cancelled.legalInfo")}
         </p>
 
       </div>
@@ -105,12 +107,14 @@ function OnboardingCancelledContent() {
 }
 
 export default function OnboardingCancelledPage() {
+  const { t } = useI18n();
+
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-white p-4">
         <div className="max-w-md mx-auto text-center p-8 space-y-6 bg-white rounded-xl shadow-lg border border-red-100">
           <div className="animate-spin rounded-full h-12 w-12 border-2 border-red-600 border-t-transparent mx-auto"></div>
-          <p className="text-gray-600">Ładowanie...</p>
+          <p className="text-gray-600">{t("common.loading")}</p>
         </div>
       </div>
     }>

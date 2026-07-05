@@ -28,6 +28,15 @@ export function QuestionAnswerDialog({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUsingFullContext, setIsUsingFullContext] = useState(false);
 
+  const formatMessage = useCallback(
+    (key: string, replacements: Record<string, string | number> = {}) => {
+      return Object.entries(replacements).reduce((message, [token, value]) => {
+        return message.replaceAll(`{${token}}`, String(value));
+      }, t(key));
+    },
+    [t],
+  );
+
   const refreshSelectionIntoSource = useCallback(() => {
     activeEditor.getEditorState().read(() => {
       const selection = $getSelection();
@@ -81,15 +90,15 @@ export function QuestionAnswerDialog({
 
   function normalizeGeneratedItems(payload: unknown, expectedCount: number) {
     if (!Array.isArray(payload)) {
-      throw new Error('Model nie zwrócił tablicy pytań.');
+      throw new Error(t('ed.qaErrorModelNotArray'));
     }
     if (payload.length !== expectedCount) {
-      throw new Error(`Model powinien zwrócić dokładnie ${expectedCount} pytań.`);
+      throw new Error(formatMessage('ed.qaErrorModelExactCount', {count: expectedCount}));
     }
 
     return payload.map((item, idx) => {
       if (!item || typeof item !== 'object') {
-        throw new Error(`Niepoprawny format pytania #${idx + 1}.`);
+        throw new Error(formatMessage('ed.qaErrorInvalidQuestionFormat', {index: idx + 1}));
       }
       const obj = item as Record<string, unknown>;
       const question = typeof obj.question === 'string' ? obj.question.trim() : '';
@@ -103,7 +112,7 @@ export function QuestionAnswerDialog({
             : '';
 
       if (!question || !answer) {
-        throw new Error(`Pytanie #${idx + 1} musi mieć treść i odpowiedź.`);
+        throw new Error(formatMessage('ed.qaErrorQuestionNeedsContentAndAnswer', {index: idx + 1}));
       }
 
       return { question, answer, explanation: explanationText };
@@ -122,23 +131,13 @@ export function QuestionAnswerDialog({
       const requestedCount = Number.isFinite(aiItemCount)
         ? Math.max(1, Math.min(aiItemCount, 20))
         : 1;
-      const userPrompt = `Wygeneruj zestaw pytań i odpowiedzi: dokładnie ${requestedCount} elementów.
-Zwróć WYŁĄCZNIE poprawny JSON (bez Markdown), w formacie tablicy ${requestedCount} obiektów:
-[
-  {
-    "question": "...",
-    "answer": "...",
-    "explanation": "opcjonalne wyjaśnienie albo null"
-  }
-]
-
-Tekst źródłowy:
-"""
-${text}
-"""`;
+      const userPrompt = formatMessage('ed.qaPromptUser', {
+        count: requestedCount,
+        text,
+      });
 
       const payload = {
-        systemPrompt: "Tworzysz krótkie pytania i odpowiedzi na podstawie tekstu. Zwracasz tylko JSON.",
+        systemPrompt: t('ed.qaPromptSystem'),
         userPrompt,
       };
 
@@ -160,10 +159,10 @@ ${text}
 
       setItems(generatedItems);
       setCurrentIndex(0);
-      toast.success(`Wygenerowano ${requestedCount} pytań.`);
+      toast.success(formatMessage('ed.qaGeneratedN', {count: requestedCount}));
     } catch (err) {
       console.error('QA AI generation error:', err);
-      toast.error('Nie udało się wygenerować pytań. Spróbuj ponownie.');
+      toast.error(t('ed.qaGenerateFailed'));
     } finally {
       setIsGenerating(false);
     }
@@ -316,7 +315,7 @@ ${text}
             disabled={items.length <= 1}
             className="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
           >
-            Usun
+            {t('ed.remove')}
           </button>
           <button
             type="button"

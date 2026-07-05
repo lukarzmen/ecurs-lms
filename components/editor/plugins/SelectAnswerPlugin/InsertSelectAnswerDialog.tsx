@@ -21,6 +21,12 @@ export function InsertSelectAnswerDialog({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUsingFullContext, setIsUsingFullContext] = useState(false);
 
+  const formatMessage = (key: string, replacements: Record<string, string | number> = {}) => {
+    return Object.entries(replacements).reduce((message, [token, value]) => {
+      return message.replaceAll(`{${token}}`, String(value));
+    }, t(key));
+  };
+
   const refreshSelectionIntoSource = useCallback(() => {
     activeEditor.getEditorState().read(() => {
       const selection = $getSelection();
@@ -96,39 +102,37 @@ export function InsertSelectAnswerDialog({
 
   function normalizeGeneratedOptions(payload: unknown, expectedCount: number) {
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-      throw new Error("Model nie zwrócił obiektu z odpowiedziami.");
+      throw new Error(t('ed.saErrorModelNotObject'));
     }
     const obj = payload as Record<string, unknown>;
     const optionsValue = obj.options;
     const correctIndexValue = obj.correctIndex;
 
     if (!Array.isArray(optionsValue)) {
-      throw new Error("Model nie zwrócił listy odpowiedzi.");
+      throw new Error(t('ed.saErrorModelNotArray'));
     }
     if (optionsValue.length !== expectedCount) {
-      throw new Error(
-        `Model powinien zwrócić dokładnie ${expectedCount} odpowiedzi.`
-      );
+      throw new Error(formatMessage('ed.saErrorModelExactCount', {count: expectedCount}));
     }
 
     const normalizedOptions = optionsValue.map((option, idx) => {
       if (typeof option !== "string") {
-        throw new Error(`Niepoprawny format odpowiedzi #${idx + 1}.`);
+        throw new Error(formatMessage('ed.saErrorInvalidAnswerFormat', {index: idx + 1}));
       }
       const trimmed = option.trim();
       if (!trimmed) {
-        throw new Error(`Brak treści odpowiedzi #${idx + 1}.`);
+        throw new Error(formatMessage('ed.saErrorMissingAnswerContent', {index: idx + 1}));
       }
       return trimmed;
     });
 
     if (!Number.isInteger(correctIndexValue)) {
-      throw new Error("Model nie zwrócił poprawnego indeksu odpowiedzi.");
+      throw new Error(t('ed.saErrorInvalidCorrectIndex'));
     }
 
     const correctIndex = Number(correctIndexValue);
     if (correctIndex < 0 || correctIndex >= normalizedOptions.length) {
-      throw new Error("Indeks poprawnej odpowiedzi jest poza zakresem.");
+      throw new Error(t('ed.saErrorCorrectIndexOutOfRange'));
     }
 
     return { options: normalizedOptions, correctIndex };
@@ -151,25 +155,14 @@ export function InsertSelectAnswerDialog({
       const requestedCount = Number.isFinite(aiOptionCount)
         ? Math.max(2, Math.min(aiOptionCount, 8))
         : 4;
-      const userPrompt = `Wygeneruj odpowiedzi do pytania jednokrotnego wyboru: dokładnie ${requestedCount} odpowiedzi.
-Zwróć WYŁĄCZNIE poprawny JSON (bez Markdown), w formacie:
-{
-  "options": ["..."],
-  "correctIndex": 0
-}
-
-Wymagania:
-- "options" ma dokładnie ${requestedCount} krótkich odpowiedzi (string).
-- "correctIndex" wskazuje poprawną odpowiedź (0-${requestedCount - 1}).
-
-Tekst źródłowy:
-"""
-${text}
-"""`;
+      const userPrompt = formatMessage('ed.saPromptUser', {
+        count: requestedCount,
+        maxIndex: requestedCount - 1,
+        text,
+      });
 
       const payload = {
-        systemPrompt:
-          "Tworzysz krótkie odpowiedzi jednokrotnego wyboru na podstawie tekstu. Zwracasz tylko JSON.",
+        systemPrompt: t('ed.saPromptSystem'),
         userPrompt,
       };
 
@@ -191,10 +184,10 @@ ${text}
 
       setAnswers(generated.options);
       setCorrectAnswerIndex(generated.correctIndex);
-      toast.success(`Wygenerowano ${requestedCount} odpowiedzi.`);
+      toast.success(formatMessage('ed.saGeneratedN', {count: requestedCount}));
     } catch (err) {
       console.error("SelectAnswer AI generation error:", err);
-      toast.error("Nie udało się wygenerować odpowiedzi. Spróbuj ponownie.");
+      toast.error(t('ed.saGenerateFailed'));
     } finally {
       setIsGenerating(false);
     }
@@ -259,7 +252,7 @@ ${text}
             )}
             <div className="flex flex-wrap items-center gap-3">
               <label className="text-xs font-semibold text-gray-700">
-                {t('ed.saAnswerCount')}
+                {formatMessage('ed.saAnswers', { n: aiOptionCount })}
                 <input
                   type="number"
                   min={2}
@@ -309,7 +302,7 @@ ${text}
 
       <div className="flex items-center justify-between">
         <div className="text-sm font-semibold text-gray-700">
-          {t('ed.saAnswers', {n: answers.length})}
+          {formatMessage('ed.saAnswers', { n: answers.length })}
         </div>
         <button
           type="button"
@@ -328,9 +321,9 @@ ${text}
         {answers.map((answer, index) => (
           <div
             key={index}
-            className="flex flex-wrap items-start gap-3 rounded-md border border-gray-200 p-3"
+            className="flex flex-wrap items-center gap-3 rounded-md border border-gray-200 p-3"
           >
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <label className="inline-flex min-h-10 items-center gap-2 text-sm font-medium text-gray-700 leading-none">
               <input
                 type="radio"
                 name="correct-answer"
@@ -345,7 +338,7 @@ ${text}
               value={answer}
               onChange={(e) => onAnswerChange(index, e.target.value)}
               className="flex-1 min-w-[220px] border border-gray-300 rounded-md p-2"
-              placeholder={t('ed.saAnswer', {letter: String.fromCharCode(65 + index)})}
+              placeholder={formatMessage('ed.saAnswer', { letter: String.fromCharCode(65 + index) })}
             />
             <button
               type="button"

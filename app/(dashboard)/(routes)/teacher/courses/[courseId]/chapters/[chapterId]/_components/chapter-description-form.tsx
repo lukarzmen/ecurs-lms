@@ -12,6 +12,7 @@ import { SaveResult } from "@/components/editor/plugins/ActionsPlugin";
 import LexicalEditor from "@/components/editor/LexicalEditor";
 import { ModuleContextData } from "@/components/editor/context/CourseContext";
 import { calculatePayloadSize, formatFileSize } from "@/lib/upload-utils";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface ChapterDescriptionFormProps {
   courseId: string;
@@ -33,6 +34,7 @@ export const ChapterDescriptionForm = ({
   courseId,
   chapterId: moduleId,
 }: ChapterDescriptionFormProps) => {
+  const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [serializedEditorStateString, setSerializedEditorStateString] = useState<string | null>(null);
@@ -76,7 +78,7 @@ export const ChapterDescriptionForm = ({
           return null;
         }
         if (!response.ok) {
-          throw new Error('Błąd pobierania dokumentu edytora');
+          throw new Error(t('chapterDescriptionForm.fetchDocumentError'));
         }
         return response.json();
       })
@@ -95,7 +97,7 @@ export const ChapterDescriptionForm = ({
         console.error('Error:', error);
         setIsLoading(false);
       });
-  }, [moduleId]);
+  }, [moduleId, t]);
 
   useEffect(() => {
     fetchData();
@@ -127,20 +129,21 @@ export const ChapterDescriptionForm = ({
       const payloadSize = calculatePayloadSize(serializedDocument);
       
       setUploadProgress(`Przygotowywanie danych (${formatFileSize(payloadSize)})...`);
+      setUploadProgress(t('chapterDescriptionForm.preparingData').replace('{size}', formatFileSize(payloadSize)));
       
       // If payload is larger than 500KB, use chunked upload
       const CHUNK_THRESHOLD = 500 * 1024; // 500KB
       
       if (payloadSize > CHUNK_THRESHOLD) {
-        setUploadProgress(`Duży plik (${formatFileSize(payloadSize)}) - przesyłanie w częściach...`);
+        setUploadProgress(t('chapterDescriptionForm.largeFile').replace('{size}', formatFileSize(payloadSize)));
         await handleChunkedUpload(payload);
       } else {
-        setUploadProgress(`Przesyłanie (${formatFileSize(payloadSize)})...`);
+        setUploadProgress(t('chapterDescriptionForm.uploading').replace('{size}', formatFileSize(payloadSize)));
         await handleRegularUpload(serializedDocument);
       }
     } catch (error) {
       console.error('Error:', error);
-      toast.error("Coś poszło nie tak podczas zapisywania dokumentu");
+      toast.error(t('chapterDescriptionForm.saveError'));
       setIsLoading(false);
       setUploadProgress("");
     }
@@ -157,27 +160,27 @@ export const ChapterDescriptionForm = ({
       });
       
       if (response.status === 413) {
-        toast.error("Treść jest za duża. Próbuję przesłać w częściach...");
-        setUploadProgress("Treść za duża - przechodzę na przesyłanie w częściach...");
+        toast.error(t('chapterDescriptionForm.tooLarge'));
+        setUploadProgress(t('chapterDescriptionForm.switchToChunks'));
         await handleChunkedUpload(JSON.stringify(serializedDocument));
         return;
       }
       
       if (!response.ok) {
-        toast.error("Błąd zapisu dokumentu");
+        toast.error(t('chapterDescriptionForm.saveDocumentError'));
         setIsLoading(false);
         setUploadProgress("");
         return;
       }
       
-      toast.success("Zapisano dokument");
+      toast.success(t('chapterDescriptionForm.documentSaved'));
       setIsEditing(false);
       setUploadProgress("");
       // Fetch new data after successful save
       fetchData();
     } catch (error) {
       console.error('Regular upload error:', error);
-      toast.error("Błąd połączenia podczas zapisywania dokumentu");
+      toast.error(t('chapterDescriptionForm.connectionSaveError'));
       setIsLoading(false);
       setUploadProgress("");
     }
@@ -195,11 +198,11 @@ export const ChapterDescriptionForm = ({
       
       const sessionId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
       
-      setUploadProgress(`Przesyłanie w ${chunks.length} częściach...`);
+      setUploadProgress(t('chapterDescriptionForm.chunkCount').replace('{count}', String(chunks.length)));
       
       // Send each chunk
       for (let i = 0; i < chunks.length; i++) {
-        setUploadProgress(`Część ${i + 1}/${chunks.length}...`);
+        setUploadProgress(t('chapterDescriptionForm.chunkProgress').replace('{current}', String(i + 1)).replace('{total}', String(chunks.length)));
         
         const chunkInfo = {
           chunkIndex: i,
@@ -217,7 +220,7 @@ export const ChapterDescriptionForm = ({
         });
         
         if (!response.ok) {
-          toast.error(`Błąd przesyłania części ${i + 1}/${chunks.length}`);
+          toast.error(t('chapterDescriptionForm.chunkError').replace('{current}', String(i + 1)).replace('{total}', String(chunks.length)));
           setIsLoading(false);
           setUploadProgress("");
           return;
@@ -242,14 +245,14 @@ export const ChapterDescriptionForm = ({
                     const data = JSON.parse(line.slice(6));
                     
                     if (data.error) {
-                      toast.error(`Błąd: ${data.error}`);
+                      toast.error(t('chapterDescriptionForm.serverError').replace('{error}', data.error));
                       setIsLoading(false);
                       setUploadProgress("");
                       return;
                     }
                     
                     if (data.status === 'complete') {
-                      toast.success("Zapisano dokument");
+                      toast.success(t('chapterDescriptionForm.documentSaved'));
                       fetchData();
                       setIsEditing(false);
                       setIsLoading(false);
@@ -258,7 +261,7 @@ export const ChapterDescriptionForm = ({
                     }
                     
                     if (data.progress) {
-                      setUploadProgress(`Przetwarzanie... ${data.progress}%`);
+                      setUploadProgress(t('chapterDescriptionForm.processing').replace('{progress}', String(data.progress)));
                     }
                   } catch (e) {
                     // Skip invalid JSON lines
@@ -276,7 +279,7 @@ export const ChapterDescriptionForm = ({
       setUploadProgress("");
     } catch (error) {
       console.error('Chunked upload error:', error);
-      toast.error("Błąd przesyłania w częściach");
+      toast.error(t('chapterDescriptionForm.chunkUploadError'));
       setIsLoading(false);
       setUploadProgress("");
     }
@@ -285,23 +288,23 @@ export const ChapterDescriptionForm = ({
   return (
     <div className="mt-6">
       <FormCard
-        title="Treść modułu"
+        title={t('chapterDescriptionForm.title')}
         icon={FileText}
         status={{
-          label: isEditing ? "Edycja" : (notFound ? "Brak treści" : "Zapisano"),
+          label: isEditing ? t('chapterDescriptionForm.editing') : (notFound ? t('chapterDescriptionForm.noContent') : t('chapterDescriptionForm.saved')),
           variant: isEditing ? "secondary" : (notFound ? "outline" : "default"),
           className: notFound ? "" : (isEditing ? "bg-blue-500 text-white" : "bg-green-500"),
           icon: isEditing ? Edit3 : (notFound ? FileText : undefined)
         }}
         isLoading={isLoading}
-        loadingMessage={uploadProgress || "Ładowanie treści..."}
+        loadingMessage={uploadProgress || t('chapterDescriptionForm.loading')}
       >
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-muted-foreground">Edytor treści modułu</span>
+          <span className="text-sm text-muted-foreground">{t('chapterDescriptionForm.subtitle')}</span>
           <Button onClick={toggleEdit} variant="ghost" size="sm">
-            {isEditing ? <>Anuluj</> : <>
+            {isEditing ? <>{t('common.cancel')}</> : <>
               <Pencil className="h-4 w-4 mr-2"></Pencil>
-              Edytuj
+              {t('common.edit')}
             </>}
           </Button>
         </div>
@@ -309,8 +312,8 @@ export const ChapterDescriptionForm = ({
         {notFound && !isEditing ? (
           <FormSection variant="warning">
             <p>
-              <strong>Treść nie istnieje</strong><br />
-              Edytuj aby utworzyć treść lekcji
+              <strong>{t('chapterDescriptionForm.noContentTitle')}</strong><br />
+              {t('chapterDescriptionForm.noContentHint')}
             </p>
           </FormSection>
         ) : (

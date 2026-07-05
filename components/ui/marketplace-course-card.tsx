@@ -31,6 +31,8 @@ interface MarketplaceCourseCardProps extends BaseCourseCardProps {
 
 export interface CourseInfoCardProps extends BaseCourseCardProps {
     modulesCount: number;
+    completedModulesCount?: number;
+    nextModuleId?: number | null;
     isCompleted?: boolean;
     type?: "educationalPath" | "course" | null;
 }

@@ -2,10 +2,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { IconBadge } from "../icon-badge";
-import { BookOpen, Loader2 } from "lucide-react";
+import { BookOpen, Loader2, PlayCircle } from "lucide-react";
 import { CourseInfoCardProps } from "./marketplace-course-card";
 import { useState } from "react";
 import { useI18n } from "@/hooks/use-i18n";
+import { useRouter } from "next/navigation";
 
 export const CourseInfoCard = ({
     id,
@@ -18,13 +19,22 @@ export const CourseInfoCard = ({
     type,
     isCompleted = false,
     modulesCount,
+    completedModulesCount,
+    nextModuleId,
 }: CourseInfoCardProps & { modulesCount?: number }) => {
+    const router = useRouter();
     const imageUrl = imageId ? `/api/image/${imageId}` : null;
     const placeholderImageUrl = "/logo.png";
     const [isImageLoading, setIsImageLoading] = useState(true);
     const linkHref = type === "educationalPath" ? `/educational-paths/${id}` : `/courses/${id}`;
+    const continueHref = nextModuleId ? `/courses/${id}/chapters/${nextModuleId}` : linkHref;
     const { t } = useI18n();
     
+    const progressPercent =
+        type === "course" && modulesCount && modulesCount > 0 && completedModulesCount !== undefined
+            ? Math.round((completedModulesCount / modulesCount) * 100)
+            : null;
+
     // Wyświetl nazwę szkoły jeśli kurs należy do szkoły, inaczej wyświetl autora
     const displayAuthor = schoolId && schoolName ? schoolName : author;
     return (
@@ -81,6 +91,33 @@ export const CourseInfoCard = ({
                         <div className="mt-2 text-xs text-orange-700 font-semibold">
                             {t("common.completed")}
                         </div>
+                    )}
+                    {!isCompleted && progressPercent !== null && (
+                        <div className="mt-2 space-y-1">
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                <span>{completedModulesCount}/{modulesCount}</span>
+                                <span>{progressPercent}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                                    style={{ width: `${progressPercent}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+                    {!isCompleted && nextModuleId && type === "course" && (
+                        <button
+                            type="button"
+                            onClick={e => {
+                                e.stopPropagation();
+                                router.push(continueHref);
+                            }}
+                            className="mt-3 w-full flex items-center justify-center gap-1.5 rounded-md bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold py-1.5 transition"
+                        >
+                            <PlayCircle className="h-3.5 w-3.5" />
+                            {t("common.continueLearning")}
+                        </button>
                     )}
                 </div>
             </div>

@@ -86,6 +86,16 @@ export async function GET(
       });
     }
 
+    // Fetch adjacent modules for Prev/Next navigation
+    const allModules = await db.module.findMany({
+      where: { courseId: courseIdInt },
+      orderBy: { position: "asc" },
+      select: { id: true, position: true },
+    });
+    const currentIndex = allModules.findIndex(m => m.id === chapterIdInt);
+    const prevModuleId = currentIndex > 0 ? allModules[currentIndex - 1].id : null;
+    const nextModuleId = currentIndex < allModules.length - 1 ? allModules[currentIndex + 1].id : null;
+
     let userModule = null;
 
     // If providerId is provided, find or create UserModule
@@ -125,7 +135,7 @@ export async function GET(
     }
 
     // Return chapter, course, and userModule (which will be null if no providerId or user found)
-    return NextResponse.json({ module: chapter, course, userModule });
+    return NextResponse.json({ module: chapter, course, userModule, prevModuleId, nextModuleId });
 
   } catch (error) {
     console.error("[GET_CHAPTER]", error);

@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
 import { UserResponse } from "@/app/api/user/route";
 import { Bell, Mail, Plus, Edit, Trash2, Send, Copy, Eye, Sparkles, TestTube } from "lucide-react";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface NotificationTemplate {
 	id: number;
@@ -49,35 +50,36 @@ export default function NotificationsPage() {
 	const [showTestResult, setShowTestResult] = useState(false);
 
 	const { userId, sessionId } = useAuth();
+	const { t } = useI18n();
 
 	// Template categories
 	const categories = [
-		{ key: 'general', label: 'Ogólne' },
-		{ key: 'course', label: 'Kursowe' },
-		{ key: 'reminder', label: 'Przypomnienia' },
-		{ key: 'payment', label: 'Płatności' }
+		{ key: 'general', label: t('notifications.categories.general') },
+		{ key: 'course', label: t('notifications.categories.course') },
+		{ key: 'reminder', label: t('notifications.categories.reminder') },
+		{ key: 'payment', label: t('notifications.categories.payment') }
 	];
 
 	// Default templates
 	const defaultTemplates = [
 		{
-			title: "Nowa lekcja dostępna",
-			message: "Cześć {{user}}! 🎉 W Twoim kursie '{{course}}' pojawiła się nowa lekcja. Sprawdź ją już teraz i kontynuuj swoją edukacyjną podróż!",
+			title: t("notifications.defaultTemplates.newLesson.title"),
+			message: t("notifications.defaultTemplates.newLesson.message"),
 			category: "course"
 		},
 		{
-			title: "Przypomnienie o kursie",
-			message: "{{user}}, nie zauważyliśmy Twojej aktywności w kursie '{{course}}' przez pewien czas. Wróć do nauki i osiągnij swoje cele! 💪",
+			title: t("notifications.defaultTemplates.courseReminder.title"),
+			message: t("notifications.defaultTemplates.courseReminder.message"),
 			category: "reminder"
 		},
 		{
-			title: "Nowy kurs w ścieżce",
-			message: "Hej {{user}}! Właśnie dodaliśmy nowy kurs '{{course}}' do Twojej ścieżki edukacyjnej. Odkryj nowe możliwości rozwoju już dziś! 🚀",
+			title: t("notifications.defaultTemplates.newPathCourse.title"),
+			message: t("notifications.defaultTemplates.newPathCourse.message"),
 			category: "course"
 		},
 		{
-			title: "Przypomnienie o płatności",
-			message: "{{user}}, nie odnotowaliśmy płatności za kurs '{{course}}'. Sprawdź szczegóły i dokończ transakcję, aby kontynuować naukę. 💳",
+			title: t("notifications.defaultTemplates.paymentReminder.title"),
+			message: t("notifications.defaultTemplates.paymentReminder.message"),
 			category: "payment"
 		}
 	];
@@ -567,10 +569,9 @@ export default function NotificationsPage() {
 						</div>
 					</div>
 					<div className="mt-4 text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
-						<p className="font-medium text-blue-800 mb-1">Zmienne szablonu:</p>
+						<p className="font-medium text-blue-800 mb-1">{t("notifications.test.templateVariablesTitle")}</p>
 						<p>
-							Użyj <code className="bg-white px-1 py-0.5 rounded text-xs font-mono">{"{{user}}"}</code> i{" "}
-							<code className="bg-white px-1 py-0.5 rounded text-xs font-mono">{"{{course}}"}</code> w treści szablonów. Zostaną zastąpione danymi testowymi powyżej.
+							{t("notifications.test.templateVariablesDescription")} <code className="bg-white px-1 py-0.5 rounded text-xs font-mono">{"{{user}}"}</code> {t("notifications.test.and")} <code className="bg-white px-1 py-0.5 rounded text-xs font-mono">{"{{course}}"}</code> {t("notifications.test.templateVariablesSuffix")}
 						</p>
 					</div>
 				</CardContent>

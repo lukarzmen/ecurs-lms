@@ -34,6 +34,14 @@ function QuestionAnswerComponent({
 }: QuestionAnswerComponentProps) {
   const answerId = useId();
   const { t } = useI18n();
+  const formatMessage = (
+    key: string,
+    replacements: Record<string, string | number> = {},
+  ) => {
+    return Object.entries(replacements).reduce((message, [token, value]) => {
+      return message.replaceAll(`{${token}}`, String(value));
+    }, t(key));
+  };
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userInputs, setUserInputs] = useState<string[]>([]);
   const [correctFlags, setCorrectFlags] = useState<Array<boolean | null>>([]);
@@ -77,23 +85,17 @@ function QuestionAnswerComponent({
         },
         body: JSON.stringify({
           userPrompt: ``,
-          systemPrompt: `Zweryfikuj poprawność odpowiedzi użytkownika na podstawie pytania i wyjaśnienia (jeśli istnieje).
-Bądź zwięzły.
-Odpowiedz "true", jeśli odpowiedź jest poprawna.
-Odpowiedz "false: [twoje wyjaśnienie]", jeśli odpowiedź jest niepoprawna, podając krótkie wyjaśnienie dlaczego.
-Na przykład: "false: Stolicą Francji jest Paryż, a nie Berlin."
-###
-pytanie: ${currentItem?.question ?? ""}
-###
-odpowiedź użytkownika: ${currentAnswer.trim()}
-###
-wyjaśnienie: ${currentItem?.explanation ?? "Brak dodatkowego wyjaśnienia dla poprawnej odpowiedzi."}
-###`,
+          systemPrompt: formatMessage('ed.qaVerifyPromptSystem', {
+            question: currentItem?.question ?? '',
+            userAnswer: currentAnswer.trim(),
+            explanation:
+              currentItem?.explanation ?? t('ed.qaVerifyNoExplanation'),
+          }),
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`Błąd API: ${response.statusText}`);
+        throw new Error(formatMessage('ed.qaVerifyApiError', {statusText: response.statusText}));
       }
 
       const text = await response.text();
@@ -110,10 +112,10 @@ wyjaśnienie: ${currentItem?.explanation ?? "Brak dodatkowego wyjaśnienia dla p
           explanationFromLlm = text.substring(colonIndex + 1).trim();
         }
       } else {
-        console.warn("Nieoczekiwany format odpowiedzi LLM:", text);
+        console.warn(t('ed.qaVerifyUnexpectedFormat'), text);
         isVerifiedCorrect = false;
         explanationFromLlm =
-          "Nie udało się zweryfikować odpowiedzi. Spróbuj ponownie.";
+          t('ed.qaVerifyTryAgain');
       }
 
       setLlmExplanations((prev) =>
@@ -130,13 +132,13 @@ wyjaśnienie: ${currentItem?.explanation ?? "Brak dodatkowego wyjaśnienia dla p
       );
       onComplete(nextFlags.length > 0 && nextFlags.every((flag) => flag === true));
     } catch (error) {
-      console.error("Weryfikacja nie powiodła się:", error);
+      console.error(t('ed.qaVerifyFailed'), error);
       setCorrectFlags((prev) =>
         prev.map((value, index) => (index === currentIndex ? false : value))
       );
       setLlmExplanations((prev) =>
         prev.map((value, index) =>
-          index === currentIndex ? "Wystąpił błąd podczas weryfikacji odpowiedzi." : value
+          index === currentIndex ? t('ed.qaVerifyError') : value
         )
       );
       onComplete(false);
@@ -204,7 +206,10 @@ wyjaśnienie: ${currentItem?.explanation ?? "Brak dodatkowego wyjaśnienia dla p
             </div>
             {isMulti ? (
               <div className="text-xs font-semibold text-muted-foreground">
-                {t('ed.qaCompQuestionOf', { current: currentIndex + 1, total: normalizedItems.length })}
+                {formatMessage('ed.qaCompQuestionOf', {
+                  current: currentIndex + 1,
+                  total: normalizedItems.length,
+                })}
               </div>
             ) : null}
             {isMulti ? (

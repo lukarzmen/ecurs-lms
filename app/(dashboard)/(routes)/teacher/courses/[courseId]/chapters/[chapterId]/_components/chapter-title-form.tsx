@@ -21,6 +21,7 @@ import { Pencil, FileText } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { useI18n } from "@/hooks/use-i18n";
 
 const formSchema = z.object({
   title: z.string().min(1),
@@ -36,6 +37,7 @@ export const ChapterTitleForm = ({
   courseId,
   chapterId,
 }: ChapterTitleFormProps) => {
+    const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -55,33 +57,33 @@ export const ChapterTitleForm = ({
         `/api/courses/${courseId}/chapters/${chapterId}`,
         values,
       );
-      toast.success("Zaktualizowano kurs");
+      toast.success(t("chapterTitleForm.updated"));
       toogleEdit();
       router.refresh();
     } catch (error) {
-      toast.error("Coś poszło nie tak");
+      toast.error(t("common.error"));
     }
   };
 
   return (
     <div className="mt-6">
       <FormCard
-        title="Nazwa modułu"
+        title={t("chapterTitleForm.title")}
         icon={FileText}
         status={{
-          label: isEditing ? "Edycja" : "Zapisano",
-          variant: isEditing ? "secondary" : "outline"
+          label: isEditing ? t("chapterTitleForm.statusEditing") : t("chapterTitleForm.statusSaved"),
+          variant: isEditing ? "secondary" : "outline",
         }}
       >
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-muted-foreground">Tytuł modułu kursu</span>
+          <span className="text-sm text-muted-foreground">{t("chapterTitleForm.subtitle")}</span>
           <Button onClick={toogleEdit} variant="ghost" size="sm">
             {isEditing ? (
-              <>Anuluj</>
+              <>{t("common.cancel")}</>
             ) : (
               <>
                 <Pencil className="h-4 w-4 mr-2"></Pencil>
-                Edytuj
+                {t("common.edit")}
               </>
             )}
           </Button>
@@ -110,7 +112,7 @@ export const ChapterTitleForm = ({
               ></FormField>
               <FormActions>
                 <Button disabled={!isValid || isSubmitting} type="submit" className="flex-1">
-                  Zapisz
+                  {t("common.save")}
                 </Button>
               </FormActions>
             </form>

@@ -27,6 +27,11 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
   contextText
 }) => {
   const { t } = useI18n();
+  const formatMessage = (key: string, replacements: Record<string, string | number> = {}) => {
+    return Object.entries(replacements).reduce((message, [token, value]) => {
+      return message.replaceAll(`{${token}}`, String(value));
+    }, t(key));
+  };
   // Derive entries from the dictionary prop instead of keeping separate state
   const currentEntries = useMemo(() => Object.entries(dictionary), [dictionary]);
 
@@ -245,22 +250,22 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
 
   const normalizeGeneratedEntries = (payload: unknown, expectedCount: number): [string, string][] => {
     if (!Array.isArray(payload)) {
-      throw new Error("Model nie zwrócił tablicy wpisów.");
+      throw new Error(t('ed.dictErrorModelNotArray'));
     }
     if (payload.length !== expectedCount) {
-      throw new Error(`Model powinien zwrócić dokładnie ${expectedCount} wpisów.`);
+      throw new Error(formatMessage('ed.dictErrorModelExactCount', {count: expectedCount}));
     }
 
     return payload.map((item, idx) => {
       if (!item || typeof item !== "object") {
-        throw new Error(`Niepoprawny format wpisu #${idx + 1}.`);
+        throw new Error(formatMessage('ed.dictErrorInvalidEntryFormat', {index: idx + 1}));
       }
       const obj = item as Record<string, unknown>;
       const term = typeof obj.term === "string" ? obj.term.trim() : "";
       const definition = typeof obj.definition === "string" ? obj.definition.trim() : "";
 
       if (!term || !definition) {
-        throw new Error(`Wpis #${idx + 1} musi mieć hasło i definicję.`);
+        throw new Error(formatMessage('ed.dictErrorEntryNeedsTermAndDefinition', {index: idx + 1}));
       }
 
       return [term, definition] as [string, string];
@@ -280,27 +285,18 @@ export const DictionaryComponent: React.FC<DictionaryComponentProps> = ({
         ? Math.max(1, Math.min(aiItemCount, 20))
         : 1;
       const modeLabel = aiOutputType === "translations"
-        ? "tłumaczenia"
+        ? t('ed.dictModeTranslations')
         : aiOutputType === "definitions"
-          ? "krótkie wyjaśnienia"
-          : "mieszane (tłumaczenia i krótkie wyjaśnienia)";
-      const userPrompt = `Wygeneruj słowniczek do szybkiej nauki (fiszki): ${modeLabel}.
-Każde "term" i "definition" ma być krótkie (najlepiej 1-6 słów), bez długich zdań i bez akapitów.
-Wygeneruj DOKŁADNIE ${requestedCount} wpisów. Zwróć WYŁĄCZNIE poprawny JSON (bez Markdown), w formacie tablicy ${requestedCount} obiektów:
-[
-  {
-    "term": "...",
-    "definition": "..."
-  }
-]
-
-Tekst źródłowy:
-"""
-${text}
-"""`;
+          ? t('ed.dictModeDefinitions')
+          : t('ed.dictModeMixed');
+      const userPrompt = formatMessage('ed.dictPromptUser', {
+        mode: modeLabel,
+        count: requestedCount,
+        text,
+      });
 
       const payload = {
-        systemPrompt: "Tworzysz krótkie tłumaczenia i wyjaśnienia do fiszek. Zwracasz tylko JSON.",
+        systemPrompt: t('ed.dictPromptSystem'),
         userPrompt,
       };
 
@@ -369,7 +365,7 @@ ${text}
                     <h3 className="text-xl font-semibold">{t('ed.dictMatchGame')}</h3>
                   </div>
                   <span className="text-sm font-medium text-muted-foreground">
-                    {matchedPairs}/{totalPairs} par
+                      {formatMessage('ed.dictPairsProgress', {matched: matchedPairs, total: totalPairs})}
                   </span>
                 </div>
                 <div className="mb-2">

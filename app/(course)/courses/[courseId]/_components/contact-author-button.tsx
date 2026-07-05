@@ -14,6 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import toast from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
+import { useI18n } from "@/hooks/use-i18n";
 
 interface ContactAuthorButtonProps {
   courseId: string;
@@ -28,12 +29,19 @@ export const ContactAuthorButton = ({
   authorName,
   courseTitle,
 }: ContactAuthorButtonProps) => {
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const { userId } = useAuth();
   const [studentName, setStudentName] = useState("");
+
+  const formatMessage = (key: string, replacements: Record<string, string | number> = {}) => {
+    return Object.entries(replacements).reduce((msg, [token, value]) => {
+      return msg.replaceAll(`{${token}}`, String(value));
+    }, t(key));
+  };
 
   // Fetch student name when dialog opens
   const fetchStudentName = async () => {
@@ -63,19 +71,23 @@ export const ContactAuthorButton = ({
     try {
       const prompts = {
         question: {
-          systemPrompt:
-            "Jesteś pomocnym asystentem studenta. Twoim zadaniem jest generowanie uprzejmych pytań do prowadzącego kursu.",
-          userPrompt: `Wygeneruj uprzejme wprowadzenie do pytania dla prowadzącego kurs "${courseTitle}". Wiadomość powinna być profesjonalna i grzeczna, z miejscem na dodanie konkretnego pytania. Długość: 2-3 zdania.`,
+          systemPrompt: t("contactAuthor.aiPrompt.question.system"),
+          userPrompt: formatMessage("contactAuthor.aiPrompt.question.user", {
+            courseTitle,
+          }),
         },
         feedback: {
-          systemPrompt:
-            "Jesteś pomocnym asystentem studenta. Twoim zadaniem jest generowanie pozytywnych opinii o kursie.",
-          userPrompt: `Wygeneruj pozytywną opinię o kursie "${courseTitle}" dla prowadzącego ${authorName}. Wiadomość powinna być szczera i konstruktywna. Długość: 2-3 zdania.`,
+          systemPrompt: t("contactAuthor.aiPrompt.feedback.system"),
+          userPrompt: formatMessage("contactAuthor.aiPrompt.feedback.user", {
+            courseTitle,
+            authorName,
+          }),
         },
         help: {
-          systemPrompt:
-            "Jesteś pomocnym asystentem studenta. Twoim zadaniem jest generowanie próśb o pomoc.",
-          userPrompt: `Wygeneruj uprzejmą prośbę o pomoc dla prowadzącego kurs "${courseTitle}". Wiadomość powinna być grzeczna z miejscem na opisanie problemu. Długość: 2-3 zdania.`,
+          systemPrompt: t("contactAuthor.aiPrompt.help.system"),
+          userPrompt: formatMessage("contactAuthor.aiPrompt.help.user", {
+            courseTitle,
+          }),
         },
       };
 
@@ -86,15 +98,15 @@ export const ContactAuthorButton = ({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate message");
+        throw new Error(t("contactAuthor.errors.generateFailed"));
       }
 
       const generatedMessage = await response.text();
       setMessage(generatedMessage);
-      toast.success("Wiadomość wygenerowana przez AI!");
+      toast.success(t("contactAuthor.toast.aiGenerated"));
     } catch (error) {
       console.error("Error generating AI message:", error);
-      toast.error("Nie udało się wygenerować wiadomości. Spróbuj ponownie.");
+      toast.error(t("contactAuthor.toast.aiGenerateError"));
     } finally {
       setIsGenerating(false);
     }
@@ -102,7 +114,7 @@ export const ContactAuthorButton = ({
 
   const sendMessage = async () => {
     if (!message.trim()) {
-      toast.error("Wpisz treść wiadomości");
+      toast.error(t("contactAuthor.toast.enterMessage"));
       return;
     }
 
@@ -113,23 +125,27 @@ export const ContactAuthorButton = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           to: authorEmail,
-          subject: `Wiadomość od studenta: ${courseTitle}`,
-          text: `Od: ${studentName || "Student"}\nKurs: ${courseTitle}\n\n${message}`,
+          subject: formatMessage("contactAuthor.email.subject", { courseTitle }),
+          text: formatMessage("contactAuthor.email.body", {
+            student: studentName || t("contactAuthor.email.studentFallback"),
+            courseTitle,
+            message,
+          }),
           useSSL: true,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to send message");
+        throw new Error(errorData.error || t("contactAuthor.errors.sendFailed"));
       }
 
-      toast.success("Wysłano wiadomość do prowadzącego!");
+      toast.success(t("contactAuthor.toast.sent"));
       setIsOpen(false);
       setMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
-      toast.error("Nie udało się wysłać wiadomości. Spróbuj ponownie później.");
+      toast.error(t("contactAuthor.toast.sendLaterError"));
     } finally {
       setIsSending(false);
     }
@@ -144,19 +160,21 @@ export const ContactAuthorButton = ({
           className="flex items-center gap-1 sm:gap-2 min-w-0"
         >
           <Mail className="h-4 w-4 shrink-0" />
-          <span className="hidden sm:inline">Kontakt z autorem</span>
-          <span className="sm:hidden">Autor</span>
+          <span className="hidden sm:inline">{t("contactAuthor.buttonFull")}</span>
+          <span className="sm:hidden">{t("contactAuthor.buttonShort")}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5 text-orange-600" />
-            Kontakt z autorem kursu
+            {t("contactAuthor.dialogTitle")}
           </DialogTitle>
           <DialogDescription>
-            Wyślij wiadomość do <strong>{authorName}</strong> dotyczącą kursu{" "}
-            <strong>{courseTitle}</strong>
+            {formatMessage("contactAuthor.dialogDescription", {
+              authorName,
+              courseTitle,
+            })}
           </DialogDescription>
         </DialogHeader>
 
@@ -172,7 +190,7 @@ export const ContactAuthorButton = ({
               className="flex items-center gap-1 text-xs"
             >
               <Sparkles className="h-3 w-3" />
-              Pytanie
+              {t("contactAuthor.ai.question")}
             </Button>
             <Button
               type="button"
@@ -183,7 +201,7 @@ export const ContactAuthorButton = ({
               className="flex items-center gap-1 text-xs"
             >
               <Sparkles className="h-3 w-3" />
-              Opinia
+              {t("contactAuthor.ai.feedback")}
             </Button>
             <Button
               type="button"
@@ -194,22 +212,22 @@ export const ContactAuthorButton = ({
               className="flex items-center gap-1 text-xs"
             >
               <Sparkles className="h-3 w-3" />
-              Pomoc
+              {t("contactAuthor.ai.help")}
             </Button>
           </div>
 
           {/* Message Textarea */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Twoja wiadomość</label>
+            <label className="text-sm font-medium">{t("contactAuthor.messageLabel")}</label>
             <Textarea
-              placeholder="Napisz wiadomość do autora kursu..."
+              placeholder={t("contactAuthor.messagePlaceholder")}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               className="min-h-[150px] resize-none"
               disabled={isGenerating || isSending}
             />
             <p className="text-xs text-slate-500">
-              {message.length} / 2000 znaków
+              {formatMessage("contactAuthor.messageCount", { count: message.length })}
             </p>
           </div>
 
@@ -221,7 +239,7 @@ export const ContactAuthorButton = ({
               onClick={() => handleOpenChange(false)}
               disabled={isSending}
             >
-              Anuluj
+              {t("common.cancel")}
             </Button>
             <Button
               type="button"
@@ -232,12 +250,12 @@ export const ContactAuthorButton = ({
               {isSending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Wysyłanie...
+                  {t("contactAuthor.sending")}
                 </>
               ) : (
                 <>
                   <Send className="h-4 w-4 mr-2" />
-                  Wyślij
+                  {t("contactAuthor.send")}
                 </>
               )}
             </Button>

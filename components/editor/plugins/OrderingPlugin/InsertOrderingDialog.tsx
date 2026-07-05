@@ -14,6 +14,14 @@ export function InsertOrderingDialog({
   onClose: () => void;
 }): JSX.Element {
   const { t } = useI18n();
+  const formatMessage = useCallback(
+    (key: string, replacements: Record<string, string | number> = {}) => {
+      return Object.entries(replacements).reduce((message, [token, value]) => {
+        return message.replaceAll(`{${token}}`, String(value));
+      }, t(key));
+    },
+    [t],
+  );
   const [items, setItems] = useState<OrderingItem[]>([]);
   const [newText, setNewText] = useState("");
   const [isAiOpen, setIsAiOpen] = useState(false);
@@ -75,10 +83,10 @@ export function InsertOrderingDialog({
 
   function normalizeGeneratedItems(payload: unknown, expectedCount: number): OrderingItem[] {
     if (!Array.isArray(payload)) {
-      throw new Error("Model nie zwrócił tablicy kroków.");
+      throw new Error(t('ed.ordErrorModelNotArray'));
     }
     if (payload.length !== expectedCount) {
-      throw new Error(`Model powinien zwrócić dokładnie ${expectedCount} kroków.`);
+      throw new Error(formatMessage('ed.ordErrorModelExactCount', {count: expectedCount}));
     }
 
     return payload.map((item, idx) => {
@@ -90,7 +98,7 @@ export function InsertOrderingDialog({
         text = typeof obj.text === "string" ? obj.text.trim() : "";
       }
       if (!text) {
-        throw new Error(`Brak treści kroku #${idx + 1}.`);
+        throw new Error(formatMessage('ed.ordErrorMissingStepText', {index: idx + 1}));
       }
       return {
         id: Math.random().toString(36).slice(2),
@@ -111,21 +119,13 @@ export function InsertOrderingDialog({
       const requestedCount = Number.isFinite(aiItemCount)
         ? Math.max(2, Math.min(aiItemCount, 20))
         : 5;
-      const userPrompt = `Wygeneruj kroki do ułożenia w poprawnej kolejności: dokładnie ${requestedCount} elementów.
-Zwróć WYŁĄCZNIE poprawny JSON (bez Markdown), w formacie tablicy ${requestedCount} obiektów:
-[
-  {
-    "text": "..."
-  }
-]
-
-Tekst źródłowy:
-"""
-${text}
-"""`;
+      const userPrompt = formatMessage('ed.ordPromptUser', {
+        count: requestedCount,
+        text,
+      });
 
       const payload = {
-        systemPrompt: "Tworzysz listę kroków w poprawnej kolejności. Zwróć tylko JSON.",
+        systemPrompt: t('ed.ordPromptSystem'),
         userPrompt,
       };
 
@@ -146,10 +146,10 @@ ${text}
       const generatedItems = normalizeGeneratedItems(parsed, requestedCount);
 
       setItems(generatedItems);
-      toast.success(`Wygenerowano ${requestedCount} kroków.`);
+      toast.success(formatMessage('ed.ordGeneratedN', {count: requestedCount}));
     } catch (err) {
       console.error("Ordering AI generation error:", err);
-      toast.error("Nie udało się wygenerować kroków. Spróbuj ponownie.");
+      toast.error(t('ed.ordGenerateFailed'));
     } finally {
       setIsGenerating(false);
     }
@@ -276,9 +276,11 @@ ${text}
                     {t('ed.generating')}
                   </>
                 ) : (
-                  t('ed.ordGenerateN', {n: Number.isFinite(aiItemCount)
-                    ? Math.max(2, Math.min(aiItemCount, 20))
-                    : 5})
+                  formatMessage('ed.ordGenerateN', {
+                    n: Number.isFinite(aiItemCount)
+                      ? Math.max(2, Math.min(aiItemCount, 20))
+                      : 5,
+                  })
                 )}
               </button>
             </div>

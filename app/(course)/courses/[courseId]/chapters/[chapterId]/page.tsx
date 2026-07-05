@@ -11,6 +11,7 @@ import { useEffect, useState } from "react"; // <-- Import client-side hooks
 import { redirect, useParams, useRouter } from "next/navigation"; // <-- Import client-side navigation hooks
 import { Loader2 } from "lucide-react";
 import type { ExportHandlers } from "@/components/editor/plugins/ExportBridgePlugin";
+import { useI18n } from "@/hooks/use-i18n";
 
 // Define a type for the fetched chapter data
 interface ChapterData {
@@ -29,10 +30,13 @@ interface ChapterData {
         isFinished: boolean;
         // other userModule fields...
     } | null; // UserModule might not exist initially
+    prevModuleId: number | null;
+    nextModuleId: number | null;
 }
 
 const ChapterIdPage = () => {
     const { userId } = useAuth(); // Get providerId from client hook
+    const { t } = useI18n();
     const params = useParams(); // Get route params
     const router = useRouter(); // Get router for refresh
 
@@ -46,6 +50,8 @@ const ChapterIdPage = () => {
     const [isCompleted, setIsCompleted] = useState(false); // Local state for completion status
     const [isCompleting, setIsCompleting] = useState(false); // Prevent double completion
     const [exportHandlers, setExportHandlers] = useState<ExportHandlers | null>(null);
+    const [prevModuleId, setPrevModuleId] = useState<number | null>(null);
+    const [nextModuleId, setNextModuleId] = useState<number | null>(null);
 
     useEffect(() => {
         // Fetch data only if userProviderId and params are available
@@ -133,6 +139,8 @@ const ChapterIdPage = () => {
 
                 setChapterData(data);
                 setIsCompleted(!!data.userModule?.isFinished);
+                setPrevModuleId(data.prevModuleId ?? null);
+                setNextModuleId(data.nextModuleId ?? null);
 
             } catch (err: any) {
                 console.error("Fetch Error:", err);
@@ -222,7 +230,7 @@ const ChapterIdPage = () => {
              <div className="flex flex-col items-center justify-center h-full p-4">
                 <p className="text-lg text-red-600">Błąd: {error}</p>
                 <Link href={`/`} className="mt-4 text-blue-500 hover:underline">
-                    Wróć do panelu kursów
+                    {t("chapterPage.backToCoursesPanel")}
                 </Link>
             </div>
         );
@@ -230,7 +238,7 @@ const ChapterIdPage = () => {
 
     // Render chapter content if data is loaded
     if (!chapterData) {
-         return <div className="p-4">Nie znaleziono danych rozdziału.</div>; // Should ideally be caught by error state
+         return <div className="p-4">{t("chapterPage.noChapterData")}</div>; // Should ideally be caught by error state
     }
 
     return (
@@ -244,7 +252,7 @@ const ChapterIdPage = () => {
                     href={"/"} // Link back to the course page
                     className="flex items-center text-sm hover:opacity-75 transition select-none">
                     <ArrowLeft className="h-4 w-4 mr-1" />
-                    Wróć do panelu kursów
+                    {t("chapterPage.backToCoursesPanel")}
                 </Link>
 
                 <div className="flex items-center gap-2">
@@ -252,9 +260,27 @@ const ChapterIdPage = () => {
                         type="button"
                         variant="outline"
                         size="sm"
+                        disabled={!prevModuleId}
+                        onClick={() => prevModuleId && router.push(`/courses/${courseId}/chapters/${prevModuleId}`)}
+                    >
+                        {t("chapterPage.previousModule")}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!nextModuleId}
+                        onClick={() => nextModuleId && router.push(`/courses/${courseId}/chapters/${nextModuleId}`)}
+                    >
+                        {t("chapterPage.nextModule")}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
                         disabled={!exportHandlers}
                         onClick={() => exportHandlers?.exportHtml(chapterData.course.title, chapterData.module.title)}>
-                        Pobierz HTML
+                        {t("ed.downloadHtml")}
                     </Button>
                     <Button
                         type="button"
@@ -262,7 +288,7 @@ const ChapterIdPage = () => {
                         size="sm"
                         disabled={!exportHandlers}
                         onClick={() => exportHandlers?.exportPdf(chapterData.course.title, chapterData.module.title)}>
-                        Pobierz PDF
+                        {t("ed.downloadPdf")}
                     </Button>
                 </div>
             </div>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { INSERT_TASK_COMMAND } from '.';
 import toast from 'react-hot-toast';
 import ProgressSpinner from '../TextGeneratorPlugin/ProgressComponent';
+import { useI18n } from '@/hooks/use-i18n';
 
 
 export function DoTaskDialog({
@@ -12,6 +13,7 @@ export function DoTaskDialog({
   activeEditor: LexicalEditor;
   onClose: () => void;
 }): JSX.Element {
+  const { t } = useI18n();
   const [items, setItems] = useState<Array<{ task: string; hint: string }>>([
     { task: '', hint: '' },
   ]);
@@ -23,6 +25,12 @@ export function DoTaskDialog({
   const [aiItemCount, setAiItemCount] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUsingFullContext, setIsUsingFullContext] = useState(false);
+
+  const formatMessage = (key: string, replacements: Record<string, string | number> = {}) =>
+    Object.entries(replacements).reduce(
+      (message, [token, value]) => message.replaceAll(`{${token}}`, String(value)),
+      t(key),
+    );
 
   const refreshSelectionIntoSource = useCallback(() => {
     activeEditor.getEditorState().read(() => {
@@ -78,15 +86,15 @@ export function DoTaskDialog({
   function normalizeGeneratedItems(payload: unknown, expectedCount: number) {
     if (!Array.isArray(payload)) {
 
-      throw new Error("Model nie zwrócił tablicy zadań.");
+      throw new Error(t('ed.doTask.error.modelNotArray'));
     }
     if (payload.length !== expectedCount) {
-      throw new Error(`Model powinien zwrócić dokładnie ${expectedCount} zadań.`);
+      throw new Error(formatMessage('ed.doTask.error.modelExactCount', { count: expectedCount }));
     }
 
     return payload.map((item, idx) => {
       if (!item || typeof item !== 'object') {
-        throw new Error(`Niepoprawny format zadania #${idx + 1}.`);
+        throw new Error(formatMessage('ed.doTask.error.invalidTaskFormat', { index: idx + 1 }));
       }
       const obj = item as Record<string, unknown>;
       const task = typeof obj.task === 'string' ? obj.task.trim() : '';
@@ -99,7 +107,7 @@ export function DoTaskDialog({
             : '';
 
       if (!task) {
-        throw new Error(`Brak treści zadania #${idx + 1}.`);
+        throw new Error(formatMessage('ed.doTask.error.missingTaskText', { index: idx + 1 }));
       }
 
       return { task, hint: hintText };
@@ -109,7 +117,7 @@ export function DoTaskDialog({
   const handleGenerateFromSource = async () => {
     const text = aiSourceText.trim();
     if (!text) {
-      toast.error('Podaj tekst źródłowy lub zaznacz fragment w edytorze.');
+      toast.error(t('ed.doTask.error.provideSourceText'));
       return;
     }
 
@@ -118,22 +126,13 @@ export function DoTaskDialog({
       const requestedCount = Number.isFinite(aiItemCount)
         ? Math.max(1, Math.min(aiItemCount, 20))
         : 1;
-      const userPrompt = `Wygeneruj zestaw zadań: dokładnie ${requestedCount} elementów.
-Zwróć WYŁĄCZNIE poprawny JSON (bez Markdown), w formacie tablicy ${requestedCount} obiektów:
-[
-  {
-    "task": "...",
-    "hint": "opcjonalna wskazowka albo null"
-  }
-]
-
-Tekst źródłowy:
-"""
-${text}
-"""`;
+      const userPrompt = formatMessage('ed.doTask.ai.userPromptTemplate', {
+        count: requestedCount,
+        text,
+      });
 
       const payload = {
-        systemPrompt: "Tworzysz krótkie zadania na podstawie tekstu. Zwracasz tylko JSON.",
+        systemPrompt: t('ed.doTask.ai.systemPrompt'),
         userPrompt,
       };
 
@@ -155,10 +154,10 @@ ${text}
 
       setItems(generatedItems);
       setCurrentIndex(0);
-      toast.success(`Wygenerowano ${requestedCount} zadań.`);
+      toast.success(formatMessage('ed.doTask.generatedCount', { count: requestedCount }));
     } catch (err) {
       console.error('DoTask AI generation error:', err);
-      toast.error('Nie udało się wygenerować zadań. Spróbuj ponownie.');
+      toast.error(t('ed.doTask.error.generateFailed'));
     } finally {
       setIsGenerating(false);
     }
@@ -218,13 +217,13 @@ ${text}
           }
         >
           <div className="flex items-center justify-between gap-3">
-            <div className="font-semibold text-gray-900">Zadania z AI</div>
+            <div className="font-semibold text-gray-900">{t('ed.doTask.ai.title')}</div>
             <div className="text-xs font-semibold text-orange-700">
-              {isAiOpen ? "Ukryj" : "Rozwiń"}
+              {isAiOpen ? t('ed.doTask.ai.hide') : t('ed.doTask.ai.expand')}
             </div>
           </div>
           <div className="mt-1 text-xs text-gray-600">
-            Wklej tekst źródłowy lub pobierz zaznaczenie z edytora.
+            {t('ed.doTask.ai.subtitle')}
           </div>
         </button>
 
@@ -236,23 +235,23 @@ ${text}
                 setAiSourceText(e.target.value);
                 setIsUsingFullContext(false);
               }}
-              placeholder="Wklej tekst źródłowy..."
+              placeholder={t('ed.doTask.ai.sourcePlaceholder')}
               className="min-h-[120px] w-full rounded-md border border-gray-300 p-2 resize-y"
               disabled={isGenerating}
             />
             {isUsingFullContext && !aiSourceText.trim() && (
               <div className="text-xs text-gray-500">
-                Brak tekstu — używam całego kontekstu z edytora.
+                {t('ed.doTask.ai.noTextUsingContext')}
               </div>
             )}
             {isUsingFullContext && aiSourceText.trim() && (
               <div className="text-xs text-gray-500">
-                Brak zaznaczenia — używam całego kontekstu z edytora.
+                {t('ed.doTask.ai.noSelectionUsingContext')}
               </div>
             )}
             <div className="flex flex-wrap items-center gap-3">
               <label className="text-xs font-semibold text-gray-700">
-                Liczba zadań
+                {t('ed.doTask.ai.itemCount')}
                 <input
                   type="number"
                   min={1}
@@ -276,7 +275,7 @@ ${text}
                 disabled={isGenerating}
                 className={`px-3 py-2 rounded-md border ${isGenerating ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"}`}
               >
-                Wczytaj zaznaczenie
+                {t('ed.doTask.ai.loadSelection')}
               </button>
               <button
                 type="button"
@@ -287,10 +286,10 @@ ${text}
                 {isGenerating ? (
                   <>
                     <ProgressSpinner />
-                    Generowanie...
+                    {t('ed.doTask.ai.generating')}
                   </>
                 ) : (
-                  "Wygeneruj"
+                  t('ed.doTask.ai.generate')
                 )}
               </button>
             </div>
@@ -301,7 +300,7 @@ ${text}
       <hr className="border-gray-200" />
       <div className="flex items-center justify-between">
         <div className="text-sm font-semibold text-gray-700">
-          Element {currentIndex + 1} z {items.length}
+          {formatMessage('ed.doTask.itemOf', { current: currentIndex + 1, total: items.length })}
         </div>
         <div className="flex gap-2">
           <button
@@ -310,34 +309,34 @@ ${text}
             disabled={items.length <= 1}
             className="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
           >
-            Usun
+            {t('common.delete')}
           </button>
           <button
             type="button"
             onClick={handleAddItem}
             className="px-3 py-1.5 rounded-md bg-orange-50 text-orange-700 hover:bg-orange-100"
           >
-            Dodaj
+            {t('common.add')}
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-[1fr_3fr] gap-4 items-start">
-        <label className="text-sm font-medium text-gray-700 text-left pt-2">Zadanie:</label>
+        <label className="text-sm font-medium text-gray-700 text-left pt-2">{t('ed.doTask.taskLabel')}</label>
         <textarea
           value={currentItem.task}
           onChange={(e) => updateCurrentItem('task', e.target.value)}
           rows={6}
           className="w-full border border-gray-300 rounded-md p-2 resize-y min-h-[140px]"
-          placeholder="Wpisz treść zadania"
+          placeholder={t('ed.doTask.taskPlaceholder')}
         />
-        <label className="text-sm font-medium text-gray-700 text-left pt-2">Wskazowka:</label>
+        <label className="text-sm font-medium text-gray-700 text-left pt-2">{t('ed.doTask.hintLabel')}</label>
         <textarea
           value={currentItem.hint}
           onChange={(e) => updateCurrentItem('hint', e.target.value)}
           rows={4}
           className="w-full border border-gray-300 rounded-md p-2 resize-y min-h-[100px]"
-          placeholder="Wpisz wskazowke (opcjonalnie)"
+          placeholder={t('ed.doTask.hintPlaceholder')}
         />
       </div>
 
@@ -349,7 +348,7 @@ ${text}
             disabled={currentIndex === 0}
             className="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
           >
-            Wstecz
+            {t('common.back')}
           </button>
           <button
             type="button"
@@ -357,10 +356,10 @@ ${text}
             disabled={currentIndex >= items.length - 1}
             className="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
           >
-            Dalej
+            {t('common.next')}
           </button>
         </div>
-        <div className="text-xs text-gray-500">Kreator elementu</div>
+        <div className="text-xs text-gray-500">{t('ed.doTask.itemBuilder')}</div>
       </div>
 
       <div className="flex justify-end space-x-4">
@@ -374,14 +373,14 @@ ${text}
               : 'bg-orange-600 hover:bg-orange-700'
           }`}
         >
-          Potwierdź
+          {t('ed.doTask.confirm')}
         </button>
         {/* Cancel Button */}
         <button
           onClick={onClose}
           className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200"
         >
-          Anuluj
+          {t('common.cancel')}
         </button>
       </div>
     </div>

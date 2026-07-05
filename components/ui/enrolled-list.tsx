@@ -2,6 +2,7 @@
 import type { CourseDetails } from "@/app/api/user/courses/route";
 import type { UserEducationalPathDetails } from "@/app/api/user/educational-paths/route";
 import CourseInfoCard from "./course-card";
+import { createTranslator, getMessages, getRequestLocale } from "@/lib/i18n/server";
 
 export type EnrolledItem = CourseDetails | UserEducationalPathDetails;
 
@@ -10,11 +11,15 @@ export type EnrolledCoursesListBaseProps = {
 };
 
 
-export const EnrolledEduList = ({ items }: EnrolledCoursesListBaseProps) => {
+export const EnrolledEduList = async ({ items }: EnrolledCoursesListBaseProps) => {
+    const locale = await getRequestLocale();
+    const messages = await getMessages(locale, "common");
+    const t = createTranslator(messages);
+
     if (!items || items.length === 0) {
         return (
             <div className="flex justify-center items-center w-full h-full">
-                <div className="text-center text-sm text-muted-foreground mt-10">Nie znaleziono.</div>
+                <div className="text-center text-sm text-muted-foreground mt-10">{t("common.notFound")}</div>
             </div>
         );
     }
@@ -37,6 +42,8 @@ export const EnrolledEduList = ({ items }: EnrolledCoursesListBaseProps) => {
                         imageId={item.imageId ?? ""}
                         author={displayAuthor}
                         modulesCount={item.modulesCount}
+                        completedModulesCount={'completedModulesCount' in item ? item.completedModulesCount : undefined}
+                        nextModuleId={'nextModuleId' in item ? item.nextModuleId : undefined}
                         category={categoryString}
                         type={item.type}
                         isCompleted={isCompleted}

@@ -451,7 +451,7 @@ const TeacherSettingsPage = () => {
                 </p>
                 {stripeConnectInfo?.stripeBusinessType && (
                   <p className="text-sm text-muted-foreground">
-                    {t("tSet.stripeAccountType")}: {stripeConnectInfo.stripeBusinessType === 'company' ? t("tSet.company") : 'Individual'}
+                    {t("tSet.stripeAccountType")}: {stripeConnectInfo.stripeBusinessType === 'company' ? t("tSet.company") : t("tSet.individual")}
                   </p>
                 )}
               </div>
@@ -594,8 +594,8 @@ const TeacherSettingsPage = () => {
                   <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                     <h4 className="font-semibold">{t("tSet.planIndividualTitle")}</h4>
                     <p className="text-sm text-muted-foreground mb-2">{t("tSet.upTo100")}</p>
-                    <p className="text-2xl font-bold mb-1">{formatPln(19, locale)} zł brutto <span className="text-sm font-normal text-muted-foreground line-through">{formatPln(29, locale)} zł</span><span className="text-sm font-normal">/{t("tSet.monthly")}</span></p>
-                    <p className="text-xs text-muted-foreground mb-2">{formatPln(calculateNetPrice(19), locale)} zł netto + VAT {PLATFORM_VAT_PERCENT}%</p>
+                    <p className="text-2xl font-bold mb-1">{formatPln(19, locale)} {t("tSet.currency")}{" "}{t("tSet.grossLabel")} <span className="text-sm font-normal text-muted-foreground line-through">{formatPln(29, locale)} {t("tSet.currency")}</span><span className="text-sm font-normal">/{t("tSet.monthly")}</span></p>
+                    <p className="text-xs text-muted-foreground mb-2">{formatPln(calculateNetPrice(19), locale)} {t("tSet.currency")} {t("tSet.netLabel")} + {t("tSet.vatLabel")} {PLATFORM_VAT_PERCENT}%</p>
                     <p className="text-xs text-green-600 mb-3">{t("tSet.freeMonths")}</p>
                     <Button onClick={() => subscribeToPlatform('individual')} className="w-full">
                       {t("tSet.choosePlan")}
@@ -611,8 +611,8 @@ const TeacherSettingsPage = () => {
                   <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                     <h4 className="font-semibold">{t("tSet.planSchoolTitle")}</h4>
                     <p className="text-sm text-muted-foreground mb-2">{t("tSet.over100")}</p>
-                    <p className="text-2xl font-bold mb-1">{formatPln(1199, locale)} zł brutto <span className="text-sm font-normal text-muted-foreground line-through">{formatPln(1499, locale)} zł</span><span className="text-sm font-normal">/{t("tSet.yearly")}</span></p>
-                    <p className="text-xs text-muted-foreground mb-2">{formatPln(calculateNetPrice(1199), locale)} zł netto + VAT {PLATFORM_VAT_PERCENT}%</p>
+                    <p className="text-2xl font-bold mb-1">{formatPln(1199, locale)} {t("tSet.currency")} {t("tSet.grossLabel")} <span className="text-sm font-normal text-muted-foreground line-through">{formatPln(1499, locale)} {t("tSet.currency")}</span><span className="text-sm font-normal">/{t("tSet.yearly")}</span></p>
+                    <p className="text-xs text-muted-foreground mb-2">{formatPln(calculateNetPrice(1199), locale)} {t("tSet.currency")} {t("tSet.netLabel")} + {t("tSet.vatLabel")} {PLATFORM_VAT_PERCENT}%</p>
                     <p className="text-xs text-green-600 mb-3">{t("tSet.freeMonths")}</p>
                     <Button onClick={() => subscribeToPlatform('school')} className="w-full">
                       {t("tSet.choosePlan")}
