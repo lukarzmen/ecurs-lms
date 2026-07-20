@@ -1,129 +1,202 @@
-# Ecurs – Interactive Educational Platform
+# Ecurs LMS
 
-Ecurs is a modern, interactive educational platform designed by teachers for teachers and students. Replace boring worksheets with engaging, interactive educational materials. Create, manage, and sell online courses with ease. Ecurs is a full-stack application built with [Next.js](https://nextjs.org/) (frontend & backend).
+Ecurs to full-stackowa platforma edukacyjna (LMS) zbudowana w Next.js 15.
+Pozwala tworzyc i sprzedawac kursy online, prowadzic szkoly (multi-tenant),
+zarzadzac uczniami i materialami, korzystac z AI (OpenAI/ElevenLabs) oraz obslugiwac platnosci Stripe.
 
----
+## Co to za aplikacja
 
-## Features
+- Panel nauczyciela: tworzenie kursow, lekcji, materialow i promocji.
+- Panel ucznia: zakup, dostep i postep nauki.
+- Marketplace kursow i sciezek edukacyjnych.
+- Uwierzytelnianie i konta przez Clerk.
+- Powiadomienia e-mail i zadania cykliczne (cron).
 
-- **Interactive Content Creation:** Build engaging lessons with quizzes, flashcards, matching tasks, and more.
-- **AI-Powered Tools:** Use artificial intelligence to generate educational content and support students.
-- **Course & Student Management:** Manage your courses, materials, and student groups in one place.
-- **Marketplace:** Publish your courses to reach a wider audience.
-- **Advanced Analytics:** Track student progress and course effectiveness.
-- **Flexible Access:** Use Ecurs on desktop, tablet, or mobile devices.
-- **Monetization:** Sell your courses or share them for free.
+## Stack technologiczny
 
----
+- Next.js 15 (App Router)
+- React 18 + Tailwind CSS
+- PostgreSQL + Prisma
+- Clerk (auth)
+- Stripe (platnosci i webhooki)
+- OpenAI + ElevenLabs
 
-## Technology Stack
+## Szybki start (lokalnie)
 
-- **Next.js** – Full-stack React framework (frontend & backend in one codebase)
-- **Clerk** – Authentication and user management
-- **PostgreSQL** – Relational database for persistent storage
-- **OpenAI** – AI-powered content generation
-- **ElevenLabs** – Text-to-speech and voice features
-- **Stripe** – Secure online payments and subscriptions
-
----
-
-## Getting Started
-
-### 1. Clone the repository
+1. Sklonuj repozytorium:
 
 ```bash
 git clone https://github.com/lukarzmen/ecurs-lms
 cd ecurs-lms
 ```
 
-### 2. Install dependencies
+2. Zainstaluj zaleznosci:
 
 ```bash
 npm install
-# or
-yarn install
-# or
-pnpm install
 ```
 
-
-### 3. Configure environment variables
-Copy the example environment file and fill in your own API keys and secrets:
+3. Przygotuj env:
 
 ```bash
 cp .env.dev .env.local
+cp .env.development .env.development.local
 ```
 
-Edit `.env` and provide your credentials for Clerk, PostgreSQL, OpenAI, ElevenLabs, Stripe, etc.
-
-See [.env.dev](./.env.dev) for all required variables.
-
-### 4. Run the development server
+4. Uzupelnij `.env.local` i uruchom:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the app.
+Aplikacja bedzie dostepna pod `http://localhost:3000`.
 
----
+## Zmienne srodowiskowe (env)
 
-## Learn More
+Minimalny zestaw wymagany do poprawnego dzialania:
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Clerk Documentation](https://clerk.com/docs)
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
-- [OpenAI API Docs](https://platform.openai.com/docs/)
-- [ElevenLabs API Docs](https://docs.elevenlabs.io/)
-- [Stripe Docs](https://stripe.com/docs)
+```env
+# App
+NEXT_PUBLIC_APP_URL=https://twoja-domena.pl
+NEXT_PUBLIC_API_URL=https://twoja-domena.pl
+NEXT_PUBLIC_TEST_ENV=false
 
----
+# Database
+DATABASE_URL=postgresql://user:password@127.0.0.1:5432/ecurs
 
-## Deployment
+# Clerk
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/register
+NEXT_PUBLIC_CLERK__AFTER_SIGN_IN_URL=/
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/register
 
-You can deploy Ecurs to any platform that supports Node.js and PostgreSQL.
+# AI
+OPENAI_API_KEY=
+ELEVENLABS_API_KEY=
 
-### Deploy on Vercel
+# Stripe
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_CONNECT_WEBHOOK_SECRET=
+STRIPE_PUBLIC_KEY=
 
-The recommended way to deploy a Next.js app is with [Vercel](https://vercel.com/):
+# Mail / Notifications
+SMTP_HOST=
+SMTP_USER=
+SMTP_PASS=
+CRON_SECRET=
 
-1. Push your repository to GitHub, GitLab, or Bitbucket.
-2. Go to [Vercel](https://vercel.com/) and import your project.
-3. Set up environment variables in the Vercel dashboard (copy from your `.env.local`).
-4. Click **Deploy**.
+# Redis (uzywane przez RedisService)
+AZURE_REDIS_CONNECTIONSTRING=
+```
 
-Vercel will automatically build and deploy your app, including both frontend and backend (API routes).  
-For more details, see the [Next.js deployment documentation](https://nextjs.org/docs/deployment).
+Uwagi:
 
----
+- `NEXT_PUBLIC_APP_URL` i `NEXT_PUBLIC_API_URL` na produkcji powinny wskazywac publiczna domene aplikacji.
+- `CRON_SECRET` jest wymagany do bezpiecznego recznego wywolywania endpointu crona.
+- Dla Clerk musisz ustawic poprawne domeny i redirect URI po stronie dashboardu Clerk.
 
-### License
+## Wdrozenie na wlasny serwer (Linux)
 
-This project is licensed under the GNU Lesser General Public License (LGPL).  
-See the [LICENSE](./LICENSE) file for details.
+Projekt jest przygotowany pod self-hosting (bez Vercela), np. VPS/VM z publicznym IP:
 
-### Incoming features:
-- Checked lists as a feature
-- Checkbox support in the editor
-- Integrated chat functionality
-- Additional payment methods
-- Invoicing support
-- Marketing tools
-- Attachments
-- Certificates
-- Share
+- Ubuntu/Debian
+- Node.js 20+
+- PostgreSQL 15+
+- Nginx (reverse proxy)
+- SSL (np. certbot)
 
-### Clear purchase data 
+### 1. Build aplikacji
+
+```bash
+npm ci
+npx prisma generate
+npx prisma migrate deploy
+npm run build
+```
+
+### 2. Start procesu aplikacji
+
+Najprosciej przez PM2:
+
+```bash
+npm i -g pm2
+pm2 start npm --name ecurs-lms -- start
+pm2 save
+pm2 startup
+```
+
+Aplikacja uruchamia sie komenda `npm start` (port 3000).
+
+### 3. Reverse proxy (Nginx)
+
+Przykladowy blok serwera:
+
+```nginx
+server {
+	listen 80;
+	server_name ecurs.pl www.ecurs.pl;
+
+	location / {
+		proxy_pass http://127.0.0.1:3000;
+		proxy_http_version 1.1;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection "upgrade";
+	}
+}
+```
+
+Nastepnie dodaj SSL (np. certbot) i przekierowanie HTTP -> HTTPS.
+
+### 4. Cron na wlasnym serwerze
+
+W repo jest endpoint `GET/POST /api/notifications/cron`.
+Na self-hostingu ustaw systemowy cron, np. codziennie o 07:00:
+
+```cron
+0 7 * * * curl -sS -H "Authorization: Bearer ${CRON_SECRET}" https://twoja-domena.pl/api/notifications/cron > /dev/null
+```
+
+## Gdzie wdrazac
+
+Polecane opcje dla tej aplikacji:
+
+- VPS z Dockerem lub bez (Hetzner, OVH, DigitalOcean, Mikroserwer).
+- VM w chmurze (AWS EC2, GCP Compute Engine, Azure VM).
+- On-premise Linux z publicznym reverse proxy.
+
+Najwazniejsze wymagania to stabilny PostgreSQL, poprawnie ustawione env, SSL i webhooki Stripe/Clerk.
+
+## Webhooki i integracje
+
+- Stripe webhook endpoint: `/api/webhook`.
+- Upewnij sie, ze ustawione sa oba sekrety: `STRIPE_WEBHOOK_SECRET` i `STRIPE_CONNECT_WEBHOOK_SECRET`.
+- Przy zmianie domeny zaktualizuj URL-e w Stripe i Clerk.
+
+## Przydatne komendy
+
+```bash
+npm run dev
+npm run lint
+npm run build
+npm start
+```
+
+## License
+
+Projekt jest objety licencja LGPL. Szczegoly: [LICENSE](./LICENSE).
+
+## Clear purchase data
 
 ```sql
--- Delete all records from the UserCoursePurchase table
 DELETE FROM public."UserCoursePurchase";
 
--- Delete records from UserCourse where roleId is 0
 DELETE FROM public."UserCourse"
 WHERE "roleId" = 0;
 ```
