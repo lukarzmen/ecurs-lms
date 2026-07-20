@@ -183,6 +183,7 @@ function DefinitionModal({
 
 export default function DescriptionPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
+  const { t } = useI18n();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedText, setSelectedText] = useState("");
 
@@ -209,7 +210,7 @@ export default function DescriptionPlugin(): JSX.Element | null {
       },
       COMMAND_PRIORITY_EDITOR
     );
-  }, [editor]);
+  }, [editor, t]);
 
   const handleModalSubmit = (term: string, definition: string) => {
     editor.update(() => {

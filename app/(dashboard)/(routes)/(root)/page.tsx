@@ -13,6 +13,19 @@ import { Categories } from "@/app/(dashboard)/(routes)/search/_components/catego
 import { MarketplaceCoursesList } from "@/components/ui/marketplace-list";
 import { getMessages, getRequestLocale, createTranslator } from "@/lib/i18n/server";
 
+async function readJsonOrFallback<T>(response: Response, fallback: T): Promise<T> {
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    return fallback;
+  }
+
+  try {
+    return (await response.json()) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 export default async function Home({
   searchParams,
 }: {
@@ -33,12 +46,13 @@ export default async function Home({
       `${process.env.NEXT_PUBLIC_API_URL}/api/categories`,
       { next: { revalidate: 60 } }
     );
+    const categories = await readJsonOrFallback(resCategories, [] as Array<{ id: number; name: string }>);
 
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/courses/search?title=${encodeURIComponent(
       title
     )}&categoryId=${encodeURIComponent(categoryId)}`;
     const res = await fetch(apiUrl, { next: { revalidate: 3600, tags: ["learning-units-search"] } });
-    const courses = await res.json();
+    const courses = await readJsonOrFallback(res, [] as any[]);
 
     return (
       <div className="p-6 space-y-10 bg-gradient-to-b from-gray-50 to-white">
@@ -186,7 +200,7 @@ export default async function Home({
     // Fetch enrolled educational paths
     const eduPathRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/educational-paths?userId=${userId}`, { cache: 'no-store' });
     if (eduPathRes.ok) {
-      const eduPathData = await eduPathRes.json();
+      const eduPathData = await readJsonOrFallback(eduPathRes, { educationalPaths: [], finishedCount: 0, unfinishedCount: 0 });
       educationalPaths = eduPathData.educationalPaths || [];
       eduPathFinishedCount = eduPathData.finishedCount ?? 0;
       eduPathUnfinishedCount = eduPathData.unfinishedCount ?? 0;
@@ -194,14 +208,14 @@ export default async function Home({
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/courses?userId=${userId}`, { cache: 'no-store' }); // Added no-store cache option for dynamic data
     if (!response.ok) {
       // Handle HTTP errors (e.g., 400, 500)
-      const errorData = await response.json().catch(() => ({ error: `HTTP error! status: ${response.status}` })); // Attempt to parse error JSON, fallback to status
+      const errorData = await readJsonOrFallback(response, { error: `HTTP error! status: ${response.status}` }); // Attempt to parse error JSON, fallback to status
       fetchError = errorData.error || `HTTP error! status: ${response.status}`;
       console.error("Error fetching user courses:", fetchError);
     } else {
-      const userCourses: DashboardCoursesResponse = await response.json();
+      const userCourses: DashboardCoursesResponse = await readJsonOrFallback(response, { courses: [], finishedCount: 0, unfinishedCount: 0 });
       // Check if the API returned an error structure
       if ('error' in userCourses) {
-        fetchError = userCourses.error;
+        fetchError = String(userCourses.error);
         console.error("API returned error:", fetchError);
       } else {
         // Destructure only if it's the success structure
