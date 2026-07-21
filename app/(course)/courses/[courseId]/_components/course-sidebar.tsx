@@ -4,6 +4,7 @@ import CourseSidebarItem from "./course-sidebar-item";
 import { CourseSidebarProps } from "./course-mobile-sidebar";
 import { StudentCommunicationLinks } from "./student-communication-links";
 import { useI18n } from "@/hooks/use-i18n";
+import { TeacherModeSwitch } from "@/components/teacher-mode-switch";
 
 export const CourseSidebar = ({ course }: CourseSidebarProps) => {
     const { t } = useI18n();
@@ -13,6 +14,9 @@ export const CourseSidebar = ({ course }: CourseSidebarProps) => {
 
     return (
         <div className="h-full border-r flex flex-col overflow-y-auto shadow-sm rounded-md">
+            <div className="border-b px-4 py-3">
+                <TeacherModeSwitch />
+            </div>
             <div className="p-7 flex flex-col border-b gap-y-3">
                 <h1 className="font-semibold truncate whitespace-nowrap overflow-hidden text-ellipsis">
                     {course.title}

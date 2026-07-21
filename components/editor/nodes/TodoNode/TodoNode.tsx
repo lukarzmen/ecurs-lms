@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { NodeWrapper } from '../../ui/NodeWrapper';
 import TodoComponent, { TodoItem } from "./TodoComponent";
 import {
   $applyNodeReplacement,
@@ -119,13 +120,15 @@ export class TodoNode extends DecoratorNode<JSX.Element> implements ToCompleteNo
 
   decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element {
     return withNodeErrorBoundary(
-      <Suspense fallback={null}>
-        <TodoComponent
-          title={this.__title}
-          initialItems={this.__items}
-          onComplete={(completed) => this.setCompleted(completed, editor)}
-        />
-      </Suspense>
+      <NodeWrapper editor={editor} nodeKey={this.__key}>
+        <Suspense fallback={null}>
+          <TodoComponent
+            title={this.__title}
+            initialItems={this.__items}
+            onComplete={(completed) => this.setCompleted(completed, editor)}
+          />
+        </Suspense>
+      </NodeWrapper>
     );
   }
 }

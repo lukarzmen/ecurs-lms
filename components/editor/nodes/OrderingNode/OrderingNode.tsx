@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { NodeWrapper } from '../../ui/NodeWrapper';
 import OrderingComponent, { OrderingItem } from "./OrderingComponent";
 import {
   $applyNodeReplacement,
@@ -151,13 +152,15 @@ export class OrderingNode extends DecoratorNode<JSX.Element> implements ToComple
 
   decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element {
     return withNodeErrorBoundary(
-      <Suspense fallback={null}>
-        <OrderingComponent
-          items={this.__items}
-          initialCompleted={this.__isCompleted}
-          onComplete={(isCorrect) => this.setCompleted(isCorrect, editor)}
-        />
-      </Suspense>
+      <NodeWrapper editor={editor} nodeKey={this.__key}>
+        <Suspense fallback={null}>
+          <OrderingComponent
+            items={this.__items}
+            initialCompleted={this.__isCompleted}
+            onComplete={(isCorrect) => this.setCompleted(isCorrect, editor)}
+          />
+        </Suspense>
+      </NodeWrapper>
     );
   }
 }

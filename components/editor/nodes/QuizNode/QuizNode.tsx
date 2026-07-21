@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { NodeWrapper } from '../../ui/NodeWrapper';
 import QuizComponent, { Test } from "./QuizComponent";
 import {
   $applyNodeReplacement,
@@ -179,12 +180,14 @@ export class QuizNode extends DecoratorNode<JSX.Element> implements ToCompleteNo
 
   decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element {
     return withNodeErrorBoundary(
-      <Suspense fallback={null}>
-        <QuizComponent
-          tests={this.__tests}
-          onComplete={() => this.setCompleted(true, editor)}
-        />
-      </Suspense>
+      <NodeWrapper editor={editor} nodeKey={this.__key}>
+        <Suspense fallback={null}>
+          <QuizComponent
+            tests={this.__tests}
+            onComplete={() => this.setCompleted(true, editor)}
+          />
+        </Suspense>
+      </NodeWrapper>
     );
   }
 }

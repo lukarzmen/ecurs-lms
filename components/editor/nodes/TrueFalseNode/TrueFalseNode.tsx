@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { NodeWrapper } from '../../ui/NodeWrapper';
 import TrueFalseComponent, { TrueFalseQuestion } from "./TrueFalseComponent";
 import {
   $applyNodeReplacement,
@@ -168,22 +169,24 @@ export class TrueFalseNode extends DecoratorNode<JSX.Element> implements ToCompl
 
   decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element {
     return withNodeErrorBoundary(
-      <Suspense fallback={null}>
-        <TrueFalseComponent
-          questions={this.__questions}
-          initialSelections={this.__selections}
-          initialCompleted={this.__isCompleted}
-          onSelect={(index, value) => {
-            const nextSelections = Array.from(
-              { length: this.__questions.length },
-              (_, i) => this.__selections?.[i] ?? null,
-            );
-            nextSelections[index] = value;
-            this.setSelections(nextSelections, editor);
-          }}
-          onComplete={(isCorrect) => this.setCompleted(isCorrect, editor)}
-        />
-      </Suspense>
+      <NodeWrapper editor={editor} nodeKey={this.__key}>
+        <Suspense fallback={null}>
+          <TrueFalseComponent
+            questions={this.__questions}
+            initialSelections={this.__selections}
+            initialCompleted={this.__isCompleted}
+            onSelect={(index, value) => {
+              const nextSelections = Array.from(
+                { length: this.__questions.length },
+                (_, i) => this.__selections?.[i] ?? null,
+              );
+              nextSelections[index] = value;
+              this.setSelections(nextSelections, editor);
+            }}
+            onComplete={(isCorrect) => this.setCompleted(isCorrect, editor)}
+          />
+        </Suspense>
+      </NodeWrapper>
     );
   }
 }

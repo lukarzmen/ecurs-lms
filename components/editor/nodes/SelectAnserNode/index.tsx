@@ -1,3 +1,4 @@
+import { NodeWrapper } from '../../ui/NodeWrapper';
 import {
     $applyNodeReplacement,
     $getNodeByKey,
@@ -193,20 +194,18 @@ export class SelectAnswerNode extends DecoratorNode<JSX.Element> implements ToCo
 
 
     decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element {
-        // Pass node state and bound methods down to the component
         return (
+          <NodeWrapper editor={editor} nodeKey={this.__key}>
             <SelectAnswerComponent
                 answers={this.__answers}
                 correctAnswerIndex={this.__correctAnswerIndex}
-                initialSelectedAnswer={this.__selectedAnswer} // Pass current selection state as initial
-                isNodeCompleted={this.__isCompleted} // Pass node's completion state for disabling
+                initialSelectedAnswer={this.__selectedAnswer}
+                isNodeCompleted={this.__isCompleted}
                 nodeKey={this.__key}
-                // Pass method to update node's selected answer
                 onSelect={(answer) => this.setSelectedAnswer(answer, editor)}
-                // Pass method to update node's completion status
                 onComplete={(isCorrect) => this.setCompletionStatus(isCorrect, editor)}
-                // REMOVED onCheck prop
             />
+          </NodeWrapper>
         );
     }
 }

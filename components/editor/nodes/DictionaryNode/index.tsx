@@ -1,3 +1,4 @@
+import { NodeWrapper } from '../../ui/NodeWrapper';
 import {
   $applyNodeReplacement,
   $getNodeByKey,
@@ -247,7 +248,7 @@ export class DictionaryNode extends DecoratorNode<JSX.Element> implements ToComp
     });
   }
 
-  decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element { // Add editor, config
+  decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element {
     const isReadonly = !editor.isEditable() || !this.__isEditable;
     let contextText = '';
     editor.getEditorState().read(() => {
@@ -255,13 +256,16 @@ export class DictionaryNode extends DecoratorNode<JSX.Element> implements ToComp
     });
 
     return (
+      <NodeWrapper editor={editor} nodeKey={this.__key}>
         <DictionaryComponent
-        isReadonly={isReadonly}
-        onDictionaryChanged={(dict) => this.handleDictionaryChanged(dict, editor)}
-        dictionary={this.__dictionaryData}
-        contextText={contextText}
-        // Pass bound update method
-        onComplete={(isCorrect) => this.setCompleted(isCorrect, editor)} initialCompleted={false}        />
+          isReadonly={isReadonly}
+          onDictionaryChanged={(dict) => this.handleDictionaryChanged(dict, editor)}
+          dictionary={this.__dictionaryData}
+          contextText={contextText}
+          onComplete={(isCorrect) => this.setCompleted(isCorrect, editor)}
+          initialCompleted={false}
+        />
+      </NodeWrapper>
     );
   }
 }

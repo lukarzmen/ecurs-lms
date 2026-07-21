@@ -1,11 +1,11 @@
 "use client";
 
 import { BarChart, Compass, Layout, List, GroupIcon, Settings, Users } from "lucide-react";
-import { SidebarItem } from "./sidebar-item";
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { usePathname } from "next/navigation";
+import { SidebarItem } from "./sidebar-item";
 import { useI18n } from "@/hooks/use-i18n";
+import { TeacherModeSwitch } from "@/components/teacher-mode-switch";
 
 const getGuestRoutes = (t: (key: string) => string) => [
   {
@@ -70,14 +70,11 @@ interface OwnedSchool {
 
 export const SidebarRoutes = () => {
   const pathName = usePathname();
-  const { userId } = useAuth();
   const { t } = useI18n();
   const [hasSchool, setHasSchool] = useState(false);
 
   useEffect(() => {
     const checkUserSchool = async () => {
-      if (!userId) return;
-
       try {
         const response = await fetch("/api/user/school");
         if (response.ok) {
@@ -90,16 +87,16 @@ export const SidebarRoutes = () => {
     };
 
     checkUserSchool();
-  }, [userId]);
-
-  const isTeacherPage = pathName?.startsWith("/teacher");
+  }, []);
 
   const guestRoutes = getGuestRoutes(t);
   const teacherRoutes = getTeacherRoutes(t);
-  let routes = isTeacherPage ? teacherRoutes : guestRoutes;
+  let routes = guestRoutes;
 
   // Filter teacher routes based on school ownership
+  const isTeacherPage = pathName.startsWith("/teacher");
   if (isTeacherPage) {
+    routes = teacherRoutes;
     // Remove notifications for teachers who don't own a school
     routes = routes.filter(route => {
       if (route.href === "/teacher/notifications" && !hasSchool) {
@@ -120,6 +117,7 @@ export const SidebarRoutes = () => {
 
   return (
     <div className="flex w-full flex-col space-y-1">
+      <TeacherModeSwitch />
       {routes.map((route) => {
         return (
           <SidebarItem

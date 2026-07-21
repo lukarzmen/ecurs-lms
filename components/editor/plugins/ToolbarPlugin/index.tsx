@@ -116,6 +116,7 @@ import {DoTaskDialog} from '../TaskPlugin/DoTaskDialog';
 import {InsertTodoDialog} from '../TodoPlugin/InsertTodoDialog';
 import {InsertOrderingDialog} from '../OrderingPlugin/InsertOrderingDialog';
 import {InsertTrueFalseDialog} from '../TrueFalsePlugin/InsertTrueFalseDialog';
+import {LessonBuilderDialog} from '../LessonBuilderPlugin/LessonBuilderDialog';
 import {
   clearFormatting,
   formatBulletList,
@@ -1773,6 +1774,19 @@ export default function NewToolbarPlugin({
         buttonLabel="AI"
         buttonAriaLabel={t('ed.aiOptions')}
         buttonIconClassName="icon ai">
+        <DropDownItem
+          onClick={() => {
+            showModal(t('ed.lessonBuilderTitle'), (onClose) => (
+              <LessonBuilderDialog
+                activeEditor={activeEditor}
+                onClose={onClose}
+              />
+            ));
+          }}
+          className="item">
+          <i className="icon generate-text" />
+          <span className="text">{t('ed.lessonBuilderMenu')}</span>
+        </DropDownItem>
         <DropDownItem
           onClick={() => {
             showModal(t('ed.generateContent'), (onClose) => (

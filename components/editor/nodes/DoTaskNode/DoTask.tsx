@@ -1,3 +1,4 @@
+import { NodeWrapper } from '../../ui/NodeWrapper';
 import {
   $applyNodeReplacement,
   $getNodeByKey,
@@ -168,16 +169,17 @@ export class DoTaskNode extends DecoratorNode<JSX.Element> implements ToComplete
       });
   }
 
-  decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element { // Add editor, config
+  decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element {
     return (
+      <NodeWrapper editor={editor} nodeKey={this.__key}>
         <DoTaskComponent
             task={this.__task}
             hint={this.__hint}
           items={this.__items}
-            initialCompleted={this.__isCompleted} // Pass current transient state
-            // Pass bound update method
+            initialCompleted={this.__isCompleted}
             onComplete={(isCorrect) => this.setCompleted(isCorrect, editor)}
         />
+      </NodeWrapper>
     );
   }
 }

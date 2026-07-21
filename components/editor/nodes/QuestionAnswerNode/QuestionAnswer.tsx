@@ -1,3 +1,4 @@
+import { NodeWrapper } from '../../ui/NodeWrapper';
 import {
   $applyNodeReplacement,
   $getNodeByKey,
@@ -216,15 +217,16 @@ export class QuestionAnswerNode extends DecoratorNode<JSX.Element> implements To
 
   decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element {
     return (
+      <NodeWrapper editor={editor} nodeKey={this.__key}>
         <QuestionAnswerComponent
             question={this.__question}
             answer={this.__answer}
             explanation={this.__explanation}
           items={this.__items}
             initialCompleted={this.__isCompleted}
-            // Pass bound update method
             onComplete={(isCorrect) => this.setCompleted(isCorrect, editor)}
         />
+      </NodeWrapper>
     );
   }
 }
