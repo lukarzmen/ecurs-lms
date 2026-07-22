@@ -9,7 +9,6 @@ import './index.css';
 
 import {$isCodeNode} from '@lexical/code';
 import {$getNearestNodeFromDOMNode, LexicalEditor} from 'lexical';
-import {Options} from 'prettier';
 import * as React from 'react';
 import {useState} from 'react';
 
@@ -38,7 +37,7 @@ async function loadPrettierFormat() {
   return format;
 }
 
-const PRETTIER_OPTIONS_BY_LANG: Record<string, Options> = {
+const PRETTIER_OPTIONS_BY_LANG: Record<string, {parser: string}> = {
   css: {
     parser: 'css',
   },
@@ -59,7 +58,7 @@ export function canBePrettier(lang: string): boolean {
   return LANG_CAN_BE_PRETTIER.includes(lang);
 }
 
-function getPrettierOptions(lang: string): Options {
+function getPrettierOptions(lang: string): {parser: string; plugins?: unknown[]} {
   const options = PRETTIER_OPTIONS_BY_LANG[lang];
   if (!options) {
     throw new Error(

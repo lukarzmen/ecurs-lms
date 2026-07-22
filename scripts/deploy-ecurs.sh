@@ -44,7 +44,7 @@ rollback() {
   echo "==> Rolling back to ${PREV_COMMIT}"
   git reset --hard "${PREV_COMMIT}"
   restore_env_files
-  npm ci
+  npm ci --include=dev
   npx prisma migrate deploy
   npm run build
   if pm2 describe "${PM2_NAME}" >/dev/null 2>&1; then
@@ -109,7 +109,7 @@ if [[ ${pull_exit} -eq 0 ]]; then
   restore_env_files
 
   echo "==> Installing dependencies"
-  npm ci
+  npm ci --include=dev
   deploy_exit=$?
 
   if [[ ${deploy_exit} -eq 0 ]]; then
