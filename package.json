@@ -1,11 +1,12 @@
 {
   "name": "ecurs-lms",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "scripts": {
     "dev": "cross-env TZ=Europe/Warsaw next dev",
     "build": "cross-env TZ=Europe/Warsaw prisma generate && next build",
     "start": "cross-env TZ=Europe/Warsaw next start",
+    "deploy:prod": "bash ./scripts/deploy-ecurs.sh",
     "lint": "eslint .",
     "postinstall": "prisma generate",
     "pretty": "prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json}\""
