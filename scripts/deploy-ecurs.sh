@@ -80,9 +80,10 @@ done
 cd "${APP_DIR}"
 
 status_output="$(git status --porcelain)"
-if [[ -n "${status_output}" ]]; then
+filtered_status="$(printf '%s\n' "${status_output}" | rg -v '^\?\? deploy\.log$' || true)"
+if [[ -n "${filtered_status}" ]]; then
   echo "ERROR: repo has local changes. Commit/stash them first."
-  printf '%s\n' "${status_output}"
+  printf '%s\n' "${filtered_status}"
   exit 1
 fi
 
