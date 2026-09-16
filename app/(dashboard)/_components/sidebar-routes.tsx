@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { SidebarItem } from "./sidebar-item";
 import { useI18n } from "@/hooks/use-i18n";
-import { TeacherModeSwitch } from "@/components/teacher-mode-switch";
 
 const getGuestRoutes = (t: (key: string) => string) => [
   {
@@ -117,7 +116,6 @@ export const SidebarRoutes = () => {
 
   return (
     <div className="flex w-full flex-col space-y-1">
-      <TeacherModeSwitch />
       {routes.map((route) => {
         return (
           <SidebarItem

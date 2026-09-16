@@ -2,6 +2,7 @@ import { NavbarRoutes } from "@/components/navbar-routes";
 import { CourseMobileSidebar, CourseSidebarProps as CourseSidebarProps } from "./course-mobile-sidebar";
 import { StudentCommunicationLinks } from "./student-communication-links";
 import { ContactAuthorButton } from "./contact-author-button";
+import { TeacherModeSwitch } from "@/components/teacher-mode-switch";
 
 
 export const CourseNavbar = ({
@@ -12,6 +13,7 @@ export const CourseNavbar = ({
         <div className="p-2 sm:p-4 border-b h-full flex items-center bg-white shadow-sm">
             <CourseMobileSidebar course={course} />
             <div className="flex items-center gap-1 sm:gap-4 ml-auto">
+                <TeacherModeSwitch compact />
                 <StudentCommunicationLinks courseId={course.id.toString()} />
                 {course.author && (
                     <ContactAuthorButton

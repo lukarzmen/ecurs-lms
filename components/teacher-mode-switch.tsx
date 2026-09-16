@@ -9,8 +9,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GraduationCap, User2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
-export const TeacherModeSwitch = () => {
+interface TeacherModeSwitchProps {
+  compact?: boolean;
+}
+
+export const TeacherModeSwitch = ({ compact = false }: TeacherModeSwitchProps) => {
   const pathName = usePathname();
   const isTeacherPage = pathName?.startsWith("/teacher");
   const { userId, sessionId } = useAuth();
@@ -45,12 +50,20 @@ export const TeacherModeSwitch = () => {
     return null;
   }
 
+  const label = isTeacherPage ? t("nav.studentMode") : t("nav.teacherMode");
+
   return (
-    <Link href={isTeacherPage ? "/" : "/teacher/courses"} className="block w-full">
-      <Button variant="ghost" className="w-full justify-start gap-2 select-none">
+    <Button asChild className="shrink-0 select-none px-3 shadow-sm">
+      <Link
+        href={isTeacherPage ? "/" : "/teacher/courses"}
+        aria-label={label}
+        title={label}
+      >
         {isTeacherPage ? <User2 className="h-4 w-4" /> : <GraduationCap className="h-4 w-4" />}
-        {isTeacherPage ? t("nav.studentMode") : t("nav.teacherMode")}
-      </Button>
-    </Link>
+        <span className={cn("ml-2", compact ? "hidden lg:inline" : "hidden sm:inline")}>
+          {label}
+        </span>
+      </Link>
+    </Button>
   );
 };
