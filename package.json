@@ -1,11 +1,12 @@
 {
   "name": "ecurs-lms",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "scripts": {
     "dev": "cross-env TZ=Europe/Warsaw next dev",
     "build": "cross-env TZ=Europe/Warsaw prisma generate && next build",
     "start": "cross-env TZ=Europe/Warsaw next start",
+    "deploy:prod": "bash ./scripts/deploy-ecurs.sh",
     "lint": "eslint .",
     "postinstall": "prisma generate",
     "pretty": "prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json}\""
@@ -61,6 +62,7 @@
     "pdf-lib": "^1.17.1",
     "pg": "^8.13.1",
     "postcss": "8.4.41",
+    "prettier": "^2.8.8",
     "qrcode": "^1.5.4",
     "query-string": "^9.1.1",
     "radix-ui": "^1.4.3",
@@ -96,9 +98,9 @@
     "@types/bun": "^1.2.9",
     "@types/lodash-es": "^4.17.12",
     "@types/nodemailer": "^7.0.2",
+    "@types/prettier": "^2.7.3",
     "@types/qrcode": "^1.5.5",
     "eslint-config-next": "^16.2.1",
-    "prettier": "^3.3.3",
     "prisma": "^6.16.2"
   }
 }
