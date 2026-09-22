@@ -79,6 +79,48 @@ function extractJsonObject(text: string): unknown {
   return JSON.parse(getJsonCandidate(text));
 }
 
+async function fetchTasksJson(payload: LLMPrompt): Promise<unknown> {
+  const res = await fetch('/api/tasks', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error('apiError');
+  }
+
+  const rawText = await res.text();
+  try {
+    return extractJsonObject(rawText);
+  } catch (parseError) {
+    const repairPayload: LLMPrompt = {
+      systemPrompt:
+        'Naprawiasz uszkodzony JSON. Zwracasz WYŁĄCZNIE poprawny JSON zgodny ze schematem wejściowym. Bez komentarzy, bez markdown, bez dodatkowego tekstu.',
+      userPrompt: `Napraw poniższy JSON tak, aby był poprawny składniowo i zachował możliwie pełną treść.\n\nZwróć WYŁĄCZNIE JSON.\n\nDane wejściowe:\n${getJsonCandidate(rawText)}`,
+    };
+
+    const repairRes = await fetch('/api/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(repairPayload),
+    });
+
+    if (!repairRes.ok) {
+      throw parseError;
+    }
+
+    const repairedRawText = await repairRes.text();
+    return extractJsonObject(repairedRawText);
+  }
+}
+
+type OutlineSection = {
+  heading: string;
+  keyPoints: string[];
+  sourceGrounded: boolean;
+};
+
 function appendFormattedLine(root: ReturnType<typeof $getRoot>, line: string) {
   const paragraphNode = $createParagraphNode();
   const parts = line.split(/(\$[^$]+\$|`[^`]+`|\*\*[^*]+\*\*)/g);
@@ -442,6 +484,8 @@ export function LessonBuilderDialog({
 
   const [topic, setTopic] = useState('');
   const [details, setDetails] = useState('');
+  const [sourceMaterial, setSourceMaterial] = useState('');
+  const [qualityMode, setQualityMode] = useState(true);
   const [difficulty, setDifficulty] = useState('średniozaawansowany');
   const [sectionCount, setSectionCount] = useState(4);
   const [quizCount, setQuizCount] = useState(5);
@@ -500,6 +544,174 @@ export function LessonBuilderDialog({
     });
   }, [topicPlaceholder]);
 
+  // Single-shot: one request generates the whole lesson package. Fast, but prone to generic filler.
+  const runSingleShot = async (): Promise<BuilderPayload> => {
+    const userPrompt = t('ed.lessonBuilderPromptUser')
+      .replace('{topic}', topic.trim())
+      .replace('{details}', details.trim() || t('ed.lessonBuilderNoDetails'))
+      .replace('{difficulty}', difficulty)
+      .replace('{sections}', String(Math.max(2, Math.min(sectionCount, 10))))
+      .replace('{quizCount}', String(includeQuiz ? Math.max(1, Math.min(quizCount, 20)) : 0))
+      .replace('{openQuestionCount}', String(includeOpenQuestions ? Math.max(1, Math.min(openQuestionCount, 20)) : 0))
+      .replace('{taskCount}', String(includeTasks ? Math.max(1, Math.min(taskCount, 20)) : 0))
+      .replace('{todoCount}', String(includeTodo ? Math.max(1, Math.min(todoCount, 20)) : 0))
+      .replace('{trueFalseCount}', String(includeTrueFalse ? Math.max(3, Math.min(trueFalseCount, 20)) : 0))
+      .replace('{orderingItemCount}', String(includeOrdering ? Math.max(3, Math.min(orderingItemCount, 20)) : 0))
+      .replace('{dictionaryEntryCount}', String(includeDictionary ? Math.max(3, Math.min(dictionaryEntryCount, 30)) : 0))
+      .replace('{includeQuiz}', includeQuiz ? 'true' : 'false')
+      .replace('{includeOpenQuestions}', includeOpenQuestions ? 'true' : 'false')
+      .replace('{includeTasks}', includeTasks ? 'true' : 'false')
+      .replace('{includeSelectAnswer}', includeSelectAnswer ? 'true' : 'false')
+      .replace('{includeTodo}', includeTodo ? 'true' : 'false')
+      .replace('{includeTrueFalse}', includeTrueFalse ? 'true' : 'false')
+      .replace('{includeOrdering}', includeOrdering ? 'true' : 'false')
+      .replace('{includeDictionary}', includeDictionary ? 'true' : 'false')
+      .replace('{context}', courseContext || t('ed.lessonBuilderNoContext'));
+
+    const raw = await fetchTasksJson({
+      systemPrompt: t('ed.lessonBuilderPromptSystem'),
+      userPrompt,
+    });
+
+    return normalizePayload(raw);
+  };
+
+  // Quality mode: outline -> per-section content -> anti-slop review/fix -> meta (lead/summary/quiz).
+  // Slower and costs more tokens, but grounds content in author-supplied source material instead of guessing.
+  const runQualityPipeline = async (): Promise<BuilderPayload> => {
+    const sourceMaterialText = sourceMaterial.trim() || t('ed.lessonBuilderNoSourceMaterial');
+
+    const outlineUserPrompt = t('ed.lessonBuilderOutlineUser')
+      .replace('{topic}', topic.trim())
+      .replace('{difficulty}', difficulty)
+      .replace('{sections}', String(Math.max(2, Math.min(sectionCount, 10))))
+      .replace('{sourceMaterial}', sourceMaterialText)
+      .replace('{details}', details.trim() || t('ed.lessonBuilderNoDetails'))
+      .replace('{context}', courseContext || t('ed.lessonBuilderNoContext'));
+
+    const outlineRaw = (await fetchTasksJson({
+      systemPrompt: t('ed.lessonBuilderOutlineSystem'),
+      userPrompt: outlineUserPrompt,
+    })) as { lessonTitle?: unknown; outline?: unknown };
+
+    const lessonTitle =
+      typeof outlineRaw.lessonTitle === 'string' && outlineRaw.lessonTitle.trim()
+        ? outlineRaw.lessonTitle.trim()
+        : topic.trim();
+
+    const outline: OutlineSection[] = Array.isArray(outlineRaw.outline)
+      ? outlineRaw.outline
+          .map((entry) => {
+            if (!entry || typeof entry !== 'object') return null;
+            const item = entry as Record<string, unknown>;
+            const heading = typeof item.heading === 'string' ? item.heading.trim() : '';
+            const keyPoints = Array.isArray(item.keyPoints)
+              ? item.keyPoints.map((p) => (typeof p === 'string' ? p.trim() : '')).filter(Boolean)
+              : [];
+            if (!heading) return null;
+            return { heading, keyPoints, sourceGrounded: Boolean(item.sourceGrounded) };
+          })
+          .filter((entry): entry is OutlineSection => entry !== null)
+      : [];
+
+    if (outline.length === 0) {
+      throw new Error('invalidObject');
+    }
+
+    const draftSections = await Promise.all(
+      outline.map(async (section) => {
+        const sectionUserPrompt = t('ed.lessonBuilderSectionUser')
+          .replace('{heading}', section.heading)
+          .replace('{keyPoints}', section.keyPoints.join('; '))
+          .replace('{sourceGrounded}', section.sourceGrounded ? 'true' : 'false')
+          .replace('{difficulty}', difficulty)
+          .replace('{sourceMaterial}', sourceMaterialText);
+
+        const raw = (await fetchTasksJson({
+          systemPrompt: t('ed.lessonBuilderSectionSystem'),
+          userPrompt: sectionUserPrompt,
+        })) as { content?: unknown };
+
+        return {
+          heading: section.heading,
+          content: typeof raw.content === 'string' ? raw.content.trim() : '',
+        };
+      }),
+    );
+
+    const reviewedSections = await Promise.all(
+      draftSections.map(async (section) => {
+        if (!section.content) return section;
+
+        const reviewUserPrompt = t('ed.lessonBuilderReviewUser')
+          .replace('{sourceMaterial}', sourceMaterialText)
+          .replace('{heading}', section.heading)
+          .replace('{content}', section.content);
+
+        const reviewRaw = (await fetchTasksJson({
+          systemPrompt: t('ed.lessonBuilderReviewSystem'),
+          userPrompt: reviewUserPrompt,
+        })) as { issues?: unknown };
+
+        const issues = Array.isArray(reviewRaw.issues) ? reviewRaw.issues : [];
+        if (issues.length === 0) return section;
+
+        const fixUserPrompt = t('ed.lessonBuilderFixUser')
+          .replace('{heading}', section.heading)
+          .replace('{content}', section.content)
+          .replace('{issues}', JSON.stringify(issues));
+
+        try {
+          const fixRaw = (await fetchTasksJson({
+            systemPrompt: t('ed.lessonBuilderFixSystem'),
+            userPrompt: fixUserPrompt,
+          })) as { content?: unknown };
+
+          const fixedContent = typeof fixRaw.content === 'string' ? fixRaw.content.trim() : '';
+          return { heading: section.heading, content: fixedContent || section.content };
+        } catch {
+          // Keep the original draft if the fix pass itself fails – it already passed generation.
+          return section;
+        }
+      }),
+    );
+
+    const fullContent = reviewedSections.map((s) => `## ${s.heading}\n${s.content}`).join('\n\n');
+
+    const metaUserPrompt = t('ed.lessonBuilderMetaUser')
+      .replace('{topic}', topic.trim())
+      .replace('{difficulty}', difficulty)
+      .replace('{fullContent}', fullContent)
+      .replace('{includeQuiz}', includeQuiz ? 'true' : 'false')
+      .replace('{includeOpenQuestions}', includeOpenQuestions ? 'true' : 'false')
+      .replace('{includeTasks}', includeTasks ? 'true' : 'false')
+      .replace('{includeSelectAnswer}', includeSelectAnswer ? 'true' : 'false')
+      .replace('{includeTodo}', includeTodo ? 'true' : 'false')
+      .replace('{includeTrueFalse}', includeTrueFalse ? 'true' : 'false')
+      .replace('{includeOrdering}', includeOrdering ? 'true' : 'false')
+      .replace('{includeDictionary}', includeDictionary ? 'true' : 'false')
+      .replace('{quizCount}', String(includeQuiz ? Math.max(1, Math.min(quizCount, 20)) : 0))
+      .replace('{openQuestionCount}', String(includeOpenQuestions ? Math.max(1, Math.min(openQuestionCount, 20)) : 0))
+      .replace('{taskCount}', String(includeTasks ? Math.max(1, Math.min(taskCount, 20)) : 0))
+      .replace('{todoCount}', String(includeTodo ? Math.max(1, Math.min(todoCount, 20)) : 0))
+      .replace('{trueFalseCount}', String(includeTrueFalse ? Math.max(3, Math.min(trueFalseCount, 20)) : 0))
+      .replace('{orderingItemCount}', String(includeOrdering ? Math.max(3, Math.min(orderingItemCount, 20)) : 0))
+      .replace('{dictionaryEntryCount}', String(includeDictionary ? Math.max(3, Math.min(dictionaryEntryCount, 30)) : 0));
+
+    const metaRaw = await fetchTasksJson({
+      systemPrompt: t('ed.lessonBuilderMetaSystem'),
+      userPrompt: metaUserPrompt,
+    });
+
+    const metaObj = metaRaw && typeof metaRaw === 'object' ? (metaRaw as Record<string, unknown>) : {};
+
+    return normalizePayload({
+      lessonTitle,
+      sections: reviewedSections,
+      ...metaObj,
+    });
+  };
+
   const handleGenerate = async () => {
     if (!topic.trim()) {
       toast.error(t('ed.lessonBuilderTopicRequired'));
@@ -509,74 +721,7 @@ export function LessonBuilderDialog({
     setLoading(true);
 
     try {
-      const userPrompt = t('ed.lessonBuilderPromptUser')
-        .replace('{topic}', topic.trim())
-        .replace('{details}', details.trim() || t('ed.lessonBuilderNoDetails'))
-        .replace('{difficulty}', difficulty)
-        .replace('{sections}', String(Math.max(2, Math.min(sectionCount, 10))))
-        .replace('{quizCount}', String(includeQuiz ? Math.max(1, Math.min(quizCount, 20)) : 0))
-        .replace('{openQuestionCount}', String(includeOpenQuestions ? Math.max(1, Math.min(openQuestionCount, 20)) : 0))
-        .replace('{taskCount}', String(includeTasks ? Math.max(1, Math.min(taskCount, 20)) : 0))
-        .replace('{todoCount}', String(includeTodo ? Math.max(1, Math.min(todoCount, 20)) : 0))
-        .replace('{trueFalseCount}', String(includeTrueFalse ? Math.max(3, Math.min(trueFalseCount, 20)) : 0))
-        .replace('{orderingItemCount}', String(includeOrdering ? Math.max(3, Math.min(orderingItemCount, 20)) : 0))
-        .replace('{dictionaryEntryCount}', String(includeDictionary ? Math.max(3, Math.min(dictionaryEntryCount, 30)) : 0))
-        .replace('{includeQuiz}', includeQuiz ? 'true' : 'false')
-        .replace('{includeOpenQuestions}', includeOpenQuestions ? 'true' : 'false')
-        .replace('{includeTasks}', includeTasks ? 'true' : 'false')
-        .replace('{includeSelectAnswer}', includeSelectAnswer ? 'true' : 'false')
-        .replace('{includeTodo}', includeTodo ? 'true' : 'false')
-        .replace('{includeTrueFalse}', includeTrueFalse ? 'true' : 'false')
-        .replace('{includeOrdering}', includeOrdering ? 'true' : 'false')
-        .replace('{includeDictionary}', includeDictionary ? 'true' : 'false')
-        .replace('{context}', courseContext || t('ed.lessonBuilderNoContext'));
-
-      const payload: LLMPrompt = {
-        systemPrompt: t('ed.lessonBuilderPromptSystem'),
-        userPrompt,
-      };
-
-      const res = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        throw new Error('apiError');
-      }
-
-      const rawText = await res.text();
-      let raw: unknown;
-      try {
-        raw = extractJsonObject(rawText);
-      } catch (parseError) {
-        const repairPayload: LLMPrompt = {
-          systemPrompt:
-            'Naprawiasz uszkodzony JSON. Zwracasz WYŁĄCZNIE poprawny JSON zgodny ze schematem wejściowym. Bez komentarzy, bez markdown, bez dodatkowego tekstu.',
-          userPrompt:
-            `Napraw poniższy JSON tak, aby był poprawny składniowo i zachował możliwie pełną treść.\n\nZwróć WYŁĄCZNIE JSON.\n\nDane wejściowe:\n${getJsonCandidate(rawText)}`,
-        };
-
-        const repairRes = await fetch('/api/tasks', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(repairPayload),
-        });
-
-        if (!repairRes.ok) {
-          throw parseError;
-        }
-
-        const repairedRawText = await repairRes.text();
-        raw = extractJsonObject(repairedRawText);
-      }
-
-      const normalized = normalizePayload(raw);
+      const normalized = qualityMode ? await runQualityPipeline() : await runSingleShot();
 
       // Helper – appends an empty paragraph separator to root (idempotent: skips if last child is already empty paragraph)
       const sep = () => {
@@ -768,6 +913,33 @@ export function LessonBuilderDialog({
               disabled={loading}
             />
           </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-foreground">{t('ed.lessonBuilderSourceMaterial')}</label>
+            <textarea
+              value={sourceMaterial}
+              onChange={(e) => setSourceMaterial(e.target.value)}
+              placeholder={t('ed.lessonBuilderSourceMaterialPlaceholder')}
+              rows={4}
+              className="w-full rounded-md border-2 border-border bg-background px-3 py-2 text-foreground outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary/30 resize-none"
+              disabled={loading}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">{t('ed.lessonBuilderSourceMaterialHint')}</p>
+          </div>
+
+          <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 text-sm">
+            <input
+              type="checkbox"
+              checked={qualityMode}
+              onChange={(e) => setQualityMode(e.target.checked)}
+              disabled={loading}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="block font-medium text-foreground">{t('ed.lessonBuilderQualityMode')}</span>
+              <span className="block text-xs text-muted-foreground">{t('ed.lessonBuilderQualityModeHint')}</span>
+            </span>
+          </label>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
