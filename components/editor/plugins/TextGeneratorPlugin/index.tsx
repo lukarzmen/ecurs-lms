@@ -14,9 +14,10 @@ import { $createCodeNode } from '@lexical/code';
 import { $createListItemNode, $createListNode, ListType } from '@lexical/list';
 import { $createEquationNode } from '../../nodes/EquationNode';
 import { useCourseContext } from '../../context/CourseContext';
-import { Sparkles, X, Edit2, Loader2 } from 'lucide-react';
+import { Sparkles, X, Edit2 } from 'lucide-react';
 import { useI18n } from '@/hooks/use-i18n';
 import toast from 'react-hot-toast';
+import { AiGenerationProgress } from '@/components/ui/ai-generation-progress';
 
 export const GENERATE_TEXT_COMMAND: LexicalCommand<LLMPrompt> = createCommand(
   'GENERATE_TEXT_COMMAND',
@@ -240,10 +241,7 @@ export function TextGeneratorDialog({
 
           <div className="flex justify-end gap-2 pt-2">
             {loading ? (
-              <div className="flex items-center gap-2 px-4 py-2 text-muted-foreground">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-sm font-medium">{t('ed.genGenerating')}</span>
-              </div>
+              <AiGenerationProgress label={t('ed.genGenerating')} className="w-full space-y-2" />
             ) : (
               <>
                 <button
@@ -271,20 +269,32 @@ export function TextGeneratorDialog({
 
 export default function TextGeneratorPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
+  const { t } = useI18n();
 
   useEffect(() => {
     return editor.registerCommand<LLMPrompt>(
       GENERATE_TEXT_COMMAND,
       (payload) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 90_000);
+
         fetch('/api/tasks', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(payload),
+          signal: controller.signal,
         })
-          .then((response) => response.text())
+          .then(async (response) => {
+            if (!response.ok) {
+              const errorText = await response.text().catch(() => '');
+              throw new Error(errorText || `HTTP ${response.status}`);
+            }
+            return response.text();
+          })
           .then((response) => {
+            clearTimeout(timeoutId);
             editor.update(() => {
               const root = $getRoot();
 
@@ -431,13 +441,21 @@ export default function TextGeneratorPlugin(): JSX.Element | null {
 
             const event = new Event('generateTextComplete');
             document.dispatchEvent(event);
+          })
+          .catch((error) => {
+            clearTimeout(timeoutId);
+            console.error('[GENERATE_TEXT_COMMAND]', error);
+            toast.error(error instanceof DOMException && error.name === 'AbortError' ? t('aiProgress.timeoutError') : t('ed.genError'));
+
+            const event = new Event('generateTextComplete');
+            document.dispatchEvent(event);
           });
 
         return true;
       },
       COMMAND_PRIORITY_EDITOR,
     );
-  }, [editor]);
+  }, [editor, t]);
 
   return null;
 }

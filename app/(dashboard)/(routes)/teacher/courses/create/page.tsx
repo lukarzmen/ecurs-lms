@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useI18n } from "@/hooks/use-i18n";
+import { generateCourseDescription, LLMTimeoutError } from "@/lib/ai/generate-course-description";
+import { AiGenerationProgress } from "@/components/ui/ai-generation-progress";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
@@ -34,27 +36,30 @@ const CreatePage = () => {
   const [trialPeriodEnd, setTrialPeriodEnd] = useState<string>("");
   const [vatRate, setVatRate] = useState<number>(23);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [qualityMode, setQualityMode] = useState(false);
+  const [progressStep, setProgressStep] = useState<{ step: number; total: number } | null>(null);
   const { t } = useI18n();
 
   const handleGenerateAiDescription = async () => {
     if (isGenerating || isSubmitting) return;
 
     setIsGenerating(true);
+    setProgressStep(null);
     try {
-      const response = await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemPrompt:
-            "Jesteś doświadczonym copywriterem sprzedażowym. Napisz zwięzły, sprzedażowy opis kursu po polsku (2-3 krótkie zdania). Nie używaj emoji. Skup się na konkretnej korzyści dla kupującego i wyniku, który osiągnie. Pisz językiem korzyści, nie funkcji. Bądź konkretny, nie lej wody.",
-          userPrompt:
-            `Napisz krótki, sprzedażowy opis kursu ${title ? `"${title}"` : "(tytuł nieznany)"}. Maksymalnie 2-3 zdania. ${title ? "" : "Jeśli nie znasz tematu, napisz neutralny opis ogólny bez zmyślania faktów."}`,
-        }),
+      const categoryName = categories.find((cat) => cat.id.toString() === category)?.name;
+      const text = await generateCourseDescription({
+        title,
+        categoryName,
+        quality: qualityMode,
+        maxSentences: 3,
+        singleShotSystemPrompt:
+          "Jesteś doświadczonym copywriterem sprzedażowym. Napisz zwięzły, sprzedażowy opis kursu po polsku (2-3 krótkie zdania). Nie używaj emoji. Skup się na konkretnej korzyści dla kupującego i wyniku, który osiągnie. Pisz językiem korzyści, nie funkcji. Bądź konkretny, nie lej wody.",
+        singleShotUserPrompt:
+          `Napisz krótki, sprzedażowy opis kursu ${title ? `"${title}"` : "(tytuł nieznany)"}. Maksymalnie 2-3 zdania. ${title ? "" : "Jeśli nie znasz tematu, napisz neutralny opis ogólny bez zmyślania faktów."}`,
+        t,
+        onProgress: (step, total) => setProgressStep({ step, total }),
       });
 
-      if (!response.ok) throw new Error("AI generation failed");
-
-      const text = (await response.text()).trim();
       if (!text) {
         toast.error(t("create.step3.aiEmpty"));
         return;
@@ -62,10 +67,11 @@ const CreatePage = () => {
 
       setDescription(text);
       toast.success(t("create.step3.aiSuccess"));
-    } catch {
-      toast.error(t("create.step3.aiError"));
+    } catch (error) {
+      toast.error(error instanceof LLMTimeoutError ? t('aiProgress.timeoutError') : t("create.step3.aiError"));
     } finally {
       setIsGenerating(false);
+      setProgressStep(null);
     }
   };
 
@@ -305,6 +311,25 @@ const CreatePage = () => {
                       {t("create.step3.charCount").replace("{count}", String(description.length))}
                     </p>
                   </div>
+                  <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={qualityMode}
+                      onChange={(e) => setQualityMode(e.target.checked)}
+                      disabled={isGenerating || isSubmitting}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <span className="block font-medium text-foreground">{t("descForm.aiQualityMode")}</span>
+                      <span className="block text-xs text-muted-foreground">{t("descForm.aiQualityModeHint")}</span>
+                    </span>
+                  </label>
+                  {isGenerating && (
+                    <AiGenerationProgress
+                      label={t("create.step3.generating")}
+                      stepLabel={progressStep ? t(`aiProgress.step${progressStep.step}`, { total: progressStep.total }) : undefined}
+                    />
+                  )}
                   <Button
                     type="button"
                     onClick={handleGenerateAiDescription}

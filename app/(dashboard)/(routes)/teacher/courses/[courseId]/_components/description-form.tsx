@@ -9,18 +9,23 @@ import { FormCard, FormActions, FormSection } from "@/components/ui/form-card";
 import { FileText, Loader2, Pencil, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 import { useI18n } from "@/hooks/use-i18n";
+import { generateCourseDescription, LLMTimeoutError } from "@/lib/ai/generate-course-description";
+import { AiGenerationProgress } from "@/components/ui/ai-generation-progress";
 
 interface DescriptionFormProps {
   description: string;
   courseId: string;
   courseTitle?: string;
+  categoryName?: string;
 }
 
-const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId, courseTitle }) => {
+const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId, courseTitle, categoryName }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [descriptionValue, setDescriptionValue] = useState(description);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [qualityMode, setQualityMode] = useState(false);
+  const [progressStep, setProgressStep] = useState<{ step: number; total: number } | null>(null);
   const router = useRouter();
   const { t } = useI18n();
 
@@ -51,23 +56,21 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
     if (isGenerating || isSubmitting) return;
 
     setIsGenerating(true);
+    setProgressStep(null);
     try {
-      const response = await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemPrompt:
-            "Jesteś doświadczonym copywriterem i metodykiem e-learningu. Napisz krótki, zachęcający opis kursu po polsku (3-6 zdań). Nie używaj emoji. Skup się na korzyściach, zakresie i dla kogo jest kurs.",
-          userPrompt:
-            `Wygeneruj opis kursu ${courseTitle ? `\"${courseTitle}\"` : "(tytuł nieznany)"}. ${courseTitle ? "" : "Jeśli nie znasz tematu, napisz neutralny opis ogólny bez zmyślania faktów."}`,
-        }),
+      const text = await generateCourseDescription({
+        title: courseTitle ?? "",
+        categoryName,
+        quality: qualityMode,
+        maxSentences: 6,
+        singleShotSystemPrompt:
+          "Jesteś doświadczonym copywriterem i metodykiem e-learningu. Napisz krótki, zachęcający opis kursu po polsku (3-6 zdań). Nie używaj emoji. Skup się na korzyściach, zakresie i dla kogo jest kurs.",
+        singleShotUserPrompt:
+          `Wygeneruj opis kursu ${courseTitle ? `\"${courseTitle}\"` : "(tytuł nieznany)"}. ${courseTitle ? "" : "Jeśli nie znasz tematu, napisz neutralny opis ogólny bez zmyślania faktów."}`,
+        t,
+        onProgress: (step, total) => setProgressStep({ step, total }),
       });
 
-      if (!response.ok) {
-        throw new Error("AI generation failed");
-      }
-
-      const text = (await response.text()).trim();
       if (!text) {
         toast.error(t('descForm.aiNoContent'));
         return;
@@ -75,10 +78,11 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
 
       setDescriptionValue(text);
       toast.success(t('descForm.aiGenerated'));
-    } catch {
-      toast.error(t('descForm.aiError'));
+    } catch (error) {
+      toast.error(error instanceof LLMTimeoutError ? t('aiProgress.timeoutError') : t('descForm.aiError'));
     } finally {
       setIsGenerating(false);
+      setProgressStep(null);
     }
   };
 
@@ -117,6 +121,25 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
                 rows={4}
               />
             </div>
+            <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 text-sm">
+              <input
+                type="checkbox"
+                checked={qualityMode}
+                onChange={(e) => setQualityMode(e.target.checked)}
+                disabled={isGenerating || isSubmitting}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="block font-medium text-foreground">{t('descForm.aiQualityMode')}</span>
+                <span className="block text-xs text-muted-foreground">{t('descForm.aiQualityModeHint')}</span>
+              </span>
+            </label>
+            {isGenerating && (
+              <AiGenerationProgress
+                label={t('descForm.generating')}
+                stepLabel={progressStep ? t(`aiProgress.step${progressStep.step}`, { total: progressStep.total }) : undefined}
+              />
+            )}
             <FormActions>
               <Button
                 type="button"

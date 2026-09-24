@@ -8,6 +8,7 @@ import { useAuth } from "@clerk/nextjs";
 import { UserResponse } from "@/app/api/user/route";
 import { Bell, Mail, Plus, Edit, Trash2, Send, Copy, Eye, Sparkles, TestTube } from "lucide-react";
 import { useI18n } from "@/hooks/use-i18n";
+import { callLLM, LLMTimeoutError } from "@/lib/ai/call-llm";
 
 interface NotificationTemplate {
 	id: number;
@@ -484,30 +485,21 @@ export default function NotificationsPage() {
 		setLoading(true);
 		try {
 			const prompt = `Napisz profesjonalne powiadomienie email dla platformy edukacyjnej o tytule "${templateForm.title}". Użyj zmiennych {{user}} i {{course}} w treści. Powiadomienie powinno być przyjazne, motywujące i nie dłuższe niż 4 zdania. Dodaj odpowiednie emoji.`;
-			
-			const res = await fetch("/api/tasks", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					systemPrompt: "Jesteś asystentem LMS. Tworzysz przyjazne, profesjonalne powiadomienia dla użytkowników. Używaj zmiennych {{user}} i {{course}} w treści.",
-					userPrompt: prompt,
-				}),
-			});
-			
-			if (!res.ok) throw new Error("API error");
-			const data = await res.text();
-			
+
+			const data = await callLLM(
+				"Jesteś asystentem LMS. Tworzysz przyjazne, profesjonalne powiadomienia dla użytkowników. Używaj zmiennych {{user}} i {{course}} w treści.",
+				prompt,
+			);
+
 			setTemplateForm(prev => ({
 				...prev,
 				message: data || ""
 			}));
-			
+
 			toast.success("Treść szablonu została wygenerowana");
 		} catch (err) {
 			console.error("Error generating template:", err);
-			toast.error("Błąd generowania treści");
+			toast.error(err instanceof LLMTimeoutError ? t('aiProgress.timeoutError') : "Błąd generowania treści");
 		} finally {
 			setLoading(false);
 		}

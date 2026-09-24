@@ -101,6 +101,7 @@ const CourseIdPage = async ({ params }: { params: Promise<{ courseId: string }> 
             description={course.description ?? ""}
             courseId={courseId}
             courseTitle={courseTitle}
+            categoryName={categories.find((x: Category) => x.id === course.categoryId)?.name}
           />
           <CategoryForm
             categoryId={course.categoryId ?? -1}

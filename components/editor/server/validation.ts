@@ -10,7 +10,6 @@ import {createHeadlessEditor} from '@lexical/headless';
 import {$isMarkNode, $unwrapMarkNode} from '@lexical/mark';
 import * as http from 'http';
 import {$getRoot, $isElementNode, LexicalNode} from 'lexical';
-import * as url from 'url';
 
 import EditorNodes from '../nodes/EditorNodes';
 import {migrateLexicalStateJSON} from '../utils/migrateLexicalState';
@@ -86,7 +85,7 @@ const validateEditorState = async (
 };
 
 const server = http.createServer(async (req: http.IncomingMessage, res: http.ServerResponse) => {
-  const pathname = url.parse(req.url!).pathname;
+  const pathname = new URL(req.url!, `http://${hostname}:${port}`).pathname;
   const {method} = req;
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');

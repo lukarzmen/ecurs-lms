@@ -27,6 +27,8 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { ChaptersList } from "./chapters-list";
 import { Module } from "@prisma/client";
+import { generateLessonTitles, LLMTimeoutError } from "@/lib/ai/generate-lesson-titles";
+import { AiGenerationProgress } from "@/components/ui/ai-generation-progress";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +57,8 @@ export const ChaptersForm = ({ chapters, courseId, courseTitle }: ModulesFormPro
   const [showAIModal, setShowAIModal] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [editableCourseTitle, setEditableCourseTitle] = useState(courseTitle || "");
+  const [qualityMode, setQualityMode] = useState(false);
+  const [progressStep, setProgressStep] = useState<{ step: number; total: number } | null>(null);
   const { t } = useI18n();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -91,14 +95,15 @@ export const ChaptersForm = ({ chapters, courseId, courseTitle }: ModulesFormPro
 
     try {
       setIsGeneratingAI(true);
+      setProgressStep(null);
       
       // Prepare existing chapters information
       const existingChapters = chapters.map(chapter => chapter.title);
       const hasExistingChapters = existingChapters.length > 0;
-      
+
       let systemPrompt = "Jesteś ekspertem w tworzeniu programów edukacyjnych. Generujesz tylko tytuły lekcji/modułów na podstawie opisu kursu.";
       let userPrompt = "";
-      
+
       if (hasExistingChapters) {
         systemPrompt += " Unikaj duplikatów z już istniejącymi lekcjami.";
         userPrompt = `Na podstawie tego opisu kursu: "${aiPrompt}", wygeneruj listę 5-10 NOWYCH tytułów lekcji/modułów, które UZUPEŁNIĄ już istniejące lekcje.
@@ -110,28 +115,17 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
       } else {
         userPrompt = `Na podstawie tego opisu kursu: "${aiPrompt}", wygeneruj listę 8-15 tytułów lekcji/modułów. Zwróć tylko tytuły, każdy w nowej linii, bez numeracji, bez dodatkowych opisów. Przykład formatu:\nWprowadzenie do geografii\nZiemia jako planeta\nLitosfera i procesy geologiczne`;
       }
-      
-      const llmPrompt = {
-        systemPrompt,
-        userPrompt
-      };
 
-      const response = await axios.post('/api/tasks', llmPrompt);
-      console.log('API Response:', response.data);
-      const generatedText = response.data;
-      
-      if (!generatedText || typeof generatedText !== 'string') {
-        console.error('Invalid response from API:', generatedText);
-        toast.error(t('chaptersForm.aiInvalidResponse'));
-        return;
-      }
-      
-      // Parse the generated titles
-      const titles = generatedText
-        .split('\n')
-        .map((title: string) => title.trim())
-        .filter((title: string) => title.length > 0 && !title.match(/^\d+\./)) // Remove numbered items
-        .slice(0, 15); // Limit to 15 titles
+      const titles = await generateLessonTitles({
+        courseTitle: editableCourseTitle,
+        courseDescription: aiPrompt,
+        existingChapters,
+        quality: qualityMode,
+        singleShotSystemPrompt: systemPrompt,
+        singleShotUserPrompt: userPrompt,
+        t,
+        onProgress: (step, total) => setProgressStep({ step, total }),
+      });
 
       if (titles.length === 0) {
         toast.error(t('chaptersForm.aiGenerationFailed'));
@@ -153,15 +147,15 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
       toast.success(message);
     } catch (error) {
       console.error('Error generating lessons:', error);
-      if (axios.isAxiosError(error)) {
-        console.error('Response data:', error.response?.data);
-        console.error('Response status:', error.response?.status);
-        toast.error(t('chaptersForm.apiError').replace('{error}', error.response?.data || error.message));
+      if (error instanceof LLMTimeoutError) {
+        toast.error(t('aiProgress.timeoutError'));
       } else {
-        toast.error(t('chaptersForm.generationError'));
+        const message = error instanceof Error ? error.message : String(error);
+        toast.error(t('chaptersForm.apiError').replace('{error}', message));
       }
     } finally {
       setIsGeneratingAI(false);
+      setProgressStep(null);
     }
   };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -289,7 +283,27 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
                     disabled={isGeneratingAI}
                   />
                 </div>
+                <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={qualityMode}
+                    onChange={(e) => setQualityMode(e.target.checked)}
+                    disabled={isGeneratingAI}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <span className="block font-medium text-foreground">{t('chaptersForm.aiQualityMode')}</span>
+                    <span className="block text-xs text-muted-foreground">{t('chaptersForm.aiQualityModeHint')}</span>
+                  </span>
+                </label>
               </div>
+              {isGeneratingAI && (
+                <AiGenerationProgress
+                  label={t('chaptersForm.generating')}
+                  stepLabel={progressStep ? t(`aiProgress.step${progressStep.step}`, { total: progressStep.total }) : undefined}
+                  className="px-6 pb-2 space-y-2"
+                />
+              )}
               <DialogFooter>
                 <Button
                   variant="outline"

@@ -1,6 +1,9 @@
 import OpenAIService from "@/services/OpenAIService";
 import { NextResponse } from "next/server";
 
+// AI generation can take longer than the platform default function timeout.
+export const maxDuration = 120;
+
 export async function POST(req: Request) {
     try {
         const llmPrompt: LLMPrompt = await req.json();

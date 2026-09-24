@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useI18n } from '@/hooks/use-i18n';
+import { callLLM, LLMTimeoutError } from '@/lib/ai/call-llm';
+import { AiGenerationProgress } from '@/components/ui/ai-generation-progress';
 
 import type { SortingState, ColumnFiltersState } from "@tanstack/react-table";
 const createColumns = (t: (key: string) => string) => [
@@ -304,22 +306,12 @@ const StudentsPage: React.FC = () => {
                 }
             };
 
-            const response = await fetch('/api/tasks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(prompts[type]),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to generate message');
-            }
-
-            const generatedMessage = await response.text();
+            const generatedMessage = await callLLM(prompts[type].systemPrompt, prompts[type].userPrompt);
             setBulkMessage(generatedMessage);
             toast.success(t('teacherStudents.toast.aiGenerated'));
         } catch (error) {
             console.error('Error generating AI message:', error);
-            toast.error(t('teacherStudents.toast.aiGenerateError'));
+            toast.error(error instanceof LLMTimeoutError ? t('aiProgress.timeoutError') : t('teacherStudents.toast.aiGenerateError'));
         } finally {
             setIsGenerating(false);
         }
@@ -343,22 +335,12 @@ const StudentsPage: React.FC = () => {
                 }
             };
 
-            const response = await fetch('/api/tasks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(prompts[type]),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to generate message');
-            }
-
-            const generatedMessage = await response.text();
+            const generatedMessage = await callLLM(prompts[type].systemPrompt, prompts[type].userPrompt);
             setMessage(generatedMessage);
             toast.success(t('teacherStudents.toast.aiGenerated'));
         } catch (error) {
             console.error('Error generating AI message:', error);
-            toast.error(t('teacherStudents.toast.aiGenerateError'));
+            toast.error(error instanceof LLMTimeoutError ? t('aiProgress.timeoutError') : t('teacherStudents.toast.aiGenerateError'));
         } finally {
             setIsGenerating(false);
         }
@@ -626,6 +608,7 @@ const StudentsPage: React.FC = () => {
                                 onChange={(e) => setBulkMessage(e.target.value)}
                                 disabled={isGenerating}
                             />
+                            {isGenerating && <AiGenerationProgress label={t('teacherStudents.ai.motivation')} className="mt-2 space-y-2" />}
                             <div className="flex gap-3 mt-6">
                                 <button
                                     className="flex-1 px-4 py-2 bg-orange-600 text-white font-semibold rounded-md shadow hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -697,6 +680,7 @@ const StudentsPage: React.FC = () => {
                                 onChange={(e) => setMessage(e.target.value)}
                                 disabled={isGenerating}
                             />
+                            {isGenerating && <AiGenerationProgress label={t('teacherStudents.ai.motivation')} className="mt-2 space-y-2" />}
                             <div className="flex gap-3 mt-6">
                                 <button
                                     className="flex-1 px-4 py-2 bg-orange-600 text-white font-semibold rounded-md shadow hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"

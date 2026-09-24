@@ -10,6 +10,8 @@ import { DescriptionNode } from "../../nodes/DictionaryNode/DescriptionNode";
 import toast from "react-hot-toast";
 import { Loader2, X, BookOpen, Sparkles } from "lucide-react";
 import {useI18n} from '@/hooks/use-i18n';
+import { callLLM, LLMTimeoutError } from "@/lib/ai/call-llm";
+import { AiGenerationProgress } from "@/components/ui/ai-generation-progress";
 
 export const INSERT_DEFINITION_NODE_COMMAND = createCommand("INSERT_DEFINITION_NODE_COMMAND");
 
@@ -63,23 +65,16 @@ function DefinitionModal({
       return;
     }
     setIsLoading(true);
-    fetch('/api/tasks', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        systemPrompt: "Jesteś ekspertem w danej dziedzinie. Wyjaśnij znaczenie w 2-3 zdaniach. Bądź zwięzły i precyzyjny.",
-        userPrompt: `Napisz definicję dla słowa "${trimmedTerm}".`,
-      }),
-    })
-      .then((response) => response.text())
+    callLLM(
+      "Jesteś ekspertem w danej dziedzinie. Wyjaśnij znaczenie w 2-3 zdaniach. Bądź zwięzły i precyzyjny.",
+      `Napisz definicję dla słowa "${trimmedTerm}".`,
+    )
       .then((data) => {
         setDefinition(data);
         toast.success(t('ed.descAiGenerated'));
       })
-      .catch(() => {
-        toast.error(t('ed.descAiError'));
+      .catch((error) => {
+        toast.error(error instanceof LLMTimeoutError ? t('aiProgress.timeoutError') : t('ed.descAiError'));
       })
       .finally(() => {
         setIsLoading(false);
@@ -138,6 +133,7 @@ function DefinitionModal({
           <p className="text-xs text-muted-foreground mt-2">
             {definition.length} / 500 {t('ed.descChars')}
           </p>
+          {isLoading && <AiGenerationProgress label={t('ed.descGenerating')} className="mt-3 space-y-2" />}
         </div>
 
         {/* Footer */}

@@ -13,7 +13,7 @@ export default class OpenAIService {
         
         try {
             //todo: do przeniesienia na strone serwera
-            const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+            const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true, timeout: 110_000 });
             const completion = await openai.chat.completions.create({
                 model: "gpt-5-mini",
                 messages: [

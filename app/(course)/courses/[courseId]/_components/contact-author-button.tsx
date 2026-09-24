@@ -15,6 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import toast from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
 import { useI18n } from "@/hooks/use-i18n";
+import { callLLM, LLMTimeoutError } from "@/lib/ai/call-llm";
+import { AiGenerationProgress } from "@/components/ui/ai-generation-progress";
 
 interface ContactAuthorButtonProps {
   courseId: string;
@@ -91,22 +93,13 @@ export const ContactAuthorButton = ({
         },
       };
 
-      const response = await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(prompts[type]),
-      });
-
-      if (!response.ok) {
-        throw new Error(t("contactAuthor.errors.generateFailed"));
-      }
-
-      const generatedMessage = await response.text();
+      const { systemPrompt, userPrompt } = prompts[type];
+      const generatedMessage = await callLLM(systemPrompt, userPrompt);
       setMessage(generatedMessage);
       toast.success(t("contactAuthor.toast.aiGenerated"));
     } catch (error) {
       console.error("Error generating AI message:", error);
-      toast.error(t("contactAuthor.toast.aiGenerateError"));
+      toast.error(error instanceof LLMTimeoutError ? t("aiProgress.timeoutError") : t("contactAuthor.toast.aiGenerateError"));
     } finally {
       setIsGenerating(false);
     }
@@ -229,6 +222,7 @@ export const ContactAuthorButton = ({
             <p className="text-xs text-slate-500">
               {formatMessage("contactAuthor.messageCount", { count: message.length })}
             </p>
+            {isGenerating && <AiGenerationProgress label={t("contactAuthor.ai.help")} className="space-y-2" />}
           </div>
 
           {/* Action Buttons */}
