@@ -3,6 +3,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse, NextRequest } from "next/server";
 import { use } from "react";
 import Stripe from "stripe";
+import { calculateApplicationFeeAmount, getCommissionRatePercent } from "@/lib/commission";
 
 export async function POST(
     req: NextRequest,
@@ -279,6 +280,8 @@ export async function POST(
             });
         }
 
+        const commissionRatePercent = await getCommissionRatePercent();
+
         // Calculate net price with promo code using new pricing structure
         // Amount from DB is already NET (without VAT)
         let netPrice = Number(price?.amount ?? 0);
@@ -479,6 +482,8 @@ export async function POST(
                 subscription_data: {
                     // Only include trial_period_days if it's greater than 0 (Stripe requirement)
                     ...(trialPeriodDays > 0 ? { trial_period_days: trialPeriodDays } : {}),
+                    // Prowizja platformy pobierana automatycznie z każdej płatności subskrypcyjnej
+                    application_fee_percent: commissionRatePercent,
                     // Pieniądze trafiają na konto odbiorcy (szkoła lub nauczyciel)
                     metadata: {
                         userEducationalPathId: userEducationalPath.id.toString(),
@@ -495,6 +500,7 @@ export async function POST(
                         vatInvoiceRequested: vatInvoiceRequested.toString(),
                         buyerType: buyerType,
                         buyerCompanyName: buyerCompanyName,
+                        commissionRatePercent: String(commissionRatePercent),
                     }
                 },
             }, {
@@ -650,8 +656,9 @@ export async function POST(
                     buyerCompanyName: buyerCompanyName,
                 },
                 // NIE używamy payment_intent_data.transfer_data gdy operujemy bezpośrednio na Connect account
-                // Pieniądze automatycznie zostają na koncie nauczyciela
+                // Pieniądze automatycznie zostają na koncie nauczyciela, platforma pobiera prowizję od ceny netto
                 payment_intent_data: {
+                    application_fee_amount: calculateApplicationFeeAmount(Math.round(netPrice * 100), commissionRatePercent),
                     metadata: {
                         userEducationalPathId: userEducationalPath.id.toString(),
                         educationalPathId: educationalPathId,
@@ -666,6 +673,7 @@ export async function POST(
                         vatInvoiceRequested: vatInvoiceRequested.toString(),
                         buyerType: buyerType,
                         buyerCompanyName: buyerCompanyName,
+                        commissionRatePercent: String(commissionRatePercent),
                     }
                 },
             }, {

@@ -7,6 +7,7 @@
   "aiProgress.step3": "Step 3 of {total}: checking quality...",
   "aiProgress.step4": "Step 4 of {total}: refining...",
   "aiProgress.timeoutError": "Generation took too long and was cancelled. Try again or turn off deep analysis mode.",
+  "aiModel.select": "AI model",
   "auth.signedOut.title": "Ecurs — modern education platform",
   "auth.signedOut.description": "Sign in or create an account to browse courses, track progress, and use the platform features.",
   "auth.signIn": "Sign in",

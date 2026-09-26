@@ -18,6 +18,8 @@ import { Sparkles, X, Edit2 } from 'lucide-react';
 import { useI18n } from '@/hooks/use-i18n';
 import toast from 'react-hot-toast';
 import { AiGenerationProgress } from '@/components/ui/ai-generation-progress';
+import { AiModelSelect } from '@/components/ui/ai-model-select';
+import { useAiModelStore } from '@/hooks/use-ai-model-store';
 
 export const GENERATE_TEXT_COMMAND: LexicalCommand<LLMPrompt> = createCommand(
   'GENERATE_TEXT_COMMAND',
@@ -34,6 +36,7 @@ export function TextGeneratorDialog({
 }): JSX.Element {
   const { module } = useCourseContext();
   const { t } = useI18n();
+  const { modelId } = useAiModelStore();
 
   const [generationPreset, setGenerationPreset] = useState<GenerationPresetId>('lesson');
   const [userPrompt, setUserPrompt] = useState('');
@@ -118,6 +121,7 @@ export function TextGeneratorDialog({
     const payload: LLMPrompt = {
       userPrompt: composedUserPrompt,
       systemPrompt: effectiveSystemPrompt.trim(),
+      modelId,
     };
 
     setLoading(true);
@@ -237,6 +241,11 @@ export function TextGeneratorDialog({
               }}
               disabled={!isSystemPromptEditable || loading}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">{t('aiModel.select')}</label>
+            <AiModelSelect disabled={loading} className="w-full" />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

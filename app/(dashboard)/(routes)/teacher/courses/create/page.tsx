@@ -17,6 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useI18n } from "@/hooks/use-i18n";
 import { generateCourseDescription, LLMTimeoutError } from "@/lib/ai/generate-course-description";
 import { AiGenerationProgress } from "@/components/ui/ai-generation-progress";
+import { AiModelSelect } from "@/components/ui/ai-model-select";
+import { useAiModelStore } from "@/hooks/use-ai-model-store";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
@@ -38,6 +40,7 @@ const CreatePage = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [qualityMode, setQualityMode] = useState(false);
   const [progressStep, setProgressStep] = useState<{ step: number; total: number } | null>(null);
+  const { modelId } = useAiModelStore();
   const { t } = useI18n();
 
   const handleGenerateAiDescription = async () => {
@@ -58,6 +61,7 @@ const CreatePage = () => {
           `Napisz krótki, sprzedażowy opis kursu ${title ? `"${title}"` : "(tytuł nieznany)"}. Maksymalnie 2-3 zdania. ${title ? "" : "Jeśli nie znasz tematu, napisz neutralny opis ogólny bez zmyślania faktów."}`,
         t,
         onProgress: (step, total) => setProgressStep({ step, total }),
+        modelId,
       });
 
       if (!text) {
@@ -324,6 +328,10 @@ const CreatePage = () => {
                       <span className="block text-xs text-muted-foreground">{t("descForm.aiQualityModeHint")}</span>
                     </span>
                   </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">{t("aiModel.select")}</span>
+                    <AiModelSelect disabled={isGenerating || isSubmitting} className="w-[200px]" />
+                  </div>
                   {isGenerating && (
                     <AiGenerationProgress
                       label={t("create.step3.generating")}

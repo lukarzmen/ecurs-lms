@@ -21,6 +21,8 @@ export type LessonTitlesOptions = {
   t: TranslateFn;
   // Reports the current pipeline step (1-based) so the UI can show progress.
   onProgress?: (step: number, totalSteps: number) => void;
+  // One of the ids in lib/ai/models.ts; omit to use the server default.
+  modelId?: string;
 };
 
 function parseTitles(raw: string): string[] {
@@ -32,7 +34,7 @@ function parseTitles(raw: string): string[] {
 }
 
 async function runQualityPipeline(options: LessonTitlesOptions): Promise<string[]> {
-  const { courseTitle, courseDescription, existingChapters, t, onProgress } = options;
+  const { courseTitle, courseDescription, existingChapters, t, onProgress, modelId } = options;
   const totalSteps = 4;
   const existing =
     existingChapters.length > 0
@@ -45,7 +47,7 @@ async function runQualityPipeline(options: LessonTitlesOptions): Promise<string[
     description: courseDescription,
     existing,
   });
-  const analysisRaw = (await callLLMJson(t('chaptersForm.aiAnalysisSystem'), analysisUser)) as {
+  const analysisRaw = (await callLLMJson(t('chaptersForm.aiAnalysisSystem'), analysisUser, undefined, modelId)) as {
     subtopics?: unknown;
     audience?: unknown;
   };
@@ -64,7 +66,7 @@ async function runQualityPipeline(options: LessonTitlesOptions): Promise<string[
   });
 
   onProgress?.(2, totalSteps);
-  const draft = parseTitles(await callLLM(t('chaptersForm.aiDraftSystem'), draftUser));
+  const draft = parseTitles(await callLLM(t('chaptersForm.aiDraftSystem'), draftUser, undefined, modelId));
   if (draft.length === 0) {
     throw new Error('invalidObject');
   }
@@ -74,7 +76,7 @@ async function runQualityPipeline(options: LessonTitlesOptions): Promise<string[
     titles: draft.map((title, i) => `${i + 1}. ${title}`).join('\n'),
     existing,
   });
-  const reviewRaw = (await callLLMJson(t('chaptersForm.aiReviewSystem'), reviewUser)) as {
+  const reviewRaw = (await callLLMJson(t('chaptersForm.aiReviewSystem'), reviewUser, undefined, modelId)) as {
     issues?: unknown;
   };
   const issues = Array.isArray(reviewRaw.issues) ? reviewRaw.issues : [];
@@ -89,7 +91,7 @@ async function runQualityPipeline(options: LessonTitlesOptions): Promise<string[
       titles: draft.join('\n'),
       issues: JSON.stringify(issues),
     });
-    const fixed = parseTitles(await callLLM(t('chaptersForm.aiFixSystem'), fixUser));
+    const fixed = parseTitles(await callLLM(t('chaptersForm.aiFixSystem'), fixUser, undefined, modelId));
     return fixed.length > 0 ? fixed : draft;
   } catch {
     // Keep the draft if the fix pass itself fails – it already passed generation.
@@ -100,7 +102,7 @@ async function runQualityPipeline(options: LessonTitlesOptions): Promise<string[
 export async function generateLessonTitles(options: LessonTitlesOptions): Promise<string[]> {
   if (!options.quality) {
     options.onProgress?.(1, 1);
-    return parseTitles(await callLLM(options.singleShotSystemPrompt, options.singleShotUserPrompt));
+    return parseTitles(await callLLM(options.singleShotSystemPrompt, options.singleShotUserPrompt, undefined, options.modelId));
   }
 
   return runQualityPipeline(options);

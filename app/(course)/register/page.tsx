@@ -359,6 +359,7 @@ export default function RegisterPage() {
   const [currentStep, setCurrentStep] = useState<RegistrationStep>("role-selection");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedRole, setSelectedRole] = useState<null | "student" | "teacher">(null);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [businessData, setBusinessData] = useState<BusinessTypeData>({
     businessType: "individual",
     companyName: "",
@@ -526,38 +527,19 @@ export default function RegisterPage() {
                 };
               });
 
-              setCurrentStep("platform-subscription");
+              setCurrentStep("completed");
+              setTimeout(() => router.push("/teacher/courses"), 2000);
             } else if (success === 'subscription') {
               toast.success('Płatność za platformę została przetworzona! Rejestracja zakończona.');
               setCurrentStep("completed");
               setTimeout(() => router.push("/teacher/courses"), 2000);
             } else {
-              // Check if teacher has completed registration
-              const hasStripe = updateData.stripeOnboardingComplete;
-              const hasSubscription = updateData.hasActiveSubscription;
-              const isMember = isMemberOfOtherSchool;
-              
-              console.log('[checkUserStatus] Teacher status - hasStripe:', hasStripe, 'hasSubscription:', hasSubscription, 'isMemberOfOtherSchool:', isMember, 'ownsSchool:', ownsSchool);
-              
-              // If teacher is a member of a school (not owner), they don't need to pay - school owner covers
-              if (isMember) {
-                setCurrentStep("completed");
-                toast.success("Jesteś już w pełni zarejestrowany jako członek szkoły!");
-                setTimeout(() => router.push("/teacher/courses"), 2000);
-              } else if (hasStripe && hasSubscription) {
-                // Fully registered with everything
-                setCurrentStep("completed");
-                toast.success("Jesteś już w pełni zarejestrowany!");
-                setTimeout(() => router.push("/teacher/courses"), 2000);
-              } else if (hasStripe && !hasSubscription) {
-                // Has Stripe, needs subscription
-                setCurrentStep("platform-subscription");
-                toast("Wybierz plan subskrypcji platformy", { icon: "💳" });
-              } else {
-                // Needs Stripe setup
-                setCurrentStep("stripe-setup");
-                toast("Witaj ponownie! Dokończymy rejestrację.", { icon: "👋" });
-              }
+              // Teacher account + school are configured - registration is complete.
+              // Stripe Connect payouts are optional and configured later in Settings,
+              // required only before publishing a paid course - not a registration gate.
+              setCurrentStep("completed");
+              toast.success(isMemberOfOtherSchool ? "Jesteś już w pełni zarejestrowany jako członek szkoły!" : "Jesteś już w pełni zarejestrowany!");
+              setTimeout(() => router.push("/teacher/courses"), 2000);
             }
           }
           
@@ -601,8 +583,9 @@ export default function RegisterPage() {
                 selectedSchoolId: prev.selectedSchoolId || schoolForData?.id,
               }));
 
-              setCurrentStep("platform-subscription");
-              toast.success('Konto Stripe skonfigurowane. Wybierz plan platformy.');
+              setCurrentStep("completed");
+              toast.success('Konto Stripe skonfigurowane. Rejestracja zakończona!');
+              setTimeout(() => router.push("/teacher/courses"), 1500);
             } else if (success === 'subscription') {
               toast.success('Płatność za platformę została przetworzona! Rejestracja zakończona.');
               setCurrentStep("completed");
@@ -669,67 +652,55 @@ export default function RegisterPage() {
                 setCurrentStep("completed");
                 setTimeout(() => router.push("/teacher/courses"), 2000);
               } else if (refresh === 'true') {
-                toast.error('Konfiguracja Stripe została przerwana. Możesz spróbować ponownie.');
-                setCurrentStep("stripe-setup");
+                toast.error('Konfiguracja Stripe została przerwana. Możesz spróbować ponownie w panelu nauczyciela.');
+                setCurrentStep("completed");
+                setTimeout(() => router.push("/teacher/courses"), 2000);
               } else {
-                // Check what's missing for teacher
-              const hasStripe = userData.stripeAccountId && userData.stripeOnboardingComplete;
-                const hasSubscription = userData.hasActiveSubscription;
-                
-                if (hasSubscription) {
-                  // Fully registered
-                  setCurrentStep("completed");
-                  toast.success("Jesteś już w pełni zarejestrowany!");
-                  setTimeout(() => router.push("/teacher/courses"), 2000);
-                } else if (hasStripe) {
-                  // Has Stripe, needs subscription
-                  setCurrentStep("platform-subscription");
-                  toast("Wybierz plan subskrypcji platformy", { icon: "💳" });
-                } else {
-                  // Check if teacher has school - if yes, populate business data and skip to terms
-                  console.log('[checkUserStatus] Checking for school:', {
-                    hasSchoolId: !!userData.schoolId,
-                    hasSchool: !!userData.school,
-                    schoolId: userData.schoolId,
-                    school: userData.school
+                // Stripe Connect payouts are optional and configured later in Settings,
+                // required only before publishing a paid course - not a registration gate.
+                // Check if teacher has school - if yes, populate business data and skip to terms
+                console.log('[checkUserStatus] Checking for school:', {
+                  hasSchoolId: !!userData.schoolId,
+                  hasSchool: !!userData.school,
+                  schoolId: userData.schoolId,
+                  school: userData.school
+                });
+
+                if (userData.schoolId && userData.school) {
+                  // Populate businessData with school information from API response
+                  const businessType = (userData.school.schoolType === "business" ? "company" : "individual") as "individual" | "company";
+                  const newBusinessData: BusinessTypeData = {
+                    businessType: businessType,
+                    companyName: userData.school.companyName || "",
+                    schoolName: userData.school.name || "",
+                    taxId: userData.school.taxId || "",
+                    requiresVatInvoices: userData.school.requiresVatInvoices || false,
+                    joinSchoolMode: "own-school",
+                    selectedSchoolId: userData.school.id
+                  };
+
+                  console.log('[checkUserStatus] Setting business data:', newBusinessData);
+                  setBusinessData(newBusinessData);
+                  setCurrentSchoolType(userData.school.schoolType as "individual" | "business");
+
+                  console.log('[checkUserStatus] School data loaded:', {
+                    schoolType: userData.school.schoolType,
+                    companyName: userData.school.companyName,
+                    schoolName: userData.school.name,
+                    taxId: userData.school.taxId
                   });
-                  
-                  if (userData.schoolId && userData.school) {
-                    // Populate businessData with school information from API response
-                    const businessType = (userData.school.schoolType === "business" ? "company" : "individual") as "individual" | "company";
-                    const newBusinessData: BusinessTypeData = {
-                      businessType: businessType,
-                      companyName: userData.school.companyName || "",
-                      schoolName: userData.school.name || "",
-                      taxId: userData.school.taxId || "",
-                      requiresVatInvoices: userData.school.requiresVatInvoices || false,
-                      joinSchoolMode: "own-school",
-                      selectedSchoolId: userData.school.id
-                    };
-                    
-                    console.log('[checkUserStatus] Setting business data:', newBusinessData);
-                    setBusinessData(newBusinessData);
-                    setCurrentSchoolType(userData.school.schoolType as "individual" | "business");
-                    
-                    console.log('[checkUserStatus] School data loaded:', {
-                      schoolType: userData.school.schoolType,
-                      companyName: userData.school.companyName,
-                      schoolName: userData.school.name,
-                      taxId: userData.school.taxId
-                    });
-                    
-                    setCurrentStep("terms-consent");
-                    toast.success("Masz już przypisaną szkołę! Zaakceptuj regulamin, aby kontynuować.", { icon: "🏫" });
-                  } else if (userData.schoolId) {
-                    // Has schoolId but school data not fetched - still proceed to terms
-                    console.log('[checkUserStatus] Has schoolId but no school data');
-                    setCurrentStep("terms-consent");
-                    toast.success("Masz już przypisaną szkołę! Zaakceptuj regulamin, aby kontynuować.", { icon: "🏫" });
-                  } else {
-                    // Needs business type selection
-                    setCurrentStep("business-type-selection");
-                    toast("Rozpocznij rejestrację od wyboru typu działalności", { icon: "👨‍🏫" });
-                  }
+
+                  setCurrentStep("terms-consent");
+                  toast.success("Masz już przypisaną szkołę! Zaakceptuj regulamin, aby kontynuować.", { icon: "🏫" });
+                } else if (userData.schoolId) {
+                  // Has schoolId but school data not fetched - still proceed to terms
+                  console.log('[checkUserStatus] Has schoolId but no school data');
+                  setCurrentStep("terms-consent");
+                  toast.success("Masz już przypisaną szkołę! Zaakceptuj regulamin, aby kontynuować.", { icon: "🏫" });
+                } else {
+                  // Needs business type selection
+                  setCurrentStep("business-type-selection");
+                  toast("Rozpocznij rejestrację od wyboru typu działalności", { icon: "👨‍🏫" });
                 }
               }
             }
@@ -820,12 +791,13 @@ export default function RegisterPage() {
     if (!selectedRole || currentStep === "role-selection") return null;
     
     const steps = selectedRole === "teacher" 
-      ? ["Wybór roli", "Regulamin", "Typ działalności", "Wybór szkoły", "Tworzenie konta", "Konfiguracja płatności", "Subskrypcja platformy", "Zakończone"]
+      ? ["Wybór roli", "Regulamin", "Typ działalności", "Wybór szkoły", "Tworzenie konta", "Zakończone"]
       : ["Wybór roli", "Regulamin", "Tworzenie konta", "Zakończone"];
     
     const normalizeStepForProgress = (step: RegistrationStep): RegistrationStep => {
       if (step === "find-school") return "school-choice";
       if (step === "user-creation") return "terms-acceptance";
+      if (step === "stripe-setup" || step === "platform-subscription") return "completed";
       return step;
     };
 
@@ -836,8 +808,6 @@ export default function RegisterPage() {
           "business-type-selection",
           "school-choice",
           "terms-acceptance",
-          "stripe-setup",
-          "platform-subscription",
           "completed",
         ]
       : ["role-selection", "terms-consent", "terms-acceptance", "completed"];
@@ -983,7 +953,7 @@ export default function RegisterPage() {
           
           console.log('[handleSignUp] hasActiveSubscription:', hasActiveSubscription, 'stripeOnboardingComplete:', stripeOnboardingComplete, 'isMemberOfOtherSchool:', isMemberOfOtherSchool, 'ownsSchool:', ownsSchool);
           
-          // If teacher is a member of another school, they don't pay individually - school owner's subscription covers them
+          // If teacher is a member of another school, they don't pay individually - school owner covers costs
           if (isMemberOfOtherSchool) {
             console.log('[handleSignUp] Teacher is member of school - no need to pay, logging in directly');
             setBusinessData(prev => ({
@@ -992,41 +962,9 @@ export default function RegisterPage() {
               joinSchoolMode: "join-existing-school",
               selectedSchoolId: school?.id
             }));
-          } else if (!stripeOnboardingComplete || !hasActiveSubscription) {
-            // Teacher needs to complete Stripe setup or subscribe to platform
-            console.log('[handleSignUp] Teacher needs Stripe/subscription, stripeOnboardingComplete:', stripeOnboardingComplete, 'hasActiveSubscription:', hasActiveSubscription);
-            const newData: BusinessTypeData = {
-              businessType: newBusinessType as "individual" | "company",
-              companyName: school?.companyName || "",
-              schoolName: school?.name || "",
-              taxId: school?.taxId || "",
-              requiresVatInvoices: school?.requiresVatInvoices || false,
-              joinSchoolMode: "own-school",
-              selectedSchoolId: school?.id
-            };
-            console.log('[handleSignUp] Prepared data:', newData);
-            console.log('[handleSignUp] About to set pendingBusinessData with:', newData);
-            setPendingBusinessData(newData);
-            
-            // Set to appropriate next step based on what's missing
-            if (!stripeOnboardingComplete) {
-              console.log('[handleSignUp] Stripe not complete, setting currentStep to stripe-setup');
-              setBusinessData(newData);
-              setCurrentStep("stripe-setup");
-            } else {
-              console.log('[handleSignUp] Stripe complete but no subscription, will go to platform-subscription');
-              setNeedsPlatformSubscription(true);
-            }
-            
-            setIsLoading(false);
-            setLoadingState("idle");
-            console.log('[handleSignUp] Returning early, state will be updated');
-
-            await recordTermsAcceptanceOnce();
-            return;
           } else {
-            // Already has both Stripe and subscription, just update businessData for future use
-            console.log('[handleSignUp] Teacher has everything, logging in directly');
+            // Stripe Connect payouts are optional - configured later in Settings before publishing a paid course.
+            console.log('[handleSignUp] Teacher has a school, logging in directly (Stripe setup deferred)');
             setBusinessData(prev => ({
               ...prev,
               businessType: newBusinessType,
@@ -1188,9 +1126,14 @@ export default function RegisterPage() {
             router.refresh();
           }, 1500);
         } else {
-          // All other teachers (individual or own-school) need to set up Stripe
-          console.log('[handleRegister] Teacher needs Stripe setup');
-          setCurrentStep("stripe-setup");
+          // Stripe Connect payouts are optional - configured later in Settings before publishing a paid course.
+          console.log('[handleRegister] Teacher account created, Stripe setup deferred to Settings');
+          setCurrentStep("completed");
+          toast.success("Konto nauczyciela utworzone! Możesz od razu zacząć tworzyć kursy.");
+          setTimeout(() => {
+            router.push("/teacher/courses");
+            router.refresh();
+          }, 1500);
         }
       }
       
@@ -1266,12 +1209,13 @@ export default function RegisterPage() {
         }, 1500);
         return;
       } else if (stripeResult.onboardingComplete || stripeResult.existingAccount) {
-        // Account already configured, proceed to subscription
-        console.log("Account already configured, proceeding to subscription");
-        toast.success("Konto płatności już skonfigurowane! Przejdź do wyboru planu.");
+        // Account already configured - registration is complete.
+        console.log("Account already configured, registration complete");
+        toast.success("Konto płatności już skonfigurowane! Rejestracja zakończona.");
         setIsLoading(false);
         setLoadingState("idle");
-        setCurrentStep("platform-subscription");
+        setCurrentStep("completed");
+        setTimeout(() => router.push("/teacher/courses"), 1500);
       } else {
         throw new Error("Nie otrzymano linku do konfiguracji konta płatności");
       }
@@ -1906,7 +1850,25 @@ export default function RegisterPage() {
 
               <div className="space-y-3 sm:space-y-4">
                 <h3 className="text-sm sm:text-md font-semibold text-gray-700">{t("register.businessType.select")}</h3>
-                
+
+                {!showAdvancedOptions && (
+                  <div className="p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm font-medium text-green-800">Zakładasz indywidualne konto nauczyciela</p>
+                    <p className="text-xs sm:text-sm text-green-700 mt-1">
+                      Najszybsza opcja - zaczynasz od razu, bez NIP i danych firmy. Możesz to zmienić później w Ustawieniach.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowAdvancedOptions(true)}
+                      className="mt-2 text-xs sm:text-sm text-blue-600 underline hover:text-blue-800"
+                    >
+                      Prowadzisz firmę albo chcesz dołączyć do istniejącej szkoły?
+                    </button>
+                  </div>
+                )}
+
+                {showAdvancedOptions && (
+                  <>
                 <div className="space-y-2 sm:space-y-3">
                   <label className="flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 md:p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                     <input
@@ -2114,6 +2076,26 @@ export default function RegisterPage() {
                       </div>
                     </label>
                   </div>
+                )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAdvancedOptions(false);
+                        setBusinessData(prev => ({
+                          ...prev,
+                          businessType: "individual",
+                          schoolName: "",
+                          companyName: "",
+                          taxId: "",
+                          requiresVatInvoices: false
+                        }));
+                      }}
+                      className="text-xs sm:text-sm text-gray-500 underline hover:text-gray-700"
+                    >
+                      ← Wróć do szybkiej rejestracji indywidualnej
+                    </button>
+                  </>
                 )}
 
                 <button
@@ -2395,11 +2377,11 @@ export default function RegisterPage() {
 
                 <button
                   onClick={() => {
-                    setCurrentStep("platform-subscription");
-                    toast(t("register.stripeSetup.toast.rememberStripeRequired"), {
-                      icon: "ℹ️",
+                    setCurrentStep("completed");
+                    toast.success("Rejestracja zakończona! Konfigurację płatności możesz dokończyć później w panelu nauczyciela.", {
                       duration: 5000
                     });
+                    setTimeout(() => router.push("/teacher/courses"), 1500);
                   }}
                   disabled={isLoading}
                   className="w-full py-2 px-4 rounded-lg font-medium text-gray-600 text-sm border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"

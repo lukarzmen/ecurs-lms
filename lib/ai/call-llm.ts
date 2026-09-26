@@ -14,6 +14,7 @@ export async function callLLM(
   systemPrompt: string,
   userPrompt: string,
   timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  modelId?: string,
 ): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -22,7 +23,7 @@ export async function callLLM(
     const res = await fetch("/api/tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ systemPrompt, userPrompt }),
+      body: JSON.stringify({ systemPrompt, userPrompt, modelId }),
       signal: controller.signal,
     });
 
@@ -46,10 +47,12 @@ export async function callLLMJson(
   systemPrompt: string,
   userPrompt: string,
   timeoutMs?: number,
+  modelId?: string,
 ): Promise<unknown> {
-  const raw = await callLLM(systemPrompt, userPrompt, timeoutMs);
+  const raw = await callLLM(systemPrompt, userPrompt, timeoutMs, modelId);
   return JSON.parse(getJsonCandidate(raw));
 }
+
 
 export function getJsonCandidate(text: string): string {
   const trimmed = text.trim();

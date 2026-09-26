@@ -29,6 +29,8 @@ import { ChaptersList } from "./chapters-list";
 import { Module } from "@prisma/client";
 import { generateLessonTitles, LLMTimeoutError } from "@/lib/ai/generate-lesson-titles";
 import { AiGenerationProgress } from "@/components/ui/ai-generation-progress";
+import { AiModelSelect } from "@/components/ui/ai-model-select";
+import { useAiModelStore } from "@/hooks/use-ai-model-store";
 import {
   Dialog,
   DialogContent,
@@ -59,6 +61,7 @@ export const ChaptersForm = ({ chapters, courseId, courseTitle }: ModulesFormPro
   const [editableCourseTitle, setEditableCourseTitle] = useState(courseTitle || "");
   const [qualityMode, setQualityMode] = useState(false);
   const [progressStep, setProgressStep] = useState<{ step: number; total: number } | null>(null);
+  const { modelId } = useAiModelStore();
   const { t } = useI18n();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -125,6 +128,7 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
         singleShotUserPrompt: userPrompt,
         t,
         onProgress: (step, total) => setProgressStep({ step, total }),
+        modelId,
       });
 
       if (titles.length === 0) {
@@ -296,6 +300,10 @@ Wygeneruj TYLKO NOWE, UZUPEŁNIAJĄCE lekcje. NIE powtarzaj istniejących temat�
                     <span className="block text-xs text-muted-foreground">{t('chaptersForm.aiQualityModeHint')}</span>
                   </span>
                 </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">{t('aiModel.select')}</span>
+                  <AiModelSelect disabled={isGeneratingAI} className="w-[200px]" />
+                </div>
               </div>
               {isGeneratingAI && (
                 <AiGenerationProgress

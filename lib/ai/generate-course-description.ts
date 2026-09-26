@@ -21,6 +21,8 @@ export type CourseDescriptionOptions = {
   t: TranslateFn;
   // Reports the current pipeline step (1-based) so the UI can show progress.
   onProgress?: (step: number, totalSteps: number) => void;
+  // One of the ids in lib/ai/models.ts; omit to use the server default.
+  modelId?: string;
 };
 
 function stripQuotes(text: string): string {
@@ -28,13 +30,13 @@ function stripQuotes(text: string): string {
 }
 
 async function runQualityPipeline(options: CourseDescriptionOptions): Promise<string> {
-  const { title, categoryName, maxSentences, t, onProgress } = options;
+  const { title, categoryName, maxSentences, t, onProgress, modelId } = options;
   const totalSteps = 4;
   const category = categoryName?.trim() || t('descForm.aiNoCategory');
 
   onProgress?.(1, totalSteps);
   const analysisUser = t('descForm.aiAnalysisUser', { title, category });
-  const analysisRaw = (await callLLMJson(t('descForm.aiAnalysisSystem'), analysisUser)) as {
+  const analysisRaw = (await callLLMJson(t('descForm.aiAnalysisSystem'), analysisUser, undefined, modelId)) as {
     sellingPoints?: unknown;
     audience?: unknown;
     grounded?: unknown;
@@ -57,14 +59,14 @@ async function runQualityPipeline(options: CourseDescriptionOptions): Promise<st
   const draftSystem = t('descForm.aiDraftSystem', { maxSentences });
 
   onProgress?.(2, totalSteps);
-  const draft = stripQuotes(await callLLM(draftSystem, draftUser));
+  const draft = stripQuotes(await callLLM(draftSystem, draftUser, undefined, modelId));
   if (!draft) {
     throw new Error('invalidObject');
   }
 
   onProgress?.(3, totalSteps);
   const reviewUser = t('descForm.aiReviewUser', { description: draft });
-  const reviewRaw = (await callLLMJson(t('descForm.aiReviewSystem'), reviewUser)) as {
+  const reviewRaw = (await callLLMJson(t('descForm.aiReviewSystem'), reviewUser, undefined, modelId)) as {
     issues?: unknown;
   };
   const issues = Array.isArray(reviewRaw.issues) ? reviewRaw.issues : [];
@@ -79,7 +81,7 @@ async function runQualityPipeline(options: CourseDescriptionOptions): Promise<st
       description: draft,
       issues: JSON.stringify(issues),
     });
-    const fixed = stripQuotes(await callLLM(t('descForm.aiFixSystem'), fixUser));
+    const fixed = stripQuotes(await callLLM(t('descForm.aiFixSystem'), fixUser, undefined, modelId));
     return fixed || draft;
   } catch {
     // Keep the draft if the fix pass itself fails – it already passed generation.
@@ -90,7 +92,7 @@ async function runQualityPipeline(options: CourseDescriptionOptions): Promise<st
 export async function generateCourseDescription(options: CourseDescriptionOptions): Promise<string> {
   if (!options.quality) {
     options.onProgress?.(1, 1);
-    return stripQuotes(await callLLM(options.singleShotSystemPrompt, options.singleShotUserPrompt));
+    return stripQuotes(await callLLM(options.singleShotSystemPrompt, options.singleShotUserPrompt, undefined, options.modelId));
   }
 
   return runQualityPipeline(options);

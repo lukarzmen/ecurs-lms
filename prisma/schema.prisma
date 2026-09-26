@@ -468,6 +468,8 @@ model PlatformFeeConfig {
   vatRate               Decimal @default(0.23) @db.Decimal(5, 2)
   currency              String  @default("PLN")
   trialPeriodDays       Int     @default(90)
+  // Commission model (replaces the flat teacher subscription fees above) - admin-configurable in Settings.
+  commissionRatePercent Decimal @default(8) @db.Decimal(5, 2)
   isActive              Boolean @default(true)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt

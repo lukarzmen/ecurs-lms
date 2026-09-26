@@ -11,6 +11,8 @@ import toast from "react-hot-toast";
 import { useI18n } from "@/hooks/use-i18n";
 import { generateCourseDescription, LLMTimeoutError } from "@/lib/ai/generate-course-description";
 import { AiGenerationProgress } from "@/components/ui/ai-generation-progress";
+import { AiModelSelect } from "@/components/ui/ai-model-select";
+import { useAiModelStore } from "@/hooks/use-ai-model-store";
 
 interface DescriptionFormProps {
   description: string;
@@ -26,6 +28,7 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
   const [isGenerating, setIsGenerating] = useState(false);
   const [qualityMode, setQualityMode] = useState(false);
   const [progressStep, setProgressStep] = useState<{ step: number; total: number } | null>(null);
+  const { modelId } = useAiModelStore();
   const router = useRouter();
   const { t } = useI18n();
 
@@ -69,6 +72,7 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
           `Wygeneruj opis kursu ${courseTitle ? `\"${courseTitle}\"` : "(tytuł nieznany)"}. ${courseTitle ? "" : "Jeśli nie znasz tematu, napisz neutralny opis ogólny bez zmyślania faktów."}`,
         t,
         onProgress: (step, total) => setProgressStep({ step, total }),
+        modelId,
       });
 
       if (!text) {
@@ -134,6 +138,10 @@ const DescriptionForm: React.FC<DescriptionFormProps> = ({ description, courseId
                 <span className="block text-xs text-muted-foreground">{t('descForm.aiQualityModeHint')}</span>
               </span>
             </label>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">{t('aiModel.select')}</span>
+              <AiModelSelect disabled={isGenerating || isSubmitting} className="w-[200px]" />
+            </div>
             {isGenerating && (
               <AiGenerationProgress
                 label={t('descForm.generating')}

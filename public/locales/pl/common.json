@@ -7,6 +7,7 @@
   "aiProgress.step3": "Krok 3 z {total}: sprawdzanie jakości...",
   "aiProgress.step4": "Krok 4 z {total}: poprawianie...",
   "aiProgress.timeoutError": "Generowanie trwa zbyt długo i zostało przerwane. Spróbuj ponownie lub wyłącz tryb głębszej analizy.",
+  "aiModel.select": "Model AI",
   "auth.signedOut.title": "Ecurs — platforma nowoczesnej edukacji",
   "auth.signedOut.description": "Zaloguj się lub załóż konto, aby przeglądać kursy, śledzić postępy i korzystać z funkcji platformy.",
   "auth.signIn": "Zaloguj się",
