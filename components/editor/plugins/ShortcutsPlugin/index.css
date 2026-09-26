@@ -1,0 +1,120 @@
+/**
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ */
+
+.keyboard-shortcuts-bar {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 6px 8px;
+  border-top: 1px solid #eee;
+  background: #fff;
+  border-radius: 0 0 10px 10px;
+}
+
+.keyboard-shortcuts-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: #555;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.keyboard-shortcuts-button:hover {
+  background-color: #f2f3f5;
+  color: #222;
+}
+
+.keyboard-shortcuts-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSIyIiB5PSI0IiB3aWR0aD0iMjAiIGhlaWdodD0iMTYiIHJ4PSIyIi8+PHBhdGggZD0iTTYgOGguMDFNMTAgOGguMDFNMTQgOGguMDFNMTggOGguMDFNOCAxMmguMDFNMTIgMTJoLjAxTTE2IDEyaC4wMU02IDE2aDEyIi8+PC9zdmc+);
+  opacity: 0.65;
+}
+
+.keyboard-shortcuts-button:hover .keyboard-shortcuts-icon {
+  opacity: 1;
+}
+
+.keyboard-shortcuts-button-text {
+  white-space: nowrap;
+}
+
+.keyboard-shortcuts-dialog {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.keyboard-shortcuts-group-title {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #666;
+}
+
+.keyboard-shortcuts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.keyboard-shortcuts-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: #333;
+}
+
+.keyboard-shortcuts-label {
+  flex: 1 1 auto;
+}
+
+.keyboard-shortcuts-combo {
+  flex: 0 0 auto;
+  font-family: inherit;
+  font-size: 12px;
+  background: #f2f3f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  color: #444;
+}
+
+@media (max-width: 640px) {
+  .keyboard-shortcuts-button-text {
+    display: none;
+  }
+
+  .keyboard-shortcuts-dialog {
+    grid-template-columns: 1fr;
+    max-height: 50vh;
+  }
+}

@@ -72,6 +72,7 @@ import CodeActionMenuPlugin from './plugins/CodeActionMenuPlugin';
 import CourseInfoPlugin from './plugins/CourseInfoPlugin';
 import EditorRefreshPlugin from './plugins/EditorRefreshPlugin';
 import ShortcutsPlugin from './plugins/ShortcutsPlugin';
+import KeyboardShortcutsButton from './plugins/ShortcutsPlugin/KeyboardShortcutsButton';
 import ExportBridgePlugin, {ExportHandlers} from './plugins/ExportBridgePlugin';
 
 
@@ -349,6 +350,11 @@ export default function Editor( {
           isRichText={true}
           shouldPreserveNewLinesInMarkdown={shouldPreserveNewLinesInMarkdown}
         />)} */}
+        {isEditable && (
+          <div className="keyboard-shortcuts-bar">
+            <KeyboardShortcutsButton />
+          </div>
+        )}
       </div>
     </>
   );
