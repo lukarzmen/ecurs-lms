@@ -16,6 +16,8 @@
 
   "nav.studentMode": "Przejdź do trybu ucznia",
   "nav.teacherMode": "Przejdź do trybu nauczyciela",
+  "nav.studentModeShort": "Uczeń",
+  "nav.teacherModeShort": "Nauczyciel",
 
   "sidebar.yourEducation": "Twoja edukacja",
   "sidebar.discover": "Odkrywaj",
@@ -225,6 +227,13 @@
   "analytics.chartThisMonth": "Ten miesiąc",
   "analytics.chartCompletedModules": "Ukończone moduły",
   "analytics.chartProgress": "Postęp (%)",
+  "analytics.streakAtRisk": "🔥 Twoja passa {streak} dni jest zagrożona! Ukończ dziś choć jeden moduł, aby ją utrzymać.",
+  "analytics.continueLearning": "Kontynuuj naukę",
+  "analytics.continueLearningCta": "Wróć do nauki",
+  "analytics.weeklyGoal": "Cel tygodniowy",
+  "analytics.weeklyGoalProgress": "Ukończono {current} z {target} modułów w tym tygodniu",
+  "analytics.weeklyGoalReached": "Cel tygodniowy osiągnięty! Świetna robota! 🎉",
+  "analytics.nextMilestones": "Kolejne cele do zdobycia",
 
   "settings.title": "Ustawienia",
   "settings.subtitle": "Zarządzaj swoimi subskrypcjami i ustawieniami konta",
@@ -791,6 +800,14 @@
   "anal.tipText": "Kliknij na kurs, aby zobaczyć szczegółowe statystyki i przeanalizować postęp studentów.",
   "anal.schoolStatsTitle": "Statystyki szkoły",
   "anal.schoolStatsText": "Tutaj widzisz łączne statystyki całej szkoły. Dane obejmują wszystkich nauczycieli, studentów i kursy.",
+  "anal.studentsNeedingSupport": "Uczniowie wymagający wsparcia",
+  "anal.noStudentsNeedingSupport": "Świetnie! Obecnie żaden uczeń nie wymaga dodatkowego wsparcia.",
+  "anal.progress": "Postęp",
+  "anal.inactiveFor": "Brak aktywności od {days} dni",
+  "anal.contact": "Napisz",
+  "anal.modulesNeedingAttention": "Moduły wymagające uwagi",
+  "anal.noModulesNeedingAttention": "Brak modułów z niskim wskaźnikiem ukończenia.",
+  "anal.reviewModuleHint": "Niski wskaźnik ukończenia może oznaczać, że warto przejrzeć treść tego modułu.",
 
   "epPrice.title": "Cena",
   "epPrice.hint": "Ustaw cenę dostępu do ścieżki edukacyjnej",
@@ -1051,6 +1068,7 @@
   "ed.audio": "Audio",
   "ed.table": "Tabela",
   "ed.columnBlocks": "Bloki w kolumnach",
+  "ed.noteBlock": "Wyróżniony blok",
   "ed.equation": "Wzór",
   "ed.note": "Notatka",
   "ed.collapsible": "Kontener zwijany",
@@ -1069,6 +1087,7 @@
   "ed.insertAudio": "Wstaw audio",
   "ed.insertTable": "Wstaw tabelę",
   "ed.insertColumns": "Wstaw bloki w kolumnach",
+  "ed.insertNote": "Wstaw wyróżniony blok",
   "ed.insertEquation": "Wstaw równanie",
   "ed.katexTitle": "Wstaw równanie matematyczne",
   "ed.katexSubtitle": "Użyj składni LaTeX do utworzenia równania",
@@ -1525,6 +1544,8 @@
 
   "ed.pickerColumns": "Bloki w kolumnach",
   "ed.pickerInsertColumns": "Wstaw bloki w kolumnach",
+  "ed.pickerNote": "Wyróżniony blok",
+  "ed.pickerInsertNote": "Wstaw wyróżniony blok",
 
   "ed.alignLeft": "Do lewej",
   "ed.alignCenter": "Wyśrodkuj",

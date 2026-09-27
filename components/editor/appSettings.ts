@@ -15,7 +15,8 @@ export const DEFAULT_SETTINGS = {
   isMaxLength: false,
   isRichText: true,
   isCodeHighlighted: true,
-  isCodeShiki: false,
+  // @lexical/code no longer ships Prism highlighting; only code-shiki does
+  isCodeShiki: true,
   measureTypingPerf: false,
   shouldPreserveNewLinesInMarkdown: false,
   shouldUseLexicalContextMenu: false,

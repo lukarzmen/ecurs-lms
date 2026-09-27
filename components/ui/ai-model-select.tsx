@@ -16,7 +16,6 @@ import { useI18n } from "@/hooks/use-i18n";
 const PROVIDER_LABELS: Record<string, string> = {
   openai: "OpenAI",
   deepseek: "DeepSeek",
-  kimi: "Kimi",
 };
 
 const COST_BADGE: Record<AiCostTier, string> = {

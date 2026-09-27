@@ -30,7 +30,10 @@ import {
   BarChart3,
   Activity,
   Trophy,
-  Building2
+  Building2,
+  HeartHandshake,
+  Mail,
+  AlertTriangle
 } from "lucide-react";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
@@ -45,6 +48,21 @@ interface CourseDetail {
   lastActiveUser?: string;
   lastActiveDate?: string;
   teacher?: string;
+}
+
+interface StudentNeedingSupport {
+  studentName: string;
+  studentEmail: string;
+  courseTitle: string;
+  progressPercentage: number;
+  daysSinceActivity: number;
+}
+
+interface ModuleNeedingAttention {
+  moduleTitle: string;
+  courseTitle: string;
+  completionRate: number;
+  enrolledCount: number;
 }
 
 interface AnalyticsData {
@@ -62,6 +80,8 @@ interface AnalyticsData {
   mostActiveStudent?: string;
   mostCoursesStudent?: string;
   coursesDetails?: CourseDetail[];
+  studentsNeedingSupport?: StudentNeedingSupport[];
+  modulesNeedingAttention?: ModuleNeedingAttention[];
   // Educational Path Analytics
   pathUserCount?: number;
   pathsCount?: number;
@@ -276,6 +296,8 @@ const AnalyticsPage = () => {
     mostActiveStudent,
     mostCoursesStudent,
     coursesDetails = [],
+    studentsNeedingSupport = [],
+    modulesNeedingAttention = [],
     pathUserCount,
     pathsCount,
     pathCoursesCount,
@@ -579,6 +601,79 @@ const AnalyticsPage = () => {
           </Card>
         )}
       </div>
+
+      {/* Students Needing Support - actionable list to help teachers reach out proactively */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <HeartHandshake className="h-5 w-5 text-rose-500" />
+            <span>{t("anal.studentsNeedingSupport")}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {studentsNeedingSupport.length === 0 ? (
+            <p className="text-sm text-gray-500 py-4 text-center">{t("anal.noStudentsNeedingSupport")}</p>
+          ) : (
+            <div className="space-y-3">
+              {studentsNeedingSupport.map((student, idx) => (
+                <div key={idx} className="flex flex-col md:flex-row md:items-center justify-between gap-2 border rounded-lg p-3 bg-rose-50/50 border-rose-100">
+                  <div>
+                    <p className="font-medium text-gray-900">{student.studentName}</p>
+                    <p className="text-sm text-gray-600">{student.courseTitle}</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm text-gray-600 text-right">
+                      <div>{t("anal.progress")}: <span className="font-semibold">{student.progressPercentage}%</span></div>
+                      <div>{t("anal.inactiveFor").replace("{days}", String(student.daysSinceActivity))}</div>
+                    </div>
+                    {student.studentEmail && (
+                      <Button asChild size="sm" variant="outline">
+                        <a href={`mailto:${student.studentEmail}`}>
+                          <Mail className="h-4 w-4 mr-2" />
+                          {t("anal.contact")}
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Modules Needing Attention - content quality signal from low completion rates */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            <span>{t("anal.modulesNeedingAttention")}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {modulesNeedingAttention.length === 0 ? (
+            <p className="text-sm text-gray-500 py-4 text-center">{t("anal.noModulesNeedingAttention")}</p>
+          ) : (
+            <div className="space-y-3">
+              {modulesNeedingAttention.map((module, idx) => (
+                <div key={idx} className="border rounded-lg p-3 bg-amber-50/50 border-amber-100">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900">{module.moduleTitle}</p>
+                      <p className="text-sm text-gray-600">{module.courseTitle}</p>
+                    </div>
+                    <Badge variant="outline" className="bg-amber-100 text-amber-800">
+                      {module.completionRate}%
+                    </Badge>
+                  </div>
+                  <Progress value={module.completionRate} className="h-2 mt-2" />
+                  <p className="text-xs text-gray-500 mt-1">{t("anal.reviewModuleHint")}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Educational Paths Section */}
       <Card>

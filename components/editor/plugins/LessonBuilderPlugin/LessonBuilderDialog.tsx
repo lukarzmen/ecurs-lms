@@ -13,9 +13,10 @@ import { INSERT_TRUE_FALSE_COMMAND } from '../TrueFalsePlugin';
 import { INSERT_ORDERING_COMMAND } from '../OrderingPlugin';
 import { $createDictionaryNode, Dictionary } from '../../nodes/DictionaryNode';
 import { useI18n } from '@/hooks/use-i18n';
-import { Loader2, Sparkles, X } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { AiGenerationProgress } from '@/components/ui/ai-generation-progress';
 
 type BuilderPayload = {
   lessonTitle: string;
@@ -734,6 +735,148 @@ export function LessonBuilderDialog({
         });
       };
 
+      // Interactive blocks insert at the current selection – keep it pinned to the
+      // document end before every dispatch so mixed insertion stays in order.
+      const selectEnd = () => {
+        activeEditor.update(() => {
+          $getRoot().selectEnd();
+        });
+      };
+
+      // Splits an array into up to `maxChunks` near-equal pieces so a single generated
+      // batch (e.g. 6 quiz questions) can be spread across several sections instead of
+      // landing as one big block.
+      const chunkArray = <T,>(items: T[], maxChunks: number): T[][] => {
+        if (items.length === 0 || maxChunks <= 0) return [];
+        const chunkCount = Math.min(items.length, maxChunks);
+        const chunks: T[][] = [];
+        const base = Math.floor(items.length / chunkCount);
+        let remainder = items.length % chunkCount;
+        let idx = 0;
+        for (let c = 0; c < chunkCount; c++) {
+          const size = base + (remainder > 0 ? 1 : 0);
+          if (remainder > 0) remainder--;
+          chunks.push(items.slice(idx, idx + size));
+          idx += size;
+        }
+        return chunks;
+      };
+
+      type InsertJob = () => void;
+      const jobs: InsertJob[] = [];
+      const sectionSplitCount = Math.max(normalized.sections.length, 1);
+
+      if (includeQuiz && normalized.quiz.length > 0) {
+        chunkArray(normalized.quiz, sectionSplitCount).forEach((tests) => {
+          jobs.push(() => activeEditor.dispatchCommand(INSERT_TEST_COMMAND, { tests }));
+        });
+      }
+
+      if (includeOpenQuestions && normalized.openQuestions.length > 0) {
+        chunkArray(normalized.openQuestions, sectionSplitCount).forEach((items) => {
+          jobs.push(() => activeEditor.dispatchCommand(INSERT_QA_COMMAND, { items }));
+        });
+      }
+
+      if (includeTasks && normalized.descriptiveTasks.length > 0) {
+        chunkArray(normalized.descriptiveTasks, sectionSplitCount).forEach((items) => {
+          jobs.push(() => activeEditor.dispatchCommand(INSERT_TASK_COMMAND, { items }));
+        });
+      }
+
+      if (includeTrueFalse && normalized.trueFalse.length > 0) {
+        chunkArray(normalized.trueFalse, sectionSplitCount).forEach((questions) => {
+          jobs.push(() => activeEditor.dispatchCommand(INSERT_TRUE_FALSE_COMMAND, { questions }));
+        });
+      }
+
+      // SelectAnswer is inline-only in its plugin – insert as explicit block here,
+      // preceded by a heading with the question text so it has context.
+      if (includeSelectAnswer && normalized.selectAnswer) {
+        const sa = normalized.selectAnswer;
+        jobs.push(() => {
+          activeEditor.update(() => {
+            const root = $getRoot();
+
+            if (sa.question) {
+              const questionHeading = $createHeadingNode('h3');
+              questionHeading.append($createTextNode(sa.question));
+              root.append(questionHeading);
+            }
+
+            const wrapper = $createParagraphNode();
+            const saNode = new SelectAnswerNode({
+              options: sa.options,
+              selectedIndex: sa.correctIndex,
+            });
+            wrapper.append(saNode);
+            root.append(wrapper);
+          });
+        });
+      }
+
+      if (includeTodo && normalized.todo) {
+        const todoPayload = normalized.todo;
+        jobs.push(() =>
+          activeEditor.dispatchCommand(INSERT_TODO_COMMAND, {
+            title: todoPayload.title,
+            items: todoPayload.items.map((entry) => ({
+              id: Math.random().toString(36).slice(2),
+              text: entry.text,
+              checked: false,
+            })),
+          }),
+        );
+      }
+
+      if (includeOrdering && normalized.ordering) {
+        const orderingPayload = normalized.ordering;
+        jobs.push(() =>
+          activeEditor.dispatchCommand(INSERT_ORDERING_COMMAND, {
+            items: orderingPayload.items.map((item, idx) => ({
+              id: `ord-${idx}-${item.text.slice(0, 8)}`,
+              text: item.text,
+            })),
+          }),
+        );
+      }
+
+      if (includeDictionary && normalized.dictionary) {
+        const dictionaryPayload = normalized.dictionary;
+        jobs.push(() => {
+          activeEditor.update(() => {
+            const root = $getRoot();
+            const node = $createDictionaryNode(dictionaryPayload, true);
+            const wrapper = $createParagraphNode();
+            wrapper.append(node);
+            root.append($createParagraphNode());
+            root.append(wrapper);
+          });
+        });
+      }
+
+      // Round-robin the jobs over the section indices so interactive blocks land
+      // right after the section they relate to, mixed with the text, instead of
+      // all being dumped after the last section.
+      const jobsBySlot = new Map<number, InsertJob[]>();
+      jobs.forEach((job, i) => {
+        const slot = normalized.sections.length > 0 ? i % normalized.sections.length : -1;
+        const bucket = jobsBySlot.get(slot) ?? [];
+        bucket.push(job);
+        jobsBySlot.set(slot, bucket);
+      });
+
+      const runJobs = (slot: number) => {
+        const slotJobs = jobsBySlot.get(slot);
+        if (!slotJobs || slotJobs.length === 0) return;
+        slotJobs.forEach((job) => {
+          selectEnd();
+          sep();
+          job();
+          sep();
+        });
+      };
+
       activeEditor.update(() => {
         const root = $getRoot();
 
@@ -746,120 +889,38 @@ export function LessonBuilderDialog({
         if (normalized.lead) {
           insertMarkdown(root, normalized.lead);
         }
+      });
 
-        normalized.sections.forEach((section) => {
+      normalized.sections.forEach((section, index) => {
+        activeEditor.update(() => {
+          const root = $getRoot();
           const headingNode = $createHeadingNode('h2');
           headingNode.append($createTextNode(section.heading));
           root.append(headingNode);
           insertMarkdown(root, section.content);
         });
 
-        if (normalized.summary) {
+        runJobs(index);
+      });
+
+      // No sections were generated – fall back to appending interactive blocks right away.
+      runJobs(-1);
+
+      if (normalized.summary) {
+        activeEditor.update(() => {
+          const root = $getRoot();
           const headingNode = $createHeadingNode('h3');
           headingNode.append($createTextNode(t('ed.lessonBuilderSummaryHeading')));
           root.append(headingNode);
           insertMarkdown(root, normalized.summary);
-        }
+        });
+      }
 
-        // Add a paragraph separator before the first component block
+      activeEditor.update(() => {
+        const root = $getRoot();
         root.append($createParagraphNode());
         root.selectEnd();
       });
-
-      if (includeQuiz && normalized.quiz.length > 0) {
-        activeEditor.dispatchCommand(INSERT_TEST_COMMAND, {
-          tests: normalized.quiz,
-        });
-        sep();
-      }
-
-      if (includeOpenQuestions && normalized.openQuestions.length > 0) {
-        sep();
-        activeEditor.dispatchCommand(INSERT_QA_COMMAND, {
-          items: normalized.openQuestions,
-        });
-        sep();
-      }
-
-      if (includeTasks && normalized.descriptiveTasks.length > 0) {
-        sep();
-        activeEditor.dispatchCommand(INSERT_TASK_COMMAND, {
-          items: normalized.descriptiveTasks,
-        });
-        sep();
-      }
-
-      // SelectAnswer is inline-only in its plugin – insert as explicit block here,
-      // preceded by a heading with the question text so it has context.
-      if (includeSelectAnswer && normalized.selectAnswer) {
-        const sa = normalized.selectAnswer;
-        sep();
-        activeEditor.update(() => {
-          const root = $getRoot();
-
-          if (sa.question) {
-            const questionHeading = $createHeadingNode('h3');
-            questionHeading.append($createTextNode(sa.question));
-            root.append(questionHeading);
-          }
-
-          const wrapper = $createParagraphNode();
-          const saNode = new SelectAnswerNode({
-            options: sa.options,
-            selectedIndex: sa.correctIndex,
-          });
-          wrapper.append(saNode);
-          root.append(wrapper);
-          root.append($createParagraphNode());
-        });
-        sep();
-      }
-
-      if (includeTodo && normalized.todo) {
-        sep();
-        activeEditor.dispatchCommand(INSERT_TODO_COMMAND, {
-          title: normalized.todo.title,
-          items: normalized.todo.items.map((entry) => ({
-            id: Math.random().toString(36).slice(2),
-            text: entry.text,
-            checked: false,
-          })),
-        });
-        sep();
-      }
-
-      if (includeTrueFalse && normalized.trueFalse.length > 0) {
-        sep();
-        activeEditor.dispatchCommand(INSERT_TRUE_FALSE_COMMAND, {
-          questions: normalized.trueFalse,
-        });
-        sep();
-      }
-
-      if (includeOrdering && normalized.ordering) {
-        sep();
-        activeEditor.dispatchCommand(INSERT_ORDERING_COMMAND, {
-          items: normalized.ordering.items.map((item, idx) => ({
-            id: `ord-${idx}-${item.text.slice(0, 8)}`,
-            text: item.text,
-          })),
-        });
-        sep();
-      }
-
-      if (includeDictionary && normalized.dictionary) {
-        sep();
-        activeEditor.update(() => {
-          const root = $getRoot();
-          const node = $createDictionaryNode(normalized.dictionary!, true);
-          const wrapper = $createParagraphNode();
-          wrapper.append(node);
-          root.append($createParagraphNode());
-          root.append(wrapper);
-          root.append($createParagraphNode());
-        });
-        sep();
-      }
 
       toast.success(t('ed.lessonBuilderSuccess'));
       onClose();
@@ -1060,21 +1121,27 @@ export function LessonBuilderDialog({
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <button
-              onClick={onClose}
-              type="button"
-              className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-              disabled={loading}>
-              {t('ed.cancel')}
-            </button>
-            <button
-              onClick={handleGenerate}
-              type="button"
-              className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={loading || !topic.trim()}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {loading ? t('ed.generating') : t('ed.lessonBuilderGenerate')}
-            </button>
+            {loading ? (
+              <AiGenerationProgress label={t('ed.generating')} className="w-full space-y-2" />
+            ) : (
+              <>
+                <button
+                  onClick={onClose}
+                  type="button"
+                  className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                  disabled={loading}>
+                  {t('ed.cancel')}
+                </button>
+                <button
+                  onClick={handleGenerate}
+                  type="button"
+                  className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={loading || !topic.trim()}>
+                  <Sparkles className="h-4 w-4" />
+                  {t('ed.lessonBuilderGenerate')}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

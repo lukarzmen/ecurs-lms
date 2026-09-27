@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+import Link from "next/link";
 import { 
   Bar, 
   Doughnut, 
@@ -22,6 +23,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { 
   BookOpen, 
   Trophy, 
@@ -32,7 +34,10 @@ import {
   TrendingUp,
   Award,
   Star,
-  CheckCircle2
+  CheckCircle2,
+  ArrowRight,
+  AlertCircle,
+  Lock
 } from "lucide-react";
 import { useI18n } from "@/hooks/use-i18n";
 
@@ -92,6 +97,20 @@ interface RecentCompletion {
   completedAt: string;
 }
 
+interface WeeklyGoal {
+  target: number;
+  current: number;
+  progressPercentage: number;
+}
+
+interface NextMilestone {
+  category: string;
+  label: string;
+  current: number;
+  target: number;
+  progressPercentage: number;
+}
+
 interface StudentAnalyticsData {
   enrolledCoursesCount: number;
   completedCoursesCount: number;
@@ -106,6 +125,10 @@ interface StudentAnalyticsData {
   pathProgress: PathProgress[];
   recentCompletions: RecentCompletion[];
   achievements: Achievement[];
+  streakAtRisk: boolean;
+  nextBestAction: CourseProgress | null;
+  weeklyGoal: WeeklyGoal;
+  nextMilestones: NextMilestone[];
   userInfo: {
     firstName: string | null;
     lastName: string | null;
@@ -130,6 +153,10 @@ const StudentAnalyticsPage = () => {
     pathProgress: [],
     recentCompletions: [],
     achievements: [],
+    streakAtRisk: false,
+    nextBestAction: null,
+    weeklyGoal: { target: 5, current: 0, progressPercentage: 0 },
+    nextMilestones: [],
     userInfo: {
       firstName: null,
       lastName: null,
@@ -192,6 +219,10 @@ const StudentAnalyticsPage = () => {
     pathProgress,
     recentCompletions,
     achievements,
+    streakAtRisk,
+    nextBestAction,
+    weeklyGoal,
+    nextMilestones,
     userInfo
   } = analyticsData;
 
@@ -258,6 +289,43 @@ const StudentAnalyticsPage = () => {
           <span className="text-gray-600">{t("analytics.streak")}</span>
         </div>
       </div>
+
+      {/* Streak-at-risk nudge */}
+      {streakAtRisk && (
+        <Card className="bg-amber-50 border-amber-300">
+          <CardContent className="p-4 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
+            <p className="text-sm text-amber-800">
+              {t("analytics.streakAtRisk").replace("{streak}", String(currentStreak))}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Continue Learning CTA */}
+      {nextBestAction && (
+        <Card className="bg-gradient-to-r from-indigo-600 to-blue-600 border-none text-white">
+          <CardContent className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <p className="text-sm text-indigo-100 uppercase tracking-wide font-semibold">
+                {t("analytics.continueLearning")}
+              </p>
+              <h3 className="text-xl font-bold mt-1">{nextBestAction.title}</h3>
+              {nextBestAction.nextModule && (
+                <p className="text-indigo-100 mt-1">{nextBestAction.nextModule.title}</p>
+              )}
+            </div>
+            {nextBestAction.nextModule && (
+              <Button asChild size="lg" variant="secondary" className="shrink-0">
+                <Link href={`/courses/${nextBestAction.id}/chapters/${nextBestAction.nextModule.id}`}>
+                  {t("analytics.continueLearningCta")}
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Link>
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -450,6 +518,50 @@ const StudentAnalyticsPage = () => {
                 </div>
                 
                 <Progress value={path.progressPercentage} className="h-2" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Weekly Goal */}
+      <Card className="border-l-4 border-l-emerald-500">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Target className="h-5 w-5 text-emerald-600" />
+            <span>{t("analytics.weeklyGoal")}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+            <span>{t("analytics.weeklyGoalProgress").replace("{current}", String(weeklyGoal.current)).replace("{target}", String(weeklyGoal.target))}</span>
+            <span className="font-semibold">{weeklyGoal.progressPercentage}%</span>
+          </div>
+          <Progress value={weeklyGoal.progressPercentage} className="h-2" />
+          {weeklyGoal.progressPercentage >= 100 && (
+            <p className="text-sm text-emerald-600 font-medium mt-2">{t("analytics.weeklyGoalReached")}</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Next Milestones - what to strive for next */}
+      {nextMilestones.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Lock className="h-5 w-5" />
+              <span>{t("analytics.nextMilestones")}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {nextMilestones.map((milestone) => (
+              <div key={milestone.category} className="border rounded-lg p-4 space-y-2">
+                <p className="font-semibold">{milestone.label}</p>
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <span>{milestone.current}/{milestone.target}</span>
+                  <span>{milestone.progressPercentage}%</span>
+                </div>
+                <Progress value={milestone.progressPercentage} className="h-2" />
               </div>
             ))}
           </CardContent>

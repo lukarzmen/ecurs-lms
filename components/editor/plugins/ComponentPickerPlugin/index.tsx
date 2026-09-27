@@ -44,6 +44,7 @@ import {InsertEquationDialog} from '../EquationsPlugin';
 import {INSERT_EXCALIDRAW_COMMAND} from '../ExcalidrawPlugin';
 import {INSERT_IMAGE_COMMAND, InsertImageDialog} from '../ImagesPlugin';
 import InsertLayoutDialog from '../LayoutPlugin/InsertLayoutDialog';
+import InsertNoteDialog from '../LayoutPlugin/InsertNoteDialog';
 import {INSERT_PAGE_BREAK} from '../PageBreakPlugin';
 import {InsertTableDialog} from '../TablePlugin';
 
@@ -291,6 +292,14 @@ function getBaseOptions(editor: LexicalEditor, showModal: ShowModal, t: (key: st
       onSelect: () =>
         showModal(t('ed.pickerInsertColumns'), (onClose) => (
           <InsertLayoutDialog activeEditor={editor} onClose={onClose} />
+        )),
+    }),
+    new ComponentPickerOption(t('ed.pickerNote'), {
+      icon: <i className="icon highlight" />,
+      keywords: ['note', 'important', 'curiosity', 'ciekawostka', 'ważne'],
+      onSelect: () =>
+        showModal(t('ed.pickerInsertNote'), (onClose) => (
+          <InsertNoteDialog activeEditor={editor} onClose={onClose} />
         )),
     }),
     ...(['left', 'center', 'right', 'justify'] as const).map(

@@ -10,6 +10,8 @@
 
   "nav.studentMode": "Przejdź do trybu ucznia",
   "nav.teacherMode": "Przejdź do trybu nauczyciela",
+  "nav.studentModeShort": "Uczeń",
+  "nav.teacherModeShort": "Nauczyciel",
 
   "sidebar.yourEducation": "Twoja edukacja",
   "sidebar.discover": "Odkrywaj",

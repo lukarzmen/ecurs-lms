@@ -2,14 +2,16 @@
 module.exports = {
   // Allows Server Actions requests when the Origin host differs from Host/x-forwarded-host.
   // Useful in local dev (localhost vs 127.0.0.1) and behind reverse proxies.
-  serverActions: {
-    allowedOrigins: [
-      'localhost:3000',
-      '127.0.0.1:3000',
-      'ecurs.pl',
-      'clerk.ecurs.pl',
-      'accounts.ecurs.pl',
-    ],
+  experimental: {
+    serverActions: {
+      allowedOrigins: [
+        'localhost:3000',
+        '127.0.0.1:3000',
+        'ecurs.pl',
+        'clerk.ecurs.pl',
+        'accounts.ecurs.pl',
+      ],
+    },
   },
   eslint: {
     ignoreDuringBuilds: true,

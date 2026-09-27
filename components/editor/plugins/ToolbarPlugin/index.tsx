@@ -8,11 +8,7 @@
 
 import type {JSX} from 'react';
 
-import {
-  $isCodeNode,
-  getCodeLanguageOptions as getCodeLanguageOptionsPrism,
-  normalizeCodeLanguage as normalizeCodeLanguagePrism,
-} from '@lexical/code';
+import {$isCodeNode} from '@lexical/code';
 import {
   getCodeLanguageOptions as getCodeLanguageOptionsShiki,
   getCodeThemeOptions as getCodeThemeOptionsShiki,
@@ -98,6 +94,7 @@ import {
   InsertImagePayload,
 } from '../ImagesPlugin';
 import InsertLayoutDialog from '../LayoutPlugin/InsertLayoutDialog';
+import InsertNoteDialog from '../LayoutPlugin/InsertNoteDialog';
 import {INSERT_PAGE_BREAK} from '../PageBreakPlugin';
 import {InsertTableDialog} from '../TablePlugin';
 import FontSize, {parseFontSizeForToolbar} from './fontSize';
@@ -136,32 +133,6 @@ const rootTypeToRootName = {
   root: 'Root',
   table: 'Table',
 };
-
-const CODE_LANGUAGE_OPTIONS_PRISM: [string, string][] =
-  getCodeLanguageOptionsPrism().filter((option: [string, string]) =>
-    [
-      'c',
-      'clike',
-      'cpp',
-      'css',
-      'html',
-      'java',
-      'js',
-      'javascript',
-      'markdown',
-      'objc',
-      'objective-c',
-      'plain',
-      'powershell',
-      'py',
-      'python',
-      'rust',
-      'sql',
-      'swift',
-      'typescript',
-      'xml',
-    ].includes(option[0]),
-  );
 
 const CODE_LANGUAGE_OPTIONS_SHIKI: [string, string][] =
   getCodeLanguageOptionsShiki().filter((option: [string, string]) =>
@@ -649,7 +620,7 @@ export default function NewToolbarPlugin({
   );
 
   const {
-    settings: {isCodeHighlighted, isCodeShiki},
+    settings: {isCodeHighlighted},
   } = useSettings();
 
   const $handleCodeNode = useCallback(
@@ -659,10 +630,7 @@ export default function NewToolbarPlugin({
         updateToolbarState(
           'codeLanguage',
           language
-            ? (isCodeHighlighted &&
-                (isCodeShiki
-                  ? normalizeCodeLanguageShiki(language)
-                  : normalizeCodeLanguagePrism(language))) ||
+            ? (isCodeHighlighted && normalizeCodeLanguageShiki(language)) ||
                 language
             : '',
         );
@@ -671,7 +639,7 @@ export default function NewToolbarPlugin({
         return;
       }
     },
-    [updateToolbarState, isCodeHighlighted, isCodeShiki],
+    [updateToolbarState, isCodeHighlighted],
   );
 
   const $updateToolbar = useCallback(() => {
@@ -1230,33 +1198,7 @@ export default function NewToolbarPlugin({
         )}
       {toolbarState.blockType === 'code' && isCodeHighlighted ? (
         <>
-          {!isCodeShiki && (
-            <DropDown
-              disabled={!isEditable}
-              buttonClassName="toolbar-item code-language"
-              buttonLabel={
-                (CODE_LANGUAGE_OPTIONS_PRISM.find(
-                  (opt) =>
-                    opt[0] ===
-                    normalizeCodeLanguagePrism(toolbarState.codeLanguage),
-                ) || ['', ''])[1]
-              }
-              buttonAriaLabel="Select language">
-              {CODE_LANGUAGE_OPTIONS_PRISM.map(([value, name]) => {
-                return (
-                  <DropDownItem
-                    className={`item ${dropDownActiveClass(
-                      value === toolbarState.codeLanguage,
-                    )}`}
-                    onClick={() => onCodeLanguageSelect(value)}
-                    key={value}>
-                    <span className="text">{name}</span>
-                  </DropDownItem>
-                );
-              })}
-            </DropDown>
-          )}
-          {isCodeShiki && (
+          {(
             <>
               <DropDown
                 disabled={!isEditable}
@@ -1598,6 +1540,19 @@ export default function NewToolbarPlugin({
                   className="item">
                   <i className="icon columns" />
                   <span className="text">{t('ed.columnBlocks')}</span>
+                </DropDownItem>
+                <DropDownItem
+                  onClick={() => {
+                    showModal(t('ed.insertNote'), (onClose) => (
+                      <InsertNoteDialog
+                        activeEditor={activeEditor}
+                        onClose={onClose}
+                      />
+                    ));
+                  }}
+                  className="item">
+                  <i className="icon highlight" />
+                  <span className="text">{t('ed.noteBlock')}</span>
                 </DropDownItem>
                 <DropDownItem
                   onClick={() => {

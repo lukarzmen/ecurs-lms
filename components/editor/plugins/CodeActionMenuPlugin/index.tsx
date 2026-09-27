@@ -8,12 +8,11 @@
 
 import './index.css';
 
+import {$isCodeNode, CodeNode} from '@lexical/code';
 import {
-  $isCodeNode,
-  CodeNode,
-  getLanguageFriendlyName,
-  normalizeCodeLang,
-} from '@lexical/code';
+  getCodeLanguageOptions,
+  normalizeCodeLanguage,
+} from '@lexical/code-shiki';
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {$getNearestNodeFromDOMNode} from 'lexical';
 import {useEffect, useRef, useState} from 'react';
@@ -135,8 +134,10 @@ function CodeActionMenuContainer({
     );
   }, [editor]);
 
-  const normalizedLang = normalizeCodeLang(lang);
-  const codeFriendlyName = getLanguageFriendlyName(lang);
+  const normalizedLang = normalizeCodeLanguage(lang);
+  const codeFriendlyName =
+    getCodeLanguageOptions().find(([value]) => value === normalizedLang)?.[1] ??
+    lang;
 
   return (
     <>

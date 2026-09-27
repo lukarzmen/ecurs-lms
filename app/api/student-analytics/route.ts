@@ -348,6 +348,60 @@ export async function GET(req: NextRequest) {
             });
         }
 
+        // Streak-at-risk: user has an active streak but hasn't studied yet today - nudge to keep it alive
+        const streakAtRisk = currentStreak > 0 && !activityDays.has(today);
+
+        // "Continue learning" call to action - first not-yet-completed course with a known next module
+        const nextBestAction = courseProgress.find(cp => !cp.isCompleted && cp.nextModule) ?? null;
+
+        // Weekly learning goal - encourages a steady habit rather than one-off study bursts
+        const weeklyGoalTarget = 5;
+        const weeklyGoal = {
+            target: weeklyGoalTarget,
+            current: thisWeekActivity,
+            progressPercentage: Math.min(100, Math.round((thisWeekActivity / weeklyGoalTarget) * 100)),
+        };
+
+        // Next milestones (locked achievements) so students always see the next thing to strive for
+        const streakMilestones = [3, 7, 14, 30];
+        const courseMilestones = [1, 3, 5, 10];
+        const progressMilestones = [25, 50, 75, 100];
+
+        const nextMilestones: { category: string; label: string; current: number; target: number; progressPercentage: number }[] = [];
+
+        const nextStreakTarget = streakMilestones.find(t => t > currentStreak);
+        if (nextStreakTarget) {
+            nextMilestones.push({
+                category: 'streak',
+                label: `${nextStreakTarget} dni nauki z rzędu`,
+                current: currentStreak,
+                target: nextStreakTarget,
+                progressPercentage: Math.round((currentStreak / nextStreakTarget) * 100),
+            });
+        }
+
+        const nextCourseTarget = courseMilestones.find(t => t > completedCoursesCount);
+        if (nextCourseTarget) {
+            nextMilestones.push({
+                category: 'courses',
+                label: `${nextCourseTarget} ukończonych kursów`,
+                current: completedCoursesCount,
+                target: nextCourseTarget,
+                progressPercentage: Math.round((completedCoursesCount / nextCourseTarget) * 100),
+            });
+        }
+
+        const nextProgressTarget = progressMilestones.find(t => t > overallProgress);
+        if (nextProgressTarget) {
+            nextMilestones.push({
+                category: 'progress',
+                label: `${nextProgressTarget}% ogólnego postępu`,
+                current: overallProgress,
+                target: nextProgressTarget,
+                progressPercentage: Math.round((overallProgress / nextProgressTarget) * 100),
+            });
+        }
+
         return NextResponse.json({
             // Basic stats
             enrolledCoursesCount,
@@ -359,6 +413,12 @@ export async function GET(req: NextRequest) {
             currentStreak,
             thisWeekActivity,
             thisMonthActivity,
+
+            // Motivation-focused data
+            streakAtRisk,
+            nextBestAction,
+            weeklyGoal,
+            nextMilestones,
 
             // Detailed data
             courseProgress,

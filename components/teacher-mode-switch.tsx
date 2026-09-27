@@ -3,13 +3,11 @@
 import { useAuth } from "@clerk/nextjs";
 import { authorizeUser, AuthState } from "@/hooks/use-auth";
 import { UserResponse } from "@/app/api/user/route";
-import { Button } from "@/components/ui/button";
 import { useI18n } from "@/hooks/use-i18n";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { GraduationCap, User2 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { GraduationCap, Presentation } from "lucide-react";
 
 interface TeacherModeSwitchProps {
   compact?: boolean;
@@ -17,6 +15,7 @@ interface TeacherModeSwitchProps {
 
 export const TeacherModeSwitch = ({ compact = false }: TeacherModeSwitchProps) => {
   const pathName = usePathname();
+  const router = useRouter();
   const isTeacherPage = pathName?.startsWith("/teacher");
   const { userId, sessionId } = useAuth();
   const { t } = useI18n();
@@ -50,20 +49,60 @@ export const TeacherModeSwitch = ({ compact = false }: TeacherModeSwitchProps) =
     return null;
   }
 
-  const label = isTeacherPage ? t("nav.studentMode") : t("nav.teacherMode");
+  const value: "student" | "teacher" = isTeacherPage ? "teacher" : "student";
+
+  const handleValueChange = (next: "student" | "teacher") => {
+    if (next === value) {
+      return;
+    }
+    router.push(next === "teacher" ? "/teacher/courses" : "/");
+  };
+
+  const options = [
+    {
+      key: "student" as const,
+      label: t("nav.studentModeShort"),
+      title: t("nav.studentMode"),
+      icon: GraduationCap,
+    },
+    {
+      key: "teacher" as const,
+      label: t("nav.teacherModeShort"),
+      title: t("nav.teacherMode"),
+      icon: Presentation,
+    },
+  ];
 
   return (
-    <Button asChild className="shrink-0 select-none px-3 shadow-sm">
-      <Link
-        href={isTeacherPage ? "/" : "/teacher/courses"}
-        aria-label={label}
-        title={label}
-      >
-        {isTeacherPage ? <User2 className="h-4 w-4" /> : <GraduationCap className="h-4 w-4" />}
-        <span className={cn("ml-2", compact ? "hidden lg:inline" : "hidden sm:inline")}>
-          {label}
-        </span>
-      </Link>
-    </Button>
+    <div
+      role="radiogroup"
+      aria-label={t("nav.teacherMode")}
+      className="relative inline-grid shrink-0 select-none grid-cols-2 items-center gap-0.5 rounded-full bg-muted p-1"
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-background shadow-sm transition-transform duration-200 ease-out",
+          value === "teacher" && "translate-x-[calc(100%+4px)]",
+        )}
+      />
+      {options.map(({ key, label, title, icon: Icon }) => (
+        <button
+          key={key}
+          type="button"
+          role="radio"
+          aria-checked={value === key}
+          onClick={() => handleValueChange(key)}
+          title={title}
+          className={cn(
+            "relative z-10 flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+            value === key ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Icon className="h-4 w-4" />
+          <span className={cn(compact && "hidden lg:inline")}>{label}</span>
+        </button>
+      ))}
+    </div>
   );
 };

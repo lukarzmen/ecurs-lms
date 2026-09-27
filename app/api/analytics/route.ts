@@ -421,6 +421,109 @@ export async function GET(req: NextRequest) {
             });
         }
 
+        // --- STUDENTS NEEDING SUPPORT & CONTENT QUALITY SIGNALS ---
+        // Helps teachers proactively reach out to struggling/inactive students
+        // and spot modules that may need to be reworked (low completion rate).
+
+        const allAuthorModules = await db.module.findMany({
+            where: { courseId: { in: authorCourseIds } },
+            select: { id: true, title: true, courseId: true },
+        });
+        const courseModuleIdsMap: Record<number, number[]> = {};
+        for (const m of allAuthorModules) {
+            const cId = m.courseId as number;
+            if (!courseModuleIdsMap[cId]) courseModuleIdsMap[cId] = [];
+            courseModuleIdsMap[cId].push(m.id);
+        }
+        const allModuleIdsForSupport = allAuthorModules.map(m => m.id);
+
+        const allEnrollments = await db.userCourse.findMany({
+            where: { courseId: { in: authorCourseIds } },
+            select: {
+                userId: true,
+                courseId: true,
+                createdAt: true,
+                user: { select: { email: true, firstName: true, lastName: true } },
+                course: { select: { title: true } },
+            },
+        });
+
+        const allUserModulesForSupport = allModuleIdsForSupport.length > 0
+            ? await db.userModule.findMany({
+                where: { moduleId: { in: allModuleIdsForSupport } },
+                select: { userId: true, moduleId: true, isFinished: true, updatedAt: true },
+            })
+            : [];
+
+        const moduleToCourseId: Record<number, number> = {};
+        for (const m of allAuthorModules) moduleToCourseId[m.id] = m.courseId as number;
+
+        // finished count & last activity per (userId, courseId)
+        const progressMap: Record<string, { finished: number; lastActivity: Date | null }> = {};
+        // students who finished each module (used for per-module completion rate)
+        const moduleFinishedUsers: Record<number, Set<number>> = {};
+
+        for (const um of allUserModulesForSupport) {
+            const courseId = moduleToCourseId[um.moduleId];
+            if (courseId === undefined) continue;
+            const key = `${um.userId}_${courseId}`;
+            if (!progressMap[key]) progressMap[key] = { finished: 0, lastActivity: null };
+            if (um.isFinished) {
+                progressMap[key].finished++;
+                if (!moduleFinishedUsers[um.moduleId]) moduleFinishedUsers[um.moduleId] = new Set();
+                moduleFinishedUsers[um.moduleId].add(um.userId);
+            }
+            if (!progressMap[key].lastActivity || um.updatedAt > progressMap[key].lastActivity!) {
+                progressMap[key].lastActivity = um.updatedAt;
+            }
+        }
+
+        const now = new Date();
+        const studentsNeedingSupport = allEnrollments
+            .map(enrollment => {
+                const totalModulesInCourse = courseModuleIdsMap[enrollment.courseId]?.length || 0;
+                const key = `${enrollment.userId}_${enrollment.courseId}`;
+                const progress = progressMap[key];
+                const progressPercentage = totalModulesInCourse > 0
+                    ? Math.round(((progress?.finished || 0) / totalModulesInCourse) * 100)
+                    : 0;
+                const lastActivity = progress?.lastActivity || null;
+                const referenceDate = lastActivity || enrollment.createdAt;
+                const daysSinceActivity = Math.floor((now.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
+                return {
+                    studentName: enrollment.user.email || `${enrollment.user.firstName || ""} ${enrollment.user.lastName || ""}`.trim() || enrollment.userId.toString(),
+                    studentEmail: enrollment.user.email,
+                    courseTitle: enrollment.course.title,
+                    progressPercentage,
+                    daysSinceActivity,
+                };
+            })
+            .filter(s => s.progressPercentage < 100 && s.daysSinceActivity >= 14)
+            .sort((a, b) => (a.progressPercentage - b.progressPercentage) || (b.daysSinceActivity - a.daysSinceActivity))
+            .slice(0, 8);
+
+        const enrolledCountByCourse: Record<number, number> = {};
+        for (const e of allEnrollments) {
+            enrolledCountByCourse[e.courseId] = (enrolledCountByCourse[e.courseId] || 0) + 1;
+        }
+
+        const modulesNeedingAttention = allAuthorModules
+            .map(m => {
+                const courseId = m.courseId as number;
+                const enrolledCount = enrolledCountByCourse[courseId] || 0;
+                const finishedCount = moduleFinishedUsers[m.id]?.size || 0;
+                const completionRate = enrolledCount > 0 ? Math.round((finishedCount / enrolledCount) * 100) : 0;
+                return {
+                    moduleTitle: m.title,
+                    courseTitle: authorCourses.find(c => c.id === courseId)?.title || "",
+                    completionRate,
+                    enrolledCount,
+                };
+            })
+            .filter(m => m.enrolledCount >= 3 && m.completionRate < 40)
+            .sort((a, b) => a.completionRate - b.completionRate)
+            .slice(0, 5);
+
         return NextResponse.json({
             userCount,
             coursesCount,
@@ -436,6 +539,9 @@ export async function GET(req: NextRequest) {
             mostActiveStudent,
             mostCoursesStudent,
             coursesDetails, // <--- new field
+            // --- Actionable insights: support students & improve course quality ---
+            studentsNeedingSupport,
+            modulesNeedingAttention,
             // --- Educational Path Analytics ---
             pathUserCount,
             pathsCount,

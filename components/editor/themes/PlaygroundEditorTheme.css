@@ -588,6 +588,7 @@
   display: grid;
   gap: 10px;
   margin: 10px 0;
+  width: 100%;
 }
 .PlaygroundEditorTheme__layoutItem {
   border: 1px dashed #ddd;
@@ -602,12 +603,13 @@
   position: absolute;
   top: 30px;
   right: 6px;
-  z-index: 5;
+  z-index: 9999;
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 8px;
   min-width: 180px;
+  max-width: min(280px, calc(100vw - 24px));
 }
 .PlaygroundEditorTheme__layoutItem .layout-item-popover-row {
   display: flex;

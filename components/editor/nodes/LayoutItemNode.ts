@@ -19,6 +19,7 @@ export type SerializedLayoutItemNode = SerializedElementNode & {
   showFrame?: boolean;
   extraLabel?: string;
   customBackgroundColor?: string;
+  showLabel?: boolean;
 };
 
 function $convertLayoutItemElement(domNode: HTMLElement): DOMConversionOutput | null {
@@ -36,6 +37,8 @@ function $convertLayoutItemElement(domNode: HTMLElement): DOMConversionOutput | 
   const frameAttr = domNode.getAttribute('data-lexical-layout-item-frame');
   const showFrame = frameAttr === null ? true : frameAttr !== 'false';
   const extraLabel = domNode.getAttribute('data-lexical-layout-item-extra-label') || '';
+  const showLabelAttr = domNode.getAttribute('data-lexical-layout-item-show-label');
+  const showLabel = showLabelAttr === null ? true : showLabelAttr !== 'false';
 
   const node = $createLayoutItemNode(
     backgroundColor,
@@ -44,6 +47,7 @@ function $convertLayoutItemElement(domNode: HTMLElement): DOMConversionOutput | 
     showFrame,
     extraLabel,
     customBackgroundColor,
+    showLabel,
   );
   return {node};
 }
@@ -55,6 +59,7 @@ export class LayoutItemNode extends ElementNode {
   __showFrame: boolean;
   __extraLabel: string;
   __customBackgroundColor: string;
+  __showLabel: boolean;
   __editor: any;
 
   constructor(
@@ -65,6 +70,7 @@ export class LayoutItemNode extends ElementNode {
     showFrame: boolean = true,
     extraLabel: string = '',
     customBackgroundColor: string = '',
+    showLabel: boolean = true,
   ) {
     super(key);
     this.__backgroundColor = backgroundColor;
@@ -73,6 +79,7 @@ export class LayoutItemNode extends ElementNode {
     this.__showFrame = showFrame;
     this.__extraLabel = extraLabel;
     this.__customBackgroundColor = customBackgroundColor;
+    this.__showLabel = showLabel;
     this.__editor = $getEditor();
   }
 
@@ -89,6 +96,7 @@ export class LayoutItemNode extends ElementNode {
       node.__showFrame,
       node.__extraLabel,
       node.__customBackgroundColor,
+      node.__showLabel,
     );
   }
 
@@ -103,11 +111,13 @@ export class LayoutItemNode extends ElementNode {
       this.__showFrame ? 'true' : 'false',
     );
 
-    const label = document.createElement('div');
-    label.classList.add('layout-item-label');
-    label.textContent = this.__variant === 'warning' ? 'Ważne' : 'Ciekawostka';
-    label.contentEditable = 'false';
-    dom.appendChild(label);
+    if (this.__showLabel) {
+      const label = document.createElement('div');
+      label.classList.add('layout-item-label');
+      label.textContent = this.__variant === 'warning' ? 'Ważne' : 'Ciekawostka';
+      label.contentEditable = 'false';
+      dom.appendChild(label);
+    }
 
     if (this.__extraLabel) {
       const extra = document.createElement('div');
@@ -139,14 +149,47 @@ export class LayoutItemNode extends ElementNode {
       popover.contentEditable = 'false';
       popover.style.display = 'none';
 
+      const labelToggleRow = document.createElement('div');
+      labelToggleRow.classList.add('layout-item-popover-row');
+
+      const labelToggleLabel = document.createElement('label');
+      labelToggleLabel.classList.add('layout-item-popover-label');
+      labelToggleLabel.textContent = 'Dodaj etykietę';
+
+      const labelToggleInput = document.createElement('input');
+      labelToggleInput.type = 'checkbox';
+      labelToggleInput.checked = this.__showLabel;
+      labelToggleInput.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+      labelToggleInput.addEventListener('change', (e) => {
+        e.stopPropagation();
+        const checked = (e.target as HTMLInputElement).checked;
+        const editor = this.__editor ?? $getEditor();
+        if (!editor) return;
+        editor.update(() => {
+          const writableNode = this.getWritable();
+          writableNode.__showLabel = checked;
+        });
+      });
+
+      labelToggleRow.appendChild(labelToggleLabel);
+      labelToggleRow.appendChild(labelToggleInput);
+      popover.appendChild(labelToggleRow);
+
       const motifRow = document.createElement('div');
       motifRow.classList.add('layout-item-popover-row');
+      if (!this.__showLabel) {
+        motifRow.style.opacity = '0.5';
+        motifRow.style.pointerEvents = 'none';
+      }
 
       const makeMotifChoice = (label: string, value: LayoutItemVariant) => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.classList.add('layout-item-popover-btn');
         btn.textContent = label;
+        btn.disabled = !this.__showLabel;
         btn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -273,7 +316,8 @@ export class LayoutItemNode extends ElementNode {
       this.__variant !== prevNode.__variant ||
       this.__showFrame !== prevNode.__showFrame ||
       this.__extraLabel !== prevNode.__extraLabel ||
-      this.__customBackgroundColor !== prevNode.__customBackgroundColor
+      this.__customBackgroundColor !== prevNode.__customBackgroundColor ||
+      this.__showLabel !== prevNode.__showLabel
     ) {
       return true;
     }
@@ -305,6 +349,10 @@ export class LayoutItemNode extends ElementNode {
     if (this.__extraLabel) {
       element.setAttribute('data-lexical-layout-item-extra-label', this.__extraLabel);
     }
+    element.setAttribute(
+      'data-lexical-layout-item-show-label',
+      this.__showLabel ? 'true' : 'false',
+    );
     if (this.__variant === 'default' && this.__backgroundColor) {
       element.setAttribute('data-lexical-layout-item-bg', this.__backgroundColor);
     }
@@ -333,19 +381,21 @@ export class LayoutItemNode extends ElementNode {
       element.style.backgroundColor = background;
     }
 
-    const labelText =
-      this.__variant === 'warning'
-        ? 'Ważne'
-        : this.__variant === 'info'
-          ? 'Info'
-          : 'Ciekawostka';
+    if (this.__showLabel) {
+      const labelText =
+        this.__variant === 'warning'
+          ? 'Ważne'
+          : this.__variant === 'info'
+            ? 'Info'
+            : 'Ciekawostka';
 
-    const label = document.createElement('div');
-    label.textContent = labelText;
-    label.style.fontWeight = '700';
-    label.style.margin = '0 0 6px 0';
-    label.style.fontSize = '0.95em';
-    element.appendChild(label);
+      const label = document.createElement('div');
+      label.textContent = labelText;
+      label.style.fontWeight = '700';
+      label.style.margin = '0 0 6px 0';
+      label.style.fontSize = '0.95em';
+      element.appendChild(label);
+    }
 
     if (this.__extraLabel) {
       const extra = document.createElement('div');
@@ -361,7 +411,7 @@ export class LayoutItemNode extends ElementNode {
     return true;
   }
   static importJSON(serializedNode: SerializedLayoutItemNode): LayoutItemNode {
-    const {backgroundColor, variant, showFrame, extraLabel, customBackgroundColor} = serializedNode;
+    const {backgroundColor, variant, showFrame, extraLabel, customBackgroundColor, showLabel} = serializedNode;
     const node = $createLayoutItemNode(
       backgroundColor,
       false,
@@ -369,6 +419,7 @@ export class LayoutItemNode extends ElementNode {
       showFrame ?? true,
       extraLabel ?? '',
       customBackgroundColor ?? '',
+      showLabel ?? true,
     );
     return node;
   }
@@ -384,6 +435,7 @@ export class LayoutItemNode extends ElementNode {
       showFrame: this.__showFrame,
       extraLabel: this.__extraLabel,
       customBackgroundColor: this.__customBackgroundColor,
+      showLabel: this.__showLabel,
     };
   }
 
@@ -452,6 +504,19 @@ export class LayoutItemNode extends ElementNode {
     return this.__customBackgroundColor;
   }
 
+  setShowLabel(showLabel: boolean): void {
+    if (this.__editor) {
+      this.__editor.update(() => {
+        const writableNode = this.getWritable();
+        writableNode.__showLabel = showLabel;
+      });
+    }
+  }
+
+  getShowLabel(): boolean {
+    return this.__showLabel;
+  }
+
   set isEditable(value: boolean) {
     this.__isEditable = value;
   }
@@ -473,6 +538,7 @@ export function $createLayoutItemNode(
   showFrame: boolean = true,
   extraLabel: string = '',
   customBackgroundColor: string = '',
+  showLabel: boolean = true,
 ): LayoutItemNode {
   return new LayoutItemNode(
     undefined,
@@ -482,6 +548,7 @@ export function $createLayoutItemNode(
     showFrame,
     extraLabel,
     customBackgroundColor,
+    showLabel,
   );
 }
 

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DEFAULT_AI_MODEL_ID } from "@/lib/ai/models";
+import { AI_MODELS, DEFAULT_AI_MODEL_ID } from "@/lib/ai/models";
 
 type AiModelStore = {
   modelId: string;
@@ -14,6 +14,17 @@ export const useAiModelStore = create<AiModelStore>()(
       modelId: DEFAULT_AI_MODEL_ID,
       setModelId: (modelId) => set({ modelId }),
     }),
-    { name: "ecurs-ai-model" },
+    {
+      name: "ecurs-ai-model",
+      // Heals stale localStorage values pointing at a model removed from the whitelist.
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<AiModelStore> | undefined;
+        const modelId =
+          persisted?.modelId && AI_MODELS.some((m) => m.id === persisted.modelId)
+            ? persisted.modelId
+            : DEFAULT_AI_MODEL_ID;
+        return { ...currentState, ...persisted, modelId };
+      },
+    },
   ),
 );
