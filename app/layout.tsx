@@ -8,6 +8,7 @@ import {
 } from "@clerk/nextjs";
 import ToastProvider from "@/components/providers/toast-provider";
 import { ConfettiProvider } from "@/components/providers/confetti-provider";
+import { ChunkErrorReloader } from "@/components/providers/chunk-error-reloader";
 import { enUS, plPL } from "@clerk/localizations";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -122,6 +123,7 @@ export default async function RootLayout({
             </div>
           )}
           <div>
+            <ChunkErrorReloader />
             <I18nProvider locale={locale} messages={messages}>
             <SignedIn>
               <ConfettiProvider />

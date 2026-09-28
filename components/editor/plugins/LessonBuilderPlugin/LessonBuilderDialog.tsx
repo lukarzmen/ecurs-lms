@@ -177,6 +177,25 @@ function appendNoteBlock(
   root.append(container);
 }
 
+// AI output often repeats the section/lesson title as its own first markdown
+// heading line (e.g. content starting with "### Heading" right under an
+// already-rendered heading), which visually looks like a duplicated header.
+function stripLeadingDuplicateHeading(content: string, title: string): string {
+  const lines = content.split('\n');
+  let idx = 0;
+  while (idx < lines.length && lines[idx].trim() === '') idx++;
+  if (idx >= lines.length) return content;
+
+  const headingMatch = lines[idx].match(/^#{1,3}\s+(.*)$/);
+  if (!headingMatch) return content;
+
+  const candidate = headingMatch[1].trim().toLowerCase();
+  if (candidate !== title.trim().toLowerCase()) return content;
+
+  lines.splice(idx, 1);
+  return lines.join('\n');
+}
+
 function insertMarkdown(root: ReturnType<typeof $getRoot>, markdown: string) {
   const cleanedResponse = markdown.replace(/^#####\s*/gm, '');
   const lines = cleanedResponse
@@ -919,8 +938,12 @@ export function LessonBuilderDialog({
         const slotJobs = jobsBySlot.get(slot);
         if (!slotJobs || slotJobs.length === 0) return;
         slotJobs.forEach((job) => {
-          selectEnd();
+          // Append the separator paragraph first, then move the selection into it.
+          // Doing it in the other order leaves the selection anchored inside the
+          // previous block (e.g. a "ciekawostka" note), so the next interactive
+          // block would be inserted nested inside it instead of after it.
           sep();
+          selectEnd();
           job();
           sep();
         });
@@ -936,7 +959,12 @@ export function LessonBuilderDialog({
         }
 
         if (normalized.lead) {
-          insertMarkdown(root, normalized.lead);
+          insertMarkdown(
+            root,
+            normalized.lessonTitle
+              ? stripLeadingDuplicateHeading(normalized.lead, normalized.lessonTitle)
+              : normalized.lead,
+          );
         }
       });
 
@@ -946,7 +974,7 @@ export function LessonBuilderDialog({
           const headingNode = $createHeadingNode('h2');
           headingNode.append($createTextNode(section.heading));
           root.append(headingNode);
-          insertMarkdown(root, section.content);
+          insertMarkdown(root, stripLeadingDuplicateHeading(section.content, section.heading));
           section.notes.forEach((note) => appendNoteBlock(root, note));
         });
 
@@ -959,10 +987,11 @@ export function LessonBuilderDialog({
       if (normalized.summary) {
         activeEditor.update(() => {
           const root = $getRoot();
+          const summaryHeadingLabel = t('ed.lessonBuilderSummaryHeading');
           const headingNode = $createHeadingNode('h3');
-          headingNode.append($createTextNode(t('ed.lessonBuilderSummaryHeading')));
+          headingNode.append($createTextNode(summaryHeadingLabel));
           root.append(headingNode);
-          insertMarkdown(root, normalized.summary);
+          insertMarkdown(root, stripLeadingDuplicateHeading(normalized.summary, summaryHeadingLabel));
         });
       }
 
