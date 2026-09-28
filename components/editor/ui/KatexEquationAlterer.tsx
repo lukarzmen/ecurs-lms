@@ -97,7 +97,7 @@ export default function KatexEquationAlterer({
           </div>
           <div className="KatexEquationAlterer_preview">
             <ErrorBoundary 
-              onError={(e) => editor._onError(e)} 
+              onError={(e) => editor._onError(e instanceof Error ? e : new Error(String(e)))} 
               fallback={<div className="KatexEquationAlterer_error">{t('ed.katexSyntaxError')}</div>}
             >
               {equation ? (

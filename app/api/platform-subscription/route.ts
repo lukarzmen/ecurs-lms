@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import { Decimal } from "@prisma/client/runtime/library";
 
 import { db } from "@/lib/db";
+import { DEFAULT_COMMISSION_RATE_PERCENT } from "@/lib/commission";
 
 // Note: This API will work after running the Prisma migration to add platform subscription tables
 
@@ -97,6 +98,7 @@ export async function POST(req: NextRequest) {
                 vatRate: new Decimal(0.23),
                 currency: 'PLN',
                 trialPeriodDays: 90,
+                commissionRatePercent: new Decimal(DEFAULT_COMMISSION_RATE_PERCENT),
                 isActive: true,
                 createdAt: new Date(),
                 updatedAt: new Date(),
