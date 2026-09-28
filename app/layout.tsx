@@ -13,6 +13,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { I18nProvider } from "@/components/providers/i18n-provider";
 import { createTranslator, getMessages, getRequestLocale } from "@/lib/i18n/server";
+import { ChunkErrorReloader } from "@/components/chunk-error-reloader";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -115,6 +116,7 @@ export default async function RootLayout({
           </noscript>
         </head>
         <body className={inter.className}>
+          <ChunkErrorReloader />
           {isTestEnvironment && (
             <div className="bg-yellow-400 text-black text-center py-2 px-4 font-bold text-sm fixed bottom-0 left-0 right-0 z-[9999] shadow-md">
               ⚠️ ŚRODOWISKO TESTOWE / TEST ENVIRONMENT ⚠️
