@@ -6,7 +6,8 @@ import {
     EditorConfig, 
     LexicalNode, 
     NodeKey, 
-    SerializedLexicalNode 
+    SerializedLexicalNode,
+    Spread
 } from 'lexical';
 
 export interface Definition {
@@ -159,12 +160,15 @@ export class DefinitionNode extends DecoratorNode<JSX.Element> {
     }
 }
 
-export interface SerializedDefinitionNode extends SerializedLexicalNode {
-    key: string;
-    description: string;
-    type: 'definition';
-    version: 1;
-}
+export type SerializedDefinitionNode = Spread<
+    {
+        key: string;
+        description: string;
+        type: 'definition';
+        version: 1;
+    },
+    SerializedLexicalNode
+>;
 
 export function $createDefinitionNode(key: string, description: string): DefinitionNode {
     return new DefinitionNode(key, description);
