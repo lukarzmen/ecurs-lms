@@ -12,6 +12,8 @@ import { INSERT_TODO_COMMAND } from '../TodoPlugin';
 import { INSERT_TRUE_FALSE_COMMAND } from '../TrueFalsePlugin';
 import { INSERT_ORDERING_COMMAND } from '../OrderingPlugin';
 import { $createDictionaryNode, Dictionary } from '../../nodes/DictionaryNode';
+import { $createLayoutContainerNode } from '../../nodes/LayoutContainerNode';
+import { $createLayoutItemNode } from '../../nodes/LayoutItemNode';
 import { useI18n } from '@/hooks/use-i18n';
 import { Sparkles, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -21,7 +23,11 @@ import { AiGenerationProgress } from '@/components/ui/ai-generation-progress';
 type BuilderPayload = {
   lessonTitle: string;
   lead: string;
-  sections: Array<{ heading: string; content: string }>;
+  sections: Array<{
+    heading: string;
+    content: string;
+    notes: Array<{ type: 'default' | 'warning'; text: string }>;
+  }>;
   summary: string;
   quiz: Array<{
     question: string;
@@ -122,7 +128,7 @@ type OutlineSection = {
   sourceGrounded: boolean;
 };
 
-function appendFormattedLine(root: ReturnType<typeof $getRoot>, line: string) {
+function createFormattedParagraph(line: string) {
   const paragraphNode = $createParagraphNode();
   const parts = line.split(/(\$[^$]+\$|`[^`]+`|\*\*[^*]+\*\*)/g);
 
@@ -152,7 +158,23 @@ function appendFormattedLine(root: ReturnType<typeof $getRoot>, line: string) {
     paragraphNode.append($createTextNode(part));
   });
 
-  root.append(paragraphNode);
+  return paragraphNode;
+}
+
+function appendFormattedLine(root: ReturnType<typeof $getRoot>, line: string) {
+  root.append(createFormattedParagraph(line));
+}
+
+// Renders an AI-flagged fun-fact/important note as a single-column highlighted block.
+function appendNoteBlock(
+  root: ReturnType<typeof $getRoot>,
+  note: { type: 'default' | 'warning'; text: string },
+) {
+  const container = $createLayoutContainerNode('1fr');
+  const item = $createLayoutItemNode('#ffffff', true, note.type, true, '', '', true);
+  item.append(createFormattedParagraph(note.text));
+  container.append(item);
+  root.append(container);
 }
 
 function insertMarkdown(root: ReturnType<typeof $getRoot>, markdown: string) {
@@ -280,9 +302,32 @@ function normalizePayload(raw: unknown): BuilderPayload {
           const heading = typeof item.heading === 'string' ? item.heading.trim() : '';
           const content = typeof item.content === 'string' ? item.content.trim() : '';
           if (!heading || !content) return null;
-          return { heading, content };
+
+          const notes = Array.isArray(item.notes)
+            ? item.notes
+                .map((noteEntry) => {
+                  if (!noteEntry || typeof noteEntry !== 'object') return null;
+                  const noteItem = noteEntry as Record<string, unknown>;
+                  const text = typeof noteItem.text === 'string' ? noteItem.text.trim() : '';
+                  if (!text) return null;
+                  const rawType =
+                    typeof noteItem.type === 'string' ? noteItem.type.trim().toLowerCase() : '';
+                  const type: 'default' | 'warning' =
+                    rawType === 'important' || rawType === 'warning' || rawType === 'ważne'
+                      ? 'warning'
+                      : 'default';
+                  return { type, text };
+                })
+                .filter((n): n is { type: 'default' | 'warning'; text: string } => n !== null)
+                .slice(0, 4)
+            : [];
+
+          return { heading, content, notes };
         })
-        .filter((entry): entry is { heading: string; content: string } => entry !== null)
+        .filter(
+          (entry): entry is { heading: string; content: string; notes: Array<{ type: 'default' | 'warning'; text: string }> } =>
+            entry !== null,
+        )
     : [];
 
   const quiz = Array.isArray(obj.quiz)
@@ -504,6 +549,7 @@ export function LessonBuilderDialog({
   const [includeTodo, setIncludeTodo] = useState(false);
   const [includeTrueFalse, setIncludeTrueFalse] = useState(false);
   const [includeOrdering, setIncludeOrdering] = useState(false);
+  const [includeHighlights, setIncludeHighlights] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const courseContext = useMemo(() => {
@@ -567,6 +613,7 @@ export function LessonBuilderDialog({
       .replace('{includeTrueFalse}', includeTrueFalse ? 'true' : 'false')
       .replace('{includeOrdering}', includeOrdering ? 'true' : 'false')
       .replace('{includeDictionary}', includeDictionary ? 'true' : 'false')
+      .replace('{includeHighlights}', includeHighlights ? 'true' : 'false')
       .replace('{context}', courseContext || t('ed.lessonBuilderNoContext'));
 
     const raw = await fetchTasksJson({
@@ -626,16 +673,18 @@ export function LessonBuilderDialog({
           .replace('{keyPoints}', section.keyPoints.join('; '))
           .replace('{sourceGrounded}', section.sourceGrounded ? 'true' : 'false')
           .replace('{difficulty}', difficulty)
-          .replace('{sourceMaterial}', sourceMaterialText);
+          .replace('{sourceMaterial}', sourceMaterialText)
+          .replace('{includeHighlights}', includeHighlights ? 'true' : 'false');
 
         const raw = (await fetchTasksJson({
           systemPrompt: t('ed.lessonBuilderSectionSystem'),
           userPrompt: sectionUserPrompt,
-        })) as { content?: unknown };
+        })) as { content?: unknown; notes?: unknown };
 
         return {
           heading: section.heading,
           content: typeof raw.content === 'string' ? raw.content.trim() : '',
+          notes: raw.notes,
         };
       }),
     );
@@ -669,7 +718,7 @@ export function LessonBuilderDialog({
           })) as { content?: unknown };
 
           const fixedContent = typeof fixRaw.content === 'string' ? fixRaw.content.trim() : '';
-          return { heading: section.heading, content: fixedContent || section.content };
+          return { heading: section.heading, content: fixedContent || section.content, notes: section.notes };
         } catch {
           // Keep the original draft if the fix pass itself fails – it already passed generation.
           return section;
@@ -898,6 +947,7 @@ export function LessonBuilderDialog({
           headingNode.append($createTextNode(section.heading));
           root.append(headingNode);
           insertMarkdown(root, section.content);
+          section.notes.forEach((note) => appendNoteBlock(root, note));
         });
 
         runJobs(index);
@@ -1064,6 +1114,10 @@ export function LessonBuilderDialog({
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={includeTodo} onChange={(e) => setIncludeTodo(e.target.checked)} disabled={loading} />
                 {t('ed.lessonBuilderIncludeTodo')}
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={includeHighlights} onChange={(e) => setIncludeHighlights(e.target.checked)} disabled={loading} />
+                {t('ed.lessonBuilderIncludeHighlights')}
               </label>
             </div>
 
