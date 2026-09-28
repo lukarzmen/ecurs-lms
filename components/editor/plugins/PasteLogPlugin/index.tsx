@@ -21,8 +21,8 @@ export default function PasteLogPlugin(): JSX.Element {
     if (isActive) {
       return editor.registerCommand(
         PASTE_COMMAND,
-        (e: ClipboardEvent) => {
-          const {clipboardData} = e;
+        (e) => {
+          const clipboardData = e instanceof ClipboardEvent ? e.clipboardData : null;
           const allData: string[] = [];
           if (clipboardData && clipboardData.types) {
             clipboardData.types.forEach((type) => {

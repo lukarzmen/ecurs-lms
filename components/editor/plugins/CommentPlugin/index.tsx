@@ -771,7 +771,7 @@ export default function CommentPlugin({
           setTimeout(() => {
             editor.update(() => {
               for (const key of markNodeKeys) {
-                const node: null | MarkNode = $getNodeByKey(key);
+                const node = $getNodeByKey<MarkNode>(key);
                 if ($isMarkNode(node)) {
                   node.deleteID(id);
                   if (node.getIDs().length === 0) {
@@ -858,7 +858,7 @@ export default function CommentPlugin({
         (mutations) => {
           editor.getEditorState().read(() => {
             for (const [key, mutation] of mutations) {
-              const node: null | MarkNode = $getNodeByKey(key);
+              const node = $getNodeByKey<MarkNode>(key);
               let ids: NodeKey[] = [];
 
               if (mutation === 'destroyed') {

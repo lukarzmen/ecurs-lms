@@ -583,7 +583,7 @@ export default function NewToolbarPlugin({
     return 'modul';
   }, [module]);
 
-  const dispatchToolbarCommand = <T extends LexicalCommand<unknown>>(
+  const dispatchToolbarCommand = <T extends LexicalCommand<any>>(
     command: T,
     payload: CommandPayloadType<T> | undefined = undefined,
     skipRefocus: boolean = false,
